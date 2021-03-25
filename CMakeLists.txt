@@ -8,7 +8,7 @@ project(
 )
 
 # Options
-option(BUILD_EXAMPLES "Whether to build examples" OFF)
+option(BUILD_EXAMPLES "Whether to build examples" ON)
 
 # Add the main library
 add_subdirectory(lib)

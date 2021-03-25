@@ -1,6 +1,6 @@
 #include "../../lib/malloy/listener.hpp"
 #include "../../lib/malloy/http/router.hpp"
-#include "../../lib/malloy/logging/manager.hpp"
+#include "../common/logger.hpp"
 
 #include <boost/asio/signal_set.hpp>
 #include <spdlog/logger.h>
@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     // Initialize logger
     std::shared_ptr<spdlog::logger> logger;
     try {
-        logger = logging::manager::instance().make_logger("app");
+        logger = logging::logger::instance().make_logger("app");
     }
     catch (const std::exception& e) {
         std::cerr << "could not create logger: " << e.what() << std::endl;

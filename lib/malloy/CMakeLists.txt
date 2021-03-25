@@ -7,7 +7,6 @@ set(TARGET_OBJS   ${NAME}-objs)
 add_library(${TARGET_OBJS} OBJECT)
 
 add_subdirectory(http)
-add_subdirectory(logging)
 add_subdirectory(websocket)
 
 target_compile_features(
