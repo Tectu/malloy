@@ -1,0 +1,58 @@
+#pragma once
+
+#include <regex>
+
+#include <boost/beast/http/verb.hpp>
+#include <boost/beast/http/parser.hpp>
+#include <boost/beast/http/string_body.hpp>
+
+namespace malloy::server::http
+{
+
+    template<class OnRequest>
+    class route
+    {
+    public:
+        using request_type = boost::beast::http::request_parser<boost::beast::http::string_body>::value_type;
+        using method_type  = boost::beast::http::verb;
+
+        method_type verb;
+        std::regex rule;
+        OnRequest handler;
+
+        // Construction
+        route() = default;
+        route(const route& other) = default;
+        route(route&& other) noexcept = default;
+        virtual ~route() = default;
+
+        // Operators
+        route& operator=(const route& rhs) = default;
+        route& operator=(route&& rhs) noexcept = default;
+
+        // General
+        [[nodiscard]]
+        bool matches_target(const std::string& target) const
+        {
+            std::smatch match_result;
+            return std::regex_match(target, match_result, rule);
+        }
+
+        [[nodiscard]]
+        bool matches_request(const request_type& req) const
+        {
+            // Check method
+            if (req.method() not_eq verb)
+                return false;
+
+            // Check rule
+            const std::string target{ req.target().data(), req.target().size() };
+            if (not matches_target(target))
+                return false;
+
+            return true;
+        }
+
+    };
+
+}
