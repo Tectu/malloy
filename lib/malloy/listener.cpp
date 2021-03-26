@@ -12,7 +12,7 @@ listener::listener(
     boost::asio::io_context& ioc,
     const tcp::endpoint& endpoint,
     std::shared_ptr<http::router> router,
-    std::shared_ptr<const std::string> http_doc_root
+    std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
     m_logger(std::move(logger)),
     m_io_ctx(ioc),

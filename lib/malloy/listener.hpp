@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -39,7 +40,7 @@ namespace malloy::server
                 boost::asio::io_context& ioc,
                 const boost::asio::ip::tcp::endpoint& endpoint,
                 std::shared_ptr<http::router> router,
-                std::shared_ptr<const std::string> http_doc_root
+                std::shared_ptr<const std::filesystem::path> http_doc_root
         );
         listener(const listener& other) = delete;
         listener(listener&& other) noexcept = delete;
@@ -57,7 +58,7 @@ namespace malloy::server
         boost::asio::io_context& m_io_ctx;
         tcp::acceptor m_acceptor;
         std::shared_ptr<http::router> m_router;
-        std::shared_ptr<const std::string> m_doc_root;
+        std::shared_ptr<const std::filesystem::path> m_doc_root;
 
         // Sync
         void do_accept();

@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -119,7 +120,7 @@ namespace malloy::server::http
             std::shared_ptr<spdlog::logger> logger,
             tcp::socket&& socket,
             std::shared_ptr<class router> router,
-            std::shared_ptr<const std::string> http_doc_root
+            std::shared_ptr<const std::filesystem::path> http_doc_root
         );
 
         // Start the session
@@ -129,7 +130,7 @@ namespace malloy::server::http
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::tcp_stream m_stream;
         boost::beast::flat_buffer m_buffer;
-        std::shared_ptr<const std::string> m_doc_root;
+        std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<router> m_router;
         queue m_queue;
 

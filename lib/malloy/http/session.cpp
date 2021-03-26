@@ -11,7 +11,7 @@ session::session(
     std::shared_ptr<spdlog::logger> logger,
     tcp::socket&& socket,
     std::shared_ptr<router> router,
-    std::shared_ptr<const std::string> http_doc_root
+    std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
     m_logger(std::move(logger)),
     m_stream(std::move(socket)),

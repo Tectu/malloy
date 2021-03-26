@@ -9,6 +9,7 @@
 
 #include <spdlog/logger.h>
 
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>
@@ -86,7 +87,7 @@ namespace malloy::server::http
             class Send
         >
         void handle_request(
-            beast::string_view doc_root,
+            const std::filesystem::path& doc_root,
             boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
             Send&& send
         )
@@ -184,7 +185,7 @@ namespace malloy::server::http
             class Send
         >
         void serve_static_files(
-            beast::string_view doc_root,
+            const std::filesystem::path& doc_root,
             boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
             Send&& send
         )
@@ -204,7 +205,7 @@ namespace malloy::server::http
             }
 
             // Build the path to the requested file
-            std::string path = path_cat(doc_root, req.target());
+            std::string path = path_cat(doc_root.string(), req.target());
             if (req.target().back() == '/')
                 path.append("index.html");
 
