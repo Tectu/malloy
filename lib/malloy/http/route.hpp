@@ -9,7 +9,10 @@
 namespace malloy::server::http
 {
 
-    template<class OnRequest>
+    template<
+        typename Request,
+        typename Response
+    >
     class route
     {
     public:
@@ -17,7 +20,7 @@ namespace malloy::server::http
 
         method_type verb;
         std::regex rule;
-        OnRequest handler;
+        std::function<Response(const Request&)> handler;
 
         // Construction
         route() = default;
@@ -37,7 +40,6 @@ namespace malloy::server::http
             return std::regex_match(target, match_result, rule);
         }
 
-        template<typename Request>
         [[nodiscard]]
         bool matches_request(const Request& req) const
         {

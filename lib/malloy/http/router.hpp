@@ -37,8 +37,7 @@ namespace malloy::server::http
         using method_type   = boost::beast::http::verb;
         using request_type  = boost::beast::http::message<true,  boost::beast::http::string_body, boost::beast::http::basic_fields<std::allocator<char>>>;
         using response_type = boost::beast::http::message<false, boost::beast::http::string_body, boost::beast::http::basic_fields<std::allocator<char>>>;
-        using handler_type  = std::function<response_type(const request_type&)>;
-        using route_type    = route<handler_type>;
+        using route_type    = route<request_type, response_type>;
 
         // Construction
         explicit router(std::shared_ptr<spdlog::logger> logger);
@@ -50,8 +49,7 @@ namespace malloy::server::http
         router& operator=(const router& rhs) = delete;
         router& operator=(router&& rhs) = delete;
 
-        // General
-        void add(const method_type method, const std::string_view target, handler_type&& on_request)
+        void add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
         {
             m_logger->trace("add_route()");
 
@@ -69,7 +67,7 @@ namespace malloy::server::http
             route_type r;
             r.rule = std::move(regex);
             r.verb = method;
-            r.handler = std::move(on_request);
+            r.handler = std::move(handler);
 
             // Add route
             try {

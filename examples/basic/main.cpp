@@ -53,6 +53,7 @@ int main(int argc, char* argv[])
 
         router->add(verb::get, "/", [](const auto& req) {
             string_response res{boost::beast::http::status::ok, req.version()};
+            res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });
 
