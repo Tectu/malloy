@@ -13,7 +13,6 @@ namespace malloy::server::http
     class route
     {
     public:
-        using request_type = boost::beast::http::request_parser<boost::beast::http::string_body>::value_type;
         using method_type  = boost::beast::http::verb;
 
         method_type verb;
@@ -38,8 +37,9 @@ namespace malloy::server::http
             return std::regex_match(target, match_result, rule);
         }
 
+        template<typename Request>
         [[nodiscard]]
-        bool matches_request(const request_type& req) const
+        bool matches_request(const Request& req) const
         {
             // Check method
             if (req.method() not_eq verb)

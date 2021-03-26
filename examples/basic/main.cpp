@@ -51,6 +51,11 @@ int main(int argc, char* argv[])
         using namespace malloy::server::http;
         using namespace boost::beast::http;
 
+        router->add(verb::get, "/", [](const auto& req) {
+            string_response res{boost::beast::http::status::ok, req.version()};
+            return res;
+        });
+
         router->add(verb::post, "/page_editor", [](const auto& req) {
             std::cout << req.body() << std::endl;
 
