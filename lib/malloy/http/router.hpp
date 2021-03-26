@@ -33,10 +33,11 @@ namespace malloy::server::http
     class router
     {
     public:
-        using method_type  = boost::beast::http::verb;
+        using method_type   = boost::beast::http::verb;
+        using request_type  = boost::beast::http::message<true,  boost::beast::http::string_body, boost::beast::http::basic_fields<std::allocator<char>>>;
         using response_type = boost::beast::http::message<false, boost::beast::http::string_body, boost::beast::http::basic_fields<std::allocator<char>>>;
-        using handler_type = std::function<response_type(const boost::beast::http::request_parser<boost::beast::http::string_body>::value_type&)>;
-        using route_type   = route<handler_type>;
+        using handler_type  = std::function<response_type(const request_type&)>;
+        using route_type    = route<handler_type>;
 
         // Construction
         explicit router(std::shared_ptr<spdlog::logger> logger);
