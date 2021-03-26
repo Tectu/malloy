@@ -168,6 +168,7 @@ namespace malloy::server::http
                     auto resp = route.handler(req);
                     resp.keep_alive(req.keep_alive());
                     resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+                    resp.prepare_payload();
                     send(std::move(resp));
 
                     return;
