@@ -93,12 +93,9 @@ namespace malloy::server::http
             m_logger->trace("handle_request()");
 
             // Log
-            const boost::string_view &verb_str = boost::beast::http::to_string(req.method());
             m_logger->debug("handling request:\n  verb: {}\n  uri : {}",
-                            verb_str.data(),
-                            std::string_view{
-                                req.target().data(),
-                                req.target().size()}
+                            std::string_view{ req.method_string().data(), req.method_string().size() },
+                            std::string_view{ req.target().data(), req.target().size() }
             );
 
             // Request path must be absolute and not contain "..".
@@ -191,14 +188,11 @@ namespace malloy::server::http
         {
             m_logger->trace("serve_static_files()");
 
-            // Get verb as string
-            const boost::string_view& verb_str = boost::beast::http::to_string(req.method());
-
             // Make sure we can handle the method
             if (req.method() != boost::beast::http::verb::get &&
                 req.method() != boost::beast::http::verb::head)
             {
-                m_logger->debug("unknown HTTP-method: {}", verb_str.data());
+                m_logger->debug("unknown HTTP-method: {}", std::string_view{ req.method_string().data(), req.method_string().size() });
                 send(bad_request(req, "Unknown HTTP-method"));
                 return;
             }
