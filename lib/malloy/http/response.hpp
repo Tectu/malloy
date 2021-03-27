@@ -7,6 +7,11 @@
 namespace malloy::server::http
 {
 
+    /**
+     * The response type.
+     */
+    using response = boost::beast::http::response<boost::beast::http::string_body>;
+
     // Returns a bad request response
     auto const bad_request =
         [](const auto& req, boost::beast::string_view why)
@@ -45,12 +50,5 @@ namespace malloy::server::http
             res.prepare_payload();
             return res;
         };
-
-    /**
-     * A response with a string body.
-     */
-    using string_response = boost::beast::http::response<
-                                boost::beast::http::string_body
-                            >;
 
 }

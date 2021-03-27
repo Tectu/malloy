@@ -49,25 +49,24 @@ int main(int argc, char* argv[])
     auto router = std::make_shared<malloy::server::http::router>(logger->clone("router"));
     {
         using namespace malloy::server::http;
-        using namespace boost::beast::http;
 
-        router->add(verb::get, "/", [](const auto& req) {
-            string_response res{boost::beast::http::status::ok, req.version()};
+        router->add(method::get, "/", [](const auto& req) {
+            response res{http::status::ok, req.version()};
             res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });
 
-        router->add(verb::post, "/page_editor", [](const auto& req) {
+        router->add(method::post, "/page_editor", [](const auto& req) {
             std::cout << req.body() << std::endl;
 
-            string_response res{boost::beast::http::status::ok, req.version()};
+            response res{status::ok, req.version()};
             return res;
         });
 
-        router->add(verb::get, "/page_editor", [](const auto& req) {
+        router->add(method::get, "/page_editor", [](const auto& req) {
             std::cout << req.body() << std::endl;
 
-            string_response res{boost::beast::http::status::ok, req.version()};
+            response res{status::ok, req.version()};
             return res;
         });
     }

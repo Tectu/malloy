@@ -2,6 +2,7 @@
 
 #include "route.hpp"
 #include "response.hpp"
+#include "http.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>

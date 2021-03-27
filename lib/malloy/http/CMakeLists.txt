@@ -1,6 +1,7 @@
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
+        http.hpp
         response.hpp
         route.hpp
         router.cpp
