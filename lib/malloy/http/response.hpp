@@ -28,6 +28,9 @@ namespace malloy::http
 
         response& operator=(const response& rhs) = default;
         response& operator=(response&& rhs) noexcept = default;
+
+        [[nodiscard]]
+        status status() const { return result(); }
     };
 
     // Returns a bad request response
