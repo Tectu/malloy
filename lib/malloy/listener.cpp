@@ -11,7 +11,7 @@ listener::listener(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::io_context& ioc,
     const tcp::endpoint& endpoint,
-    std::shared_ptr<http::router> router,
+    std::shared_ptr<http::server::router> router,
     std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
     m_logger(std::move(logger)),
@@ -103,7 +103,7 @@ void listener::on_accept(boost::beast::error_code ec, tcp::socket socket)
     );
 
     // Create the http session and run it
-    auto session = std::make_shared<http::session>(m_logger->clone("http_session"), std::move(socket), m_router, m_doc_root);
+    auto session = std::make_shared<http::server::session>(m_logger->clone("http_session"), std::move(socket), m_router, m_doc_root);
     session->run();
 
     // Accept another connection

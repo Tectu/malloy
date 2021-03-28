@@ -1,16 +1,34 @@
 #pragma once
 
+#include "http.hpp"
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 
-namespace malloy::server::http
+namespace malloy::http
 {
 
     /**
      * The response type.
      */
-    using response = boost::beast::http::response<boost::beast::http::string_body>;
+    class response :
+        public boost::beast::http::response<boost::beast::http::string_body>
+    {
+    public:
+        response() = default;
+        response(const status& _status)
+        {
+            result(_status);
+        }
+
+        response(const response& other) = default;
+        response(response&& other) noexcept = default;
+        virtual ~response() = default;
+
+        response& operator=(const response& rhs) = default;
+        response& operator=(response&& rhs) noexcept = default;
+    };
 
     // Returns a bad request response
     auto const bad_request =

@@ -9,6 +9,7 @@ project(
 
 # Options
 option(BUILD_EXAMPLES "Whether to build examples" ON)
+option(BUILD_TESTS    "Whether to build tests"    ON)
 
 # Add the main library
 add_subdirectory(lib)
@@ -16,4 +17,9 @@ add_subdirectory(lib)
 # Add examples (if supposed to)
 if (BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+# Add tests (if supposed to)
+if (BUILD_TESTS)
+    add_subdirectory(test)
 endif()

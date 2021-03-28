@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-using namespace malloy::server::http;
+using namespace malloy::http::server;
 
 router::router(std::shared_ptr<spdlog::logger> logger) :
         m_logger(std::move(logger))

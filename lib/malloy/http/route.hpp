@@ -6,7 +6,7 @@
 #include <boost/beast/http/parser.hpp>
 #include <boost/beast/http/string_body.hpp>
 
-namespace malloy::server::http
+namespace malloy::http::server
 {
 
     template<

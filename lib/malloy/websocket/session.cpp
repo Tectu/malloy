@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-using namespace malloy::server::websocket;
+using namespace malloy::websocket::server;
 
 // Agent string
 const std::string session::agent_string = std::string(BOOST_BEAST_VERSION_STRING) + " carava-server";

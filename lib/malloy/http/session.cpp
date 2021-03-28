@@ -4,8 +4,7 @@
 
 #include <spdlog/spdlog.h>
 
-using namespace malloy::server;
-using namespace malloy::server::http;
+using namespace malloy::http::server;
 
 session::session(
     std::shared_ptr<spdlog::logger> logger,
@@ -87,13 +86,16 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
 
         // Create a websocket session, transferring ownership
         // of both the socket and the HTTP request.
-        auto ws_session = std::make_shared<websocket::session>(m_logger->clone("websocket_session"), m_stream.release_socket());
+        auto ws_session = std::make_shared<malloy::websocket::server::session>(m_logger->clone("websocket_session"), m_stream.release_socket());
         ws_session->do_accept(m_parser->release());
         return;
     }
 
+    // Parse the request into something more useful from hereon
+    request req = m_parser->release();
+
     // Hand off to router
-    m_router->handle_request(*m_doc_root, m_parser->release(), m_queue);
+    m_router->handle_request(*m_doc_root, std::move(req), m_queue);
 }
 
 void session::on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)

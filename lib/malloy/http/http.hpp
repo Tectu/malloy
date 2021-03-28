@@ -2,7 +2,7 @@
 
 #include <boost/beast/http/verb.hpp>
 
-namespace malloy::server::http
+namespace malloy::http
 {
     using method = boost::beast::http::verb;
 

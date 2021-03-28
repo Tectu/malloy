@@ -18,7 +18,7 @@ namespace spdlog
     class logger;
 }
 
-namespace malloy::server::http
+namespace malloy::http::server
 {
     class router;
 

@@ -35,9 +35,9 @@ int main(int argc, char* argv[])
     // Check command line arguments.
     if (argc != 5) {
         std::cerr <<
-                  "Usage: http-server-async <address> <port> <doc_root> <threads>\n" <<
-                  "Example:\n" <<
-                  "    http-server-async 0.0.0.0 8080 . 1\n";
+            "Usage: malloy <address> <port> <doc_root> <threads>\n" <<
+            "Example:\n" <<
+            "    malloy 0.0.0.0 8080 . 1\n";
         return EXIT_FAILURE;
     }
     auto const address = net::ip::make_address(argv[1]);
@@ -46,12 +46,12 @@ int main(int argc, char* argv[])
     auto const threads = std::max<int>(1, std::atoi(argv[4]));
 
     // Create request handler
-    auto router = std::make_shared<malloy::server::http::router>(logger->clone("router"));
+    auto router = std::make_shared<malloy::http::server::router>(logger->clone("router"));
     {
-        using namespace malloy::server::http;
+        using namespace malloy::http;
 
         router->add(method::get, "/", [](const auto& req) {
-            response res{http::status::ok, req.version()};
+            response res{http::status::ok};
             res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });
@@ -59,14 +59,25 @@ int main(int argc, char* argv[])
         router->add(method::post, "/page_editor", [](const auto& req) {
             std::cout << req.body() << std::endl;
 
-            response res{status::ok, req.version()};
+            response res{status::ok};
             return res;
         });
 
         router->add(method::get, "/page_editor", [](const auto& req) {
             std::cout << req.body() << std::endl;
 
-            response res{status::ok, req.version()};
+            response res{status::ok};
+            return res;
+        });
+
+        router->add(method::get, "/page/.+", [](const auto& req) {
+            std::cout << "target   : " << req.target() << std::endl;
+            std::cout << "endpoint : " << req.uri().resource() << std::endl;
+            std::cout << "query str: " << req.uri().query_string() << std::endl;
+            for (const auto& [key, value] : req.uri().query())
+                std::cout << key << " = " << value << std::endl;
+
+            response res{ status::ok };
             return res;
         });
     }

@@ -14,7 +14,7 @@ namespace spdlog
     class logger;
 }
 
-namespace malloy::server::websocket
+namespace malloy::websocket::server
 {
     class controller;
 

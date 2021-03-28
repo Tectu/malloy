@@ -1,6 +1,7 @@
 #pragma once
 
 #include "route.hpp"
+#include "request.hpp"
 #include "response.hpp"
 #include "http.hpp"
 
@@ -26,7 +27,7 @@ namespace spdlog
     class logger;
 }
 
-namespace malloy::server::http
+namespace malloy::http::server
 {
 
     // TODO: This might be thread-safe the way we pass an instance to the listener and then from
@@ -36,8 +37,8 @@ namespace malloy::server::http
     {
     public:
         using method_type   = boost::beast::http::verb;
-        using request_type  = boost::beast::http::message<true,  boost::beast::http::string_body, boost::beast::http::basic_fields<std::allocator<char>>>;
-        using response_type = boost::beast::http::message<false, boost::beast::http::string_body, boost::beast::http::basic_fields<std::allocator<char>>>;
+        using request_type  = malloy::http::request;
+        using response_type = malloy::http::response;
         using route_type    = route<request_type, response_type>;
 
         // Construction
@@ -82,12 +83,11 @@ namespace malloy::server::http
 
 
         template<
-            class Body, class Allocator,
             class Send
         >
         void handle_request(
             const std::filesystem::path& doc_root,
-            boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
+            request&& req,
             Send&& send
         )
         {
@@ -119,7 +119,7 @@ namespace malloy::server::http
 
                     // Methods
                     std::vector<std::string> method_strings;
-                    for (const auto &route : m_routes) {
+                    for (const auto& route : m_routes) {
                         if (not route.matches_target(std::string{
                             req.target().data(),
                             req.target().size()}))

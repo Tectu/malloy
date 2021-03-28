@@ -2,10 +2,13 @@ target_sources(
     ${TARGET_OBJS}
     PRIVATE
         http.hpp
+        request.hpp
         response.hpp
         route.hpp
         router.cpp
         router.hpp
         session.cpp
         session.hpp
+        uri.cpp
+        uri.hpp
 )
