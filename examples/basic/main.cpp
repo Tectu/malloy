@@ -72,12 +72,17 @@ int main(int argc, char* argv[])
 
         router->add(method::get, "/page/.+", [](const auto& req) {
             std::cout << "target   : " << req.target() << std::endl;
-            std::cout << "endpoint : " << req.uri().resource() << std::endl;
+            std::cout << "endpoint : " << req.uri().resource_string() << std::endl;
             std::cout << "query str: " << req.uri().query_string() << std::endl;
             for (const auto& [key, value] : req.uri().query())
                 std::cout << key << " = " << value << std::endl;
 
             response res{ status::ok };
+            return res;
+        });
+
+        router->add(method::get, "/file_test", [](const auto& req) {
+            auto res = response::file("../../../examples/static_content/index.html");
             return res;
         });
     }

@@ -1,10 +1,13 @@
 #pragma once
 
 #include "http.hpp"
+#include "../utils.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
+
+#include <filesystem>
 
 namespace malloy::http
 {
@@ -39,6 +42,23 @@ namespace malloy::http
             response res(status::bad_request);
             res.set(boost::beast::http::field::content_type, "text/html");
             res.body() = reason;
+            return res;
+        }
+
+        [[nodiscard]]
+        static
+        response file(const std::filesystem::path& path)
+        {
+            // Get file content
+            const std::string& file_content = malloy::file_contents(path);
+
+            // Get mime type
+            const std::string_view& mime_type = malloy::mime_type(path);
+
+            response res{status::ok};
+            res.set(boost::beast::http::field::content_type, boost::string_view{ mime_type.data(), mime_type.size() });
+            res.body() = file_content;
+
             return res;
         }
     };

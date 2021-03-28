@@ -36,6 +36,7 @@ target_sources(
     PRIVATE
         listener.cpp
         listener.hpp
+        utils.hpp
 )
 
 target_link_libraries(
