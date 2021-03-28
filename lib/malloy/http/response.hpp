@@ -31,6 +31,16 @@ namespace malloy::http
 
         [[nodiscard]]
         status status() const { return result(); }
+
+        [[nodiscard]]
+        static
+        response bad_request(std::string_view reason)
+        {
+            response res(status::bad_request);
+            res.set(boost::beast::http::field::content_type, "text/html");
+            res.body() = reason;
+            return res;
+        }
     };
 
     // Returns a bad request response
