@@ -13,14 +13,30 @@ void uri::parse()
 
         const auto pos = raw_sv.find_first_of("?#");
         if (pos == std::string_view::npos) {
-            m_resource = raw_sv;
+            m_resource_string = raw_sv;
             m_query_string = { };
             m_fragment = { };
         }
         else {
-            m_resource = raw_sv.substr(0, pos);
+            m_resource_string = raw_sv.substr(0, pos);
             m_query_string = raw_sv.substr(pos+1);
             m_fragment = { };       // ToDo!
+        }
+    }
+
+    // Resource
+    {
+        // Clear
+        m_resource.clear();
+
+        // Split
+        if (not m_resource_string.empty()) {
+            std::string_view str = m_resource_string.substr(1);
+            boost::split(m_resource, str, boost::is_any_of("/"));
+
+            // Ignore if it's "/" or ""
+            if (m_resource_string.size() == 1 and m_resource_string.at(0) == '/')
+                m_resource.clear();
         }
     }
 

@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include <iostream>
 
@@ -59,7 +60,10 @@ namespace malloy::http
         uri& operator=(uri&& rhs) noexcept = default;
 
         [[nodiscard]]
-        std::string_view resource() const noexcept { return m_resource; }
+        std::string_view resource_string() const noexcept { return m_resource_string; }
+
+        [[nodiscard]]
+        std::vector<std::string_view> resource() const noexcept { return m_resource; }
 
         [[nodiscard]]
         std::string_view query_string() const noexcept { return m_query_string; }
@@ -75,9 +79,10 @@ namespace malloy::http
 
     private:
         std::string m_raw;
-        std::string_view m_resource;
+        std::string_view m_resource_string;
         std::string_view m_query_string;
         std::string_view m_fragment;
+        std::vector<std::string_view> m_resource;
         std::unordered_map<std::string_view, std::string_view> m_query;
 
         void parse();
