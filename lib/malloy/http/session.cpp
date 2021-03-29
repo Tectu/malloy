@@ -51,7 +51,7 @@ void session::do_read()
 
     // Apply a reasonable limit to the allowed size
     // of the body in bytes to prevent abuse.
-    m_parser->body_limit(100000);
+    m_parser->body_limit(cfg.request_body_limit);
 
     // Set the timeout.
     m_stream.expires_after(std::chrono::seconds(30));

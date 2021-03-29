@@ -115,6 +115,13 @@ namespace malloy::http::server
         };
 
     public:
+        struct config
+        {
+            std::uint64_t request_body_limit = 10 * 10e6;
+        };
+
+        struct config cfg;
+
         // Take ownership of the socket
         session(
             std::shared_ptr<spdlog::logger> logger,
