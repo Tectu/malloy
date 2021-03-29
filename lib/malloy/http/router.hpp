@@ -93,6 +93,7 @@ namespace malloy::http::server
         {
             m_logger->trace("handle_request()");
 
+
             // Log
             m_logger->debug("handling request:\n  verb: {}\n  uri : {}",
                             std::string_view{ req.method_string().data(), req.method_string().size() },
@@ -101,12 +102,11 @@ namespace malloy::http::server
 
             // Request path must be absolute and not contain "..".
             if (req.target().empty() ||
-                req.target()[0] !=
-                '/' ||
-                req.target().find("..") !=
-                beast::string_view::npos) {
+                req.target()[0] != '/' ||
+                req.target().find("..") != beast::string_view::npos)
+            {
                 m_logger->debug("illegal request-target.");
-                send(bad_request(req, "Illegal request-target"));
+                send_response(req, response::bad_request("Illegal target requested"), std::move(send));
                 return;
             }
 
@@ -135,21 +135,17 @@ namespace malloy::http::server
                     }
                     m_logger->debug("preflight allowed methods: {}", methods_string);
 
-                    boost::beast::http::response<boost::beast::http::string_body> res{
-                        boost::beast::http::status::ok,
-                        req.version()};
+                    response res{ status::ok };
                     res.set(boost::beast::http::field::content_type, "text/html");
-                    res.keep_alive(req.keep_alive());
                     res.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
                     res.base().set("Access-Control-Allow-Methods", methods_string);
                     res.base().set("Access-Control-Allow-Headers", "Content-Type");
                     res.base().set("Access-Control-Max-Age", "60");
-                    res.prepare_payload();
 
                     m_logger->debug("sending preflight response.");
 
                     // Send the response
-                    send(std::move(res));
+                    send_response(req, std::move(res), std::move(send));
                     return;
                 }
 
@@ -164,27 +160,20 @@ namespace malloy::http::server
                     }
 
                     auto resp = route.handler(req);
-                    resp.keep_alive(req.keep_alive());
-                    resp.version(req.version());
-                    resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-                    resp.prepare_payload();
-                    send(std::move(resp));
+                    send_response(req, std::move(resp), std::move(send));
 
                     return;
                 }
             }
 
             // If we got here we just serve static files
-            serve_static_files(doc_root, std::move(req), std::forward<Send>(send));
+            serve_static_files(doc_root, req, std::forward<Send>(send));
         }
 
-        template<
-            class Body, class Allocator,
-            class Send
-        >
+        template<class Send>
         void serve_static_files(
             const std::filesystem::path& doc_root,
-            boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>>&& req,
+            const request& req,
             Send&& send
         )
         {
@@ -195,7 +184,7 @@ namespace malloy::http::server
                 req.method() != boost::beast::http::verb::head)
             {
                 m_logger->debug("unknown HTTP-method: {}", std::string_view{ req.method_string().data(), req.method_string().size() });
-                send(bad_request(req, "Unknown HTTP-method"));
+                send_response(req, response::bad_request("Unknown HTTP-method"), std::move(send));
                 return;
             }
 
@@ -211,15 +200,16 @@ namespace malloy::http::server
 
             // Handle the case where the file doesn't exist
             if (ec == beast::errc::no_such_file_or_directory) {
-                m_logger->debug("target not found: {}", std::string_view{ req.target().data(), req.target().size() });
-                send(not_found(req, req.target()));
+                const std::string_view& target = std::string_view{ req.target().data(), req.target().size() };
+                m_logger->debug("target not found: {}", target);
+                send_response(req, response::not_found(target), std::move(send));
                 return;
             }
 
             // Handle an unknown error
             if (ec) {
                 m_logger->error("unhandled error: {}", ec.message());
-                send(server_error(req, ec.message()));
+                send_response(req, response::server_error(ec.message()), std::move(send));
                 return;
             }
 
@@ -228,31 +218,34 @@ namespace malloy::http::server
 
             // Respond to HEAD request
             if (req.method() == boost::beast::http::verb::head) {
-                boost::beast::http::response<boost::beast::http::empty_body> res{boost::beast::http::status::ok, req.version()};
-                res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+                response res{ status::ok };
                 res.set(boost::beast::http::field::content_type, mime_type(path));
                 res.content_length(size);
-                res.keep_alive(req.keep_alive());
 
-                return send(std::move(res));
+                return send_response(req, std::move(res), std::move(send));
             }
 
             // Respond to GET request
-            boost::beast::http::response<boost::beast::http::file_body> res{
-                    std::piecewise_construct,
-                    std::make_tuple(std::move(body)),
-                    std::make_tuple(boost::beast::http::status::ok, req.version())};
-            res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(boost::beast::http::field::content_type, mime_type(path));
-            res.content_length(size);
-            res.keep_alive(req.keep_alive());
+            auto res = response::file(path);
 
-            return send(std::move(res));
+            return send_response(req, std::move(res), std::move(send));
         }
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::vector<route_type> m_routes;
+
+        template<typename Send>
+        void send_response(const request_type& req, response_type&& resp, Send&& send)
+        {
+            // Add more information to the response
+            resp.keep_alive(req.keep_alive());
+            resp.version(req.version());
+            resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+            resp.prepare_payload();
+
+            send(std::move(resp));
+        }
 
         // Append an HTTP rel-path to a local filesystem path.
         // The returned path is normalized for the platform.

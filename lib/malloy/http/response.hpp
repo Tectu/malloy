@@ -42,6 +42,32 @@ namespace malloy::http
             response res(status::bad_request);
             res.set(boost::beast::http::field::content_type, "text/html");
             res.body() = reason;
+            res.prepare_payload();
+
+            return res;
+        }
+
+        [[nodiscard]]
+        static
+        response not_found(std::string_view resource)
+        {
+            response res(status::not_found);
+            res.set(boost::beast::http::field::content_type, "text/html");
+            res.body() = "The resource '" + std::string(resource) + "' was not found.";
+            res.prepare_payload();
+
+            return res;
+        }
+
+        [[nodiscard]]
+        static
+        response server_error(std::string_view what)
+        {
+            response res(status::internal_server_error);
+            res.set(boost::beast::http::field::content_type, "text/html");
+            res.body() = "An error occurred: '" + std::string(what) + "'";
+            res.prepare_payload();
+
             return res;
         }
 
@@ -58,48 +84,10 @@ namespace malloy::http
             response res{status::ok};
             res.set(boost::beast::http::field::content_type, boost::string_view{ mime_type.data(), mime_type.size() });
             res.body() = file_content;
+            res.prepare_payload();
 
             return res;
         }
     };
-
-    // Returns a bad request response
-    auto const bad_request =
-        [](const auto& req, boost::beast::string_view why)
-        {
-            boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::bad_request, req.version()};
-            res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(boost::beast::http::field::content_type, "text/html");
-            res.keep_alive(req.keep_alive());
-            res.body() = std::string(why);
-            res.prepare_payload();
-            return res;
-        };
-
-    // Returns a not found response
-    auto const not_found =
-        [](const auto& req, boost::beast::string_view target)
-        {
-            boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::not_found, req.version()};
-            res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(boost::beast::http::field::content_type, "text/html");
-            res.keep_alive(req.keep_alive());
-            res.body() = "The resource '" + std::string(target) + "' was not found.";
-            res.prepare_payload();
-            return res;
-        };
-
-    // Returns a server error response
-    auto const server_error =
-        [](const auto& req, boost::beast::string_view what)
-        {
-            boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::internal_server_error, req.version()};
-            res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(boost::beast::http::field::content_type, "text/html");
-            res.keep_alive(req.keep_alive());
-            res.body() = "An error occurred: '" + std::string(what) + "'";
-            res.prepare_payload();
-            return res;
-        };
 
 }
