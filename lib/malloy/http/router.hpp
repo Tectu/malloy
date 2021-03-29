@@ -4,6 +4,7 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "http.hpp"
+#include "../utils.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -82,9 +83,7 @@ namespace malloy::http::server
         }
 
 
-        template<
-            class Send
-        >
+        template<class Send>
         void handle_request(
             const std::filesystem::path& doc_root,
             request&& req,
@@ -93,11 +92,10 @@ namespace malloy::http::server
         {
             m_logger->trace("handle_request()");
 
-
             // Log
-            m_logger->debug("handling request:\n  verb: {}\n  uri : {}",
-                            std::string_view{ req.method_string().data(), req.method_string().size() },
-                            std::string_view{ req.target().data(), req.target().size() }
+            m_logger->debug("handling request: {} {}",
+                std::string_view{ req.method_string().data(), req.method_string().size() },
+                std::string_view{ req.target().data(), req.target().size() }
             );
 
             // Request path must be absolute and not contain "..".
@@ -111,7 +109,7 @@ namespace malloy::http::server
             }
 
             // Check routes
-            for (const auto &route : m_routes) {
+            for (const auto& route : m_routes) {
                 // Check if this is a preflight request
                 if (req.method() ==
                     boost::beast::http::verb::options) {
@@ -218,8 +216,12 @@ namespace malloy::http::server
 
             // Respond to HEAD request
             if (req.method() == boost::beast::http::verb::head) {
+                // Get MIME type
+                const std::string_view& mime_type = malloy::mime_type(path);
+
+                // Create response
                 response res{ status::ok };
-                res.set(boost::beast::http::field::content_type, mime_type(path));
+                res.set(boost::beast::http::field::content_type, boost::string_view{ mime_type.data(), mime_type.size() });
                 res.content_length(size);
 
                 return send_response(req, std::move(res), std::move(send));
@@ -253,8 +255,5 @@ namespace malloy::http::server
         static
         std::string
         path_cat(beast::string_view base, beast::string_view path);
-
-        // Return a reasonable mime type based on the extension of a file.
-        static beast::string_view mime_type(beast::string_view path);
     };
 }
