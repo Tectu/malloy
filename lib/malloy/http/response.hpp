@@ -75,6 +75,12 @@ namespace malloy::http
         static
         response file(const std::filesystem::path& path)
         {
+            // Check whether this is a valid file path
+            if (not std::filesystem::is_regular_file(path)) {
+                // Send 404
+                return not_found(path.string());
+            }
+
             // Get file content
             const std::string& file_content = malloy::file_contents(path);
 

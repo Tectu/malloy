@@ -85,6 +85,11 @@ int main(int argc, char* argv[])
             auto res = response::file("../../../examples/static_content/index.html");
             return res;
         });
+
+        router->add(method::get, "/file_nonexist", [](const auto& req) {
+            auto res = response::file("../../../examples/static_content/xxx.txt");
+            return res;
+        });
     }
 
     // The io_context is required for all I/O
