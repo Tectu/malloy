@@ -17,7 +17,7 @@ target_compile_features(
 
 target_compile_definitions(
     ${TARGET_OBJS}
-        PUBLIC
+    PUBLIC
         $<$<BOOL:${WIN32}>:UNICODE>
         $<$<BOOL:${WIN32}>:_UNICODE>
         $<$<BOOL:${WIN32}>:WIN32_LEAN_AND_MEAN>
