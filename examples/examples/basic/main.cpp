@@ -49,38 +49,13 @@ int main(int argc, char* argv[])
             return res;
         });
 
-        router->add(method::post, "/page_editor", [](const auto& req) {
-            std::cout << req.body() << std::endl;
-
-            response res{status::ok};
-            return res;
-        });
-
-        router->add(method::get, "/page_editor", [](const auto& req) {
-            std::cout << req.body() << std::endl;
-
-            response res{status::ok};
-            return res;
-        });
-
-        router->add(method::get, "/page/.+", [](const auto& req) {
-            std::cout << "target   : " << req.target() << std::endl;
-            std::cout << "endpoint : " << req.uri().resource_string() << std::endl;
-            std::cout << "query str: " << req.uri().query_string() << std::endl;
-            for (const auto& [key, value] : req.uri().query())
-                std::cout << key << " = " << value << std::endl;
-
-            response res{ status::ok };
-            return res;
-        });
-
-        router->add(method::get, "/file_test", [](const auto& req) {
-            auto res = response::file("../../../examples/static_content/index.html");
+        router->add(method::get, "/file", [](const auto& req) {
+            auto res = response::file("../../../../examples/static_content/index.html");
             return res;
         });
 
         router->add(method::get, "/file_nonexist", [](const auto& req) {
-            auto res = response::file("../../../examples/static_content/xxx.txt");
+            auto res = response::file("../../../../examples/static_content/nonexist.txt");
             return res;
         });
     }
