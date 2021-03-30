@@ -54,7 +54,10 @@ namespace malloy::http::server
 
         void add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
         {
-            m_logger->trace("add_route()");
+            m_logger->trace("add [route]");
+
+            // Log
+            m_logger->debug("adding route: {}", target);
 
             // Build regex
             std::regex regex;
