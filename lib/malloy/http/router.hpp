@@ -85,6 +85,36 @@ namespace malloy::http::server
             }
         }
 
+        void add(std::string resource, std::shared_ptr<router>&& router)
+        {
+            m_logger->trace("add [router]");
+
+            // Log
+            m_logger->debug("adding router: {}", resource);
+
+            // Sanity check target
+            {
+                if (resource.empty()) {
+                    m_logger->error("invalid target \"{}\". not adding router.", resource);
+                    return;
+                }
+            }
+
+            // Sanity check router
+            if (not router) {
+                m_logger->error("invalid router supplied. not adding router.");
+                return;
+            }
+
+            // Add router
+            try {
+                m_routers.try_emplace(std::move(resource), std::move(router));
+            }
+            catch (const std::exception& e) {
+                m_logger->critical("could not add router: {}", e.what());
+                return;
+            }
+        }
 
         template<class Send>
         void handle_request(
@@ -109,6 +139,29 @@ namespace malloy::http::server
                 m_logger->debug("illegal request-target.");
                 send_response(req, response::bad_request("Illegal target requested"), std::move(send));
                 return;
+            }
+
+            // Check sub-routers
+            {
+                const std::string_view resource { req.target().data(), req.target().size() };
+                for (const auto& [resource_base, router] : m_routers) {
+                    // Check if the resource bases matches
+                    if (not resource.starts_with(resource_base))
+                        continue;
+
+                    // Extract the base from the resource
+                    std::string_view router_resource_base = resource.substr(resource_base.size());
+
+                    // Log
+                    m_logger->debug("Invoking sub-router with new target base {}", router_resource_base);
+
+                    // Modify the request resource/target
+                    req.target( boost::string_view{ router_resource_base.data(), router_resource_base.size() });
+
+                    // Let the sub-router handle things from here...
+                    router->handle_request(doc_root, std::move(req), std::move(send));
+                    return;
+                }
             }
 
             // Check routes
@@ -239,6 +292,7 @@ namespace malloy::http::server
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::vector<route_type> m_routes;
+        std::unordered_map<std::string, std::shared_ptr<router>> m_routers;
 
         template<typename Send>
         void send_response(const request_type& req, response_type&& resp, Send&& send)
