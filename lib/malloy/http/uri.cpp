@@ -2,7 +2,27 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <sstream>
+
 using namespace malloy::http;
+
+std::string uri::to_string() const
+{
+    std::stringstream str;
+
+    str << "raw: " << m_raw << "\n";
+    str << "resource:\n";
+    str << "  string: " << m_resource_string << "\n";
+    for (std::size_t i = 0; i < m_resource.size(); i++)
+        str << "  resource[" << i << "]: " << m_resource.at(i) << "\n";
+    str << "query:\n";
+    str << "  string: " << m_query_string << "\n";
+    for (const auto& [qry_key, qry_value] : m_query)
+        str << "  " << qry_key << " = " << qry_value << "\n";
+    str << "fragment: " << m_fragment << "\n";
+
+    return str.str();
+}
 
 void uri::parse()
 {

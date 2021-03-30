@@ -77,6 +77,9 @@ namespace malloy::http
         [[nodiscard]]
         std::string_view fragment() const noexcept { return m_fragment; }
 
+        [[nodiscard]]
+        std::string to_string() const;
+
     private:
         std::string m_raw;
         std::string_view m_resource_string;
