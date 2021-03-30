@@ -1,6 +1,6 @@
-#include "../../lib/malloy/listener.hpp"
-#include "../../lib/malloy/http/router.hpp"
-#include "../common/logger.hpp"
+#include "malloy/listener.hpp"
+#include "malloy/http/router.hpp"
+#include "../../logger.hpp"
 
 #include <cstdlib>
 #include <iostream>
