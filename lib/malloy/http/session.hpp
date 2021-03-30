@@ -23,7 +23,9 @@ namespace malloy::http::server
     class router;
 
     /**
-     * @brief Handles an HTTP server connection
+     * An HTTP session.
+     *
+     * @brief Handles an HTTP server connection.
      */
     class session :
         public std::enable_shared_from_this<session>

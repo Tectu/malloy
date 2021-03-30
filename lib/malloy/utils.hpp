@@ -36,6 +36,12 @@ namespace malloy
         return content;
     }
 
+    /**
+     * Attempts to return a suitable MIME-TYPE for a provided file path
+     *
+     * @param path The file path.
+     * @return The corresponding MIME-TYPE.
+     */
     static inline std::string_view mime_type(const std::filesystem::path& path)
     {
         // Extract file extension
@@ -62,6 +68,7 @@ namespace malloy
         if (ext == ".tif")  return "image/tiff";
         if (ext == ".svg")  return "image/svg+xml";
         if (ext == ".svgz") return "image/svg+xml";
+
         return "application/text";
     }
 
