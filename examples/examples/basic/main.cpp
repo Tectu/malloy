@@ -58,6 +58,8 @@ int main(int argc, char* argv[])
             auto res = response::file("../../../../examples/static_content/nonexist.txt");
             return res;
         });
+
+        router->add_file_serving("/files", *doc_root);
     }
 
     // The io_context is required for all I/O

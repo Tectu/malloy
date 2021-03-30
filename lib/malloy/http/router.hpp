@@ -116,6 +116,23 @@ namespace malloy::http::server
             }
         }
 
+        void add_file_serving(std::string resource, std::filesystem::path storage_base_path)
+        {
+            m_logger->trace("add [file serving]");
+
+            // Log
+            m_logger->debug("adding file serving location: {} -> {}", resource, storage_base_path.string());
+
+            // Add
+            try {
+                m_file_servings.try_emplace(std::move(resource), std::move(storage_base_path));
+            }
+            catch (const std::exception& e) {
+                m_logger->critical("could not add file serving: {}", e.what());
+                return;
+            }
+        }
+
         template<class Send>
         void handle_request(
             const std::filesystem::path& doc_root,
@@ -137,12 +154,13 @@ namespace malloy::http::server
                 req.target().find("..") != beast::string_view::npos)
             {
                 m_logger->debug("illegal request-target.");
-                send_response(req, response::bad_request("Illegal target requested"), std::move(send));
+                send_response(req, response::bad_request("Illegal target requested"), std::forward<Send>(send));
                 return;
             }
 
             // Check sub-routers
             {
+#warning "ToDo: Use uri::resouce() instead."
                 const std::string_view resource { req.target().data(), req.target().size() };
                 for (const auto& [resource_base, router] : m_routers) {
                     // Check if the resource bases matches
@@ -153,15 +171,60 @@ namespace malloy::http::server
                     std::string_view router_resource_base = resource.substr(resource_base.size());
 
                     // Log
-                    m_logger->debug("Invoking sub-router with new target base {}", router_resource_base);
+                    m_logger->debug("invoking sub-router with new target base {}", router_resource_base);
 
                     // Modify the request resource/target
                     req.target( boost::string_view{ router_resource_base.data(), router_resource_base.size() });
 
                     // Let the sub-router handle things from here...
-                    router->handle_request(doc_root, std::move(req), std::move(send));
+                    router->handle_request(doc_root, std::move(req), std::forward<Send>(send));
+
+                    // We're done handling this request
                     return;
                 }
+            }
+
+            // Check file servings
+            for (const auto& [resource_base, storage_location_base] : m_file_servings) {
+                // Alias
+                const std::string_view& req_resource = req.uri().resource_string();
+                const auto& resources = req.uri().resource();
+
+                // Check match
+                if (not req_resource.starts_with(resource_base))
+                    continue;
+
+                // Extract the base from the resource
+                std::string_view adjusted_resource_base = req_resource.substr(resource_base.size());
+
+                // Disallow relative paths
+                if (adjusted_resource_base.find("..") != std::string_view::npos) {
+                    m_logger->warn("received request containing relative path: {}", adjusted_resource_base);
+                }
+
+                ///////////////
+                /// DO NOT DO THIS!!!!
+                ///
+                /// instead: Sanitize the path properly.
+                //           Also respond invalid request when path contains '..'
+                /////////////
+                if (adjusted_resource_base.starts_with('/'))
+                    adjusted_resource_base = adjusted_resource_base.substr(1);
+
+                // Assemble path
+                const std::filesystem::path& path = storage_location_base / adjusted_resource_base;
+
+                // Log
+                m_logger->debug("serving static file {} --> {}", req_resource, path.string());
+
+                // Create response
+                auto resp = response::file(path);
+
+                // Send response
+                send_response(req, std::move(resp), std::forward<Send>(send));
+
+                // We're done handling this request
+                return;
             }
 
             // Check routes
@@ -219,80 +282,13 @@ namespace malloy::http::server
                     return;
                 }
             }
-
-            // If we got here we just serve static files
-            serve_static_files(doc_root, req, std::forward<Send>(send));
-        }
-
-        template<class Send>
-        void serve_static_files(
-            const std::filesystem::path& doc_root,
-            const request& req,
-            Send&& send
-        )
-        {
-            m_logger->trace("serve_static_files()");
-
-            // Make sure we can handle the method
-            if (req.method() != boost::beast::http::verb::get &&
-                req.method() != boost::beast::http::verb::head)
-            {
-                m_logger->debug("unknown HTTP-method: {}", std::string_view{ req.method_string().data(), req.method_string().size() });
-                send_response(req, response::bad_request("Unknown HTTP-method"), std::move(send));
-                return;
-            }
-
-            // Build the path to the requested file
-            std::string path = path_cat(doc_root.string(), req.target());
-            if (req.target().back() == '/')
-                path.append("index.html");
-
-            // Attempt to open the file
-            beast::error_code ec;
-            boost::beast::http::file_body::value_type body;
-            body.open(path.c_str(), beast::file_mode::scan, ec);
-
-            // Handle the case where the file doesn't exist
-            if (ec == beast::errc::no_such_file_or_directory) {
-                const std::string_view& target = std::string_view{ req.target().data(), req.target().size() };
-                m_logger->debug("target not found: {}", target);
-                send_response(req, response::not_found(target), std::move(send));
-                return;
-            }
-
-            // Handle an unknown error
-            if (ec) {
-                m_logger->error("unhandled error: {}", ec.message());
-                send_response(req, response::server_error(ec.message()), std::move(send));
-                return;
-            }
-
-            // Cache the size since we need it after the move
-            auto const size = body.size();
-
-            // Respond to HEAD request
-            if (req.method() == boost::beast::http::verb::head) {
-                // Get MIME type
-                const std::string_view& mime_type = malloy::mime_type(path);
-
-                // Create response
-                response res{ status::ok };
-                res.set(boost::beast::http::field::content_type, boost::string_view{ mime_type.data(), mime_type.size() });
-                res.content_length(size);
-
-                return send_response(req, std::move(res), std::move(send));
-            }
-
-            // Respond to GET request
-            auto res = response::file(path);
-
-            return send_response(req, std::move(res), std::move(send));
         }
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::vector<route_type> m_routes;
         std::unordered_map<std::string, std::shared_ptr<router>> m_routers;
+        std::unordered_map<std::string, std::filesystem::path> m_file_servings;
 
         template<typename Send>
         void send_response(const request_type& req, response_type&& resp, Send&& send)
