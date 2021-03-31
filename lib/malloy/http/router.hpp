@@ -4,7 +4,6 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "http.hpp"
-#include "../utils.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>

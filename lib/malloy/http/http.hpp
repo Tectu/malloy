@@ -5,7 +5,13 @@
 
 namespace malloy::http
 {
+    /**
+     * The HTTP method.
+     */
     using method = boost::beast::http::verb;
 
+    /**
+     * The HTTP status.
+     */
     using status = boost::beast::http::status;
 }
