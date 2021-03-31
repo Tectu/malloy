@@ -39,7 +39,7 @@ The Doxygen API documentation can be generated with little hassle:
 ```shell
 doxygen ./Doxyfile
 ```
-The generated output(s) may be found under `/docs/doxygen`.
+The generated output(s) may be found under `/docs/doxygen`. Simply open `/docs/doxygen/html/index.html` in the web browser of your choosing.
 
 # Integration
 Malloy is designed to be an embeddable component for other C++ applications.
@@ -63,6 +63,7 @@ FetchContent_GetProperties(malloy)
 if(NOT malloy_POPULATED)
     FetchContent_Populate(malloy)
     set(BUILD_EXAMPLES OFF CACHE INTERNAL "")
+    set(BUILD_TESTS OFF CACHE INTERNAL "")
     add_subdirectory(${malloy_SOURCE_DIR} ${malloy_BINARY_DIR})
 endif()
 ```
