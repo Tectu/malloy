@@ -18,7 +18,7 @@ Building (and using) this library requires:
 - CMake 3.17 or newer
   
 ## Dependencies
-Malloy comes with a small number of dependencies.
+Malloy comes with a small number of dependencies:
 - [Boost](https://www.boost.org/) 1.73.0 or newer
 - [spdlog](https://github.com/gabime/spdlog) 1.8.3 or newer
 
