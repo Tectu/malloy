@@ -42,7 +42,6 @@ int main(int argc, char* argv[])
     auto router = std::make_shared<malloy::http::server::router>(logger->clone("router"));
     {
         using namespace malloy::http;
-        using redirection = malloy::http::server::router::redirection;
 
         // A simple GET route handler
         router->add(method::get, "/", [](const auto& req) {
@@ -64,8 +63,8 @@ int main(int argc, char* argv[])
         });
 
         // Add some redirections
-        router->add_redirect(redirection::permanent, "/redirect1", "/");
-        router->add_redirect(redirection::temporarily, "/redirect2", "/");
+        router->add_redirect(status::permanent_redirect, "/redirect1", "/");
+        router->add_redirect(status::temporary_redirect, "/redirect2", "/");
 
         // Add some file serving
         router->add_file_serving("/files", *doc_root);

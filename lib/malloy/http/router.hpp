@@ -41,12 +41,6 @@ namespace malloy::http::server
     class router
     {
     public:
-        enum class redirection
-        {
-            permanent,
-            temporarily
-        };
-
         using method_type   = boost::beast::http::verb;
         using request_type  = malloy::http::request;
         using response_type = malloy::http::response;
@@ -120,9 +114,9 @@ namespace malloy::http::server
          *
          * @param resource_old
          * @param resource_new
-         * @param permanent Returns HTTP status 301 if true, 302 otherwise.
+         * @param status The HTTP status code to use. This must be a 3xx status code.
          */
-        void add_redirect(enum redirection type, std::string resource_old, std::string resource_new);
+        void add_redirect(http::status status, std::string&& resource_old, std::string&& resource_new);
 
         /**
          * Handle a request.
@@ -169,12 +163,7 @@ namespace malloy::http::server
                     m_logger->debug("found matching redirection record: {} -> {}", record.resource_old, record.resource_new);
 
                     // Create the response
-                    http::status status = status::internal_server_error;
-                    if (record.type == redirection::permanent)
-                        status = status::permanent_redirect;
-                    else if (record.type == redirection::temporarily)
-                        status = status::temporary_redirect;
-                    response resp{ status };
+                    response resp{ record.status };
                     resp.set("Location", record.resource_new);
 
                     // Send the response
@@ -317,7 +306,7 @@ namespace malloy::http::server
          */
         struct redirection_record
         {
-            enum redirection type;
+            http::status status;
             std::string resource_old;
             std::string resource_new;
         };

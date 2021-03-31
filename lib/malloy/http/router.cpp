@@ -93,16 +93,22 @@ void router::add_file_serving(std::string resource, std::filesystem::path storag
     }
 }
 
-void router::add_redirect(const enum redirection type, std::string resource_old, std::string resource_new)
+void router::add_redirect(const http::status status, std::string&& resource_old, std::string&& resource_new)
 {
     m_logger->trace("add [redirection]");
 
     // Log
-    m_logger->debug("adding redirection: {} -> {}", resource_old, resource_new);
+    m_logger->debug("adding redirection: {}: {} -> {}", static_cast<int>(status), resource_old, resource_new);
+
+    // Sanity check status
+    if (static_cast<int>(status) < 300 or static_cast<int>(status) >= 400) {
+        m_logger->error("invalid redirection status code. must be one of the 3xxx status codes. received {} instead.", static_cast<int>(status));
+        return;
+    }
 
     // Create record
     redirection_record record;
-    record.type = type;
+    record.status = status;
     record.resource_old = std::move(resource_old);
     record.resource_new = std::move(resource_new);
 
