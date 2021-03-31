@@ -41,6 +41,12 @@ namespace malloy::http::server
     class router
     {
     public:
+        enum class redirection
+        {
+            permanent,
+            temporarily
+        };
+
         using method_type   = boost::beast::http::verb;
         using request_type  = malloy::http::request;
         using response_type = malloy::http::response;
@@ -110,6 +116,15 @@ namespace malloy::http::server
         void add_file_serving(std::string resource, std::filesystem::path storage_base_path);
 
         /**
+         * Adds a redirection rule.
+         *
+         * @param resource_old
+         * @param resource_new
+         * @param permanent Returns HTTP status 301 if true, 302 otherwise.
+         */
+        void add_redirect(enum redirection type, std::string resource_old, std::string resource_new);
+
+        /**
          * Handle a request.
          *
          * @tparam Send The response writer type.
@@ -142,9 +157,37 @@ namespace malloy::http::server
                 return;
             }
 
+            // Check redirects
+            {
+                for (const auto& record : m_redirects) {
+                    // Check if the resource matches
+                    // ToDo: Use req.uri() here instead!
+                    if (record.resource_old not_eq std::string_view{ req.target().data(), req.target().size() })
+                        continue;
+
+                    // Log
+                    m_logger->debug("found matching redirection record: {} -> {}", record.resource_old, record.resource_new);
+
+                    // Create the response
+                    http::status status = status::internal_server_error;
+                    if (record.type == redirection::permanent)
+                        status = status::permanent_redirect;
+                    else if (record.type == redirection::temporarily)
+                        status = status::temporary_redirect;
+                    response resp{ status };
+                    resp.set("Location", record.resource_new);
+
+                    // Send the response
+                    send_response(req, std::move(resp), std::forward<Send>(send));
+
+                    // We're done with handling this request
+                    return;
+                }
+            }
+
             // Check sub-routers
             {
-#warning "ToDo: Use uri::resouce() instead."
+#warning "ToDo: Use uri::resource() instead."
                 const std::string_view resource { req.target().data(), req.target().size() };
                 for (const auto& [resource_base, router] : m_routers) {
                     // Check if the resource bases matches
@@ -269,7 +312,18 @@ namespace malloy::http::server
         }
 
     private:
+        /**
+         * A record representing a redirection.
+         */
+        struct redirection_record
+        {
+            enum redirection type;
+            std::string resource_old;
+            std::string resource_new;
+        };
+
         std::shared_ptr<spdlog::logger> m_logger;
+        std::vector<redirection_record> m_redirects;
         std::vector<route_type> m_routes;
         std::unordered_map<std::string, std::shared_ptr<router>> m_routers;
         std::unordered_map<std::string, std::filesystem::path> m_file_servings;

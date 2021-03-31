@@ -92,3 +92,26 @@ void router::add_file_serving(std::string resource, std::filesystem::path storag
         return;
     }
 }
+
+void router::add_redirect(const enum redirection type, std::string resource_old, std::string resource_new)
+{
+    m_logger->trace("add [redirection]");
+
+    // Log
+    m_logger->debug("adding redirection: {} -> {}", resource_old, resource_new);
+
+    // Create record
+    redirection_record record;
+    record.type = type;
+    record.resource_old = std::move(resource_old);
+    record.resource_new = std::move(resource_new);
+
+    // Add
+    try {
+        m_redirects.emplace_back(std::move(record));
+    }
+    catch (const std::exception& e) {
+        m_logger->critical("could not add redirection record: {}", e.what());
+        return;
+    }
+}
