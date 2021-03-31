@@ -67,7 +67,7 @@ if(NOT malloy_POPULATED)
     add_subdirectory(${malloy_SOURCE_DIR} ${malloy_BINARY_DIR})
 endif()
 ```
-You may replace `GIT_TAG` with a commit has or a release tag such as `v1.0.0`.
+You may replace `GIT_TAG` with a commit hash or a release tag such as `v1.0.0`.
 
 After fetching the content, it's only a matter of linking the malloy library target to the client application:
 ```cmake
