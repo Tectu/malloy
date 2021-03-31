@@ -31,9 +31,14 @@ namespace spdlog
 namespace malloy::http::server
 {
 
-    // TODO: This might be thread-safe the way we pass an instance to the listener and then from
+    // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
 
+    /**
+     * An HTTP request router.
+     *
+     * @details This class implements a basic router for HTTP requests.
+     */
     class router
     {
     public:
@@ -42,97 +47,77 @@ namespace malloy::http::server
         using response_type = malloy::http::response;
         using route_type    = route<request_type, response_type>;
 
-        // Construction
+        /**
+         * Constructor.
+         *
+         * @param logger The logger instance to use.
+         */
         explicit router(std::shared_ptr<spdlog::logger> logger);
+
+        /**
+         * Copy constructor.
+         */
         router(const router& other) = delete;
-        router(router&& other) = delete;
+
+        /**
+         * Move constructor.
+         */
+        router(router&& other) noexcept = delete;
+
+        /**
+         * Destructor.
+         */
         virtual ~router() = default;
 
-        // Operators
+        /**
+         * Copy assignment operator.
+         *
+         * @param rhs The right-hand-side object to copy-assign from.
+         * @return A reference to the assignee.
+         */
         router& operator=(const router& rhs) = delete;
-        router& operator=(router&& rhs) = delete;
 
-        void add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
-        {
-            m_logger->trace("add [route]");
+        /**
+         * Move assignment operator.
+         *
+         * @param rhs The right-hand-side object to move-assign from.
+         * @return A reference to the assignee.
+         */
+        router& operator=(router&& rhs) noexcept = delete;
 
-            // Log
-            m_logger->debug("adding route: {}", target);
+        /**
+         * Add a handler for a specific method & resource.
+         *
+         * @param method
+         * @param target
+         * @param handler
+         */
+        void add(method_type method, std::string_view target, std::function<response_type(const request_type&)>&& handler);
 
-            // Build regex
-            std::regex regex;
-            try {
-                regex = std::move(std::regex{ target.cbegin(), target.cend() });
-            }
-            catch (const std::regex_error& e) {
-                m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
-                return;
-            }
+        /**
+         * Add a sub-router for a specific resource.
+         *
+         * @param resource
+         * @param router
+         */
+        void add(std::string resource, std::shared_ptr<router>&& router);
 
-            // Build route
-            route_type r;
-            r.rule = std::move(regex);
-            r.verb = method;
-            r.handler = std::move(handler);
+        /**
+         * Add a file-serving location.
+         *
+         * @param resource
+         * @param storage_base_path
+         */
+        void add_file_serving(std::string resource, std::filesystem::path storage_base_path);
 
-            // Add route
-            try {
-                m_routes.emplace_back(std::move(r));
-            }
-            catch (const std::exception& e) {
-                m_logger->critical("could not add route: {}", e.what());
-                return;
-            }
-        }
-
-        void add(std::string resource, std::shared_ptr<router>&& router)
-        {
-            m_logger->trace("add [router]");
-
-            // Log
-            m_logger->debug("adding router: {}", resource);
-
-            // Sanity check target
-            {
-                if (resource.empty()) {
-                    m_logger->error("invalid target \"{}\". not adding router.", resource);
-                    return;
-                }
-            }
-
-            // Sanity check router
-            if (not router) {
-                m_logger->error("invalid router supplied. not adding router.");
-                return;
-            }
-
-            // Add router
-            try {
-                m_routers.try_emplace(std::move(resource), std::move(router));
-            }
-            catch (const std::exception& e) {
-                m_logger->critical("could not add router: {}", e.what());
-                return;
-            }
-        }
-
-        void add_file_serving(std::string resource, std::filesystem::path storage_base_path)
-        {
-            m_logger->trace("add [file serving]");
-
-            // Log
-            m_logger->debug("adding file serving location: {} -> {}", resource, storage_base_path.string());
-
-            // Add
-            try {
-                m_file_servings.try_emplace(std::move(resource), std::move(storage_base_path));
-            }
-            catch (const std::exception& e) {
-                m_logger->critical("could not add file serving: {}", e.what());
-                return;
-            }
-        }
-
+        /**
+         * Handle a request.
+         *
+         * @tparam Send The response writer type.
+         * @param doc_root Path to the HTTP document root.
+         * @param req The request to handle.
+         * @param send The response writer to use.
+         */
         template<class Send>
         void handle_request(
             const std::filesystem::path& doc_root,
@@ -206,7 +191,7 @@ namespace malloy::http::server
                 /// DO NOT DO THIS!!!!
                 ///
                 /// instead: Sanitize the path properly.
-                //           Also respond invalid request when path contains '..'
+                ///          Also respond invalid request when path contains '..'
                 /////////////
                 if (adjusted_resource_base.starts_with('/'))
                     adjusted_resource_base = adjusted_resource_base.substr(1);
@@ -290,6 +275,14 @@ namespace malloy::http::server
         std::unordered_map<std::string, std::shared_ptr<router>> m_routers;
         std::unordered_map<std::string, std::filesystem::path> m_file_servings;
 
+        /**
+         * Send a response.
+         *
+         * @tparam Send The response writer type.
+         * @param req The request to which we're responding.
+         * @param resp The response.
+         * @param send The response writer.
+         */
         template<typename Send>
         void send_response(const request_type& req, response_type&& resp, Send&& send)
         {
@@ -301,12 +294,5 @@ namespace malloy::http::server
 
             send(std::move(resp));
         }
-
-        // Append an HTTP rel-path to a local filesystem path.
-        // The returned path is normalized for the platform.
-        [[nodiscard]]
-        static
-        std::string
-        path_cat(beast::string_view base, beast::string_view path);
     };
 }

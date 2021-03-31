@@ -12,27 +12,83 @@ router::router(std::shared_ptr<spdlog::logger> logger) :
         throw std::runtime_error("received invalid logger instance.");
 }
 
-// Append an HTTP rel-path to a local filesystem path.
-// The returned path is normalized for the platform.
-std::string
-router::path_cat(beast::string_view base, beast::string_view path)
+void router::add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
 {
-    if(base.empty())
-        return std::string(path);
-    std::string result(base);
-#ifdef BOOST_MSVC
-    char constexpr path_separator = '\\';
-        if(result.back() == path_separator)
-            result.resize(result.size() - 1);
-        result.append(path.data(), path.size());
-        for(auto& c : result)
-            if(c == '/')
-                c = path_separator;
-#else
-    char constexpr path_separator = '/';
-    if(result.back() == path_separator)
-        result.resize(result.size() - 1);
-    result.append(path.data(), path.size());
-#endif
-    return result;
+    m_logger->trace("add [route]");
+
+    // Log
+    m_logger->debug("adding route: {}", target);
+
+    // Build regex
+    std::regex regex;
+    try {
+        regex = std::move(std::regex{ target.cbegin(), target.cend() });
+    }
+    catch (const std::regex_error& e) {
+        m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
+        return;
+    }
+
+    // Build route
+    route_type r;
+    r.rule = std::move(regex);
+    r.verb = method;
+    r.handler = std::move(handler);
+
+    // Add route
+    try {
+        m_routes.emplace_back(std::move(r));
+    }
+    catch (const std::exception& e) {
+        m_logger->critical("could not add route: {}", e.what());
+        return;
+    }
+}
+
+void router::add(std::string resource, std::shared_ptr<router>&& router)
+{
+    m_logger->trace("add [router]");
+
+    // Log
+    m_logger->debug("adding router: {}", resource);
+
+    // Sanity check target
+    {
+        if (resource.empty()) {
+            m_logger->error("invalid target \"{}\". not adding router.", resource);
+            return;
+        }
+    }
+
+    // Sanity check router
+    if (not router) {
+        m_logger->error("invalid router supplied. not adding router.");
+        return;
+    }
+
+    // Add router
+    try {
+        m_routers.try_emplace(std::move(resource), std::move(router));
+    }
+    catch (const std::exception& e) {
+        m_logger->critical("could not add router: {}", e.what());
+        return;
+    }
+}
+
+void router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
+{
+    m_logger->trace("add [file serving]");
+
+    // Log
+    m_logger->debug("adding file serving location: {} -> {}", resource, storage_base_path.string());
+
+    // Add
+    try {
+        m_file_servings.try_emplace(std::move(resource), std::move(storage_base_path));
+    }
+    catch (const std::exception& e) {
+        m_logger->critical("could not add file serving: {}", e.what());
+        return;
+    }
 }
