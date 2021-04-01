@@ -16,7 +16,6 @@ namespace spdlog
 
 namespace malloy::websocket::server
 {
-    class controller;
 
     /**
      * A websocket session.
