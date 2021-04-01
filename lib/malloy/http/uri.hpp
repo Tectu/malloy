@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <iostream>
-
 namespace malloy::http
 {
 
