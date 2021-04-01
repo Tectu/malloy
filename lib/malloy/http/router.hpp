@@ -139,7 +139,7 @@ namespace malloy::http::server
             // Log
             m_logger->debug("handling request: {} {}",
                 std::string_view{ req.method_string().data(), req.method_string().size() },
-                req.uri().raw()
+                req.uri().resource_string()
             );
 
             // Check request URI for legality
