@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-
 namespace spdlog
 {
     class logger;
@@ -127,7 +125,7 @@ namespace malloy::http::server
         // Take ownership of the socket
         session(
             std::shared_ptr<spdlog::logger> logger,
-            tcp::socket&& socket,
+            boost::asio::ip::tcp::socket&& socket,
             std::shared_ptr<class router> router,
             std::shared_ptr<const std::filesystem::path> http_doc_root
         );

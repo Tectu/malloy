@@ -36,6 +36,7 @@ target_sources(
     PRIVATE
         listener.cpp
         listener.hpp
+        malloy.hpp
         utils.hpp
 )
 

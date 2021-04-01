@@ -18,7 +18,9 @@ namespace malloy::websocket::server
 {
     class controller;
 
-    // Echoes back all received WebSocket messages
+    /**
+     * A websocket session.
+     */
     class session :
         public std::enable_shared_from_this<session>
     {

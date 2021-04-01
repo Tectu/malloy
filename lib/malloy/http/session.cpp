@@ -8,7 +8,7 @@ using namespace malloy::http::server;
 
 session::session(
     std::shared_ptr<spdlog::logger> logger,
-    tcp::socket&& socket,
+    boost::asio::ip::tcp::socket&& socket,
     std::shared_ptr<router> router,
     std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
@@ -127,7 +127,7 @@ void session::do_close()
 
     // Send a TCP shutdown
     boost::beast::error_code ec;
-    m_stream.socket().shutdown(tcp::socket::shutdown_send, ec);
+    m_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
 
     // At this point the connection is closed gracefully
     spdlog::info("closed HTTP session gracefully.");

@@ -10,7 +10,7 @@ using namespace malloy::server;
 listener::listener(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::io_context& ioc,
-    const tcp::endpoint& endpoint,
+    const boost::asio::ip::tcp::endpoint& endpoint,
     std::shared_ptr<http::server::router> router,
     std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
@@ -85,7 +85,7 @@ void listener::do_accept()
     );
 }
 
-void listener::on_accept(boost::beast::error_code ec, tcp::socket socket)
+void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
 {
     m_logger->trace("listener::on_accept()");
 

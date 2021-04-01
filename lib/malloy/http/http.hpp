@@ -3,6 +3,11 @@
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/verb.hpp>
 
+/**
+ * @namespace malloy::http
+ *
+ * A namespace for everything related to HTTP.
+ */
 namespace malloy::http
 {
     /**
