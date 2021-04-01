@@ -1,9 +1,9 @@
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
+        generator.cpp
+        generator.hpp
         http.hpp
-        http_generator.cpp
-        http_generator.hpp
         request.hpp
         response.hpp
         route.hpp

@@ -1,10 +1,10 @@
-#include "http_generator.hpp"
+#include "generator.hpp"
 #include "response.hpp"
 #include "request.hpp"
 
 using namespace malloy::http;
 
-response http_generator::bad_request(std::string_view reason)
+response generator::bad_request(std::string_view reason)
 {
     response res(status::bad_request);
     res.set(boost::beast::http::field::content_type, "text/html");
@@ -14,7 +14,7 @@ response http_generator::bad_request(std::string_view reason)
     return res;
 }
 
-response http_generator::not_found(std::string_view resource)
+response generator::not_found(std::string_view resource)
 {
     response res(status::not_found);
     res.set(boost::beast::http::field::content_type, "text/html");
@@ -24,7 +24,7 @@ response http_generator::not_found(std::string_view resource)
     return res;
 }
 
-response http_generator::server_error(std::string_view what)
+response generator::server_error(std::string_view what)
 {
     response res(status::internal_server_error);
     res.set(boost::beast::http::field::content_type, "text/html");
@@ -34,12 +34,12 @@ response http_generator::server_error(std::string_view what)
     return res;
 }
 
-response http_generator::file(const request& req, const std::filesystem::path& storage_base_path)
+response generator::file(const request& req, const std::filesystem::path& storage_base_path)
 {
 	return file(storage_base_path, req.uri().resource_string());
 }
 
-response http_generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path)
+response generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path)
 {
     // Sanitize rel_path
     {

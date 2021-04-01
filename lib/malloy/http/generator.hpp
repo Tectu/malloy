@@ -8,18 +8,18 @@ namespace malloy::http
     class response;
     class request;
 
-    class http_generator
+    class generator
     {
     public:
         // Construction
-        http_generator() = default;
-        http_generator(const http_generator &other) = delete;
-        http_generator(http_generator &&other) = delete;
-        virtual ~http_generator() = default;
+        generator() = default;
+        generator(const generator &other) = delete;
+        generator(generator &&other) = delete;
+        virtual ~generator() = default;
 
         // Operators
-        http_generator &operator=(const http_generator &rhs) = delete;
-        http_generator &operator=(http_generator &&rhs) = delete;
+        generator &operator=(const generator &rhs) = delete;
+        generator &operator=(generator &&rhs) = delete;
 
         [[nodiscard]]
         static response bad_request(std::string_view reason);

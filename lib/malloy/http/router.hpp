@@ -4,7 +4,7 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "http.hpp"
-#include "http_generator.hpp"
+#include "generator.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -145,7 +145,7 @@ namespace malloy::http::server
             // Check request URI for legality
             if (not req.uri().is_legal()) {
                 m_logger->debug("illegal request-target.");
-                send_response(req, http_generator::bad_request("illegal URI"), std::forward<Send>(send));
+                send_response(req, generator::bad_request("illegal URI"), std::forward<Send>(send));
                 return;
             }
 
@@ -204,7 +204,7 @@ namespace malloy::http::server
                 m_logger->debug("serving static file on {}", req_resource);
 
                 // Create response
-                auto resp = http_generator::file(req, storage_location_base);
+                auto resp = generator::file(req, storage_location_base);
 
                 // Send response
                 send_response(req, std::move(resp), std::forward<Send>(send));
