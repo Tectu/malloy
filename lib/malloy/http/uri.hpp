@@ -27,14 +27,22 @@ namespace malloy::http
          *
          * @param other The object to copy-construct from.
          */
-        uri(const uri& other) = default;
+        uri(const uri& other) :
+            m_raw(other.m_raw)
+        {
+            parse();
+        }
 
         /**
          * Move ctor.
          *
          * @param other The object to move-construct from.
          */
-        uri(uri&& other) noexcept = default;
+        uri(uri&& other) :
+            m_raw(std::move(other.m_raw))
+        {
+            parse();
+        }
 
         /**
          * Destructor.
@@ -47,7 +55,14 @@ namespace malloy::http
          * @param rhs The right-hand-side object to copy-assign from.
          * @return A reference to the left-hand-side object.
          */
-        uri& operator=(const uri& rhs) = default;
+        uri& operator=(const uri& rhs)
+        {
+            m_raw = rhs.m_raw;
+
+            parse();
+
+            return *this;
+        }
 
         /**
          * Move assignment operator.
@@ -55,7 +70,17 @@ namespace malloy::http
          * @param rhs The right-hand-side object to move-assign from.
          * @return A reference to left-hand-side object.
          */
-        uri& operator=(uri&& rhs) noexcept = default;
+        uri& operator=(uri&& rhs)
+        {
+            m_raw = std::move(rhs.m_raw);
+
+            parse();
+
+            return *this;
+        }
+
+        [[nodiscard]]
+        std::string_view raw() const noexcept { return m_raw; }
 
         [[nodiscard]]
         std::string_view resource_string() const noexcept { return m_resource_string; }

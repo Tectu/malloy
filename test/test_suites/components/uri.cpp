@@ -98,7 +98,7 @@ TEST_SUITE("components - uri")
             REQUIRE_EQ(u.resource().at(0), "bar");
             REQUIRE_EQ(u.resource().at(1), "zbar");
 
-            WARN(u.resource_starts_with("/bar"));
+            REQUIRE(u.resource_starts_with("/bar"));
         }
     }
 

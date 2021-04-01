@@ -9,10 +9,11 @@ using namespace malloy::http;
 bool uri::chop_resource(const std::string_view str)
 {
     // Sanity check
-    if (not m_resource_string.starts_with(str))
+    if (not m_raw.starts_with(str) or not m_resource_string.starts_with(str))
         return false;
 
     // Modify the resource string
+    m_raw = m_raw.substr(str.size());
     m_resource_string = m_resource_string.substr(str.size());
 
     // Re-parse the resource string

@@ -7,10 +7,6 @@
 
 namespace malloy::http
 {
-    struct query
-    {
-        std::unordered_map<std::string_view, std::string_view> pairs;
-    };
 
     class request :
         public boost::beast::http::request<boost::beast::http::string_body>
@@ -21,7 +17,6 @@ namespace malloy::http
         {
             boost::beast::http::request<boost::beast::http::string_body>::operator=(std::move(raw));
 
-#warning "ToDo: moving might not be okay with the defaulted move assignment operator as the string views point to the wrong string?"
             class uri u{ std::move(std::string{target().data(), target().size()}) };
             m_uri = std::move(u);
         }
