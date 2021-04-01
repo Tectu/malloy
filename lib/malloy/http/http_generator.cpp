@@ -69,11 +69,16 @@ response http_generator::file(const request& req, const std::filesystem::path& s
 
         // HEAD request
         case method::head: {
+            // ToDo!
+            // Current problem: router::send_response() calls response::prepare_payload() which makes the manually set content_length vanish.
+            /*
             response resp{ status::ok };
             resp.set(boost::beast::http::field::content_type, boost::string_view{mime_type.data(), mime_type.size()});
             resp.content_length(file_content.size());
 
             return resp;
+            */
+            [[fallthrough]];
         }
 
         default: {
