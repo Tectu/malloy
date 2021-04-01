@@ -4,6 +4,7 @@
 #include "request.hpp"
 #include "response.hpp"
 #include "http.hpp"
+#include "http_generator.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -147,7 +148,7 @@ namespace malloy::http::server
                 req.target().find("..") != beast::string_view::npos)
             {
                 m_logger->debug("illegal request-target.");
-                send_response(req, response::bad_request("Illegal target requested"), std::forward<Send>(send));
+                send_response(req, http_generator::bad_request("Illegal target requested"), std::forward<Send>(send));
                 return;
             }
 
@@ -213,11 +214,6 @@ namespace malloy::http::server
                 // Extract the base from the resource
                 std::string_view adjusted_resource_base = req_resource.substr(resource_base.size());
 
-                // Disallow relative paths
-                if (adjusted_resource_base.find("..") != std::string_view::npos) {
-                    m_logger->warn("received request containing relative path: {}", adjusted_resource_base);
-                }
-
                 ///////////////
                 /// DO NOT DO THIS!!!!
                 ///
@@ -234,7 +230,7 @@ namespace malloy::http::server
                 m_logger->debug("serving static file {} --> {}", req_resource, path.string());
 
                 // Create response
-                auto resp = response::file(path);
+                auto resp = http_generator::file(req, storage_location_base, adjusted_resource_base);
 
                 // Send response
                 send_response(req, std::move(resp), std::forward<Send>(send));

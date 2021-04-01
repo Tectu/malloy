@@ -1,6 +1,6 @@
 target_sources(
     ${TARGET}
     PRIVATE
-        response.cpp
+        http_generator.cpp
         uri.cpp
 )

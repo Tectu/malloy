@@ -1,4 +1,5 @@
 #include "malloy/listener.hpp"
+#include "malloy/http/http_generator.hpp"
 #include "malloy/http/router.hpp"
 #include "../../logger.hpp"
 
@@ -52,14 +53,12 @@ int main(int argc, char* argv[])
 
         // Add a route to an existing file
         router->add(method::get, "/file", [](const auto& req) {
-            auto res = response::file("../../../../examples/static_content/index.html");
-            return res;
+            return http_generator::file(req, "../../../../examples/static_content", "index.html");
         });
 
         // Add a route to a non-existing file
         router->add(method::get, "/file_nonexist", [](const auto& req) {
-            auto res = response::file("../../../../examples/static_content/nonexist.txt");
-            return res;
+            return http_generator::file(req, "../../../../examples/static_content", "nonexist.xyz");
         });
 
         // Add some redirections
