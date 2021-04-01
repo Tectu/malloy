@@ -91,7 +91,7 @@ TEST_SUITE("components - uri")
         {
             uri u{"/foo/bar/zbar"};
 
-            u.chop_resource("/foo");
+            REQUIRE(u.chop_resource("/foo"));
 
             REQUIRE_EQ(u.resource_string(), "/bar/zbar");
             REQUIRE_EQ(u.resource().size(), 2);
@@ -100,6 +100,41 @@ TEST_SUITE("components - uri")
 
             REQUIRE(u.resource_starts_with("/bar"));
         }
+
+        SUBCASE("")
+        {
+            uri u{"/foo/bar/zbar"};
+
+            REQUIRE(u.chop_resource("/foo/bar"));
+
+            REQUIRE_EQ(u.resource_string(), "/zbar");
+            REQUIRE_EQ(u.resource().size(), 1);
+            REQUIRE_EQ(u.resource().at(0), "zbar");
+
+            REQUIRE(u.resource_starts_with("/zbar"));
+        }
+    }
+
+    TEST_CASE("legality")
+    {
+
+        SUBCASE("empty")
+        {
+            REQUIRE_FALSE(uri{""}.is_legal());
+        }
+
+        SUBCASE("not starting with '/'")
+        {
+            REQUIRE_FALSE(uri{"foo/bar"}.is_legal());
+        }
+
+        SUBCASE("contains \"...\"")
+        {
+            REQUIRE_FALSE(uri{"/foo/../bar"}.is_legal());
+            REQUIRE_FALSE(uri{"/.."}.is_legal());
+            REQUIRE_FALSE(uri{"/../../../foo.html"}.is_legal());
+        }
+
     }
 
 }

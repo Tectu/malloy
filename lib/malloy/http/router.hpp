@@ -142,15 +142,10 @@ namespace malloy::http::server
                 req.uri().raw()
             );
 
-            m_logger->debug("uri: \n{}\n", req.uri().to_string());
-
-            // Request path must be absolute and not contain "..".
-            if (req.target().empty() ||
-                req.target()[0] != '/' ||
-                req.target().find("..") != beast::string_view::npos)
-            {
+            // Check request URI for legality
+            if (not req.uri().is_legal()) {
                 m_logger->debug("illegal request-target.");
-                send_response(req, http_generator::bad_request("Illegal target requested"), std::forward<Send>(send));
+                send_response(req, http_generator::bad_request("illegal URI"), std::forward<Send>(send));
                 return;
             }
 

@@ -80,6 +80,9 @@ namespace malloy::http
         }
 
         [[nodiscard]]
+        bool is_legal() const;
+
+        [[nodiscard]]
         std::string_view raw() const noexcept { return m_raw; }
 
         [[nodiscard]]
