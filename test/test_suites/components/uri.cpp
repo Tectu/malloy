@@ -85,4 +85,19 @@ TEST_SUITE("components - uri")
         REQUIRE_EQ(u.fragment(), "");
     }
 
+    TEST_CASE("resource chopping")
+    {
+        SUBCASE("")
+        {
+            uri u{"/foo/bar/zbar"};
+
+            u.chop_resource("/foo");
+
+            REQUIRE_EQ(u.resource_string(), "/bar/zbar");
+            REQUIRE_EQ(u.resource().size(), 2);
+            REQUIRE_EQ(u.resource().at(0), "bar");
+            REQUIRE_EQ(u.resource().at(1), "zbar");
+        }
+    }
+
 }

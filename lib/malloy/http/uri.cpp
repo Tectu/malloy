@@ -6,6 +6,21 @@
 
 using namespace malloy::http;
 
+bool uri::chop_resource(const std::string_view str)
+{
+    // Sanity check
+    if (not m_resource_string.starts_with(str))
+        return false;
+
+    // Modify the resource string
+    m_resource_string = m_resource_string.substr(str.size());
+
+    // Re-parse the resource string
+    parse_resource();
+
+    return true;
+}
+
 std::string uri::to_string() const
 {
     std::stringstream str;
@@ -45,39 +60,45 @@ void uri::parse()
     }
 
     // Resource
-    {
-        // Clear
-        m_resource.clear();
-
-        // Split
-        if (not m_resource_string.empty()) {
-            std::string_view str = m_resource_string.substr(1);
-            boost::split(m_resource, str, boost::is_any_of("/"));
-
-            // Ignore if it's "/" or ""
-            if (m_resource_string.size() == 1 and m_resource_string.at(0) == '/')
-                m_resource.clear();
-        }
-    }
+    parse_resource();
 
     // Query
-    {
-        // Clear
-        m_query.clear();
+    parse_query();
+}
 
-        // Split
-        std::vector<std::string_view> strings_split;
-        boost::split(strings_split, m_query_string, boost::is_any_of("&#"));
+void uri::parse_resource()
+{
+    // Clear
+    m_resource.clear();
 
-        // Parse
-        for (const std::string_view& str : strings_split) {
-            std::vector<std::string_view> key_value;
-            boost::split(key_value, str, boost::is_any_of("="));
+    // Split
+    if (not m_resource_string.empty()) {
+        std::string_view str = m_resource_string.substr(1);
+        boost::split(m_resource, str, boost::is_any_of("/"));
 
-            if (key_value.size() != 2)
-                continue;
+        // Ignore if it's "/" or ""
+        if (m_resource_string.size() == 1 and m_resource_string.at(0) == '/')
+            m_resource.clear();
+    }
+}
 
-            m_query.insert_or_assign(key_value[0], key_value[1]);
-        }
+void uri::parse_query()
+{
+    // Clear
+    m_query.clear();
+
+    // Split
+    std::vector<std::string_view> strings_split;
+    boost::split(strings_split, m_query_string, boost::is_any_of("&#"));
+
+    // Parse
+    for (const std::string_view& str : strings_split) {
+        std::vector<std::string_view> key_value;
+        boost::split(key_value, str, boost::is_any_of("="));
+
+        if (key_value.size() != 2)
+            continue;
+
+        m_query.insert_or_assign(key_value[0], key_value[1]);
     }
 }
