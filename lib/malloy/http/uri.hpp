@@ -65,6 +65,12 @@ namespace malloy::http
         [[nodiscard]]
         std::vector<std::string_view> resource() const noexcept { return m_resource; }
 
+        [[nodiscard]]
+        bool resource_starts_with(std::string_view str) const
+        {
+            return m_resource_string.starts_with(str);
+        }
+
         bool chop_resource(std::string_view str);
 
         [[nodiscard]]

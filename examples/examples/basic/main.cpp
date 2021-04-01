@@ -52,13 +52,13 @@ int main(int argc, char* argv[])
         });
 
         // Add a route to an existing file
-        router->add(method::get, "/file", [](const auto& req) {
-            return http_generator::file(req, "../../../../examples/static_content", "index.html");
+        router->add(method::get, "/file", [doc_root](const auto& req) {
+            return http_generator::file(req, *doc_root);
         });
 
         // Add a route to a non-existing file
-        router->add(method::get, "/file_nonexist", [](const auto& req) {
-            return http_generator::file(req, "../../../../examples/static_content", "nonexist.xyz");
+        router->add(method::get, "/file_nonexist", [doc_root](const auto& req) {
+            return http_generator::file(req, *doc_root);
         });
 
         // Add some redirections

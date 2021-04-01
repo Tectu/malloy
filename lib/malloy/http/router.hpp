@@ -205,32 +205,19 @@ namespace malloy::http::server
             for (const auto& [resource_base, storage_location_base] : m_file_servings) {
                 // Alias
                 const std::string_view& req_resource = req.uri().resource_string();
-                const auto& resources = req.uri().resource();
 
                 // Check match
-                if (not req_resource.starts_with(resource_base))
+                if (not req.uri().resource_starts_with(resource_base))
                     continue;
 
-                // Extract the base from the resource
-                std::string_view adjusted_resource_base = req_resource.substr(resource_base.size());
-
-                ///////////////
-                /// DO NOT DO THIS!!!!
-                ///
-                /// instead: Sanitize the path properly.
-                ///          Also respond invalid request when path contains '..'
-                /////////////
-                if (adjusted_resource_base.starts_with('/'))
-                    adjusted_resource_base = adjusted_resource_base.substr(1);
-
-                // Assemble path
-                const std::filesystem::path& path = storage_location_base / adjusted_resource_base;
+                // Chop request resource path
+                req.uri().chop_resource(resource_base);
 
                 // Log
-                m_logger->debug("serving static file {} --> {}", req_resource, path.string());
+                m_logger->debug("serving static file on {}", req_resource);
 
                 // Create response
-                auto resp = http_generator::file(req, storage_location_base, adjusted_resource_base);
+                auto resp = http_generator::file(req, storage_location_base);
 
                 // Send response
                 send_response(req, std::move(resp), std::forward<Send>(send));

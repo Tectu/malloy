@@ -34,23 +34,30 @@ response http_generator::server_error(std::string_view what)
     return res;
 }
 
-response http_generator::file(const request& req, const std::filesystem::path& storage_base_path, const std::filesystem::path& rel_path)
+response http_generator::file(const request& req, const std::filesystem::path& storage_base_path)
 {
     // Sanity check the rel_path
+    std::string_view rel_path = req.uri().resource_string();
     {
-        const std::string& rel_path_str = rel_path.string();
-
         // Check for relative paths
-        if (rel_path_str.find("..") != std::string::npos)
+        if (rel_path.find("..") != std::string::npos)
             return bad_request("resource path must not contain \"..\"");
     }
+
+    // Drop any leading slash
+    if (rel_path.starts_with('/'))
+        rel_path = rel_path.substr(1);
 
     // Create the filesystem path
     std::filesystem::path path = storage_base_path / rel_path;
 
+    std::cout << "stor path: "  << storage_base_path << std::endl;
+    std::cout << "rel_path : " << rel_path << std::endl;
+    std::cout << "full path: " << path << std::endl;
+
     // Check whether this is a valid file path
     if (not std::filesystem::is_regular_file(path))
-        return not_found(path.string());
+        return not_found(rel_path);
 
     // Get file content
     const std::string& file_content = malloy::file_contents(path);
