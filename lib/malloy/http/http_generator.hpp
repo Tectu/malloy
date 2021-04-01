@@ -32,6 +32,9 @@ namespace malloy::http
 
         [[nodiscard]]
         static response file(const request& req, const std::filesystem::path& storage_path);
+
+        [[nodiscard]]
+        static response file(const std::filesystem::path& storage_path, std::string_view rel_path);
     };
 
 }

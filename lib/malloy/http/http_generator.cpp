@@ -36,24 +36,23 @@ response http_generator::server_error(std::string_view what)
 
 response http_generator::file(const request& req, const std::filesystem::path& storage_base_path)
 {
-    // Sanity check the rel_path
-    std::string_view rel_path = req.uri().resource_string();
+	return file(storage_base_path, req.uri().resource_string());
+}
+
+response http_generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path)
+{
+    // Sanitize rel_path
     {
         // Check for relative paths
         if (rel_path.find("..") != std::string::npos)
             return bad_request("resource path must not contain \"..\"");
+
+        // Drop leading slash, if any
+        if (rel_path.starts_with("/"))
+            rel_path = rel_path.substr(1);
     }
 
-    // Drop any leading slash
-    if (rel_path.starts_with('/'))
-        rel_path = rel_path.substr(1);
-
-    // Create the filesystem path
-    std::filesystem::path path = storage_base_path / rel_path;
-
-    std::cout << "stor path: "  << storage_base_path << std::endl;
-    std::cout << "rel_path : " << rel_path << std::endl;
-    std::cout << "full path: " << path << std::endl;
+    const std::filesystem::path& path = storage_base_path / rel_path;
 
     // Check whether this is a valid file path
     if (not std::filesystem::is_regular_file(path))
@@ -65,31 +64,9 @@ response http_generator::file(const request& req, const std::filesystem::path& s
     // Get mime type
     const std::string_view& mime_type = malloy::mime_type(path);
 
-    switch (req.method()) {
-        // GET request
-        case method::get: {
-            response resp{status::ok};
-            resp.set(boost::beast::http::field::content_type, boost::string_view{mime_type.data(), mime_type.size()});
-            resp.body() = file_content;
-            return resp;
-        }
-
-        // HEAD request
-        case method::head: {
-            // ToDo!
-            // Current problem: router::send_response() calls response::prepare_payload() which makes the manually set content_length vanish.
-            /*
-            response resp{ status::ok };
-            resp.set(boost::beast::http::field::content_type, boost::string_view{mime_type.data(), mime_type.size()});
-            resp.content_length(file_content.size());
-
-            return resp;
-            */
-            [[fallthrough]];
-        }
-
-        default: {
-            return bad_request("unknown HTTP method.");
-        }
-    }
+    // Create response
+    response resp{status::ok};
+    resp.set(boost::beast::http::field::content_type, boost::string_view{mime_type.data(), mime_type.size()});
+    resp.body() = file_content;
+    return resp;
 }
