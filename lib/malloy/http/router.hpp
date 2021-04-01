@@ -139,8 +139,10 @@ namespace malloy::http::server
             // Log
             m_logger->debug("handling request: {} {}",
                 std::string_view{ req.method_string().data(), req.method_string().size() },
-                std::string_view{ req.target().data(), req.target().size() }
+                req.uri().raw()
             );
+
+            m_logger->debug("uri: \n{}\n", req.uri().to_string());
 
             // Request path must be absolute and not contain "..".
             if (req.target().empty() ||
@@ -153,52 +155,42 @@ namespace malloy::http::server
             }
 
             // Check redirects
-            {
-                for (const auto& record : m_redirects) {
-                    // Check if the resource matches
-                    // ToDo: Use req.uri() here instead!
-                    if (record.resource_old not_eq std::string_view{ req.target().data(), req.target().size() })
-                        continue;
+            for (const auto& record : m_redirects) {
+                // Check if the resource matches
+                if (record.resource_old not_eq req.uri().resource_string())
+                    continue;
 
-                    // Log
-                    m_logger->debug("found matching redirection record: {} -> {}", record.resource_old, record.resource_new);
+                // Log
+                m_logger->debug("found matching redirection record: {} -> {}", record.resource_old, record.resource_new);
 
-                    // Create the response
-                    response resp{ record.status };
-                    resp.set("Location", record.resource_new);
+                // Create the response
+                response resp{ record.status };
+                resp.set("Location", record.resource_new);
 
-                    // Send the response
-                    send_response(req, std::move(resp), std::forward<Send>(send));
+                // Send the response
+                send_response(req, std::move(resp), std::forward<Send>(send));
 
-                    // We're done with handling this request
-                    return;
-                }
+                // We're done with handling this request
+                return;
             }
 
             // Check sub-routers
-            {
-#warning "ToDo: Use uri::resource() instead."
-                const std::string_view resource { req.target().data(), req.target().size() };
-                for (const auto& [resource_base, router] : m_routers) {
-                    // Check if the resource bases matches
-                    if (not resource.starts_with(resource_base))
-                        continue;
+            for (const auto& [resource_base, router] : m_routers) {
+                // Check match
+                if (not req.uri().resource_starts_with(resource_base))
+                    continue;
 
-                    // Extract the base from the resource
-                    std::string_view router_resource_base = resource.substr(resource_base.size());
+                // Log
+                m_logger->debug("invoking sub-router on {}", resource_base);
 
-                    // Log
-                    m_logger->debug("invoking sub-router with new target base {}", router_resource_base);
+                // Chop request resource path
+                req.uri().chop_resource(resource_base);
 
-                    // Modify the request resource/target
-                    req.target( boost::string_view{ router_resource_base.data(), router_resource_base.size() });
+                // Let the sub-router handle things from here...
+                router->handle_request(doc_root, std::move(req), std::forward<Send>(send));
 
-                    // Let the sub-router handle things from here...
-                    router->handle_request(doc_root, std::move(req), std::forward<Send>(send));
-
-                    // We're done handling this request
-                    return;
-                }
+                // We're done handling this request
+                return;
             }
 
             // Check file servings

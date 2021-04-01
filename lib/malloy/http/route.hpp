@@ -6,6 +6,8 @@
 #include <boost/beast/http/parser.hpp>
 #include <boost/beast/http/string_body.hpp>
 
+#include "request.hpp"
+
 namespace malloy::http::server
 {
 
@@ -48,7 +50,7 @@ namespace malloy::http::server
                 return false;
 
             // Check rule
-            const std::string target{ req.target().data(), req.target().size() };
+            const std::string target{ req.uri().resource_string() };
             if (not matches_target(target))
                 return false;
 
