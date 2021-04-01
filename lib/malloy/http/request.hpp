@@ -35,6 +35,9 @@ namespace malloy::http
         [[nodiscard]]
         class uri uri() const noexcept { return m_uri; }
 
+        [[nodiscard]]
+        class uri& uri() noexcept { return m_uri; }
+
     private:
         class uri m_uri;
     };
