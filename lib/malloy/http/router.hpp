@@ -275,6 +275,9 @@ namespace malloy::http::server
                     return;
                 }
             }
+
+            // If we end up where we have no meaningful way of handling this request
+            return send_response(req, std::move(generator::bad_request("unknown request")), std::forward<Send>(send));
         }
 
     private:
