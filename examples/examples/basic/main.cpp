@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 
         // A simple GET route handler
         router->add(method::get, "/", [](const auto& req) {
-            response res{http::status::ok};
+            response res{status::ok};
             res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });

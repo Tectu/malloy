@@ -20,9 +20,6 @@
 #include <vector>
 #include <ranges>
 
-namespace beast = boost::beast;                 // from <boost/beast.hpp>
-namespace http = beast::http;                   // from <boost/beast/http.hpp>
-
 namespace spdlog
 {
     class logger;
@@ -30,6 +27,7 @@ namespace spdlog
 
 namespace malloy::http::server
 {
+    using namespace malloy;
 
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
@@ -150,6 +148,7 @@ namespace malloy::http::server
             }
 
             // Check redirects
+            m_logger->debug("checking redirects...");
             for (const auto& record : m_redirects) {
                 // Check if the resource matches
                 if (record.resource_old not_eq req.uri().resource_string())
@@ -170,6 +169,7 @@ namespace malloy::http::server
             }
 
             // Check sub-routers
+            m_logger->debug("checking sub-routers...");
             for (const auto& [resource_base, router] : m_routers) {
                 // Check match
                 if (not req.uri().resource_starts_with(resource_base))
@@ -189,6 +189,7 @@ namespace malloy::http::server
             }
 
             // Check file servings
+            m_logger->debug("checking file servings...");
             for (const auto& [resource_base, storage_location_base] : m_file_servings) {
                 // Alias
                 const std::string_view& req_resource = req.uri().resource_string();
@@ -214,6 +215,7 @@ namespace malloy::http::server
             }
 
             // Check routes
+            m_logger->debug("checking routes...");
             for (const auto& route : m_routes) {
                 // Check if this is a preflight request
                 if (req.method() == method::options) {
@@ -222,7 +224,7 @@ namespace malloy::http::server
                     // Methods
                     std::vector<std::string> method_strings;
                     for (const auto& route : m_routes) {
-                        if (not route.matches_target(std::string{
+                        if (not route.matches_resource(std::string{
                             req.target().data(),
                             req.target().size()}))
                             continue;
@@ -248,12 +250,14 @@ namespace malloy::http::server
 
                     // Send the response
                     send_response(req, std::move(res), std::forward<Send>(send));
+
+                    // We're done handling this request
                     return;
                 }
 
                 // Handle the route
                 if (route.matches_request(req)) {
-                    m_logger->debug("route matching!");
+                    m_logger->debug("found matching route.");
 
                     // Check handler validity
                     if (not route.handler) {
@@ -261,9 +265,13 @@ namespace malloy::http::server
                         break;
                     }
 
+                    // Invoke the route's handler
                     auto resp = route.handler(req);
+
+                    // Send the response
                     send_response(req, std::move(resp), std::forward<Send>(send));
 
+                    // We're done handling this request
                     return;
                 }
             }

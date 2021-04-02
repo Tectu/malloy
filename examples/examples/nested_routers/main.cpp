@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
         using namespace malloy::http;
 
         router->add(method::get, "/", [](const auto& req) {
-            response res{ http::status::ok };
+            response res{ status::ok };
             res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });
@@ -52,13 +52,23 @@ int main(int argc, char* argv[])
         // Create nested router 1
         auto nested_router_1 = std::make_shared<malloy::http::server::router>(logger->clone("router 1"));
         nested_router_1->add(method::get, "/", [](const auto& req){
-            response resp{ http::status::ok };
+            response resp{ status::ok };
             resp.body() = "router 1 target \"/\"";
             return resp;
         });
         nested_router_1->add(method::get, "/foo", [](const auto& req){
-            response resp{ http::status::ok };
+            response resp{ status::ok };
             resp.body() = "router 1 target \"/foo\"";
+            return resp;
+        });
+        nested_router_1->add(method::get, "/foo/bar", [](const auto& req){
+            response resp{ status::ok };
+            resp.body() = "router 1 target \"/foo/bar\"";
+            return resp;
+        });
+        nested_router_1->add(method::get, "/foo/\\w+", [](const auto& req){
+            response resp{ status::ok };
+            resp.body() = "router 1 target \"/foo/\\w+\"";
             return resp;
         });
         router->add("/router1", std::move(nested_router_1));
@@ -66,12 +76,12 @@ int main(int argc, char* argv[])
         // Create nested router 2
         auto nested_router_2 = std::make_shared<malloy::http::server::router>(logger->clone("router 2"));
         nested_router_2->add(method::get, "/", [](const auto& req){
-            response resp{ http::status::ok };
+            response resp{ status::ok };
             resp.body() = "router 2 target \"/\"";
             return resp;
         });
         nested_router_2->add(method::get, "/foo", [](const auto& req){
-            response resp{ http::status::ok };
+            response resp{ status::ok };
             resp.body() = "router 2 target \"/foo\"";
             return resp;
         });
