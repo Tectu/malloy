@@ -113,6 +113,45 @@ TEST_SUITE("components - uri")
 
             REQUIRE(u.resource_starts_with("/zbar"));
         }
+
+        SUBCASE("copy")
+        {
+            uri u{"/foo/bar/zbar"};
+
+            REQUIRE(u.chop_resource("/foo"));
+            REQUIRE_EQ(u.resource_string(), "/bar/zbar");
+            REQUIRE_EQ(u.resource().size(), 2);
+
+            SUBCASE("copy ctor")
+            {
+                uri u2{ u };
+
+                REQUIRE_EQ(u2.resource_string(), "/bar/zbar");
+            }
+
+            SUBCASE("move ctor")
+            {
+                uri u2{ std::move(u) };
+
+                REQUIRE_EQ(u2.resource_string(), "/bar/zbar");
+            }
+
+            SUBCASE("copy assignment")
+            {
+                uri u2;
+                u2 = u;
+
+                REQUIRE_EQ(u2.resource_string(), "/bar/zbar");
+            }
+
+            SUBCASE("move assignment")
+            {
+                uri u2;
+                u2 = std::move(u);
+
+                REQUIRE_EQ(u2.resource_string(), "/bar/zbar");
+            }
+        }
     }
 
     TEST_CASE("legality")
