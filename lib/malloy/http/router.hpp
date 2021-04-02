@@ -84,6 +84,18 @@ namespace malloy::http::server
         router& operator=(router&& rhs) noexcept = delete;
 
         /**
+         * Controls whether the router should automatically generate preflight responses.
+         *
+         * @note Currently only preflights for routes are generated.
+         *
+         * @param enabled Whether to enable automatic preflight response generation.
+         */
+        void generate_preflights(const bool enabled)
+        {
+            m_generate_preflights = enabled;
+        }
+
+        /**
          * Add a handler for a specific method & resource.
          *
          * @param method
@@ -214,8 +226,8 @@ namespace malloy::http::server
             // Check routes
             m_logger->debug("checking routes...");
             for (const auto& route : m_routes) {
-                // Check if this is a preflight request
-                if (req.method() == method::options) {
+                // Generate preflight response (if supposed to)
+                if (m_generate_preflights and (req.method() == method::options)) {
                     m_logger->debug("automatically constructing preflight response.");
 
                     // Methods
@@ -293,6 +305,7 @@ namespace malloy::http::server
         std::vector<route_type> m_routes;
         std::unordered_map<std::string, std::shared_ptr<router>> m_routers;
         std::unordered_map<std::string, std::filesystem::path> m_file_servings;
+        bool m_generate_preflights = false;
 
         /**
          * Send a response.
