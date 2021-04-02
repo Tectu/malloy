@@ -36,10 +36,10 @@ namespace malloy::http::server
 
         // General
         [[nodiscard]]
-        bool matches_target(const std::string& target) const
+        bool matches_resource(const std::string& resource) const
         {
             std::smatch match_result;
-            return std::regex_match(target, match_result, rule);
+            return std::regex_match(resource, match_result, rule);
         }
 
         [[nodiscard]]
@@ -50,8 +50,8 @@ namespace malloy::http::server
                 return false;
 
             // Check rule
-            const std::string target{ req.uri().resource_string() };
-            if (not matches_target(target))
+            const std::string resource{ req.uri().resource_string() };
+            if (not matches_resource(resource))
                 return false;
 
             return true;
