@@ -191,9 +191,6 @@ namespace malloy::http::server
             // Check file servings
             m_logger->debug("checking file servings...");
             for (const auto& [resource_base, storage_location_base] : m_file_servings) {
-                // Alias
-                const std::string_view& req_resource = req.uri().resource_string();
-
                 // Check match
                 if (not req.uri().resource_starts_with(resource_base))
                     continue;
@@ -202,7 +199,7 @@ namespace malloy::http::server
                 req.uri().chop_resource(resource_base);
 
                 // Log
-                m_logger->debug("serving static file on {}", req_resource);
+                m_logger->debug("serving static file on {}", req.uri().resource_string());
 
                 // Create response
                 auto resp = generator::file(req, storage_location_base);
