@@ -50,7 +50,7 @@ namespace malloy::http::server
                 return false;
 
             // Check rule
-            const std::string resource{ req.uri().resource_string() };
+            const std::string resource{ req.uri().raw() };
             if (not matches_resource(resource))
                 return false;
 
