@@ -30,10 +30,21 @@ namespace malloy::websocket::server
          */
         static const std::string agent_string;
 
-        // Take ownership of the socket
+        /**
+         * Constructor.
+         *
+         * @param logger The logger instance to use.
+         * @param socket The socket to use.
+         */
         session(std::shared_ptr<spdlog::logger> logger, boost::asio::ip::tcp::socket&& socket);
 
-        // Start the asynchronous accept operation
+        /**
+         * Start the asynchronous accept operation.
+         *
+         * @tparam Body
+         * @tparam Allocator
+         * @param req The request to accept.
+         */
         template<class Body, class Allocator>
         void do_accept(boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req)
         {
@@ -57,6 +68,11 @@ namespace malloy::websocket::server
                     shared_from_this()));
         }
 
+        /**
+         * Send a payload to the client.
+         *
+         * @param payload The payload to send.
+         */
         void write(std::string&& payload);
 
     private:

@@ -8,6 +8,9 @@
 namespace malloy::http
 {
 
+    /**
+     * Represents an URI.
+     */
     class uri
     {
     public:
@@ -16,6 +19,11 @@ namespace malloy::http
          */
         uri() = default;
 
+        /**
+         * Construct an URI from a string.
+         *
+         * @param str The string to parse.
+         */
         explicit uri(std::string&& str) :
             m_raw(std::move(str))
         {
@@ -79,38 +87,95 @@ namespace malloy::http
             return *this;
         }
 
+        /**
+         * Checks whether the URI is legal.
+         *
+         * To be considered legal, ALL of the following requirements must be true:
+         * @li The resource path must not be empty
+         * @li The resource path must start with "/"
+         * @li The resource path must not contains ".."
+         *
+         * @return Whether this URI is considered to be legal.
+         */
         [[nodiscard]]
         bool is_legal() const;
 
+        /**
+         * Retrieve the raw, non-parsed string.
+         *
+         * @return The raw, non-parsed string.
+         */
         [[nodiscard]]
         std::string_view raw() const noexcept { return m_raw; }
 
+        /**
+         * Retrieve the resource path portion of the URI as a string.
+         *
+         * @return The resource path portion.
+         */
         [[nodiscard]]
         std::string_view resource_string() const noexcept { return m_resource_string; }
 
+        /**
+         * Retrieve the resource path as separated strings.
+         *
+         * @return The resource path.
+         */
         [[nodiscard]]
         std::vector<std::string_view> resource() const noexcept { return m_resource; }
 
+        /**
+         * Checks whether the resource path starts with a given string.
+         *
+         * @param str The string to check.
+         * @return Whether the resource portion of the URI starts with provided string.
+         */
         [[nodiscard]]
         bool resource_starts_with(std::string_view str) const
         {
             return m_resource_string.starts_with(str);
         }
 
+        /**
+         * Chops of a parts of the resource path portion.
+         *
+         * @param str The portion to chop off.
+         * @return `true` on success, `false` otherwise.
+         */
         bool chop_resource(std::string_view str);
 
+        /**
+         * Retrieve the query portion of the URI.
+         *
+         * @return The query portion of the URI.
+         */
         [[nodiscard]]
         std::string_view query_string() const noexcept { return m_query_string; }
 
+        /**
+         * Retrieve the parsed query.
+         *
+         * @return Key-Value map of the query.
+         */
         [[nodiscard]]
         auto query() const noexcept
         {
             return m_query;
         }
 
+        /**
+         * Retrieve the fragment portion of the URI.
+         *
+         * @return The fragment.
+         */
         [[nodiscard]]
         std::string_view fragment() const noexcept { return m_fragment; }
 
+        /**
+         * Print this URI in it's parsed form.
+         *
+         * @return The printed string.
+         */
         [[nodiscard]]
         std::string to_string() const;
 

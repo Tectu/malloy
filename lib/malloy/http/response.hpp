@@ -19,19 +19,61 @@ namespace malloy::http
         public boost::beast::http::response<boost::beast::http::string_body>
     {
     public:
+        /**
+         * Default constructor.
+         */
         response() = default;
-        response(const status& _status)
+
+        /**
+         * Constructor.
+         *
+         * @param status_ The HTTP status to use.
+         */
+        response(const status& status_)
         {
-            result(_status);
+            result(status_);
         }
 
+        /**
+         * Copy constructor.
+         *
+         * @param other The object to copy-construct from.
+         */
         response(const response& other) = default;
+
+        /**
+         * Move constructor.
+         *
+         * @param other The object to move-construct from.
+         */
         response(response&& other) noexcept = default;
+
+        /**
+         * Destructor.
+         */
         virtual ~response() = default;
 
+        /**
+         * Copy assignment operator.
+         *
+         * @param rhs The object to copy-assign from.
+         * @return A reference to the assignee.
+         */
         response& operator=(const response& rhs) = default;
+
+        /**
+         * Move assignment operator.
+         *
+         * @param rhs The object to move-assign from.
+         * @return A reference to the assignee.
+         */
         response& operator=(response&& rhs) noexcept = default;
 
+        /**
+         * Retrieve the HTTP status.
+         *
+         * @return The HTTP status
+         */
         [[nodiscard]]
         status status() const { return result(); }
     };

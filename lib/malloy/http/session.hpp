@@ -115,14 +115,27 @@ namespace malloy::http::server
         };
 
     public:
+        /**
+         * Session configuration structure.
+         */
         struct config
         {
-            std::uint64_t request_body_limit = 10 * 10e6;
+            std::uint64_t request_body_limit = 10 * 10e6;   ///< The maximum allowed body request size in bytes.
         };
 
+        /**
+         * The session configuration.
+         */
         struct config cfg;
 
-        // Take ownership of the socket
+        /**
+         * Constructor
+         *
+         * @param logger
+         * @param socket
+         * @param router
+         * @param http_doc_root
+         */
         session(
             std::shared_ptr<spdlog::logger> logger,
             boost::asio::ip::tcp::socket&& socket,
@@ -130,7 +143,9 @@ namespace malloy::http::server
             std::shared_ptr<const std::filesystem::path> http_doc_root
         );
 
-        // Start the session
+        /**
+         * Start the session.
+         */
         void run();
 
     private:

@@ -74,7 +74,7 @@ namespace malloy::http
          * Construct a file response.
          *
          * @param storage_path The base path to the local filesystem.
-         * @param rel_path The file being requested relative to the @ref storage_path.
+         * @param rel_path The file being requested relative to the storage_path.
          * @return The response.
          */
         [[nodiscard]]

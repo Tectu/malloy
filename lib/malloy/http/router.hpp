@@ -40,9 +40,24 @@ namespace malloy::http::server
     class router
     {
     public:
-        using method_type   = boost::beast::http::verb;
+        /**
+         * The method type to use.
+         */
+        using method_type   = http::method;
+
+        /**
+         * The request type to use.
+         */
         using request_type  = malloy::http::request;
+
+        /**
+         * The response type to use.
+         */
         using response_type = malloy::http::response;
+
+        /**
+         * The router type to use.
+         */
         using route_type    = route<request_type, response_type>;
 
         /**
@@ -98,9 +113,9 @@ namespace malloy::http::server
         /**
          * Add a handler for a specific method & resource.
          *
-         * @param method
-         * @param target
-         * @param handler
+         * @param method The HTTP method.
+         * @param target The resource path.
+         * @param handler The handler to generate the response.
          */
         void add(method_type method, std::string_view target, std::function<response_type(const request_type&)>&& handler);
 
