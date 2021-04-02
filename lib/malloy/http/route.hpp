@@ -20,7 +20,7 @@ namespace malloy::http::server
     public:
         using method_type  = boost::beast::http::verb;
 
-        method_type verb;
+        method_type method;
         std::regex rule;
         std::function<Response(const Request&)> handler;
 
@@ -46,7 +46,7 @@ namespace malloy::http::server
         bool matches_request(const Request& req) const
         {
             // Check method
-            if (req.method() not_eq verb)
+            if (req.method() not_eq method)
                 return false;
 
             // Check rule

@@ -227,7 +227,7 @@ namespace malloy::http::server
                             req.target().data(),
                             req.target().size()}))
                             continue;
-                        method_strings.emplace_back(boost::beast::http::to_string(route.verb));
+                        method_strings.emplace_back(boost::beast::http::to_string(route.method));
                     }
                     std::string methods_string;
                     for (const auto &str : method_strings) {

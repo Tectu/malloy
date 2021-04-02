@@ -38,7 +38,7 @@ void router::add(const method_type method, const std::string_view target, std::f
     // Build route
     route_type r;
     r.rule = std::move(regex);
-    r.verb = method;
+    r.method = method;
     r.handler = std::move(handler);
 
     // Add route
