@@ -10,34 +10,15 @@
 #include <thread>
 #include <vector>
 
-int main(int argc, char* argv[])
+int main()
 {
     // Initialize logger
-    std::shared_ptr<spdlog::logger> logger;
-    try {
-        logger = logging::logger::instance().make_logger("app");
-    }
-    catch (const std::exception& e) {
-        std::cerr << "could not create logger: " << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-    catch (...) {
-        std::cerr << "could not create logger." << std::endl;
-        return EXIT_FAILURE;
-    }
+    auto logger = logging::logger::instance().make_logger("app");
 
-    // Check command line arguments.
-    if (argc != 5) {
-        std::cerr <<
-            "Usage: malloy <address> <port> <doc_root> <threads>\n" <<
-            "Example:\n" <<
-            "    malloy 0.0.0.0 8080 . 1\n";
-        return EXIT_FAILURE;
-    }
-    auto const address = boost::asio::ip::make_address(argv[1]);
-    auto const port = static_cast<unsigned short>(std::atoi(argv[2]));
-    auto const doc_root = std::make_shared<std::filesystem::path>(argv[3]);
-    auto const threads = std::max<int>(1, std::atoi(argv[4]));
+    // Parameters
+    const std::string interface             = "127.0.0.1";
+    const std::uint16_t port                = 8080;
+    const std::filesystem::path doc_root    = "../../../../examples/static_content";
 
     // Create the router
     auto router = std::make_shared<malloy::http::server::router>(logger->clone("router"));
@@ -53,12 +34,12 @@ int main(int argc, char* argv[])
 
         // Add a route to an existing file
         router->add(method::get, "/file", [doc_root](const auto& req) {
-            return generator::file(*doc_root, "index.html");
+            return generator::file(doc_root, "index.html");
         });
 
         // Add a route to a non-existing file
         router->add(method::get, "/file_nonexist", [doc_root](const auto& req) {
-            return generator::file(*doc_root, "/some_nonexisting_file.xzy");
+            return generator::file(doc_root, "/some_nonexisting_file.xzy");
         });
 
         // Add some redirections
@@ -66,31 +47,24 @@ int main(int argc, char* argv[])
         router->add_redirect(status::temporary_redirect, "/redirect2", "/");
 
         // Add some file serving
-        router->add_file_serving("/files", *doc_root);
+        router->add_file_serving("/files", doc_root);
     }
 
     // The io_context is required for all I/O
-    boost::asio::io_context ioc{threads};
+    boost::asio::io_context ioc;
 
-    // Create and launch a listening port
+    // Create and launch a listener
     std::make_shared<malloy::server::listener>(
         logger->clone("listener"),
         ioc,
-        boost::asio::ip::tcp::endpoint{address, port},
+        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(interface), port },
         router,
-        doc_root
+        std::make_shared<std::filesystem::path>(doc_root)
     )->run();
 
-    // Run the I/O service on the requested number of threads
+    // Run the I/O service on one thread
     logger->info("starting server...");
-    std::vector<std::thread> v;
-    v.reserve(threads - 1);
-    for(auto i = threads - 1; i > 0; --i)
-        v.emplace_back(
-            [&ioc]
-            {
-                ioc.run();
-            });
+    auto ioc_thread = std::thread([&ioc]{ ioc.run(); });
     ioc.run();
 
     return EXIT_SUCCESS;
