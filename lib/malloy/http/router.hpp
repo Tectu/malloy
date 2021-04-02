@@ -216,8 +216,7 @@ namespace malloy::http::server
             // Check routes
             for (const auto& route : m_routes) {
                 // Check if this is a preflight request
-                if (req.method() ==
-                    boost::beast::http::verb::options) {
+                if (req.method() == method::options) {
                     m_logger->debug("automatically constructing preflight response.");
 
                     // Methods
@@ -248,7 +247,7 @@ namespace malloy::http::server
                     m_logger->debug("sending preflight response.");
 
                     // Send the response
-                    send_response(req, std::move(res), std::move(send));
+                    send_response(req, std::move(res), std::forward<Send>(send));
                     return;
                 }
 
@@ -263,7 +262,7 @@ namespace malloy::http::server
                     }
 
                     auto resp = route.handler(req);
-                    send_response(req, std::move(resp), std::move(send));
+                    send_response(req, std::move(resp), std::forward<Send>(send));
 
                     return;
                 }
