@@ -19,6 +19,12 @@ void router::add(const method_type method, const std::string_view target, std::f
     // Log
     m_logger->debug("adding route: {}", target);
 
+    // Check handler
+    if (not handler) {
+        m_logger->warn("route has invalid handler. ignoring.");
+        return;
+    }
+
     // Build regex
     std::regex regex;
     try {
