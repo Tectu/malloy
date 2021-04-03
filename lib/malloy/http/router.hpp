@@ -167,13 +167,6 @@ namespace malloy::http::server
                 req.uri().resource_string()
             );
 
-            // Check request URI for legality
-            if (not req.uri().is_legal()) {
-                m_logger->debug("illegal request-target.");
-                send_response(req, generator::bad_request("illegal URI"), std::forward<Send>(send));
-                return;
-            }
-
             // Check redirects
             m_logger->debug("checking redirects...");
             for (const auto& record : m_redirects) {
@@ -212,6 +205,15 @@ namespace malloy::http::server
                 router->handle_request(doc_root, std::move(req), std::forward<Send>(send));
 
                 // We're done handling this request
+                return;
+            }
+
+            // Check request URI for legality
+            // From hereon, we want to be sure that we're dealing with a legal URI as we're possibly
+            // gonna serve files.
+            if (not req.uri().is_legal()) {
+                m_logger->warn("illegal request URI");
+                send_response(req, generator::bad_request("illegal URI"), std::forward<Send>(send));
                 return;
             }
 
