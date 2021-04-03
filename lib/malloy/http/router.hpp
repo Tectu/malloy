@@ -215,29 +215,6 @@ namespace malloy::http::server
                 return;
             }
 
-            // Check file servings
-            m_logger->debug("checking file servings...");
-            for (const auto& [resource_base, storage_location_base] : m_file_servings) {
-                // Check match
-                if (not req.uri().resource_starts_with(resource_base))
-                    continue;
-
-                // Chop request resource path
-                req.uri().chop_resource(resource_base);
-
-                // Log
-                m_logger->debug("serving static file on {}", req.uri().resource_string());
-
-                // Create response
-                auto resp = generator::file(req, storage_location_base);
-
-                // Send response
-                send_response(req, std::move(resp), std::forward<Send>(send));
-
-                // We're done handling this request
-                return;
-            }
-
             // Check routes
             m_logger->debug("checking routes...");
             for (const auto& route : m_routes) {
@@ -298,6 +275,29 @@ namespace malloy::http::server
                     // We're done handling this request
                     return;
                 }
+            }
+
+            // Check file servings
+            m_logger->debug("checking file servings...");
+            for (const auto& [resource_base, storage_location_base] : m_file_servings) {
+                // Check match
+                if (not req.uri().resource_starts_with(resource_base))
+                    continue;
+
+                // Chop request resource path
+                req.uri().chop_resource(resource_base);
+
+                // Log
+                m_logger->debug("serving static file on {}", req.uri().resource_string());
+
+                // Create response
+                auto resp = generator::file(req, storage_location_base);
+
+                // Send response
+                send_response(req, std::move(resp), std::forward<Send>(send));
+
+                // We're done handling this request
+                return;
             }
 
             // If we end up where we have no meaningful way of handling this request
