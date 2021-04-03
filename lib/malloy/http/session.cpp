@@ -94,6 +94,14 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
     // Parse the request into something more useful from hereon
     request req = m_parser->release();
 
+    // Check request URI for legality
+    if (not req.uri().is_legal()) {
+        m_logger->warn("illegal request URI");
+        auto resp = generator::bad_request("illegal URI");
+        m_queue(std::move(resp));
+        return;
+    }
+
     // Hand off to router
     m_router->handle_request(*m_doc_root, std::move(req), m_queue);
 }
