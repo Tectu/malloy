@@ -96,7 +96,7 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
 
     // Check request URI for legality
     if (not req.uri().is_legal()) {
-        m_logger->warn("illegal request URI");
+        m_logger->warn("illegal request URI: {}", req.uri().raw());
         auto resp = generator::bad_request("illegal URI");
         m_queue(std::move(resp));
         return;
