@@ -24,6 +24,17 @@ namespace malloy::http
          *
          * @param str The string to parse.
          */
+        explicit uri(const std::string& str) :
+            m_raw(str)
+        {
+            parse();
+        }
+
+        /**
+         * Construct an URI from a string.
+         *
+         * @param str The string to parse.
+         */
         explicit uri(std::string&& str) :
             m_raw(std::move(str))
         {

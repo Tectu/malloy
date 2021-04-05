@@ -29,7 +29,7 @@ namespace malloy::http
         {
             boost::beast::http::request<boost::beast::http::string_body>::operator=(std::move(raw));
 
-            class uri u{ std::move(std::string{target().data(), target().size()}) };
+            class uri u{ std::string{target().data(), target().size()} };
             m_uri = std::move(u);
         }
 
