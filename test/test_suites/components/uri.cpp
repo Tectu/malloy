@@ -174,6 +174,45 @@ TEST_SUITE("components - uri")
             REQUIRE_FALSE(uri{"/../../../foo.html"}.is_legal());
         }
 
+        SUBCASE("legal")
+        {
+            std::vector<std::string> strings = {
+                "/foo/bar",
+                "/foo/bar?test=1234",
+                "/foo/index.html",
+                "/index.html",
+                "/foo/bar/zbar#anchor",
+                "/foo/index.html?test1=1&test2=2",
+                "/foo/index.html?test1=1&test2=2#zbar",
+            };
+
+            for (const std::string& str : strings) {
+                uri u{ str };
+
+                WARN(u.is_legal());
+            }
+        }
+
+        SUBCASE("legal")
+        {
+            std::vector<std::string> strings = {
+                "",
+                "foo",
+                "foo/bar/zbar",
+                "foo/../bar.html",
+                "..",
+                "/..",
+                "/foo/../../../../../etc/bar.txt",
+                "/../../.."
+            };
+
+            for (const std::string& str : strings) {
+                uri u{ str };
+
+                WARN_FALSE(u.is_legal());
+            }
+        }
+
     }
 
 }
