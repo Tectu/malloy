@@ -36,6 +36,11 @@ Malloy comes with a small number of dependencies:
 # Examples
 A variety of examples can be found in the `/examples` directory.
 
+The most basic use looks like this:
+```cpp
+
+```
+
 # Motivation
 This started off with the intention of creating a more complex, real-world example of how to use `boost.beast`.
 

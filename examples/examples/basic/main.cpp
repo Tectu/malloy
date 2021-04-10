@@ -1,27 +1,16 @@
-#include "malloy/listener.hpp"
+#include "malloy/controller.hpp"
 #include "malloy/http/generator.hpp"
 #include "malloy/http/router.hpp"
-#include "../../logger.hpp"
 
-#include <cstdlib>
 #include <iostream>
 #include <memory>
-#include <string>
-#include <thread>
-#include <vector>
 
 int main()
 {
-    // Initialize logger
-    auto logger = logging::logger::instance().make_logger("app");
-
-    // Parameters
-    const std::string interface             = "127.0.0.1";
-    const std::uint16_t port                = 8080;
-    const std::filesystem::path doc_root    = "../../../../examples/static_content";
+    const std::filesystem::path doc_root = "../../../../examples/static_content";
 
     // Create the router
-    auto router = std::make_shared<malloy::http::server::router>(logger->clone("router"));
+    auto router = std::make_shared<malloy::http::server::router>();
     {
         using namespace malloy::http;
 
@@ -50,22 +39,23 @@ int main()
         router->add_file_serving("/files", doc_root);
     }
 
-    // The io_context is required for all I/O
-    boost::asio::io_context ioc;
+    // Create malloy controller config
+    malloy::server::controller::config cfg;
+    cfg.interface   = "127.0.0.1";
+    cfg.port        = 8080;
+    cfg.doc_root    = doc_root;
+    cfg.num_threads = 5;
+    cfg.router      = router;
 
-    // Create and launch a listener
-    std::make_shared<malloy::server::listener>(
-        logger->clone("listener"),
-        ioc,
-        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(interface), port },
-        router,
-        std::make_shared<std::filesystem::path>(doc_root)
-    )->run();
+    // Create malloy controller
+    malloy::server::controller c;
+    if (not c.init(cfg)) {
+        std::cerr << "could not start controller." << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    // Run the I/O service on one thread
-    logger->info("starting server...");
-    auto ioc_thread = std::thread([&ioc]{ ioc.run(); });
-    ioc.run();
+    // Start
+    c.start();
 
     return EXIT_SUCCESS;
 }

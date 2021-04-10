@@ -7,13 +7,30 @@ using namespace malloy::http::server;
 router::router(std::shared_ptr<spdlog::logger> logger) :
         m_logger(std::move(logger))
 {
-    // Sanity check
+}
+
+void router::validate_logger()
+{
     if (not m_logger)
         throw std::runtime_error("received invalid logger instance.");
 }
 
+void router::set_logger(std::shared_ptr<spdlog::logger> logger)
+{
+    m_logger = std::move(logger);
+
+    validate_logger();
+}
+
+bool router::has_logger() const noexcept
+{
+    return m_logger.operator bool();
+}
+
 void router::add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
 {
+    validate_logger();
+
     m_logger->trace("add [route]");
 
     // Log
@@ -53,6 +70,8 @@ void router::add(const method_type method, const std::string_view target, std::f
 
 void router::add(std::string resource, std::shared_ptr<router>&& router)
 {
+    validate_logger();
+
     m_logger->trace("add [router]");
 
     // Log
@@ -72,6 +91,10 @@ void router::add(std::string resource, std::shared_ptr<router>&& router)
         return;
     }
 
+    // Add logger if none was provided
+    if (not router->has_logger())
+        router->set_logger(m_logger->clone("router " + resource));
+
     // Add router
     try {
         m_routers.try_emplace(std::move(resource), std::move(router));
@@ -84,6 +107,8 @@ void router::add(std::string resource, std::shared_ptr<router>&& router)
 
 void router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
 {
+    validate_logger();
+
     m_logger->trace("add [file serving]");
 
     // Log
@@ -101,6 +126,8 @@ void router::add_file_serving(std::string resource, std::filesystem::path storag
 
 void router::add_redirect(const http::status status, std::string&& resource_old, std::string&& resource_new)
 {
+    validate_logger();
+
     m_logger->trace("add [redirection]");
 
     // Log

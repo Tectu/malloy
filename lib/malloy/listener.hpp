@@ -45,7 +45,7 @@ namespace malloy::server
                 std::shared_ptr<spdlog::logger> logger,
                 boost::asio::io_context& ioc,
                 const boost::asio::ip::tcp::endpoint& endpoint,
-                std::shared_ptr<http::server::router> router,
+                std::shared_ptr<malloy::http::server::router> router,
                 std::shared_ptr<const std::filesystem::path> http_doc_root
         );
 
@@ -89,7 +89,7 @@ namespace malloy::server
         std::shared_ptr<spdlog::logger> m_logger;
         boost::asio::io_context& m_io_ctx;
         boost::asio::ip::tcp::acceptor m_acceptor;
-        std::shared_ptr<http::server::router> m_router;
+        std::shared_ptr<malloy::http::server::router> m_router;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
 
         /**

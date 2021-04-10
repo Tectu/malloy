@@ -61,6 +61,11 @@ namespace malloy::http::server
         using route_type    = route<request_type, response_type>;
 
         /**
+         * Default constructor.
+         */
+        router() = default;
+
+        /**
          * Constructor.
          *
          * @param logger The logger instance to use.
@@ -97,6 +102,21 @@ namespace malloy::http::server
          * @return A reference to the assignee.
          */
         router& operator=(router&& rhs) noexcept = delete;
+
+        /**
+         * Set the logger to use.
+         *
+         * @param logger The logger to use.
+         */
+        void set_logger(std::shared_ptr<spdlog::logger> logger);
+
+        /**
+         * Checks whether a valid logger instance was assigned.
+         *
+         * @return `true` if a valid logger instance has been assigned, `false` otherwise.
+         */
+        [[nodiscard]]
+        bool has_logger() const noexcept;
 
         /**
          * Controls whether the router should automatically generate preflight responses.
@@ -314,6 +334,11 @@ namespace malloy::http::server
         std::unordered_map<std::string, std::shared_ptr<router>> m_routers;
         std::unordered_map<std::string, std::filesystem::path> m_file_servings;
         bool m_generate_preflights = false;
+
+        /**
+         * This will throw an std::runtime_error if m_logger is invalid.
+         */
+        void validate_logger();
 
         /**
          * Send a response.
