@@ -40,35 +40,17 @@ bool controller::init(config cfg)
         return false;
     }
 
-    // Create a router if none was supplied
-    if (not cfg.router)
-        cfg.router = std::make_shared<malloy::http::server::router>(cfg.logger->clone("router"));
-
     // Grab the config
     m_cfg = std::move(cfg);
 
     // Create and launch a listener
     m_listener = std::make_shared<malloy::server::listener>(
-        m_cfg.logger->clone("listener"),
-        m_io_ctx,
-        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
-        m_cfg.router,
-        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
+            m_cfg.logger->clone("listener"),
+            m_io_ctx,
+            boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
+            std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router")),
+            std::make_shared<std::filesystem::path>(m_cfg.doc_root)
     );
-
-    // Run the listener
-    m_listener->run();
-
-    // Create the I/O context threads
-    m_threads.reserve(m_cfg.num_threads - 1);
-    for (std::size_t i = 0; i < m_cfg.num_threads; i++) {
-        m_threads.emplace_back(
-            [this]
-            {
-               m_io_ctx.run();
-           }
-        );
-    }
 
     // Don't initialize ever again.
     m_init_done = true;
@@ -81,6 +63,20 @@ bool controller::start()
     // Must be initialized
     if (not m_init_done)
         return false;
+
+    // Run the listener
+    m_listener->run();
+
+    // Create the I/O context threads
+    m_threads.reserve(m_cfg.num_threads - 1);
+    for (std::size_t i = 0; i < m_cfg.num_threads; i++) {
+        m_threads.emplace_back(
+                [this]
+                {
+                    m_io_ctx.run();
+                }
+        );
+    }
 
     // Log
     m_cfg.logger->info("starting server.");
@@ -104,4 +100,12 @@ std::future<void> controller::stop()
             m_cfg.logger->info("all I/O threads stopped.");
         }
     );
+}
+
+std::shared_ptr<malloy::http::server::router> controller::router() const
+{
+    if (m_listener)
+        return m_listener->router();
+
+    return { };
 }

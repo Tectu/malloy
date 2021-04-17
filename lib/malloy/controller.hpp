@@ -33,7 +33,6 @@ namespace malloy::server
             std::uint16_t port             = 8080;
             std::filesystem::path doc_root = ".";
             std::size_t num_threads        = 1;
-            std::shared_ptr<malloy::http::server::router> router;
             std::shared_ptr<spdlog::logger> logger;
 
             config() = default;
@@ -56,6 +55,7 @@ namespace malloy::server
         bool init(config cfg);
         bool start();
         std::future<void> stop();
+        [[nodiscard]] std::shared_ptr<malloy::http::server::router> router() const;
 
     private:
         bool m_init_done = false;
