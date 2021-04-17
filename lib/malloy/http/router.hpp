@@ -111,14 +111,6 @@ namespace malloy::http::server
         void set_logger(std::shared_ptr<spdlog::logger> logger);
 
         /**
-         * Checks whether a valid logger instance was assigned.
-         *
-         * @return `true` if a valid logger instance has been assigned, `false` otherwise.
-         */
-        [[nodiscard]]
-        bool has_logger() const noexcept;
-
-        /**
          * Controls whether the router should automatically generate preflight responses.
          *
          * @note Currently only preflights for routes are generated.

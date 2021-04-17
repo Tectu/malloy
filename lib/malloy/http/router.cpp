@@ -22,11 +22,6 @@ void router::set_logger(std::shared_ptr<spdlog::logger> logger)
     validate_logger();
 }
 
-bool router::has_logger() const noexcept
-{
-    return m_logger.operator bool();
-}
-
 void router::add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
 {
     validate_logger();
