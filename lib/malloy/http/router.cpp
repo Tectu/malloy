@@ -7,6 +7,7 @@ using namespace malloy::http::server;
 router::router(std::shared_ptr<spdlog::logger> logger) :
         m_logger(std::move(logger))
 {
+    validate_logger();
 }
 
 void router::validate_logger()
@@ -63,7 +64,7 @@ void router::add(const method_type method, const std::string_view target, std::f
     }
 }
 
-void router::add(std::string resource, std::shared_ptr<router>&& router)
+std::shared_ptr<router> router::add_subrouter(std::string resource)
 {
     validate_logger();
 
@@ -76,28 +77,23 @@ void router::add(std::string resource, std::shared_ptr<router>&& router)
     {
         if (resource.empty()) {
             m_logger->error("invalid target \"{}\". not adding router.", resource);
-            return;
+            return { };
         }
     }
 
-    // Sanity check router
-    if (not router) {
-        m_logger->error("invalid router supplied. not adding router.");
-        return;
-    }
-
-    // Add logger if none was provided
-    if (not router->has_logger())
-        router->set_logger(m_logger->clone("router " + resource));
+    // Create the sub-router
+    auto sub_router = std::make_shared<router>(m_logger->clone("router " + resource));
 
     // Add router
     try {
-        m_routers.try_emplace(std::move(resource), std::move(router));
+        m_routers.try_emplace(std::move(resource), sub_router);
     }
     catch (const std::exception& e) {
         m_logger->critical("could not add router: {}", e.what());
-        return;
+        return { };
     }
+
+    return sub_router;
 }
 
 void router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
