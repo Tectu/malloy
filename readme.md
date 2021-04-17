@@ -12,11 +12,11 @@ Currently implemented:
   - Sub-routers
   - Redirections
   - File serving locations
+- Utility wrapper to setup `boost::asio` I/O context, worker threads and more.
 
 Coming soon™:
 - Support for TLS connections
 - Security middleware (CSRF, XSS, ...)
-- Utility wrapper to setup `boost::asio` I/O context & worker threads
 - HTTP client
 - Websocket client
 
