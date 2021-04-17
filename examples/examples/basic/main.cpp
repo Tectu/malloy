@@ -9,9 +9,23 @@ int main()
 {
     const std::filesystem::path doc_root = "../../../../examples/static_content";
 
+    // Create malloy controller config
+    malloy::server::controller::config cfg;
+    cfg.interface   = "127.0.0.1";
+    cfg.port        = 8080;
+    cfg.doc_root    = doc_root;
+    cfg.num_threads = 5;
+
+    // Create malloy controller
+    malloy::server::controller c;
+    if (not c.init(cfg)) {
+        std::cerr << "could not start controller." << std::endl;
+        return EXIT_FAILURE;
+    }
+
     // Create the router
-    auto router = std::make_shared<malloy::http::server::router>();
-    {
+    auto router = c.router();
+    if (router) {
         using namespace malloy::http;
 
         // A simple GET route handler
@@ -37,21 +51,6 @@ int main()
 
         // Add some file serving
         router->add_file_serving("/files", doc_root);
-    }
-
-    // Create malloy controller config
-    malloy::server::controller::config cfg;
-    cfg.interface   = "127.0.0.1";
-    cfg.port        = 8080;
-    cfg.doc_root    = doc_root;
-    cfg.num_threads = 5;
-    cfg.router      = router;
-
-    // Create malloy controller
-    malloy::server::controller c;
-    if (not c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
     }
 
     // Start
