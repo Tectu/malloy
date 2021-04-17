@@ -85,6 +85,17 @@ namespace malloy::server
          */
         void run();
 
+        /**
+         * Get the router.
+         *
+         * @return The router.
+         */
+        [[nodiscard]]
+        std::shared_ptr<malloy::http::server::router> router() const noexcept
+        {
+            return m_router;
+        }
+
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         boost::asio::io_context& m_io_ctx;
