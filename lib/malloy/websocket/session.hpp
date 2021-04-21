@@ -24,6 +24,9 @@ namespace malloy::websocket::server
         public std::enable_shared_from_this<session>
     {
     public:
+        using payload_type = std::string;
+        using writer_type  = std::function<void(std::string&&)>;
+        using handler_type = std::function<void(payload_type, writer_type)>;
 
         /**
          * The agent string.
@@ -37,6 +40,16 @@ namespace malloy::websocket::server
          * @param socket The socket to use.
          */
         session(std::shared_ptr<spdlog::logger> logger, boost::asio::ip::tcp::socket&& socket);
+
+        /**
+         * Set the handler.
+         *
+         * @param reader The handler.
+         */
+        void set_handler(handler_type&& handler) noexcept
+        {
+            m_handler = std::move(handler);
+        }
 
         /**
          * Start the asynchronous accept operation.
@@ -79,6 +92,7 @@ namespace malloy::websocket::server
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::websocket::stream<boost::beast::tcp_stream> m_websocket;
         boost::beast::flat_buffer m_buffer;
+        handler_type m_handler;
 
         void on_accept(const boost::beast::error_code ec);
         void do_read();

@@ -11,6 +11,7 @@ session::session(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::ip::tcp::socket&& socket
 ) :
+    m_logger(std::move(logger)),
     m_websocket(std::move(socket))
 {
     // Sanity check logger
@@ -82,6 +83,19 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
     std::string payload = boost::beast::buffers_to_string(m_buffer.cdata());
     if (payload.empty())
         return;
+
+    // Handle the payload
+    if (m_handler) {
+        try {
+            m_handler(payload, std::bind(&session::write, this, std::placeholders::_1));
+        }
+        catch (const std::exception& e) {
+            m_logger->critical("reader exception: {}", e.what());
+        }
+        catch (...) {
+            m_logger->critical("unknown reader exception.");
+        }
+    }
 
     // Consume the buffer
     m_buffer.consume(m_buffer.size());
