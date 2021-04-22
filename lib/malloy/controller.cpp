@@ -2,6 +2,7 @@
 #include "listener.hpp"
 #include "http/router.hpp"
 
+#include <boost/asio/signal_set.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -59,6 +60,18 @@ bool controller::init(config cfg)
     return true;
 }
 
+void controller::enable_termination_signals()
+{
+    // Capture SIGINT and SIGTERM to perform a clean shutdown
+    boost::asio::signal_set signals(m_io_ctx, SIGINT, SIGTERM);
+    signals.async_wait(
+        [this](boost::system::error_code const&, int)
+        {
+            this->stop();
+        }
+    );
+}
+
 bool controller::start()
 {
     // Must be initialized
@@ -72,10 +85,10 @@ bool controller::start()
     m_threads.reserve(m_cfg.num_threads - 1);
     for (std::size_t i = 0; i < m_cfg.num_threads; i++) {
         m_threads.emplace_back(
-                [this]
-                {
-                    m_io_ctx.run();
-                }
+            [this]
+            {
+                m_io_ctx.run();
+            }
         );
     }
 
@@ -90,6 +103,12 @@ bool controller::start()
 
 std::future<void> controller::stop()
 {
+    // Stop the `io_context`. This will cause `run()`
+    // to return immediately, eventually destroying the
+    // `io_context` and all of the sockets in it.
+    m_io_ctx.stop();
+
+    // Wait for all I/O context threads to finish...
     return std::async(
         [this]
         {

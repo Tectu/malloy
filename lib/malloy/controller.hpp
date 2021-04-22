@@ -53,6 +53,7 @@ namespace malloy::server
         controller& operator=(controller&& rhs) noexcept = delete;
 
         bool init(config cfg);
+        void enable_termination_signals();
         bool start();
         std::future<void> stop();
         [[nodiscard]] std::shared_ptr<malloy::http::server::router> router() const;
