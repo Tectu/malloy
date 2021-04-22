@@ -1,11 +1,13 @@
 #pragma once
 
-#include <filesystem>
-#include <memory>
-#include <string>
+#include "websocket/types.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core/error.hpp>
+
+#include <filesystem>
+#include <memory>
+#include <string>
 
 namespace boost::asio
 {
@@ -46,7 +48,8 @@ namespace malloy::server
                 boost::asio::io_context& ioc,
                 const boost::asio::ip::tcp::endpoint& endpoint,
                 std::shared_ptr<malloy::http::server::router> router,
-                std::shared_ptr<const std::filesystem::path> http_doc_root
+                std::shared_ptr<const std::filesystem::path> http_doc_root,
+                malloy::websocket::handler_type websocket_handler
         );
 
         /**
@@ -102,6 +105,7 @@ namespace malloy::server
         boost::asio::ip::tcp::acceptor m_acceptor;
         std::shared_ptr<malloy::http::server::router> m_router;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
+        malloy::websocket::handler_type m_websocket_handler;
 
         /**
          * Start accepting incoming requests.

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../websocket/types.hpp"
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 
@@ -140,7 +142,8 @@ namespace malloy::http::server
             std::shared_ptr<spdlog::logger> logger,
             boost::asio::ip::tcp::socket&& socket,
             std::shared_ptr<class router> router,
-            std::shared_ptr<const std::filesystem::path> http_doc_root
+            std::shared_ptr<const std::filesystem::path> http_doc_root,
+            malloy::websocket::handler_type websocket_handler
         );
 
         /**
@@ -154,6 +157,7 @@ namespace malloy::http::server
         boost::beast::flat_buffer m_buffer;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<router> m_router;
+        malloy::websocket::handler_type m_websocket_handler;
         queue m_queue;
 
         // The parser is stored in an optional container so we can

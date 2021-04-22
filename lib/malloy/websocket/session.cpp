@@ -9,10 +9,12 @@ const std::string session::agent_string = std::string(BOOST_BEAST_VERSION_STRING
 
 session::session(
     std::shared_ptr<spdlog::logger> logger,
-    boost::asio::ip::tcp::socket&& socket
+    boost::asio::ip::tcp::socket&& socket,
+    malloy::websocket::handler_type handler
 ) :
     m_logger(std::move(logger)),
-    m_websocket(std::move(socket))
+    m_websocket(std::move(socket)),
+    m_handler(std::move(handler))
 {
     // Sanity check logger
     if (not m_logger)

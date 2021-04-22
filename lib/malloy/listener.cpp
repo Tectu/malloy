@@ -5,6 +5,7 @@
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
 
+using namespace malloy;
 using namespace malloy::server;
 
 listener::listener(
@@ -12,13 +13,15 @@ listener::listener(
     boost::asio::io_context& ioc,
     const boost::asio::ip::tcp::endpoint& endpoint,
     std::shared_ptr<http::server::router> router,
-    std::shared_ptr<const std::filesystem::path> http_doc_root
+    std::shared_ptr<const std::filesystem::path> http_doc_root,
+    websocket::handler_type websocket_handler
 ) :
     m_logger(std::move(logger)),
     m_io_ctx(ioc),
     m_acceptor(boost::asio::make_strand(ioc)),
     m_router(std::move(router)),
-    m_doc_root(std::move(http_doc_root))
+    m_doc_root(std::move(http_doc_root)),
+    m_websocket_handler(std::move(websocket_handler))
 {
     boost::beast::error_code ec;
 
@@ -102,8 +105,16 @@ void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::sock
         socket.remote_endpoint().port()
     );
 
-    // Create the http session and run it
-    auto session = std::make_shared<http::server::session>(m_logger->clone("http_session"), std::move(socket), m_router, m_doc_root);
+    // Create the http session
+    auto session = std::make_shared<http::server::session>(
+        m_logger->clone("http_session"),
+        std::move(socket),
+        m_router,
+        m_doc_root,
+        m_websocket_handler
+    );
+
+    // Run the HTTP session
     session->run();
 
     // Accept another connection

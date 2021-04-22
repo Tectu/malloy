@@ -3,5 +3,6 @@ target_sources(
     PRIVATE
         session.cpp
         session.hpp
+        types.hpp
         websocket.hpp
 )

@@ -10,12 +10,14 @@ session::session(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::ip::tcp::socket&& socket,
     std::shared_ptr<router> router,
-    std::shared_ptr<const std::filesystem::path> http_doc_root
+    std::shared_ptr<const std::filesystem::path> http_doc_root,
+    malloy::websocket::handler_type websocket_handler
 ) :
     m_logger(std::move(logger)),
     m_stream(std::move(socket)),
     m_router(std::move(router)),
     m_doc_root(std::move(http_doc_root)),
+    m_websocket_handler(std::move(websocket_handler)),
     m_queue(*this)
 {
     // Sanity check logger
@@ -86,7 +88,11 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
 
         // Create a websocket session, transferring ownership
         // of both the socket and the HTTP request.
-        auto ws_session = std::make_shared<malloy::websocket::server::session>(m_logger->clone("websocket_session"), m_stream.release_socket());
+        auto ws_session = std::make_shared<malloy::websocket::server::session>(
+            m_logger->clone("websocket_session"),
+            m_stream.release_socket(),
+            m_websocket_handler
+        );
         ws_session->do_accept(m_parser->release());
         return;
     }

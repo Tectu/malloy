@@ -1,13 +1,15 @@
 #pragma once
 
+#include <algorithm>
+#include <cstdlib>
+#include <memory>
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/strand.hpp>
 
-#include <algorithm>
-#include <cstdlib>
-#include <memory>
+#include "types.hpp"
 
 namespace spdlog
 {
@@ -16,6 +18,7 @@ namespace spdlog
 
 namespace malloy::websocket::server
 {
+    using namespace malloy::websocket;
 
     /**
      * A websocket session.
@@ -24,10 +27,6 @@ namespace malloy::websocket::server
         public std::enable_shared_from_this<session>
     {
     public:
-        using payload_type = std::string;
-        using writer_type  = std::function<void(std::string&&)>;
-        using handler_type = std::function<void(payload_type, writer_type)>;
-
         /**
          * The agent string.
          */
@@ -39,17 +38,7 @@ namespace malloy::websocket::server
          * @param logger The logger instance to use.
          * @param socket The socket to use.
          */
-        session(std::shared_ptr<spdlog::logger> logger, boost::asio::ip::tcp::socket&& socket);
-
-        /**
-         * Set the handler.
-         *
-         * @param reader The handler.
-         */
-        void set_handler(handler_type&& handler) noexcept
-        {
-            m_handler = std::move(handler);
-        }
+        session(std::shared_ptr<spdlog::logger> logger, boost::asio::ip::tcp::socket&& socket, handler_type handler);
 
         /**
          * Start the asynchronous accept operation.
