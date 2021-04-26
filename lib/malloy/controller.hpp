@@ -1,5 +1,7 @@
 #pragma once
 
+#include "websocket/types.hpp"
+
 #include <boost/asio/io_context.hpp>
 
 #include <memory>
@@ -57,6 +59,7 @@ namespace malloy::server
         bool start();
         std::future<void> stop();
         [[nodiscard]] std::shared_ptr<malloy::http::server::router> router() const;
+        void set_websocket_handler(malloy::websocket::handler_type handler);
 
     private:
         bool m_init_done = false;

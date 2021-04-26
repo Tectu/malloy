@@ -46,12 +46,11 @@ bool controller::init(config cfg)
 
     // Create and launch a listener
     m_listener = std::make_shared<malloy::server::listener>(
-            m_cfg.logger->clone("listener"),
-            m_io_ctx,
-            boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
-            std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router")),
-            std::make_shared<std::filesystem::path>(m_cfg.doc_root),
-            nullptr
+        m_cfg.logger->clone("listener"),
+        m_io_ctx,
+        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
+        std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router")),
+        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
     );
 
     // Don't initialize ever again.
@@ -67,7 +66,8 @@ void controller::enable_termination_signals()
     signals.async_wait(
         [this](boost::system::error_code const&, int)
         {
-            this->stop();
+            this->m_cfg.logger->info("received SIGINT or SIGTERM. stopping server.");
+            this->stop().wait();
         }
     );
 }
@@ -128,4 +128,10 @@ std::shared_ptr<malloy::http::server::router> controller::router() const
         return m_listener->router();
 
     return { };
+}
+
+void controller::set_websocket_handler(malloy::websocket::handler_type handler)
+{
+    if (m_listener)
+        m_listener->set_websocket_handler(std::move(handler));
 }

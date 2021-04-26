@@ -13,15 +13,13 @@ listener::listener(
     boost::asio::io_context& ioc,
     const boost::asio::ip::tcp::endpoint& endpoint,
     std::shared_ptr<http::server::router> router,
-    std::shared_ptr<const std::filesystem::path> http_doc_root,
-    websocket::handler_type websocket_handler
+    std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
     m_logger(std::move(logger)),
     m_io_ctx(ioc),
     m_acceptor(boost::asio::make_strand(ioc)),
     m_router(std::move(router)),
-    m_doc_root(std::move(http_doc_root)),
-    m_websocket_handler(std::move(websocket_handler))
+    m_doc_root(std::move(http_doc_root))
 {
     boost::beast::error_code ec;
 

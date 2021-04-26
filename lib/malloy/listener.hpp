@@ -48,8 +48,7 @@ namespace malloy::server
                 boost::asio::io_context& ioc,
                 const boost::asio::ip::tcp::endpoint& endpoint,
                 std::shared_ptr<malloy::http::server::router> router,
-                std::shared_ptr<const std::filesystem::path> http_doc_root,
-                malloy::websocket::handler_type websocket_handler
+                std::shared_ptr<const std::filesystem::path> http_doc_root
         );
 
         /**
@@ -97,6 +96,11 @@ namespace malloy::server
         std::shared_ptr<malloy::http::server::router> router() const noexcept
         {
             return m_router;
+        }
+
+        void set_websocket_handler(malloy::websocket::handler_type handler)
+        {
+            m_websocket_handler = std::move(handler);
         }
 
     private:
