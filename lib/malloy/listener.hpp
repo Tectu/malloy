@@ -98,6 +98,14 @@ namespace malloy::server
             return m_router;
         }
 
+        /**
+         * This function can be used to register a handler for incoming websocket
+         * requests.
+         *
+         * @brief Set the websocket handler.
+         *
+         * @param handler The handler to use.
+         */
         void set_websocket_handler(malloy::websocket::handler_type handler)
         {
             m_websocket_handler = std::move(handler);

@@ -137,6 +137,7 @@ namespace malloy::http::server
          * @param socket
          * @param router
          * @param http_doc_root
+         * @param websocket_handler
          */
         session(
             std::shared_ptr<spdlog::logger> logger,
