@@ -128,8 +128,9 @@ namespace malloy::http::server
          * @param method The HTTP method.
          * @param target The resource path.
          * @param handler The handler to generate the response.
+         * @return Whether adding the route was successful.
          */
-        void add(method_type method, std::string_view target, std::function<response_type(const request_type&)>&& handler);
+        bool add(method_type method, std::string_view target, std::function<response_type(const request_type&)>&& handler);
 
         /**
          * Add a sub-router for a specific resource.
@@ -144,8 +145,9 @@ namespace malloy::http::server
          *
          * @param resource
          * @param storage_base_path
+         * @return Whether adding the file serving was successful.
          */
-        void add_file_serving(std::string resource, std::filesystem::path storage_base_path);
+        bool add_file_serving(std::string resource, std::filesystem::path storage_base_path);
 
         /**
          * Adds a redirection rule.
@@ -153,8 +155,9 @@ namespace malloy::http::server
          * @param resource_old
          * @param resource_new
          * @param status The HTTP status code to use. This must be a 3xx status code.
+         * @return Whether adding the redirect was successful.
          */
-        void add_redirect(http::status status, std::string&& resource_old, std::string&& resource_new);
+        bool add_redirect(http::status status, std::string&& resource_old, std::string&& resource_new);
 
         /**
          * Handle a request.

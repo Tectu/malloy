@@ -23,7 +23,7 @@ void router::set_logger(std::shared_ptr<spdlog::logger> logger)
     validate_logger();
 }
 
-void router::add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
+bool router::add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
 {
     validate_logger();
 
@@ -33,7 +33,7 @@ void router::add(const method_type method, const std::string_view target, std::f
     // Check handler
     if (not handler) {
         m_logger->warn("route has invalid handler. ignoring.");
-        return;
+        return false;
     }
 
     // Build regex
@@ -43,7 +43,7 @@ void router::add(const method_type method, const std::string_view target, std::f
     }
     catch (const std::regex_error& e) {
         m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
-        return;
+        return false;
     }
 
     // Build route
@@ -58,8 +58,10 @@ void router::add(const method_type method, const std::string_view target, std::f
     }
     catch (const std::exception& e) {
         m_logger->critical("could not add route: {}", e.what());
-        return;
+        return false;
     }
+
+    return true;
 }
 
 std::shared_ptr<router> router::add_subrouter(std::string resource)
@@ -92,7 +94,7 @@ std::shared_ptr<router> router::add_subrouter(std::string resource)
     return sub_router;
 }
 
-void router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
+bool router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
 {
     validate_logger();
 
@@ -105,11 +107,13 @@ void router::add_file_serving(std::string resource, std::filesystem::path storag
     }
     catch (const std::exception& e) {
         m_logger->critical("could not add file serving: {}", e.what());
-        return;
+        return false;
     }
+
+    return true;
 }
 
-void router::add_redirect(const http::status status, std::string&& resource_old, std::string&& resource_new)
+bool router::add_redirect(const http::status status, std::string&& resource_old, std::string&& resource_new)
 {
     validate_logger();
 
@@ -119,7 +123,7 @@ void router::add_redirect(const http::status status, std::string&& resource_old,
     // Sanity check status
     if (static_cast<int>(status) < 300 or static_cast<int>(status) >= 400) {
         m_logger->error("invalid redirection status code. must be one of the 3xxx status codes. received {} instead.", static_cast<int>(status));
-        return;
+        return false;
     }
 
     // Create record
@@ -134,6 +138,8 @@ void router::add_redirect(const http::status status, std::string&& resource_old,
     }
     catch (const std::exception& e) {
         m_logger->critical("could not add redirection record: {}", e.what());
-        return;
+        return false;
     }
+
+    return true;
 }
