@@ -77,7 +77,7 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
 
     // Set the sub-router's logger
     if (m_logger)
-        sub_router->set_logger(m_logger->clone(m_logger->name() + " | router " + resource));
+        sub_router->set_logger(m_logger->clone(m_logger->name() + " | " + resource));
 
     // Add router
     try {
