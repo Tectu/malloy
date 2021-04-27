@@ -27,8 +27,6 @@ void router::add(const method_type method, const std::string_view target, std::f
 {
     validate_logger();
 
-    m_logger->trace("add [route]");
-
     // Log
     m_logger->debug("adding route: {}", target);
 
@@ -68,8 +66,6 @@ std::shared_ptr<router> router::add_subrouter(std::string resource)
 {
     validate_logger();
 
-    m_logger->trace("add [router]");
-
     // Log
     m_logger->debug("adding router: {}", resource);
 
@@ -100,8 +96,6 @@ void router::add_file_serving(std::string resource, std::filesystem::path storag
 {
     validate_logger();
 
-    m_logger->trace("add [file serving]");
-
     // Log
     m_logger->debug("adding file serving location: {} -> {}", resource, storage_base_path.string());
 
@@ -118,8 +112,6 @@ void router::add_file_serving(std::string resource, std::filesystem::path storag
 void router::add_redirect(const http::status status, std::string&& resource_old, std::string&& resource_new)
 {
     validate_logger();
-
-    m_logger->trace("add [redirection]");
 
     // Log
     m_logger->debug("adding redirection: {}: {} -> {}", static_cast<int>(status), resource_old, resource_new);
