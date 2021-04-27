@@ -135,10 +135,11 @@ namespace malloy::http::server
         /**
          * Add a sub-router for a specific resource.
          *
-         * @param resource
-         * @return Pointer to the created sub-router (if any)
+         * @param resource The resource base path for the sub-router.
+         * @param sub_router The sub-router.
+         * @return Whether adding the sub-router was successful.
          */
-        std::shared_ptr<router> add_subrouter(std::string resource);
+        bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
 
         /**
          * Add a file-serving location.

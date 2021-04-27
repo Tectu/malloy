@@ -34,41 +34,43 @@ int main(int argc, char* argv[])
             return res;
         });
 
-        // Create nested router 1
-        auto nested_router_1 = router->add_subrouter("/router1");
-        nested_router_1->add(method::get, "/", [](const auto& req){
+        // Create sub-router 1
+        auto sub_router_1 = std::make_shared<server::router>();
+        sub_router_1->add(method::get, "/", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 1 target \"/\"";
             return resp;
         });
-        nested_router_1->add(method::get, "/foo", [](const auto& req){
+        sub_router_1->add(method::get, "/foo", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 1 target \"/foo\"";
             return resp;
         });
-        nested_router_1->add(method::get, "/foo/bar", [](const auto& req){
+        sub_router_1->add(method::get, "/foo/bar", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 1 target \"/foo/bar\"";
             return resp;
         });
-        nested_router_1->add(method::get, "/foo/\\w+", [](const auto& req){
+        sub_router_1->add(method::get, "/foo/\\w+", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 1 target \"/foo/\\w+\"";
             return resp;
         });
+        router->add_subrouter("/router1", sub_router_1);
 
-        // Create nested router 2
-        auto nested_router_2 = router->add_subrouter("/router2");
-        nested_router_2->add(method::get, "/", [](const auto& req){
+        // Create sub-router 2
+        auto sub_router_2 = std::make_shared<server::router>();
+        sub_router_2->add(method::get, "/", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 2 target \"/\"";
             return resp;
         });
-        nested_router_2->add(method::get, "/foo", [](const auto& req){
+        sub_router_2->add(method::get, "/foo", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 2 target \"/foo\"";
             return resp;
         });
+        router->add_subrouter("/router2", sub_router_2);
     }
 
     // Start

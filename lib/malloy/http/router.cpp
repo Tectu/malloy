@@ -55,34 +55,39 @@ bool router::add(const method_type method, const std::string_view target, std::f
     return true;
 }
 
-std::shared_ptr<router> router::add_subrouter(std::string resource)
+bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_router)
 {
     // Log
     if (m_logger)
         m_logger->debug("adding router: {}", resource);
 
     // Sanity check target
-    {
-        if (resource.empty()) {
-            if (m_logger)
-                m_logger->error("invalid target \"{}\". not adding router.", resource);
-            return { };
-        }
+    if (resource.empty()) {
+        if (m_logger)
+            m_logger->error("invalid target \"{}\". not adding router.", resource);
+        return false;
     }
 
-    // Create the sub-router
-    auto sub_router = std::make_shared<router>(m_logger->clone("router " + resource));
+    // Sanity check router
+    if (not sub_router) {
+        if (m_logger)
+            m_logger->error("invalid sub-router supplied.");
+        return false;
+    }
+
+    // Set the sub-router's logger
+    if (m_logger)
+        sub_router->set_logger(m_logger->clone(m_logger->name() + " | router " + resource));
 
     // Add router
     try {
-        m_routers.try_emplace(std::move(resource), sub_router);
+        m_routers.try_emplace(std::move(resource), std::move(sub_router));
     }
     catch (const std::exception& e) {
-        log_or_throw(e, spdlog::level::critical, "could not add router: {}", e.what());
-        return { };
+        return log_or_throw(e, spdlog::level::critical, "could not add router: {}", e.what());
     }
 
-    return sub_router;
+    return true;
 }
 
 bool router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
