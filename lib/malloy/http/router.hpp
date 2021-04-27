@@ -331,9 +331,28 @@ namespace malloy::http::server
         bool m_generate_preflights = false;
 
         /**
-         * This will throw an std::runtime_error if m_logger is invalid.
+         * Adds a message to the log or throws an exception if no logger is available.
+         *
+         * @tparam FormatString
+         * @tparam Args
+         * @param exception
+         * @param level
+         * @param fmt
+         * @param args
+         * @return
          */
-        void validate_logger();
+        template<typename FormatString, typename... Args>
+        bool log_or_throw(const std::exception& exception, const spdlog::level::level_enum level, const FormatString& fmt, Args&&...args)
+        {
+            if (m_logger) {
+                m_logger->log(level, fmt, std::forward<Args>(args)...);
+                return false;
+            }
+
+            else {
+                throw exception;
+            }
+        }
 
         /**
          * Send a response.
