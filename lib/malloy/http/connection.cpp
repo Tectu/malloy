@@ -1,12 +1,12 @@
-#include "session.hpp"
+#include "connection.hpp"
 #include "router.hpp"
-#include "../websocket/session.hpp"
+#include "../websocket/connection.hpp"
 
 #include <spdlog/spdlog.h>
 
 using namespace malloy::http::server;
 
-session::session(
+connection::connection(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::ip::tcp::socket&& socket,
     std::shared_ptr<router> router,
@@ -29,22 +29,22 @@ session::session(
         throw std::runtime_error("did not receive a valid router instance.");
 }
 
-void session::run()
+void connection::run()
 {
     m_logger->trace("run()");
 
     // We need to be executing within a strand to perform async operations
-    // on the I/O objects in this session. Although not strictly necessary
+    // on the I/O objects in this connection. Although not strictly necessary
     // for single-threaded contexts, this example code is written to be
     // thread-safe by default.
     boost::asio::dispatch(
             m_stream.get_executor(),
             boost::beast::bind_front_handler(
-                    &session::do_read,
+                    &connection::do_read,
                     this->shared_from_this()));
 }
 
-void session::do_read()
+void connection::do_read()
 {
     m_logger->trace("do_read()");
 
@@ -64,11 +64,11 @@ void session::do_read()
             m_buffer,
             *m_parser,
             boost::beast::bind_front_handler(
-                    &session::on_read,
+                    &connection::on_read,
                     shared_from_this()));
 }
 
-void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
+void connection::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
 {
     m_logger->trace("on_read(): bytes read: {}", bytes_transferred);
 
@@ -84,16 +84,16 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
 
     // See if it is a WebSocket Upgrade
     if (boost::beast::websocket::is_upgrade(m_parser->get())) {
-        m_logger->info("upgrading HTTP session to WS session.");
+        m_logger->info("upgrading HTTP connection to WS connection.");
 
-        // Create a websocket session, transferring ownership
+        // Create a websocket connection, transferring ownership
         // of both the socket and the HTTP request.
-        auto ws_session = std::make_shared<malloy::websocket::server::session>(
-            m_logger->clone("websocket_session"),
+        auto ws_connection = std::make_shared<malloy::websocket::server::connection>(
+            m_logger->clone("websocket_connection"),
             m_stream.release_socket(),
             m_websocket_handler
         );
-        ws_session->do_accept(m_parser->release());
+        ws_connection->do_accept(m_parser->release());
         return;
     }
 
@@ -112,7 +112,7 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
     m_router->handle_request(*m_doc_root, std::move(req), m_queue);
 }
 
-void session::on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
+void connection::on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
 {
     m_logger->trace("on_write(): bytes written: {}", bytes_transferred);
 
@@ -135,7 +135,7 @@ void session::on_write(bool close, boost::beast::error_code ec, std::size_t byte
     }
 }
 
-void session::do_close()
+void connection::do_close()
 {
     m_logger->trace("do_close()");
 
@@ -144,5 +144,5 @@ void session::do_close()
     m_stream.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
 
     // At this point the connection is closed gracefully
-    spdlog::info("closed HTTP session gracefully.");
+    spdlog::info("closed HTTP connection gracefully.");
 }

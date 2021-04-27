@@ -23,12 +23,12 @@ namespace malloy::http::server
     class router;
 
     /**
-     * An HTTP session.
+     * An HTTP connection.
      *
      * @brief Handles an HTTP server connection.
      */
-    class session :
-        public std::enable_shared_from_this<session>
+    class connection:
+        public std::enable_shared_from_this<connection>
     {
         /**
          * This queue is used for HTTP pipelining.
@@ -48,11 +48,11 @@ namespace malloy::http::server
                 virtual void operator()() = 0;
             };
 
-            session& m_self;
+            connection& m_self;
             std::vector<std::unique_ptr<work>> m_items;
 
         public:
-            explicit queue(session& self) :
+            explicit queue(connection& self) :
                 m_self(self)
             {
                 static_assert(limit > 0, "queue limit must be positive");
@@ -86,10 +86,10 @@ namespace malloy::http::server
                 struct work_impl :
                     work
                 {
-                    session& m_self;
+                    connection& m_self;
                     boost::beast::http::message<isRequest, Body, Fields> m_msg;
 
-                    work_impl(session& self, boost::beast::http::message<isRequest, Body, Fields>&& msg) :
+                    work_impl(connection& self, boost::beast::http::message<isRequest, Body, Fields>&& msg) :
                         m_self(self),
                         m_msg(std::move(msg))
                     {
@@ -101,7 +101,7 @@ namespace malloy::http::server
                             m_self.m_stream,
                             m_msg,
                             boost::beast::bind_front_handler(
-                                &session::on_write,
+                                &connection::on_write,
                                 m_self.shared_from_this(),
                                 m_msg.need_eof()));
                     }
@@ -126,7 +126,7 @@ namespace malloy::http::server
         };
 
         /**
-         * The session configuration.
+         * The connection configuration.
          */
         struct config cfg;
 
@@ -139,7 +139,7 @@ namespace malloy::http::server
          * @param http_doc_root
          * @param websocket_handler
          */
-        session(
+        connection(
             std::shared_ptr<spdlog::logger> logger,
             boost::asio::ip::tcp::socket&& socket,
             std::shared_ptr<class router> router,
@@ -148,7 +148,7 @@ namespace malloy::http::server
         );
 
         /**
-         * Start the session.
+         * Start the connection.
          */
         void run();
 

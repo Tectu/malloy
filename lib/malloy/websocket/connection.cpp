@@ -1,13 +1,13 @@
-#include "session.hpp"
+#include "connection.hpp"
 
 #include <spdlog/spdlog.h>
 
 using namespace malloy::websocket::server;
 
 // Agent string
-const std::string session::agent_string = std::string(BOOST_BEAST_VERSION_STRING) + " malloy-server";
+const std::string connection::agent_string = std::string(BOOST_BEAST_VERSION_STRING) + " malloy-server";
 
-session::session(
+connection::connection(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::ip::tcp::socket&& socket,
     malloy::websocket::handler_type handler
@@ -24,7 +24,7 @@ session::session(
     m_websocket.binary(true);
 }
 
-void session::write(std::string&& payload)
+void connection::write(std::string&& payload)
 {
     m_logger->trace("write(). payload size: {}", payload.size());
 
@@ -35,11 +35,11 @@ void session::write(std::string&& payload)
     // Issue asynchronous write
     m_websocket.async_write(
         boost::asio::buffer(std::move(payload)),
-        boost::beast::bind_front_handler(&session::on_write, shared_from_this())
+        boost::beast::bind_front_handler(&connection::on_write, shared_from_this())
     );
 }
 
-void session::on_accept(const boost::beast::error_code ec)
+void connection::on_accept(const boost::beast::error_code ec)
 {
     m_logger->trace("on_accept()");
 
@@ -53,21 +53,21 @@ void session::on_accept(const boost::beast::error_code ec)
     do_read();
 }
 
-void session::do_read()
+void connection::do_read()
 {
     m_logger->trace("do_read()");
 
     // Read a message into our buffer
-    m_websocket.async_read(m_buffer, boost::beast::bind_front_handler(&session::on_read, shared_from_this()));
+    m_websocket.async_read(m_buffer, boost::beast::bind_front_handler(&connection::on_read, shared_from_this()));
 }
 
-void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
+void connection::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
 {
     m_logger->trace("on_read(): bytes read: {}", bytes_transferred);
 
-    // This indicates that the session was closed
+    // This indicates that the connection was closed
     if (ec == boost::beast::websocket::error::closed) {
-        m_logger->info("on_read(): session was closed.");
+        m_logger->info("on_read(): connection was closed.");
         return;
     }
 
@@ -89,7 +89,7 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
     // Handle the payload
     if (m_handler) {
         try {
-            m_handler(payload, std::bind(&session::write, this, std::placeholders::_1));
+            m_handler(payload, std::bind(&connection::write, this, std::placeholders::_1));
         }
         catch (const std::exception& e) {
             m_logger->critical("reader exception: {}", e.what());
@@ -106,7 +106,7 @@ void session::on_read(boost::beast::error_code ec, std::size_t bytes_transferred
     do_read();
 }
 
-void session::on_write(boost::beast::error_code ec, std::size_t bytes_transferred)
+void connection::on_write(boost::beast::error_code ec, std::size_t bytes_transferred)
 {
     m_logger->trace("on_write(): bytes written: {}", bytes_transferred);
 

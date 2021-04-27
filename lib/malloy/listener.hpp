@@ -28,7 +28,7 @@ namespace malloy::server
 {
 
     /**
-      * @brief Accepts incoming connections and launches the sessions.
+      * @brief Accepts incoming connections.
       */
     class listener :
         public std::enable_shared_from_this<listener>

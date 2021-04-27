@@ -1,6 +1,8 @@
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
+		connection.cpp
+		connection.hpp
         generator.cpp
         generator.hpp
         http.hpp
@@ -9,8 +11,6 @@ target_sources(
         route.hpp
         router.cpp
         router.hpp
-        session.cpp
-        session.hpp
         uri.cpp
         uri.hpp
 )

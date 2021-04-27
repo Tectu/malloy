@@ -1,6 +1,6 @@
 #include "listener.hpp"
 
-#include "http/session.hpp"
+#include "http/connection.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
@@ -62,7 +62,7 @@ void listener::run()
     m_logger->trace("listener::run()");
 
     // We need to be executing within a strand to perform async operations
-    // on the I/O objects in this session. Although not strictly necessary
+    // on the I/O objects in this connection. Although not strictly necessary
     // for single-threaded contexts, this example code is written to be
     // thread-safe by default.
     boost::asio::dispatch(
@@ -103,17 +103,17 @@ void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::sock
         socket.remote_endpoint().port()
     );
 
-    // Create the http session
-    auto session = std::make_shared<http::server::session>(
-        m_logger->clone("http_session"),
+    // Create the http connection
+    auto connection = std::make_shared<http::server::connection>(
+        m_logger->clone("http_connection"),
         std::move(socket),
         m_router,
         m_doc_root,
         m_websocket_handler
     );
 
-    // Run the HTTP session
-    session->run();
+    // Run the HTTP connection
+    connection->run();
 
     // Accept another connection
     do_accept();

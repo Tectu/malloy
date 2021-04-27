@@ -1,8 +1,8 @@
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
-        session.cpp
-        session.hpp
+        connection.cpp
+        connection.hpp
         types.hpp
         websocket.hpp
 )

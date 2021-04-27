@@ -21,10 +21,10 @@ namespace malloy::websocket::server
     using namespace malloy::websocket;
 
     /**
-     * A websocket session.
+     * A websocket connection.
      */
-    class session :
-        public std::enable_shared_from_this<session>
+    class connection :
+        public std::enable_shared_from_this<connection>
     {
     public:
         /**
@@ -38,7 +38,7 @@ namespace malloy::websocket::server
          * @param logger The logger instance to use.
          * @param socket The socket to use.
          */
-        session(std::shared_ptr<spdlog::logger> logger, boost::asio::ip::tcp::socket&& socket, handler_type handler);
+        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::ip::tcp::socket&& socket, handler_type handler);
 
         /**
          * Start the asynchronous accept operation.
@@ -66,7 +66,7 @@ namespace malloy::websocket::server
             m_websocket.async_accept(
                 req,
                 boost::beast::bind_front_handler(
-                    &session::on_accept,
+                    &connection::on_accept,
                     shared_from_this()));
         }
 
