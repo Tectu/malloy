@@ -1,7 +1,7 @@
 # Overview
 Malloy is a small, embeddable HTTP & WebSocket server built on top of [boost.beast](https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/index.html).
 
-The main use case for this library is an existing C++ project which needs to embedd an HTTP and/or WebSocket server.
+The main use case for this library is a C++ project which needs to embedd an HTTP and/or WebSocket server.
 
 # Features
 Currently implemented:
@@ -12,6 +12,8 @@ Currently implemented:
   - Sub-routers
   - Redirections
   - File serving locations
+- Cookies
+- Sessions
 - Utility wrapper to setup `boost::asio` I/O context, worker threads and more.
 
 Coming soon™:
