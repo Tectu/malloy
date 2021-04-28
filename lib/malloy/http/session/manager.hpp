@@ -47,6 +47,7 @@ namespace malloy::http::sessions
         std::shared_ptr<storage> m_storage;
         std::chrono::seconds m_max_lifetime;
         std::mutex m_lock; // protects sessions
+        std::string m_cookie_name = "sessionId";      // The name of the session cookie
 
         /**
          * Generates a new, unique session ID

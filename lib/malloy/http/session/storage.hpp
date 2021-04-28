@@ -30,7 +30,7 @@ namespace malloy::http::sessions
          * @return
          */
         [[nodiscard]]
-        virtual std::shared_ptr<session> get_session(id_type id) = 0;
+        virtual std::shared_ptr<session> get_session(const id_type& id) = 0;
 
         /**
          * Destroy an existing session.

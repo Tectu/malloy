@@ -46,9 +46,20 @@ namespace malloy::http
             m_uri = std::move(u);
 
             // Cookies
-            const auto& cookie_list = boost::beast::http::param_list( base_type::operator[](boost::beast::http::field::cookie) );
-            for (const auto& param : cookie_list)
-                std::cout << "Cookie '" << param.first << "' has value '" << param.second << "'\n";
+            {
+                const auto& [begin, end] = base().equal_range(field::cookie);
+                for (auto it = begin; it != end; it++) {
+                    const auto& str = it->value();
+
+                    const auto& sep_pos = it->value().find('=');
+                    if (sep_pos == std::string::npos)
+                        continue;
+
+                    std::string key{ str.substr(0, sep_pos) };
+                    std::string value{ str.substr(sep_pos+1) };
+                    m_cookies.insert_or_assign(std::move(key), std::move(value));
+                }
+            }
         }
 
         /**
@@ -102,9 +113,51 @@ namespace malloy::http
         [[nodiscard]]
         class uri& uri() noexcept { return m_uri; }
 
+        /**
+         * Returns the request's cookies.
+         *
+         * @return The cookies.
+         */
+        [[nodiscard]]
+        std::unordered_map<std::string, std::string> cookies() const noexcept
+        {
+            return m_cookies;
+        }
+
+        /**
+         * Checks whether a particular cookie is present.
+         *
+         * @return Whether the specified cookie is present.
+         */
+        [[nodiscard]]
+        bool has_cookie(const std::string& name) const
+        {
+            return m_cookies.contains(name);
+        }
+
+        /**
+         * Gets the value of a cookie.
+         */
+        [[nodiscard]]
+        std::string_view cookie(const std::string_view& name) const
+        {
+            const auto& it = std::find_if(
+                std::cbegin(m_cookies),
+                std::cend(m_cookies),
+                [&name]( const auto& pair ) {
+                    return pair.first == name;
+                }
+            );
+
+            if (it == std::cend(m_cookies))
+                return { };
+
+            return it->second;
+        }
+
     private:
         class uri m_uri;
-        std::vector<cookie> m_cookies;
+        std::unordered_map<std::string, std::string> m_cookies;
     };
 
 }

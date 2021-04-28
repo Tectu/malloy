@@ -79,13 +79,13 @@ namespace malloy::http
         status status() const { return result(); }
 
         /**
-         * Sets a cookie.
+         * Adds a cookie.
          *
          * @param c The cookie.
          */
-        void set_cookie(const cookie& c)
+        void add_cookie(const cookie& c)
         {
-            set(boost::beast::http::field::set_cookie, c.to_string());
+            insert(boost::beast::http::field::set_cookie, c.to_string());
         }
     };
 

@@ -53,6 +53,9 @@ int main()
             int counter;
             counter = std::stoi(ses->get("counter").value_or("0"));
 
+            // Store the new counter value
+            ses->set("counter", std::to_string(counter+1));
+
             // Assemble body
             res.body() = "Counter: " + std::to_string(counter);
 

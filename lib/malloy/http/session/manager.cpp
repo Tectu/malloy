@@ -33,9 +33,9 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
     std::lock_guard lock(m_lock);
 
     // Check if session exists
-    if (false) {
+    if (req.has_cookie(m_cookie_name)) {
         // Get the session ID
-        const id_type id = "";
+        const id_type id { req.cookie(m_cookie_name) };
 
         // Return the existing session
         return m_storage->get_session(id);
@@ -52,14 +52,14 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
         // Set the cookie
         // ToDo: Maybe add this as a function to session class?
         cookie c {
-            .name = "sessionId",
+            .name = m_cookie_name,
             .value = id,
             .max_age = { },
             .secure = true,
             .http_only = true,
             .same_site = cookie::same_site_t::strict,
         };
-        resp.set_cookie(c);
+        resp.add_cookie(c);
 
         // Return the newly created session
         return session;
