@@ -175,8 +175,6 @@ namespace malloy::http::server
             Send&& send
         )
         {
-            m_logger->trace("handle_request()");
-
             // Log
             m_logger->debug("handling request: {} {}",
                 std::string_view{ req.method_string().data(), req.method_string().size() },
@@ -184,7 +182,6 @@ namespace malloy::http::server
             );
 
             // Check redirects
-            m_logger->debug("checking redirects...");
             for (const auto& record : m_redirects) {
                 // Check if the resource matches
                 if (record.resource_old not_eq req.uri().resource_string())
@@ -205,7 +202,6 @@ namespace malloy::http::server
             }
 
             // Check sub-routers
-            m_logger->debug("checking sub-routers...");
             for (const auto& [resource_base, router] : m_routers) {
                 // Check match
                 if (not req.uri().resource_starts_with(resource_base))
@@ -225,7 +221,6 @@ namespace malloy::http::server
             }
 
             // Check routes
-            m_logger->debug("checking routes...");
             for (const auto& route : m_routes) {
                 // Generate preflight response (if supposed to)
                 if (m_generate_preflights and (req.method() == method::options)) {
@@ -247,7 +242,6 @@ namespace malloy::http::server
                             &method_strings.back())
                             methods_string += ", ";
                     }
-                    m_logger->debug("preflight allowed methods: {}", methods_string);
 
                     response res{ status::ok };
                     res.set(boost::beast::http::field::content_type, "text/html");
@@ -255,8 +249,6 @@ namespace malloy::http::server
                     res.base().set("Access-Control-Allow-Methods", methods_string);
                     res.base().set("Access-Control-Allow-Headers", "Content-Type");
                     res.base().set("Access-Control-Max-Age", "60");
-
-                    m_logger->debug("sending preflight response.");
 
                     // Send the response
                     send_response(req, std::move(res), std::forward<Send>(send));
@@ -267,8 +259,6 @@ namespace malloy::http::server
 
                 // Handle the route
                 if (route.matches_request(req)) {
-                    m_logger->debug("found matching route.");
-
                     // Check handler validity
                     if (not route.handler) {
                         m_logger->critical("route has no valid handler.");
@@ -287,7 +277,6 @@ namespace malloy::http::server
             }
 
             // Check file servings
-            m_logger->debug("checking file servings...");
             for (const auto& [resource_base, storage_location_base] : m_file_servings) {
                 // Check match
                 if (not req.uri().resource_starts_with(resource_base))
