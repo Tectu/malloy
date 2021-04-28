@@ -1,0 +1,10 @@
+target_sources(
+    ${TARGET_OBJS}
+    PRIVATE
+        manager.cpp
+        manager.hpp
+        session.hpp
+        storage.hpp
+        storage_memory.hpp
+        types.hpp
+)

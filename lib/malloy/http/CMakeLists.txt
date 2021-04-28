@@ -1,8 +1,12 @@
+add_subdirectory(session)
+
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
 		connection.cpp
 		connection.hpp
+		cookie.cpp
+		cookie.hpp
         generator.cpp
         generator.hpp
         http.hpp

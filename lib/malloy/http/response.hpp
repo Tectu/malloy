@@ -1,6 +1,7 @@
 #pragma once
 
 #include "http.hpp"
+#include "cookie.hpp"
 #include "../utils.hpp"
 
 #include <boost/beast/core.hpp>
@@ -76,6 +77,16 @@ namespace malloy::http
          */
         [[nodiscard]]
         status status() const { return result(); }
+
+        /**
+         * Sets a cookie.
+         *
+         * @param c The cookie.
+         */
+        void set_cookie(const cookie& c)
+        {
+            set(boost::beast::http::field::set_cookie, c.to_string());
+        }
     };
 
 }

@@ -1,9 +1,16 @@
 #pragma once
 
+#include "cookie.hpp"
 #include "uri.hpp"
 
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
+
+
+
+#include <iostream>
+
+
 
 namespace malloy::http
 {
@@ -27,10 +34,21 @@ namespace malloy::http
          */
         request(boost::beast::http::request<boost::beast::http::string_body>&& raw)
         {
-            boost::beast::http::request<boost::beast::http::string_body>::operator=(std::move(raw));
+            using namespace boost::beast::http;
 
+            using base_type = boost::beast::http::request<boost::beast::http::string_body>;
+
+            // Underlying
+            base_type::operator=(std::move(raw));
+
+            // URI
             class uri u{ std::string{target().data(), target().size()} };
             m_uri = std::move(u);
+
+            // Cookies
+            const auto& cookie_list = boost::beast::http::param_list( base_type::operator[](boost::beast::http::field::cookie) );
+            for (const auto& param : cookie_list)
+                std::cout << "Cookie '" << param.first << "' has value '" << param.second << "'\n";
         }
 
         /**
@@ -86,6 +104,7 @@ namespace malloy::http
 
     private:
         class uri m_uri;
+        std::vector<cookie> m_cookies;
     };
 
 }
