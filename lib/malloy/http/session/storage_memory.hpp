@@ -53,8 +53,8 @@ namespace malloy::http::sessions
         [[nodiscard]]
         bool update_session(
             [[maybe_unused]] const session& ses,
-            [[maybe_unused]] const session::key_type& key,
-            [[maybe_unused]] const session::value_type& value
+            [[maybe_unused]] const std::string& key,
+            [[maybe_unused]] const std::string& value
         ) override
         {
             // Nothing to do here as this is an in-memory session storage and
