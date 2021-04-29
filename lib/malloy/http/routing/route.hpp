@@ -1,6 +1,6 @@
 #pragma once
 
-#include "request.hpp"
+#include "../request.hpp"
 
 namespace malloy::http::server
 {

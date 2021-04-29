@@ -1,6 +1,6 @@
 #include "malloy/controller.hpp"
 #include "malloy/http/generator.hpp"
-#include "malloy/http/router.hpp"
+#include "malloy/http/routing/router.hpp"
 #include "malloy/http/session/manager.hpp"
 #include "malloy/http/session/session.hpp"
 #include "malloy/http/session/storage_memory.hpp"

@@ -1,0 +1,10 @@
+target_sources(
+    ${TARGET_OBJS}
+    PRIVATE
+        route.hpp
+        route_basic.hpp
+        route_files.hpp
+        route_redirect.hpp
+        router.cpp
+        router.hpp
+)

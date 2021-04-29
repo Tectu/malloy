@@ -1,10 +1,10 @@
 #pragma once
 
 #include "route.hpp"
-#include "request.hpp"
-#include "response.hpp"
-#include "http.hpp"
-#include "generator.hpp"
+#include "../request.hpp"
+#include "../response.hpp"
+#include "../http.hpp"
+#include "../generator.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>

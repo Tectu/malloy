@@ -1,3 +1,4 @@
+add_subdirectory(routing)
 add_subdirectory(session)
 
 target_sources(
@@ -12,12 +13,6 @@ target_sources(
         http.hpp
         request.hpp
         response.hpp
-        route.hpp
-		route_basic.hpp
-		route_files.hpp
-		route_redirect.hpp
-        router.cpp
-        router.hpp
         uri.cpp
         uri.hpp
 )

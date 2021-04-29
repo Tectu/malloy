@@ -1,7 +1,7 @@
 #pragma once
 
 #include "route.hpp"
-#include "generator.hpp"
+#include "../generator.hpp"
 
 #include <boost/beast/http/verb.hpp>
 
