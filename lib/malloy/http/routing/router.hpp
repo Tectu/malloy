@@ -260,6 +260,16 @@ namespace malloy::http::server
         bool m_generate_preflights = false;
 
         /**
+         * Adds a route to the list of routes.
+         *
+         * @note This uses @ref log_or_throw() internally and might therefore throw if no logger is available.
+         *
+         * @param r The route to add.
+         * @return Whether adding the route was successful.
+         */
+        bool add_route(std::shared_ptr<route<request_type, response_type>>&& r);
+
+        /**
          * Adds a message to the log or throws an exception if no logger is available.
          *
          * @tparam FormatString

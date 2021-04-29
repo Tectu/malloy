@@ -17,6 +17,18 @@ void router::set_logger(std::shared_ptr<spdlog::logger> logger)
     m_logger = std::move(logger);
 }
 
+bool router::add_route(std::shared_ptr<route<request_type, response_type>>&& r)
+{
+    try {
+        m_routes.emplace_back(std::move(r));
+    }
+    catch (const std::exception& e) {
+        return log_or_throw(e, spdlog::level::critical, "could not add route: {}", e.what());
+    }
+
+    return true;
+}
+
 bool router::add(const method_type method, const std::string_view target, std::function<response_type(const request_type&)>&& handler)
 {
     // Log
@@ -48,14 +60,7 @@ bool router::add(const method_type method, const std::string_view target, std::f
     route->handler = std::move(handler);
 
     // Add route
-    try {
-        m_routes.emplace_back(std::move(route));
-    }
-    catch (const std::exception& e) {
-        return log_or_throw(e, spdlog::level::critical, "could not add route: {}", e.what());
-    }
-
-    return true;
+    return add_route(std::move(route));
 }
 
 bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_router)
@@ -105,14 +110,7 @@ bool router::add_file_serving(std::string resource, std::filesystem::path storag
     route->base_path = std::move(storage_base_path);
 
     // Add
-    try {
-        m_routes.emplace_back(std::move(route));
-    }
-    catch (const std::exception& e) {
-        return log_or_throw(e, spdlog::level::critical, "could not add file serving: {}", e.what());
-    }
-
-    return true;
+    return add_route(std::move(route));
 }
 
 bool router::add_redirect(const http::status status, std::string&& resource_old, std::string&& resource_new)
@@ -135,12 +133,5 @@ bool router::add_redirect(const http::status status, std::string&& resource_old,
     route->status = status;
 
     // Add
-    try {
-        m_routes.emplace_back(std::move(route));
-    }
-    catch (const std::exception& e) {
-        return log_or_throw(e, spdlog::level::critical, "could not add redirection record: {}", e.what());
-    }
-
-    return true;
+    return add_route(std::move(route));
 }
