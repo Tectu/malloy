@@ -22,7 +22,13 @@ namespace malloy::http::sessions
         {
             auto ses = std::make_shared<session>(
                 std::move(id),
-                std::bind(&storage_memory::update_session, this, std::placeholders::_1)
+                std::bind(
+                    &storage_memory::update_session,
+                    this,
+                    std::placeholders::_1,
+                    std::placeholders::_2,
+                    std::placeholders::_3
+                )
             );
 
             m_sessions.emplace(ses->id(), ses);
@@ -45,7 +51,11 @@ namespace malloy::http::sessions
         }
 
         [[nodiscard]]
-        bool update_session([[maybe_unused]] const session& ses) override
+        bool update_session(
+            [[maybe_unused]] const session& ses,
+            [[maybe_unused]] const session::key_type& key,
+            [[maybe_unused]] const session::value_type& value
+        ) override
         {
             // Nothing to do here as this is an in-memory session storage and
             // sessions already save the values in their own memory.
@@ -55,6 +65,6 @@ namespace malloy::http::sessions
 
     private:
         std::unordered_map<id_type, std::shared_ptr<session>> m_sessions;
-    };
 
+    };
 }

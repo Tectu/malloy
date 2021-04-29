@@ -43,10 +43,16 @@ namespace malloy::http::sessions
          * Session values were modified. Update the underlying storage accordingly.
          *
          * @param ses The session.
+         * @param key The key.
+         * @param value The new value.
          * @return Whether the update was successful.
          */
         [[nodiscard]]
-        virtual bool update_session(const session& ses) = 0;
+        virtual bool update_session(
+            [[maybe_unused]] const session& ses,
+            [[maybe_unused]] const session::key_type& key,
+            [[maybe_unused]] const session::value_type& value
+        ) = 0;
     };
 
 }

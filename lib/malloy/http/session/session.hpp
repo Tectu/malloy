@@ -9,12 +9,23 @@
 namespace malloy::http::sessions
 {
 
+    /**
+     * This class represents a session.
+     *
+     * This is a classic implementation for achieving a stateful session over stateless HTTP.
+     * It works by generating a server-side session using an object of this class and sending the
+     * session ID to the client as a cookie. The client will send back this cookie on sub-sequent
+     * requests through which the server can retrieve the corresponding session ID.
+     *
+     * Note that the session cookie should be marked 'Secure' and 'HttpOnly' to increase protection
+     * on the client side.
+     */
     struct session
     {
         using key_type    = std::string;
         using value_type  = std::string;
         using id_type     = std::string;
-        using update_cb_t = std::function<void(const session&)>;
+        using update_cb_t = std::function<void(const session&, const key_type& key, const value_type& value)>;
 
         session(id_type&& id, update_cb_t update_cb) :
             m_id(std::move(id)),
@@ -29,7 +40,7 @@ namespace malloy::http::sessions
             m_data.insert_or_assign(key, value);
 
             if (m_update_cb)
-                m_update_cb(*this);
+                m_update_cb(*this, key, value);
         }
 
         std::optional<key_type> get(const key_type& key) const
