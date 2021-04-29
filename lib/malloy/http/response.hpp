@@ -1,6 +1,6 @@
 #pragma once
 
-#include "http.hpp"
+#include "types.hpp"
 #include "cookie.hpp"
 #include "../utils.hpp"
 

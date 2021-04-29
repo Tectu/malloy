@@ -13,6 +13,7 @@ target_sources(
         http.hpp
         request.hpp
         response.hpp
+		types.hpp
         uri.cpp
         uri.hpp
 )
