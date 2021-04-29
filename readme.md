@@ -12,6 +12,7 @@ Currently implemented:
   - Sub-routers
   - Redirections
   - File serving locations
+  - Automatic preflight responses (optional)
 - Cookies
 - Sessions
 - Utility wrapper to setup `boost::asio` I/O context, worker threads and more.
