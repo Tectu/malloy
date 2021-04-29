@@ -25,6 +25,9 @@ bool router::add_route(std::shared_ptr<route<request_type, response_type>>&& r)
     catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add route: {}", e.what());
     }
+    catch (...) {
+        return log_or_throw(std::runtime_error("unknown exception"), spdlog::level::critical, "could not add route. unknown exception.");
+    }
 
     return true;
 }
