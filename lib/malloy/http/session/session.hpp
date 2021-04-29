@@ -25,7 +25,7 @@ namespace malloy::http::sessions
         using key_type    = std::string;
         using value_type  = std::string;
         using id_type     = std::string;
-        using update_cb_t = std::function<void(const session&, const key_type& key, const value_type& value)>;
+        using update_cb_t = std::function<bool(const session&, const key_type& key, const value_type& value)>;
 
         session(id_type&& id, update_cb_t update_cb) :
             m_id(std::move(id)),
@@ -37,10 +37,13 @@ namespace malloy::http::sessions
 
         void set(const key_type& key, value_type value)
         {
-            m_data.insert_or_assign(key, value);
+            if (not m_update_cb)
+                return;
 
-            if (m_update_cb)
-                m_update_cb(*this, key, value);
+            if (not m_update_cb(*this, key, value))
+                return;
+
+            m_data.insert_or_assign(key, value);
         }
 
         std::optional<key_type> get(const key_type& key) const
