@@ -32,22 +32,21 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
     // Acquire the mutex
     std::lock_guard lock(m_lock);
 
-    // Check if session exists
-    if (req.has_cookie(m_cookie_name)) {
-        // Get the session ID
-        const id_type id { req.cookie(m_cookie_name) };
+    std::shared_ptr<session> session;
 
-        // Return the existing session
-        return m_storage->get_session(id);
+    // Get existing session (if any)
+    if (req.has_cookie(m_cookie_name)) {
+        const id_type id { req.cookie(m_cookie_name) };
+        session = m_storage->get_session(id);
     }
 
     // Otherwise create a new one
-    else {
+    if (not session) {
         // Generate a new session ID
         const id_type id = generate_session_id();
 
         // Create a new session
-        auto session = m_storage->create_session(id);
+        session = m_storage->create_session(id);
 
         // Set the cookie
         // ToDo: Maybe add this as a function to session class?
@@ -60,12 +59,9 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
             .same_site = cookie::same_site_t::strict,
         };
         resp.add_cookie(c);
-
-        // Return the newly created session
-        return session;
     }
 
-    return { };
+    return session;
 }
 
 id_type manager::generate_session_id()
