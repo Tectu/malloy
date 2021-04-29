@@ -13,6 +13,9 @@ target_sources(
         request.hpp
         response.hpp
         route.hpp
+		route_basic.hpp
+		route_files.hpp
+		route_redirect.hpp
         router.cpp
         router.hpp
         uri.cpp

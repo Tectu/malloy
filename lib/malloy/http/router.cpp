@@ -1,4 +1,7 @@
 #include "router.hpp"
+#include "route_basic.hpp"
+#include "route_files.hpp"
+#include "route_redirect.hpp"
 
 #include <stdexcept>
 
@@ -39,14 +42,14 @@ bool router::add(const method_type method, const std::string_view target, std::f
     }
 
     // Build route
-    route_type r;
-    r.rule = std::move(regex);
-    r.method = method;
-    r.handler = std::move(handler);
+    auto route = std::make_shared<route_basic<request_type, response_type>>();
+    route->resource_base = std::move(regex);
+    route->method = method;
+    route->handler = std::move(handler);
 
     // Add route
     try {
-        m_routes.emplace_back(std::move(r));
+        m_routes.emplace_back(std::move(route));
     }
     catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add route: {}", e.what());
@@ -81,7 +84,7 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
 
     // Add router
     try {
-        m_routers.try_emplace(std::move(resource), std::move(sub_router));
+        m_sub_routers.try_emplace(std::move(resource), std::move(sub_router));
     }
     catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add router: {}", e.what());
@@ -96,9 +99,14 @@ bool router::add_file_serving(std::string resource, std::filesystem::path storag
     if (m_logger)
         m_logger->debug("adding file serving location: {} -> {}", resource, storage_base_path.string());
 
+    // Create route
+    auto route = std::make_shared<route_files<request_type, response_type>>();
+    route->resource_base = resource;
+    route->base_path = std::move(storage_base_path);
+
     // Add
     try {
-        m_file_servings.try_emplace(std::move(resource), std::move(storage_base_path));
+        m_routes.emplace_back(std::move(route));
     }
     catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add file serving: {}", e.what());
@@ -120,15 +128,15 @@ bool router::add_redirect(const http::status status, std::string&& resource_old,
         return false;
     }
 
-    // Create record
-    redirection_record record;
-    record.status = status;
-    record.resource_old = std::move(resource_old);
-    record.resource_new = std::move(resource_new);
+    // Create route
+    auto route = std::make_shared<route_redirect<request_type, response_type>>();
+    route->resource_old = std::move(resource_old);
+    route->resource_new = std::move(resource_new);
+    route->status = status;
 
     // Add
     try {
-        m_redirects.emplace_back(std::move(record));
+        m_routes.emplace_back(std::move(route));
     }
     catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add redirection record: {}", e.what());

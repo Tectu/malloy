@@ -56,11 +56,6 @@ namespace malloy::http::server
         using response_type = malloy::http::response;
 
         /**
-         * The router type to use.
-         */
-        using route_type    = route<request_type, response_type>;
-
-        /**
          * Default constructor.
          */
         router() = default;
@@ -181,28 +176,8 @@ namespace malloy::http::server
                 req.uri().resource_string()
             );
 
-            // Check redirects
-            for (const auto& record : m_redirects) {
-                // Check if the resource matches
-                if (record.resource_old not_eq req.uri().resource_string())
-                    continue;
-
-                // Log
-                m_logger->debug("found matching redirection record: {} -> {}", record.resource_old, record.resource_new);
-
-                // Create the response
-                response resp{ record.status };
-                resp.set("Location", record.resource_new);
-
-                // Send the response
-                send_response(req, std::move(resp), std::forward<Send>(send));
-
-                // We're done with handling this request
-                return;
-            }
-
             // Check sub-routers
-            for (const auto& [resource_base, router] : m_routers) {
+            for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
                 if (not req.uri().resource_starts_with(resource_base))
                     continue;
@@ -222,7 +197,13 @@ namespace malloy::http::server
 
             // Check routes
             for (const auto& route : m_routes) {
+                // Check match
+                if (not route->matches(req))
+                    continue;
+
                 // Generate preflight response (if supposed to)
+                // ToDo
+                /*
                 if (m_generate_preflights and (req.method() == method::options)) {
                     m_logger->debug("automatically constructing preflight response.");
 
@@ -230,8 +211,8 @@ namespace malloy::http::server
                     std::vector<std::string> method_strings;
                     for (const auto& route : m_routes) {
                         if (not route.matches_resource(std::string{
-                            req.target().data(),
-                            req.target().size()}))
+                                req.target().data(),
+                                req.target().size()}))
                             continue;
                         method_strings.emplace_back(boost::beast::http::to_string(route.method));
                     }
@@ -256,42 +237,12 @@ namespace malloy::http::server
                     // We're done handling this request
                     return;
                 }
+                */
 
-                // Handle the route
-                if (route.matches_request(req)) {
-                    // Check handler validity
-                    if (not route.handler) {
-                        m_logger->critical("route has no valid handler.");
-                        break;
-                    }
+                // Generate the response for the request
+                auto resp = route->handle(req);
 
-                    // Invoke the route's handler
-                    auto resp = route.handler(req);
-
-                    // Send the response
-                    send_response(req, std::move(resp), std::forward<Send>(send));
-
-                    // We're done handling this request
-                    return;
-                }
-            }
-
-            // Check file servings
-            for (const auto& [resource_base, storage_location_base] : m_file_servings) {
-                // Check match
-                if (not req.uri().resource_starts_with(resource_base))
-                    continue;
-
-                // Chop request resource path
-                req.uri().chop_resource(resource_base);
-
-                // Log
-                m_logger->debug("serving static file on {}", req.uri().resource_string());
-
-                // Create response
-                auto resp = generator::file(req, storage_location_base);
-
-                // Send response
+                // Send the response
                 send_response(req, std::move(resp), std::forward<Send>(send));
 
                 // We're done handling this request
@@ -303,21 +254,9 @@ namespace malloy::http::server
         }
 
     private:
-        /**
-         * A record representing a redirection.
-         */
-        struct redirection_record
-        {
-            http::status status;
-            std::string resource_old;
-            std::string resource_new;
-        };
-
         std::shared_ptr<spdlog::logger> m_logger;
-        std::vector<redirection_record> m_redirects;
-        std::vector<route_type> m_routes;
-        std::unordered_map<std::string, std::shared_ptr<router>> m_routers;
-        std::unordered_map<std::string, std::filesystem::path> m_file_servings;
+        std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
+        std::vector<std::shared_ptr<route<request_type, response_type>>> m_routes;
         bool m_generate_preflights = false;
 
         /**

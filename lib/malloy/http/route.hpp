@@ -1,11 +1,5 @@
 #pragma once
 
-#include <regex>
-
-#include <boost/beast/http/verb.hpp>
-#include <boost/beast/http/parser.hpp>
-#include <boost/beast/http/string_body.hpp>
-
 #include "request.hpp"
 
 namespace malloy::http::server
@@ -15,31 +9,8 @@ namespace malloy::http::server
         typename Request,
         typename Response
     >
-    class route
+    struct route
     {
-    public:
-        /**
-         * The method type to use.
-         */
-        using method_type  = boost::beast::http::verb;
-
-        /**
-         * The method this route matches.
-         */
-        method_type method;
-
-        /**
-         * The rule to be applied to the URI.
-         */
-        std::regex rule;
-
-        /**
-         * The execution handler.
-         *
-         * This handler will be executed by the @ref router if the route matches.
-         */
-        std::function<Response(const Request&)> handler;
-
         /**
          * Default constructor.
          */
@@ -81,39 +52,21 @@ namespace malloy::http::server
         route& operator=(route&& rhs) noexcept = default;
 
         /**
-         * Checks whether this route would match the specified resource.
-         *
-         * @param resource The resource to check.
-         * @return `true` if this route matches, `false` otherwise.
-         */
-        [[nodiscard]]
-        bool matches_resource(const std::string& resource) const
-        {
-            std::smatch match_result;
-            return std::regex_match(resource, match_result, rule);
-        }
-
-        /**
          * Checks whether this route would match the specified request.
          *
          * @param req The request to check.
          * @return `true` if this route matches, `false` otherwise.
          */
         [[nodiscard]]
-        bool matches_request(const Request& req) const
-        {
-            // Check method
-            if (req.method() not_eq method)
-                return false;
+        virtual bool matches(const Request& req) const = 0;
 
-            // Check rule
-            const std::string resource{ req.uri().raw() };
-            if (not matches_resource(resource))
-                return false;
-
-            return true;
-        }
-
+        /**
+         * The execution handler.
+         *
+         * This handler will be executed by the @ref router if the route matches.
+         */
+        [[nodiscard]]
+        virtual Response handle(const Request& req) const = 0;
     };
 
 }
