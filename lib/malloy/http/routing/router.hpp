@@ -202,42 +202,19 @@ namespace malloy::http::server
                     continue;
 
                 // Generate preflight response (if supposed to)
-                // ToDo
-                /*
                 if (m_generate_preflights and (req.method() == method::options)) {
+                    // Log
                     m_logger->debug("automatically constructing preflight response.");
 
-                    // Methods
-                    std::vector<std::string> method_strings;
-                    for (const auto& route : m_routes) {
-                        if (not route.matches_resource(std::string{
-                                req.target().data(),
-                                req.target().size()}))
-                            continue;
-                        method_strings.emplace_back(boost::beast::http::to_string(route.method));
-                    }
-                    std::string methods_string;
-                    for (const auto &str : method_strings) {
-                        methods_string += str;
-                        if (&str not_eq
-                            &method_strings.back())
-                            methods_string += ", ";
-                    }
-
-                    response res{ status::ok };
-                    res.set(boost::beast::http::field::content_type, "text/html");
-                    res.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
-                    res.base().set("Access-Control-Allow-Methods", methods_string);
-                    res.base().set("Access-Control-Allow-Headers", "Content-Type");
-                    res.base().set("Access-Control-Max-Age", "60");
+                    // Generate
+                    auto resp = generate_preflight_response(req);
 
                     // Send the response
-                    send_response(req, std::move(res), std::forward<Send>(send));
+                    send_response(req, std::move(resp), std::forward<Send>(send));
 
                     // We're done handling this request
                     return;
                 }
-                */
 
                 // Generate the response for the request
                 auto resp = route->handle(req);
@@ -268,6 +245,8 @@ namespace malloy::http::server
          * @return Whether adding the route was successful.
          */
         bool add_route(std::shared_ptr<route<request_type, response_type>>&& r);
+
+        response_type generate_preflight_response(const request_type& req) const;
 
         /**
          * Adds a message to the log or throws an exception if no logger is available.

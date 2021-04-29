@@ -138,3 +138,40 @@ bool router::add_redirect(const http::status status, std::string&& resource_old,
     // Add
     return add_route(std::move(route));
 }
+
+router::response_type router::generate_preflight_response(const request_type& req) const
+{
+    // Create list of methods
+    std::vector<std::string> method_strings;
+    for (const auto& route : m_routes) {
+        // Only support this for basic routes (for now?)
+        const auto& basic_route = std::dynamic_pointer_cast<route_basic<request_type, response_type>>(route);
+        if (not basic_route)
+            continue;
+
+        // Check match
+        if (not basic_route->matches_resource(req))
+            continue;
+
+        // Add method string
+        method_strings.emplace_back(boost::beast::http::to_string(basic_route->method));
+    }
+
+    // Create a string representing all supported methods
+    std::string methods_string;
+    for (const auto &str : method_strings) {
+        methods_string += str;
+        if (&str not_eq
+            &method_strings.back())
+            methods_string += ", ";
+    }
+
+    response resp{status::ok };
+    resp.set(boost::beast::http::field::content_type, "text/html");
+    resp.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
+    resp.base().set("Access-Control-Allow-Methods", methods_string);
+    resp.base().set("Access-Control-Allow-Headers", "Content-Type");
+    resp.base().set("Access-Control-Max-Age", "60");
+
+    return resp;
+}
