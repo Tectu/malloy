@@ -21,19 +21,49 @@ namespace malloy::http::sessions
     class manager
     {
     public:
-        manager() = default;
+        /**
+         * Constructor.
+         *
+         * This will throw `std::invalid_argument` if no valid storage is provided.
+         *
+         * @param storage The session storage to use.
+         */
+        explicit manager(std::shared_ptr<storage> storage);
 
+        /**
+         * Copy constructor.
+         *
+         * @param other
+         */
         manager(const manager& other) = delete;
+
+        /**
+         * Move constructor.
+         *
+         * @param other
+         */
         manager(manager&& other) noexcept = delete;
+
+        /**
+         * Destructor.
+         */
         virtual ~manager() = default;
 
+        /**
+         * Copy assignment operator.
+         *
+         * @param rhs
+         * @return
+         */
         manager& operator=(const manager& rhs) = delete;
-        manager& operator=(manager&& rhs) noexcept = delete;
 
-        bool init(
-            std::shared_ptr<storage> storage,
-            std::chrono::seconds max_lifetime
-        );
+        /**
+         * Move assignment operator.
+         *
+         * @param rhs
+         * @return
+         */
+        manager& operator=(manager&& rhs) noexcept = delete;
 
         /**
          * Get an existing session (if any) or create a new one.
@@ -43,7 +73,7 @@ namespace malloy::http::sessions
          * @return The session.
          */
         [[nodiscard]]
-        std::shared_ptr<session> start_session(const request& req, response& resp);
+        std::shared_ptr<session> start(const request& req, response& resp);
 
         /**
          * Destroys an existing session.
@@ -51,18 +81,18 @@ namespace malloy::http::sessions
          * @param req The request.
          * @param resp The response.
          */
-        void destroy_session(const request& req, response& resp);
+        void destroy(const request& req, response& resp);
 
         /**
-         * Destroys any sessions older than the configured max lifetime.
+         * Destroys any sessions older than the specified max lifetime.
          *
+         * @param max_lifetime The maximum lifetime of a session.
          * @return The number of sessions that were expired/destroyed.
          */
-        std::size_t destroy_expired_sessions();
+        std::size_t destroy_expired(const std::chrono::seconds& max_lifetime);
 
     private:
         std::shared_ptr<storage> m_storage;
-        std::chrono::seconds m_max_lifetime;
         std::mutex m_lock; // protects sessions
         std::string m_cookie_name = "sessionId";      // The name of the session cookie
 
@@ -70,7 +100,7 @@ namespace malloy::http::sessions
          * Generates a new, unique session ID
          */
         [[nodiscard]]
-        static id_type generate_session_id();
+        static id_type generate_id();
     };
 
 }

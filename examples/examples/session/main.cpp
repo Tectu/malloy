@@ -28,11 +28,8 @@ int main()
     }
 
     // Create the session manager
-    auto session_manager = std::make_shared<malloy::http::sessions::manager>();
     auto session_storage = std::make_shared<malloy::http::sessions::storage_memory>();
-    if (not session_manager->init(session_storage, 24h)) {
-        std::cerr << "could not initialize session manager." << std::endl;
-    }
+    auto session_manager = std::make_shared<malloy::http::sessions::manager>(session_storage);
 
     // Create the router
     auto router = c.router();
@@ -45,7 +42,7 @@ int main()
             response res{status::ok};
 
             // Get the session
-            auto ses = session_manager->start_session(req, res);
+            auto ses = session_manager->start(req, res);
             if (not ses)
                 return generator::server_error("session management error.");
 
@@ -67,7 +64,7 @@ int main()
         {
             response resp{ status::ok };
 
-            session_manager->destroy_session(req, resp);
+            session_manager->destroy(req, resp);
 
             return resp;
         });

@@ -5,25 +5,20 @@
 #include "../request.hpp"
 #include "../response.hpp"
 
+#include <stdexcept>
 #include <random>
 
 using namespace malloy::http;
 using namespace malloy::http::sessions;
 
-bool manager::init(std::shared_ptr<storage> storage, std::chrono::seconds max_lifetime)
+manager::manager(std::shared_ptr<storage> storage) :
+    m_storage(std::move(storage))
 {
-    // Sanity check storage
-    if (not storage)
-        return false;
-
-    // Housekeeping
-    m_storage = std::move(storage);
-    m_max_lifetime = max_lifetime;
-
-    return true;
+    if (not m_storage)
+        throw std::invalid_argument("no valid storage provided.");
 }
 
-std::shared_ptr<session> manager::start_session(const request& req, response& resp)
+std::shared_ptr<session> manager::start(const request& req, response& resp)
 {
     // Nothing to do if no storage was provided
     if (not m_storage)
@@ -43,7 +38,7 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
     // Otherwise create a new one
     if (not session) {
         // Generate a new session ID
-        const id_type id = generate_session_id();
+        const id_type id = generate_id();
 
         // Create a new session
         session = m_storage->create(id);
@@ -55,7 +50,7 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
     return session;
 }
 
-void manager::destroy_session(const request& req, response& resp)
+void manager::destroy(const request& req, response& resp)
 {
     if (not m_storage)
         return;
@@ -77,26 +72,28 @@ void manager::destroy_session(const request& req, response& resp)
     // ToDo: Send back an expired session cookie to the client.
 }
 
-std::size_t manager::destroy_expired_sessions()
+std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
 {
     if (not m_storage)
         return 0;
 
     // Make sure that storage::destroy_expired_sessions() doesn't get a maximum
     // lifetime smaller than 1.
-    if (m_max_lifetime <= std::chrono::seconds::zero())
+    if (max_lifetime <= std::chrono::seconds::zero())
         return 0;
 
     // Acquire mutex
     std::lock_guard lock(m_lock);
 
-    return m_storage->destroy_expired(m_max_lifetime);
+    return m_storage->destroy_expired(max_lifetime);
 }
 
-id_type manager::generate_session_id()
+id_type manager::generate_id()
 {
     /**
      * ToDo: This implementation is not good enough for production use!
+     *       Also make this become an interface to allow the user to feed various entropy.
+     *       Maybe that should be a higher-level malloy feature. Eg. maybe through the controller?
      */
 
     static constexpr std::size_t length = 32;
