@@ -17,9 +17,6 @@ namespace malloy::http::sessions
      * It works by generating a server-side session using an object of this class and sending the
      * session ID to the client as a cookie. The client will send back this cookie on sub-sequent
      * requests through which the server can retrieve the corresponding session ID.
-     *
-     * Note that the session cookie should be marked 'Secure' and 'HttpOnly' to increase protection
-     * on the client side.
      */
     struct session
     {
@@ -36,6 +33,15 @@ namespace malloy::http::sessions
                 throw std::logic_error("no valid update call-back provided.");
         }
 
+        /**
+         * Add or update a key-value pair.
+         *
+         * If the specified key does not exist yet, a new key-value pair will be created.
+         * If the key exists, the current value will be updated.
+         *
+         * @param key The key.
+         * @param value The value.
+         */
         void set(const key_type& key, value_type value)
         {
             if (not m_update_cb)
@@ -47,6 +53,12 @@ namespace malloy::http::sessions
             m_data.insert_or_assign(key, value);
         }
 
+        /**
+         * Get the value of a particular key.
+         *
+         * @param key The key.
+         * @return The value corresponding to the specified key (if any).
+         */
         std::optional<key_type> get(const key_type& key) const
         {
             const auto& it = m_data.find(key);
@@ -55,11 +67,22 @@ namespace malloy::http::sessions
             return std::nullopt;
         }
 
+        /**
+         * Remove a key-value pair.
+         *
+         * @param key The key.
+         * @return Whether a key-value pair was removed.
+         */
         bool remove(const key_type& key)
         {
             return m_data.erase(key) > 0;
         }
 
+        /**
+         * Get the session ID.
+         *
+         * @return The session ID.
+         */
         [[nodiscard]]
         id_type id() const noexcept
         {
