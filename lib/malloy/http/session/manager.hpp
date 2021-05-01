@@ -53,6 +53,13 @@ namespace malloy::http::sessions
          */
         void destroy_session(const request& req, response& resp);
 
+        /**
+         * Destroys any sessions older than the configured max lifetime.
+         *
+         * @return The number of sessions that were expired/destroyed.
+         */
+        std::size_t destroy_expired_sessions();
+
     private:
         std::shared_ptr<storage> m_storage;
         std::chrono::seconds m_max_lifetime;

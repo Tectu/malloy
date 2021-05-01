@@ -63,6 +63,13 @@ namespace malloy::http::sessions
             return true;
         }
 
+        std::size_t destroy_expired_sessions(const std::chrono::seconds& max_lifetime) override
+        {
+            std::size_t count = 0;
+
+            return count;
+        }
+
     private:
         std::unordered_map<id_type, std::shared_ptr<session>> m_sessions;
 

@@ -53,6 +53,17 @@ namespace malloy::http::sessions
             [[maybe_unused]] const std::string& key,
             [[maybe_unused]] const std::string& value
         ) = 0;
+
+        /**
+         * Destroy any session older than a specified value.
+         * Sessions older than `max_lifetime` need to be destroyed.
+         *
+         * @note The session manager guarantees that max_lifetime is greater than zero.
+         *
+         * @param max_lifetime The maximum lifetime of a session.
+         * @return The number of sessions that were expired/destroyed.
+         */
+        virtual std::size_t destroy_expired_sessions(const std::chrono::seconds& max_lifetime) = 0;
     };
 
 }

@@ -77,6 +77,22 @@ void manager::destroy_session(const request& req, response& resp)
     // ToDo: Send back an expired session cookie to the client.
 }
 
+std::size_t manager::destroy_expired_sessions()
+{
+    if (not m_storage)
+        return 0;
+
+    // Make sure that storage::destroy_expired_sessions() doesn't get a maximum
+    // lifetime smaller than 1.
+    if (m_max_lifetime <= std::chrono::seconds::zero())
+        return 0;
+
+    // Acquire mutex
+    std::lock_guard lock(m_lock);
+
+    return m_storage->destroy_expired_sessions(m_max_lifetime);
+}
+
 id_type manager::generate_session_id()
 {
     /**
