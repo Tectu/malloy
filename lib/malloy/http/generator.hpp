@@ -34,6 +34,12 @@ namespace malloy::http
         generator &operator=(generator &&rhs) = delete;
 
         /**
+         * Construct a 200 response.
+         */
+        [[nodiscard]]
+        static response ok();
+
+        /**
          * Construct a 400 error.
          *
          * @param reason An explanation of why this request is considered a bad one.

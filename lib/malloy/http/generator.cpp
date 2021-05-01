@@ -4,6 +4,13 @@
 
 using namespace malloy::http;
 
+response generator::ok()
+{
+    response resp { status::ok };
+
+    return resp;
+}
+
 response generator::bad_request(std::string_view reason)
 {
     response res(status::bad_request);
