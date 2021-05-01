@@ -3,6 +3,7 @@
 #include "storage.hpp"
 #include "session.hpp"
 
+#include <chrono>
 #include <unordered_map>
 
 namespace malloy::http::sessions
@@ -13,57 +14,73 @@ namespace malloy::http::sessions
     /**
      * A simple in-memory storage manager.
      */
-    struct storage_memory :
-        storage
+    class storage_memory :
+        public storage
     {
-
-        [[nodiscard]]
-        std::shared_ptr<session> create_session(id_type id) override
+    private:
+        /**
+         * A session with implemented storage interface.
+         */
+        struct record :
+            session
         {
-            auto ses = std::make_shared<session>(
-                std::move(id),
-                std::bind(
-                    &storage_memory::update_session,
-                    this,
-                    std::placeholders::_1,
-                    std::placeholders::_2,
-                    std::placeholders::_3
-                )
+            explicit record(id_type&& id) :
+                session(std::move(id))
+            {
+            }
+
+            void storage_set(const key_type& key, value_type value) override
+            {
+                m_data.insert_or_assign(key, value);
+            }
+
+            [[nodiscard]]
+            std::optional<key_type> storage_get(const key_type& key) const override
+            {
+                const auto& it = m_data.find(key);
+                if (it != std::cend(m_data))
+                    return it->second;
+                return std::nullopt;
+            }
+
+            [[nodiscard]]
+            bool storage_remove(const key_type& key) override
+            {
+                return m_data.erase(key) > 0;
+            }
+
+        private:
+            std::unordered_map<std::string, std::string> m_data;
+        };
+
+    public:
+        [[nodiscard]]
+        std::shared_ptr<session> create(id_type id) override
+        {
+            auto ses = std::make_shared<record>(
+                std::move(id)
             );
 
-            m_sessions.emplace(ses->id(), ses);
+            m_sessions.try_emplace(ses->id(), ses);
 
             return ses;
         }
 
         [[nodiscard]]
-        std::shared_ptr<session> get_session(const id_type& id) override
+        std::shared_ptr<session> get(const id_type& id) override
         {
-            if (m_sessions.contains(id))
-                return m_sessions.at(id);
+            if (not m_sessions.contains(id))
+                return { };
 
-            return { };
+            return m_sessions.at(id);
         }
 
-        void destroy_session(id_type id) override
+        void destroy(id_type id) override
         {
             m_sessions.erase(id);
         }
 
-        [[nodiscard]]
-        bool update_session(
-            [[maybe_unused]] const session& ses,
-            [[maybe_unused]] const std::string& key,
-            [[maybe_unused]] const std::string& value
-        ) override
-        {
-            // Nothing to do here as this is an in-memory session storage and
-            // sessions already save the values in their own memory.
-
-            return true;
-        }
-
-        std::size_t destroy_expired_sessions(const std::chrono::seconds& max_lifetime) override
+        std::size_t destroy_expired(const std::chrono::seconds& max_lifetime) override
         {
             std::size_t count = 0;
 
@@ -71,7 +88,6 @@ namespace malloy::http::sessions
         }
 
     private:
-        std::unordered_map<id_type, std::shared_ptr<session>> m_sessions;
-
+        std::unordered_map<id_type, std::shared_ptr<record>> m_sessions;
     };
 }

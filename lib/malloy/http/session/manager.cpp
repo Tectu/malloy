@@ -37,7 +37,7 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
     // Get existing session (if any)
     if (req.has_cookie(m_cookie_name)) {
         const id_type id { req.cookie(m_cookie_name) };
-        session = m_storage->get_session(id);
+        session = m_storage->get(id);
     }
 
     // Otherwise create a new one
@@ -46,7 +46,7 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
         const id_type id = generate_session_id();
 
         // Create a new session
-        session = m_storage->create_session(id);
+        session = m_storage->create(id);
 
         // Set the cookie
         resp.add_cookie(session->generate_cookie(m_cookie_name));
@@ -72,7 +72,7 @@ void manager::destroy_session(const request& req, response& resp)
         return;
 
     // Destroy session in storage
-    m_storage->destroy_session(std::string{ ses_id });
+    m_storage->destroy(std::string{ ses_id });
 
     // ToDo: Send back an expired session cookie to the client.
 }
@@ -90,7 +90,7 @@ std::size_t manager::destroy_expired_sessions()
     // Acquire mutex
     std::lock_guard lock(m_lock);
 
-    return m_storage->destroy_expired_sessions(m_max_lifetime);
+    return m_storage->destroy_expired(m_max_lifetime);
 }
 
 id_type manager::generate_session_id()

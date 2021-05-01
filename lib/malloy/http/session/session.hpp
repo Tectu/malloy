@@ -18,20 +18,57 @@ namespace malloy::http::sessions
      * session ID to the client as a cookie. The client will send back this cookie on sub-sequent
      * requests through which the server can retrieve the corresponding session ID.
      */
-    struct session
+    class session
     {
+    private:
+        using clock_type      = std::chrono::steady_clock;
+        using time_point_type = std::chrono::time_point<clock_type>;
+
+    public:
         using key_type    = std::string;
         using value_type  = std::string;
         using id_type     = std::string;
-        using update_cb_t = std::function<bool(const session&, const key_type& key, const value_type& value)>;
 
-        session(id_type&& id, update_cb_t update_cb) :
-            m_id(std::move(id)),
-            m_update_cb(std::move(update_cb))
+        /**
+         * Constructor.
+         *
+         * @param id The session ID.
+         */
+        explicit session(id_type&& id) :
+            m_id(std::move(id))
         {
-            if (not m_update_cb)
-                throw std::logic_error("no valid update call-back provided.");
+            update_access_time();
         }
+
+        /**
+         * Copy constructor.
+         *
+         * @param other
+         */
+        session(const session& other) = delete;
+
+        /**
+         * Move constructor
+         *
+         * @param other
+         */
+        session(session&& other) noexcept = delete;
+
+        /**
+         * Copy assignment operator.
+         *
+         * @param other
+         * @return
+         */
+        session& operator=(const session& other) = delete;
+
+        /**
+         * Move assignment operator.
+         *
+         * @param other
+         * @return
+         */
+        session& operator=(session&& other) noexcept = delete;
 
         /**
          * Add or update a key-value pair.
@@ -44,13 +81,8 @@ namespace malloy::http::sessions
          */
         void set(const key_type& key, value_type value)
         {
-            if (not m_update_cb)
-                return;
-
-            if (not m_update_cb(*this, key, value))
-                return;
-
-            m_data.insert_or_assign(key, value);
+            update_access_time();
+            storage_set(key, std::move(value));
         }
 
         /**
@@ -59,12 +91,11 @@ namespace malloy::http::sessions
          * @param key The key.
          * @return The value corresponding to the specified key (if any).
          */
-        std::optional<key_type> get(const key_type& key) const
+        [[nodiscard]]
+        std::optional<key_type> get(const key_type& key)
         {
-            const auto& it = m_data.find(key);
-            if (it != std::cend(m_data))
-                return it->second;
-            return std::nullopt;
+            update_access_time();
+            return storage_get(key);
         }
 
         /**
@@ -73,9 +104,12 @@ namespace malloy::http::sessions
          * @param key The key.
          * @return Whether a key-value pair was removed.
          */
+        [[nodiscard]]
+        virtual
         bool remove(const key_type& key)
         {
-            return m_data.erase(key) > 0;
+            update_access_time();
+            return storage_remove(key);
         }
 
         /**
@@ -108,10 +142,47 @@ namespace malloy::http::sessions
             };
         }
 
+    protected:
+        /**
+         * Add or update a key-value pair.
+         *
+         * If the specified key does not exist yet, a new key-value pair will be created.
+         * If the key exists, the current value will be updated.
+         *
+         * @param key The key.
+         * @param value The value.
+         */
+        virtual
+        void storage_set(const key_type& key, value_type value) = 0;
+
+        /**
+         * Get the value of a particular key.
+         *
+         * @param key The key.
+         * @return The value corresponding to the specified key (if any).
+         */
+        [[nodiscard]]
+        virtual
+        std::optional<key_type> storage_get(const key_type& key) const = 0;
+
+        /**
+         * Remove a key-value pair.
+         *
+         * @param key The key.
+         * @return Whether a key-value pair was removed.
+         */
+        [[nodiscard]]
+        virtual
+        bool storage_remove(const key_type& key) = 0;
+
     private:
         id_type m_id;
-        update_cb_t m_update_cb;
-        std::unordered_map<key_type, value_type> m_data;
+        time_point_type m_access_time;
+
+        void update_access_time()
+        {
+            m_access_time = clock_type::now();
+        }
     };
 
 }
