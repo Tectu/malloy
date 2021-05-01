@@ -55,6 +55,28 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
     return session;
 }
 
+void manager::destroy_session(const request& req, response& resp)
+{
+    if (not m_storage)
+        return;
+
+    if (not req.has_cookie(m_cookie_name))
+        return;
+
+    // Acquire mutex
+    std::lock_guard lock(m_lock);
+
+    // Get session ID
+    const auto& ses_id = req.cookie(m_cookie_name);
+    if (ses_id.empty())
+        return;
+
+    // Destroy session in storage
+    m_storage->destroy_session(std::string{ ses_id });
+
+    // ToDo: Send back an expired session cookie to the client.
+}
+
 id_type manager::generate_session_id()
 {
     /**

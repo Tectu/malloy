@@ -38,10 +38,20 @@ namespace malloy::http::sessions
         /**
          * Get an existing session (if any) or create a new one.
          *
-         * @return
+         * @param req The request.
+         * @param resp The response.
+         * @return The session.
          */
         [[nodiscard]]
         std::shared_ptr<session> start_session(const request& req, response& resp);
+
+        /**
+         * Destroys an existing session.
+         *
+         * @param req The request.
+         * @param resp The response.
+         */
+        void destroy_session(const request& req, response& resp);
 
     private:
         std::shared_ptr<storage> m_storage;

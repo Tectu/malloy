@@ -61,6 +61,16 @@ int main()
 
             return res;
         });
+
+        // Logout
+        router->add(method::get, "/logout", [session_manager](const auto& req)
+        {
+            response resp{ status::ok };
+
+            session_manager->destroy_session(req, resp);
+
+            return resp;
+        });
     }
 
     // Start
