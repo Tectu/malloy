@@ -78,11 +78,12 @@ namespace malloy::http::sessions
          *
          * @param key The key.
          * @param value The value.
+         * @return Whether setting the value was successful.
          */
-        void set(const key_type& key, value_type value)
+        bool set(const key_type& key, value_type value)
         {
             update_access_time();
-            storage_set(key, std::move(value));
+            return storage_set(key, std::move(value));
         }
 
         /**
@@ -151,9 +152,10 @@ namespace malloy::http::sessions
          *
          * @param key The key.
          * @param value The value.
+         * @return Whether setting the value was successful.
          */
         virtual
-        void storage_set(const key_type& key, value_type value) = 0;
+        bool storage_set(const key_type& key, value_type value) = 0;
 
         /**
          * Get the value of a particular key.

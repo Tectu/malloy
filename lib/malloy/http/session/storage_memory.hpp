@@ -29,9 +29,17 @@ namespace malloy::http::sessions
             {
             }
 
-            void storage_set(const key_type& key, value_type value) override
+            bool storage_set(const key_type& key, value_type value) override
             {
-                m_data.insert_or_assign(key, value);
+                try {
+                    m_data.insert_or_assign(key, value);
+                }
+                catch (...)
+                {
+                    return false;
+                }
+
+                return true;
             }
 
             [[nodiscard]]
