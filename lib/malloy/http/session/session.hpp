@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "../cookie.hpp"
 
 #include <functional>
 #include <string>
@@ -63,6 +64,25 @@ namespace malloy::http::sessions
         id_type id() const noexcept
         {
             return m_id;
+        }
+
+        /**
+         * Generates a session cookie for this session.
+         *
+         * @param cookie_name The cookie name.
+         * @return The session cookie.
+         */
+        [[nodiscard]]
+        cookie generate_cookie(std::string cookie_name) const
+        {
+            return cookie {
+                .name = std::move(cookie_name),
+                .value = m_id,
+                .max_age = { },
+                .secure = true,
+                .http_only = true,
+                .same_site = cookie::same_site_t::strict,
+            };
         }
 
     private:

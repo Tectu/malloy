@@ -49,16 +49,7 @@ std::shared_ptr<session> manager::start_session(const request& req, response& re
         session = m_storage->create_session(id);
 
         // Set the cookie
-        // ToDo: Maybe add this as a function to session class?
-        cookie c {
-            .name = m_cookie_name,
-            .value = id,
-            .max_age = { },
-            .secure = true,
-            .http_only = true,
-            .same_site = cookie::same_site_t::strict,
-        };
-        resp.add_cookie(c);
+        resp.add_cookie(session->generate_cookie(m_cookie_name));
     }
 
     return session;
