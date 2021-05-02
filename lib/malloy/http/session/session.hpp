@@ -125,6 +125,21 @@ namespace malloy::http::sessions
         }
 
         /**
+         * Checks whether this session's access time is older than a specified maximum lifetime.
+         *
+         * @tparam Duration The duration type.
+         * @param duration The ma
+         * @return
+         */
+         // ToDo: Use concept to restrict Duration type.
+        template<typename Duration>
+        [[nodiscard]]
+        constexpr bool access_time_older_than(const Duration& max_lifetime) const
+        {
+            return (clock_type::now() - m_access_time) > max_lifetime;
+        }
+
+        /**
          * Generates a session cookie for this session.
          *
          * @param cookie_name The cookie name.
