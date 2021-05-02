@@ -102,7 +102,13 @@ namespace malloy::http::sessions
                 return std::nullopt;
 
             update_access_time();
-            return storage_get(key);
+            const auto& value_opt = storage_get(key);
+
+            // Prevent returning empty values
+            if (value_opt and value_opt.value().empty())
+                return std::nullopt;
+
+            return value_opt;
         }
 
         /**
