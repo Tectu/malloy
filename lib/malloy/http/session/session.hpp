@@ -82,6 +82,9 @@ namespace malloy::http::sessions
          */
         bool set(const key_type& key, value_type value)
         {
+            if (key.empty() or value.empty())
+                return false;
+
             update_access_time();
             return storage_set(key, std::move(value));
         }
@@ -95,6 +98,9 @@ namespace malloy::http::sessions
         [[nodiscard]]
         std::optional<key_type> get(const key_type& key)
         {
+            if (key.empty())
+                return std::nullopt;
+
             update_access_time();
             return storage_get(key);
         }
@@ -109,6 +115,9 @@ namespace malloy::http::sessions
         virtual
         bool remove(const key_type& key)
         {
+            if (key.empty())
+                return false;
+
             update_access_time();
             return storage_remove(key);
         }
