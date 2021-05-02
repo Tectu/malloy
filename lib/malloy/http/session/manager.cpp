@@ -47,10 +47,6 @@ std::shared_ptr<session> manager::start(const request& req, response& resp)
         resp.add_cookie(session->generate_cookie(m_cookie_name));
     }
 
-    // Update the access time
-    if (session)
-        session->update_access_time();
-
     return session;
 }
 

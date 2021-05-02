@@ -27,6 +27,8 @@ namespace malloy::http::sessions
         /**
          * Constructor.
          *
+         * @note Sub-classes must call `update_access_time()` in their constructor.
+         *
          * @param id The session ID.
          */
         explicit session(id_type&& id) :
@@ -218,6 +220,7 @@ namespace malloy::http::sessions
         explicit session_chrono(id_type&& id) :
             session(std::move(id))
         {
+            m_access_time = Clock::now();
         }
 
         /**
@@ -245,6 +248,9 @@ namespace malloy::http::sessions
         }
 
     protected:
+        /**
+         * @copydoc session::update_access_time()
+         */
         void update_access_time() override
         {
             m_access_time = Clock::now();

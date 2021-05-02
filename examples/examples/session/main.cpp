@@ -68,6 +68,17 @@ int main()
 
             return resp;
         });
+
+        // Clear expired sessions
+        router->add(method::get, "/clear_expired", [session_manager](const auto& req)
+        {
+            const std::size_t count = session_manager->destroy_expired(10s);
+
+            response resp{ status::ok };
+            resp.body() = "Expired sessions: " + std::to_string(count);
+
+            return resp;
+        });
     }
 
     // Start
