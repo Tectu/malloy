@@ -18,13 +18,8 @@ namespace malloy::http::sessions
      * session ID to the client as a cookie. The client will send back this cookie on sub-sequent
      * requests through which the server can retrieve the corresponding session ID.
      */
-    class session
+    struct session
     {
-    private:
-        using clock_type      = std::chrono::steady_clock;
-        using time_point_type = std::chrono::time_point<clock_type>;
-
-    public:
         using key_type    = std::string;
         using value_type  = std::string;
         using id_type     = std::string;
@@ -37,7 +32,6 @@ namespace malloy::http::sessions
         explicit session(id_type&& id) :
             m_id(std::move(id))
         {
-            update_access_time();
         }
 
         /**
@@ -140,20 +134,6 @@ namespace malloy::http::sessions
         }
 
         /**
-         * Checks whether this session's access time is older than a specified maximum lifetime.
-         *
-         * @tparam Duration The duration type.
-         * @param duration The ma
-         * @return
-         */
-        template<typename Rep, typename Period>
-        [[nodiscard]]
-        constexpr bool access_time_older_than(const std::chrono::duration<Rep, Period>& max_lifetime) const
-        {
-            return (clock_type::now() - m_access_time) > max_lifetime;
-        }
-
-        /**
          * Generates a session cookie for this session.
          *
          * @param cookie_name The cookie name.
@@ -206,14 +186,72 @@ namespace malloy::http::sessions
         virtual
         bool storage_remove(const key_type& key) = 0;
 
+        /**
+         * Update the access time.
+         *
+         * This should usually update the access time to the current time.
+         */
+        virtual
+        void update_access_time() = 0;
+
     private:
         id_type m_id;
-        time_point_type m_access_time;
+    };
 
-        void update_access_time()
+    /**
+     * A session implementing the access time using std::chrono.
+     *
+     * @tparam Clock The clock type to use.
+     */
+    template<typename Clock>
+    struct session_chrono :
+        session
+    {
+        using time_point_t = std::chrono::time_point<Clock>;
+
+    public:
+        /**
+         * Constructor.
+         *
+         * @param id The session ID.
+         */
+        explicit session_chrono(id_type&& id) :
+            session(std::move(id))
         {
-            m_access_time = clock_type::now();
         }
+
+        /**
+         * Get the access time.
+         *
+         * @return The access time.
+         */
+        time_point_t access_time() const noexcept
+        {
+            return m_access_time;
+        }
+
+        /**
+         * Checks whether this session's access time is older than a specified maximum lifetime.
+         *
+         * @tparam Duration The duration type.
+         * @param duration The ma
+         * @return
+         */
+        template<typename Rep, typename Period>
+        [[nodiscard]]
+        constexpr bool access_time_older_than(const std::chrono::duration<Rep, Period>& max_lifetime) const
+        {
+            return (Clock::now() - m_access_time) > max_lifetime;
+        }
+
+    protected:
+        void update_access_time() override
+        {
+            m_access_time = Clock::now();
+        }
+
+    private:
+        time_point_t m_access_time;
     };
 
 }

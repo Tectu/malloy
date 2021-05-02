@@ -22,10 +22,11 @@ namespace malloy::http::sessions
          * A session with implemented storage interface.
          */
         struct record :
-            session
+            session_chrono<std::chrono::steady_clock>
         {
+
             explicit record(id_type&& id) :
-                session(std::move(id))
+                session_chrono(std::move(id))
             {
             }
 
