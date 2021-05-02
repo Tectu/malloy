@@ -90,7 +90,18 @@ namespace malloy::http::sessions
 
         std::size_t destroy_expired(const std::chrono::seconds& max_lifetime) override
         {
+            // ToDo: This needs testing
+            // ToDo: This can be upgraded to use std::erase_if() once C++20 support is good enough.
+
             std::size_t count = 0;
+            for (auto it = std::begin(m_sessions); it not_eq std::end(m_sessions); it++) {
+                if (it->second->access_time_older_than(max_lifetime))
+                    m_sessions.erase(it++);
+                else
+                    ++it;
+
+                count++;
+            }
 
             return count;
         }
