@@ -146,10 +146,9 @@ namespace malloy::http::sessions
          * @param duration The ma
          * @return
          */
-         // ToDo: Use concept to restrict Duration type.
-        template<typename Duration>
+        template<typename Rep, typename Period>
         [[nodiscard]]
-        constexpr bool access_time_older_than(const Duration& max_lifetime) const
+        constexpr bool access_time_older_than(const std::chrono::duration<Rep, Period>& max_lifetime) const
         {
             return (clock_type::now() - m_access_time) > max_lifetime;
         }
