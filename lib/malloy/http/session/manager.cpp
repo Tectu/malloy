@@ -44,7 +44,11 @@ std::shared_ptr<session> manager::start(const request& req, response& resp)
         session = m_storage->create(id);
 
         // Set the cookie
-        resp.add_cookie(session->generate_cookie(m_cookie_name));
+        // Only do this after creating a new session as we don't want to send back the
+        // session cookie on every response (as subsequent calls to this function will
+        // pass this branch
+        if (session)
+            resp.add_cookie(session->generate_cookie(m_cookie_name));
     }
 
     return session;
