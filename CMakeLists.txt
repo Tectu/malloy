@@ -8,8 +8,8 @@ project(
 )
 
 # Options
-option(BUILD_EXAMPLES "Whether to build examples" ON)
-option(BUILD_TESTS    "Whether to build tests"    ON)
+option(BUILD_EXAMPLES "Whether to build examples"     ON)
+option(BUILD_TESTS    "Whether to build tests"        ON)
 
 # Add the main library
 add_subdirectory(lib)
@@ -23,3 +23,13 @@ endif()
 if (BUILD_TESTS)
     add_subdirectory(test)
 endif()
+
+# Print options
+message("")
+message("---------------------")
+message("Malloy configuration:")
+message("  Build:")
+message("    Examples : " ${BUILD_EXAMPLES})
+message("    Tests    : " ${BUILD_TESTS})
+message("---------------------")
+message("")
