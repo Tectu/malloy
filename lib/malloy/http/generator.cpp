@@ -27,7 +27,7 @@ response generator::redirect(const status code, const std::string_view location)
 response generator::bad_request(std::string_view reason)
 {
     response res(status::bad_request);
-    res.set(boost::beast::http::field::content_type, "text/html");
+    res.set(field::content_type, "text/html");
     res.body() = reason;
     res.prepare_payload();
 
@@ -37,7 +37,7 @@ response generator::bad_request(std::string_view reason)
 response generator::not_found(std::string_view resource)
 {
     response res(status::not_found);
-    res.set(boost::beast::http::field::content_type, "text/html");
+    res.set(field::content_type, "text/html");
     res.body() = "The resource '" + std::string(resource) + "' was not found.";
     res.prepare_payload();
 
@@ -47,7 +47,7 @@ response generator::not_found(std::string_view resource)
 response generator::server_error(std::string_view what)
 {
     response res(status::internal_server_error);
-    res.set(boost::beast::http::field::content_type, "text/html");
+    res.set(field::content_type, "text/html");
     res.body() = "An error occurred: '" + std::string(what) + "'";
     res.prepare_payload();
 
@@ -86,7 +86,7 @@ response generator::file(const std::filesystem::path& storage_base_path, std::st
 
     // Create response
     response resp{status::ok};
-    resp.set(boost::beast::http::field::content_type, mime_type);
+    resp.set(field::content_type, mime_type);
     resp.body() = file_content;
 
     return resp;
