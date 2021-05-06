@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <string_view>
 
+#include "types.hpp"
+
 namespace malloy::http
 {
     class response;
@@ -38,6 +40,16 @@ namespace malloy::http
          */
         [[nodiscard]]
         static response ok();
+
+        /**
+         * Construct a 3xx response.
+         *
+         * @param code The HTTP status code. Must be a 3xx status code.
+         * @param location The location to redirect to.
+         * @return The response.
+         */
+        [[nodiscard]]
+        static response redirect(status code, std::string_view location);
 
         /**
          * Construct a 400 error.

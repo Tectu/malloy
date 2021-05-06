@@ -1,6 +1,7 @@
 #pragma once
 
 #include "route.hpp"
+#include "../generator.hpp"
 
 namespace malloy::http::server
 {
@@ -26,10 +27,7 @@ namespace malloy::http::server
         [[nodiscard]]
         Response handle(const Request& req) const override
         {
-            response resp{ status };
-            resp.set("Location", resource_new);
-
-            return resp;
+            return generator::redirect(status, resource_new);
         }
 
     };
