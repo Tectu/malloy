@@ -73,7 +73,8 @@ response generator::file(const std::filesystem::path& storage_base_path, std::st
 
     // Create response
     response resp{status::ok};
-    resp.set(boost::beast::http::field::content_type, boost::string_view{mime_type.data(), mime_type.size()});
+    resp.set(boost::beast::http::field::content_type, mime_type);
     resp.body() = file_content;
+
     return resp;
 }

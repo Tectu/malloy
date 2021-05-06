@@ -18,6 +18,7 @@ target_compile_features(
 target_compile_definitions(
     ${TARGET_OBJS}
     PUBLIC
+        BOOST_BEAST_USE_STD_STRING_VIEW
         $<$<BOOL:${WIN32}>:UNICODE>
         $<$<BOOL:${WIN32}>:_UNICODE>
         $<$<BOOL:${WIN32}>:WIN32_LEAN_AND_MEAN>
