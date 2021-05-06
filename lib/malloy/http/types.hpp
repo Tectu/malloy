@@ -19,4 +19,9 @@ namespace malloy::http
      * The HTTP status.
      */
     using status = boost::beast::http::status;
+
+    /**
+     * The HTTP fields.
+     */
+    using field = boost::beast::http::field;
 }
