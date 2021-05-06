@@ -34,7 +34,7 @@ void connection::write(std::string&& payload)
 
     // Issue asynchronous write
     m_websocket.async_write(
-        boost::asio::buffer(std::move(payload)),
+        boost::asio::buffer(payload),
         boost::beast::bind_front_handler(&connection::on_write, shared_from_this())
     );
 }
