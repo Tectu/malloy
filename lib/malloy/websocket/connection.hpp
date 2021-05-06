@@ -59,7 +59,7 @@ namespace malloy::websocket::server
             m_websocket.set_option(boost::beast::websocket::stream_base::decorator(
                 [](boost::beast::websocket::response_type& res)
                 {
-                    res.set(malloy::http::field::server, agent_string);
+                    res.set(boost::beast::http::field::server, agent_string);
                 }));
 
             // Accept the websocket handshake
