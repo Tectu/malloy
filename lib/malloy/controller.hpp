@@ -97,11 +97,6 @@ namespace malloy::server
         bool init(config cfg);
 
         /**
-         * Enable capturing of `SIGINT` and `SIGTERM` signals.
-         */
-        void enable_termination_signals();
-
-        /**
          * Start the server. This function will not return until the server is stopped.
          *
          * @return Whether starting the server was successful.

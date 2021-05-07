@@ -2,7 +2,6 @@
 #include "listener.hpp"
 #include "http/routing/router.hpp"
 
-#include <boost/asio/signal_set.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -57,19 +56,6 @@ bool controller::init(config cfg)
     m_init_done = true;
 
     return true;
-}
-
-void controller::enable_termination_signals()
-{
-    // Capture SIGINT and SIGTERM to perform a clean shutdown
-    boost::asio::signal_set signals(m_io_ctx, SIGINT, SIGTERM);
-    signals.async_wait(
-        [this](boost::system::error_code const&, int)
-        {
-            this->m_cfg.logger->info("received SIGINT or SIGTERM. stopping server.");
-            this->stop().wait();
-        }
-    );
 }
 
 bool controller::start()
