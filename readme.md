@@ -6,7 +6,7 @@ The main use case for this library is a C++ project which needs to embedd an HTT
 # Features
 Currently implemented:
 - HTTP Server
-- WebSocket Servers
+- WebSocket Server
 - Request router:
   - Simple handlers
   - Sub-routers
@@ -15,6 +15,8 @@ Currently implemented:
   - Automatic preflight responses (optional)
 - Cookies
 - Sessions
+- HTML
+  - Parsing HTML forms
 - Utility wrapper to setup `boost::asio` I/O context, worker threads and more.
 
 Coming soon™:
