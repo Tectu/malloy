@@ -4,23 +4,26 @@ Malloy is a small, embeddable HTTP & WebSocket server built on top of [boost.bea
 The main use case for this library is a C++ project which needs to embedd an HTTP and/or WebSocket server.
 
 # Features
-Currently implemented:
-- HTTP Server
-- WebSocket Server
-- Request router:
-  - Simple handlers
-  - Sub-routers
-  - Redirections
-  - File serving locations
-  - Automatic preflight responses (optional)
-- Cookies
-- Sessions
+The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
+
+- Plain or TLS connections
+- HTTP
+  - Server
+    - Request router
+      - Simple handlers (useful for building REST APIs)
+      - Sub-routers (nested routers)
+      - Redirections
+      - File serving locations
+      - Automatic preflight responses (optional)
+  - Cookies
+  - Sessions
+- WebSocket
+  - Server
 - HTML
   - Parsing HTML forms
 - Utility wrapper to setup `boost::asio` I/O context, worker threads and more.
 
 Coming soon™:
-- Support for TLS connections
 - Security middleware (CSRF, XSS, ...)
 - HTTP client
 - Websocket client
@@ -157,3 +160,4 @@ Various `cmake` options are available to control the build:
 | `BUILD_EXAMPLES` | `ON` | Whether to build examples. |
 | `BUILD_TESTS` | `ON` | Whether to build the test suite(s). |
 | `FEATURE_HTML` | `ON` | Whether to enable HTML support. |
+| `FEATURE_TLS` | `ON` | Whether to enable TLS support. |
