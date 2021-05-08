@@ -1,6 +1,6 @@
 #include "listener.hpp"
 
-#include "http/connection.hpp"
+#include "http/connection/connection_detector.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
@@ -11,12 +11,14 @@ using namespace malloy::server;
 listener::listener(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::io_context& ioc,
+    boost::asio::ssl::context& tls_ctx,
     const boost::asio::ip::tcp::endpoint& endpoint,
     std::shared_ptr<http::server::router> router,
     std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
     m_logger(std::move(logger)),
     m_io_ctx(ioc),
+    m_tls_ctx(tls_ctx),
     m_acceptor(boost::asio::make_strand(ioc)),
     m_router(std::move(router)),
     m_doc_root(std::move(http_doc_root))
@@ -61,6 +63,8 @@ void listener::run()
 {
     m_logger->trace("listener::run()");
 
+    // ToDo: This can most likely be replaced to a call to this->do_accept()
+
     // We need to be executing within a strand to perform async operations
     // on the I/O objects in this connection. Although not strictly necessary
     // for single-threaded contexts, this example code is written to be
@@ -103,12 +107,14 @@ void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::sock
         socket.remote_endpoint().port()
     );
 
-    // Create the http connection
-    auto connection = std::make_shared<http::server::connection>(
+    // Create the http detector connection
+    // This will automatically spawn the correct type of connection (eg. plain or TLS).
+    auto connection = std::make_shared<http::server::connection_detector>(
         m_logger->clone("http_connection"),
         std::move(socket),
-        m_router,
+        m_tls_ctx,
         m_doc_root,
+        m_router,
         m_websocket_handler
     );
 
