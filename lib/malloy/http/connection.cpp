@@ -18,7 +18,7 @@ connection::connection(
     m_router(std::move(router)),
     m_doc_root(std::move(http_doc_root)),
     m_websocket_handler(std::move(websocket_handler)),
-    m_queue(*this)
+    m_send(*this)
 {
     // Sanity check logger
     if (not m_logger)
@@ -60,12 +60,14 @@ void connection::do_read()
 
     // Read a request using the parser-oriented interface
     boost::beast::http::async_read(
-            m_stream,
-            m_buffer,
-            *m_parser,
-            boost::beast::bind_front_handler(
-                    &connection::on_read,
-                    shared_from_this()));
+        m_stream,
+        m_buffer,
+        *m_parser,
+        boost::beast::bind_front_handler(
+                &connection::on_read,
+                shared_from_this()
+        )
+    );
 }
 
 void connection::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
@@ -104,12 +106,12 @@ void connection::on_read(boost::beast::error_code ec, std::size_t bytes_transfer
     if (not req.uri().is_legal()) {
         m_logger->warn("illegal request URI: {}", req.uri().raw());
         auto resp = generator::bad_request("illegal URI");
-        m_queue(std::move(resp));
+        m_send(std::move(resp));
         return;
     }
 
     // Hand off to router
-    m_router->handle_request(*m_doc_root, std::move(req), m_queue);
+    m_router->handle_request(*m_doc_root, std::move(req), m_send);
 }
 
 void connection::on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
@@ -128,11 +130,11 @@ void connection::on_write(bool close, boost::beast::error_code ec, std::size_t b
         return do_close();
     }
 
-    // Inform the queue that a write completed
-    if (m_queue.on_write()) {
-        // Read another request
-        do_read();
-    }
+    // We're done with the response so delete it
+    m_response = { };
+
+    // Read another request
+    do_read();
 }
 
 void connection::do_close()

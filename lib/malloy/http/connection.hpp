@@ -30,89 +30,42 @@ namespace malloy::http::server
     class connection:
         public std::enable_shared_from_this<connection>
     {
-        /**
-         * This queue is used for HTTP pipelining.
-         */
-        class queue
+        // This is the C++11 equivalent of a generic lambda.
+        // The function object is used to send an HTTP message.
+        // ToDo: This is a C++20 library, use templated lambdas.
+        struct send_lambda
         {
-            enum
-            {
-                // Maximum number of responses we will queue
-                limit = 8
-            };
-
-            // The type-erased, saved work item
-            struct work
-            {
-                virtual ~work() = default;
-                virtual void operator()() = 0;
-            };
-
             connection& m_self;
-            std::vector<std::unique_ptr<work>> m_items;
 
-        public:
-            explicit queue(connection& self) :
+            explicit
+            send_lambda(connection & self) :
                 m_self(self)
             {
-                static_assert(limit > 0, "queue limit must be positive");
-                m_items.reserve(limit);
             }
 
-            // Returns `true` if we have reached the queue limit
-            [[nodiscard]]
-            bool is_full() const
-            {
-                return m_items.size() >= limit;
-            }
-
-            // Called when a message finishes sending
-            // Returns `true` if the caller should initiate a read
-            bool on_write()
-            {
-                BOOST_ASSERT(! m_items.empty());
-                auto const was_full = is_full();
-                m_items.erase(m_items.begin());
-                if(! m_items.empty())
-                    (*m_items.front())();
-                return was_full;
-            }
-
-            // Called by the HTTP handler to send a response.
             template<bool isRequest, class Body, class Fields>
-            void operator()(boost::beast::http::message<isRequest, Body, Fields>&& msg)
+            void
+            operator()(boost::beast::http::message<isRequest, Body, Fields>&& msg) const
             {
-                // This holds a work item
-                struct work_impl :
-                    work
-                {
-                    connection& m_self;
-                    boost::beast::http::message<isRequest, Body, Fields> m_msg;
+                // The lifetime of the message has to extend
+                // for the duration of the async operation so
+                // we use a shared_ptr to manage it.
+                auto sp = std::make_shared<boost::beast::http::message<isRequest, Body, Fields>>(std::move(msg));
 
-                    work_impl(connection& self, boost::beast::http::message<isRequest, Body, Fields>&& msg) :
-                        m_self(self),
-                        m_msg(std::move(msg))
-                    {
-                    }
+                // Store a type-erased version of the shared
+                // pointer in the class to keep it alive.
+                m_self.m_response = sp;
 
-                    void operator()()
-                    {
-                        boost::beast::http::async_write(
-                            m_self.m_stream,
-                            m_msg,
-                            boost::beast::bind_front_handler(
-                                &connection::on_write,
-                                m_self.shared_from_this(),
-                                m_msg.need_eof()));
-                    }
-                };
-
-                // Allocate and store the work
-                m_items.push_back(std::make_unique<work_impl>(m_self, std::move(msg)));
-
-                // If there was no previous work, start this one
-                if (m_items.size() == 1)
-                    (*m_items.front())();
+                // Write the response
+                boost::beast::http::async_write(
+                    m_self.m_stream,
+                    *sp,
+                    boost::beast::bind_front_handler(
+                        &connection::on_write,
+                        m_self.shared_from_this(),
+                        sp->need_eof()
+                    )
+                );
             }
         };
 
@@ -159,7 +112,8 @@ namespace malloy::http::server
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<router> m_router;
         malloy::websocket::handler_type m_websocket_handler;
-        queue m_queue;
+        std::shared_ptr<void> m_response;
+        send_lambda m_send;
 
         // The parser is stored in an optional container so we can
         // construct it from scratch it at the beginning of each new message.
