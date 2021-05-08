@@ -6,6 +6,9 @@ set(TARGET_OBJS   ${NAME}-objs)
 
 add_library(${TARGET_OBJS} OBJECT)
 
+if (FEATURE_HTML)
+    add_subdirectory(html)
+endif()
 add_subdirectory(http)
 add_subdirectory(websocket)
 

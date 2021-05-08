@@ -8,8 +8,9 @@ project(
 )
 
 # Options
-option(BUILD_EXAMPLES "Whether to build examples"     ON)
-option(BUILD_TESTS    "Whether to build tests"        ON)
+option(BUILD_EXAMPLES "Whether to build examples"       ON)
+option(BUILD_TESTS    "Whether to build tests"          ON)
+option(FEATURE_HTML   "Whether to enable HTML features" ON)
 
 # Add the main library
 add_subdirectory(lib)
@@ -31,5 +32,7 @@ message("Malloy configuration:")
 message("  Build:")
 message("    Examples : " ${BUILD_EXAMPLES})
 message("    Tests    : " ${BUILD_TESTS})
+message("  Features:")
+message("    HTML     : " ${FEATURE_HTML})
 message("---------------------")
 message("")

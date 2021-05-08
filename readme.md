@@ -146,3 +146,12 @@ target_link_libraries(
 )
 ```
 Where `my_application` is your application (or library) target that should consume malloy.
+
+## Options
+Various `cmake` options are available to control the build:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `BUILD_EXAMPLES` | `ON` | Whether to build examples. |
+| `BUILD_TESTS` | `ON` | Whether to build the test suite(s). |
+| `FEATURE_HTML` | `ON` | Whether to enable HTML support. |
