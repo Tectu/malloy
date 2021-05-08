@@ -14,6 +14,7 @@ namespace malloy::http::server
         public connection<connection_tls>,
         public std::enable_shared_from_this<connection_tls>
     {
+        friend connection;
 
     public:
         connection_tls(
@@ -21,14 +22,16 @@ namespace malloy::http::server
             boost::asio::ip::tcp::socket&& socket,
             boost::asio::ssl::context& ctx,
             boost::beast::flat_buffer buffer,
-            std::shared_ptr<const std::filesystem::path> const& doc_root
+            std::shared_ptr<const std::filesystem::path> doc_root,
+            std::shared_ptr<router> router,
+            malloy::websocket::handler_type websocket_handler
         ) :
             connection<connection_tls>(
                 logger,
                 std::move(buffer),
-                nullptr,    // ToDo <---------------------------------
-                doc_root,
-                nullptr     // ToDo <---------------------------------
+                std::move(router),
+                std::move(doc_root),
+                std::move(websocket_handler)
             ),
             m_stream(std::move(socket), ctx)
         {

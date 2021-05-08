@@ -1,5 +1,6 @@
 #include "controller.hpp"
 #include "listener.hpp"
+#include "server_certificate.hpp"
 #include "http/routing/router.hpp"
 
 #include <spdlog/logger.h>
@@ -8,6 +9,11 @@
 #include <memory>
 
 using namespace malloy::server;
+
+controller::controller() :
+    m_tls_ctx{ boost::asio::ssl::context::tlsv12 }
+{
+}
 
 controller::~controller()
 {
@@ -43,14 +49,18 @@ bool controller::init(config cfg)
     // Grab the config
     m_cfg = std::move(cfg);
 
-    // Create and launch a listener
+    // Create the listener
     m_listener = std::make_shared<malloy::server::listener>(
         m_cfg.logger->clone("listener"),
         m_io_ctx,
+        m_tls_ctx,
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
         std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router")),
         std::make_shared<std::filesystem::path>(m_cfg.doc_root)
     );
+
+    // This holds the self-signed certificate used by the server
+    load_server_certificate(m_tls_ctx);
 
     // Don't initialize ever again.
     m_init_done = true;

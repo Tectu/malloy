@@ -18,3 +18,11 @@ FetchContent_Declare(
     GIT_TAG        v1.8.3
 )
 FetchContent_MakeAvailable(spdlog)
+
+#
+# OpenSSL
+#
+find_package(
+    OpenSSL
+    REQUIRED
+)

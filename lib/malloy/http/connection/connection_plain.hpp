@@ -9,6 +9,7 @@ namespace malloy::http::server
         public connection<connection_plain>,
         public std::enable_shared_from_this<connection_plain>
     {
+        friend connection;
 
     public:
         // Create the session
@@ -16,14 +17,16 @@ namespace malloy::http::server
             std::shared_ptr<spdlog::logger> logger,
             boost::asio::ip::tcp::socket&& socket,
             boost::beast::flat_buffer buffer,
-            std::shared_ptr<const std::filesystem::path> const& doc_root
+            std::shared_ptr<const std::filesystem::path> doc_root,
+            std::shared_ptr<router> router,
+            malloy::websocket::handler_type websocket_handler
         ) :
             connection<connection_plain>(
                 std::move(logger),
                 std::move(buffer),
-                nullptr,    // ToDo <---------------------------------
-                doc_root,
-                nullptr     // ToDo <---------------------------------
+                std::move(router),
+                std::move(doc_root),
+                std::move(websocket_handler)
             ),
             m_stream(std::move(socket))
         {

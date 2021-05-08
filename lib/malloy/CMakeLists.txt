@@ -53,6 +53,8 @@ target_link_libraries(
     PRIVATE
         $<$<BOOL:${WIN32}>:wsock32>
         $<$<BOOL:${WIN32}>:ws2_32>
+        OpenSSL::Crypto
+        OpenSSL::SSL
 )
 
 target_compile_options(

@@ -48,23 +48,30 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
     }
 
     if (result) {
+        m_logger->debug("launching TLS connection.");
+
         // Launch TLS connection
         std::make_shared<connection_tls>(
             m_logger,
             m_stream.release_socket(),
             m_ctx,
             std::move(m_buffer),
-            m_doc_root
+            m_doc_root,
+            m_router,
+            m_websocket_handler
         )->run();
 
         return;
     }
 
     // Launch plain connection
+    m_logger->debug("launching plain connection.");
     std::make_shared<connection_plain>(
         m_logger,
         m_stream.release_socket(),
         std::move(m_buffer),
-        m_doc_root
+        m_doc_root,
+        m_router,
+        m_websocket_handler
     )->run();
 }

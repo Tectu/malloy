@@ -3,6 +3,7 @@
 #include "websocket/types.hpp"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/ssl/context.hpp>
 
 #include <memory>
 #include <filesystem>
@@ -78,7 +79,7 @@ namespace malloy::server
             config& operator=(config&& cfg) noexcept = default;
         };
 
-        controller() = default;
+        controller();
         controller(const controller& other) = delete;
         controller(controller&& other) noexcept = delete;
         virtual ~controller();
@@ -133,6 +134,7 @@ namespace malloy::server
         std::shared_ptr<listener> m_listener;
         std::vector<std::thread> m_threads;
         boost::asio::io_context m_io_ctx;
+        boost::asio::ssl::context m_tls_ctx;
     };
 
 }
