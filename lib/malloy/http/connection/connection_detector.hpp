@@ -39,7 +39,7 @@ namespace malloy::http::server
         connection_detector(
             std::shared_ptr<spdlog::logger> logger,
             boost::asio::ip::tcp::socket&& socket,
-            boost::asio::ssl::context& ctx,
+            std::shared_ptr<boost::asio::ssl::context> ctx,
             std::shared_ptr<const std::filesystem::path> doc_root,
             std::shared_ptr<http::server::router> router,
             malloy::websocket::handler_type websocket_handler
@@ -53,7 +53,7 @@ namespace malloy::http::server
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::tcp_stream m_stream;
-        boost::asio::ssl::context& m_ctx;
+        std::shared_ptr<boost::asio::ssl::context> m_ctx;
         boost::beast::flat_buffer m_buffer;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<http::server::router> m_router;

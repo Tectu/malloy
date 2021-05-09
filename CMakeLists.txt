@@ -13,6 +13,11 @@ option(BUILD_TESTS    "Whether to build tests"          ON)
 option(FEATURE_HTML   "Whether to enable HTML features" ON)
 option(FEATURE_TLS    "Whether to enable TLS features"  OFF)
 
+# Set dependencies accordingly
+if (FEATURE_TLS)
+    set(DEPENDENCY_OPENSSL ON)
+endif()
+
 # Add the main library
 add_subdirectory(lib)
 

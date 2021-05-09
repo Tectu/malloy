@@ -19,10 +19,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spdlog)
 
-#
+########################################################################################################################
 # OpenSSL
-#
-find_package(
-    OpenSSL
-    REQUIRED
-)
+########################################################################################################################
+if (DEPENDENCY_OPENSSL)
+    find_package(
+        OpenSSL
+        REQUIRED
+    )
+endif()

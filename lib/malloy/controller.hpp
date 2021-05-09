@@ -3,7 +3,6 @@
 #include "websocket/types.hpp"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/ssl/context.hpp>
 
 #include <memory>
 #include <filesystem>
@@ -11,6 +10,11 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+namespace boost::asio::ssl
+{
+    class context;
+}
 
 namespace spdlog
 {
@@ -79,7 +83,7 @@ namespace malloy::server
             config& operator=(config&& cfg) noexcept = default;
         };
 
-        controller();
+        controller() = default;
         controller(const controller& other) = delete;
         controller(controller&& other) noexcept = delete;
         virtual ~controller();
@@ -96,6 +100,17 @@ namespace malloy::server
          * @return Whether the initialization was successful.
          */
         bool init(config cfg);
+
+        #if MALLOY_FEATURE_TLS
+            /**
+             * Initialize the TLS context.
+             *
+             * @note This must be called after `init()` but before `start()` if TLS is to be used.
+             *
+             * @return Whether the initialization was successful.
+             */
+            bool init_tls();
+        #endif
 
         /**
          * Start the server. This function will not return until the server is stopped.
@@ -134,7 +149,7 @@ namespace malloy::server
         std::shared_ptr<listener> m_listener;
         std::vector<std::thread> m_threads;
         boost::asio::io_context m_io_ctx;
-        boost::asio::ssl::context m_tls_ctx;
+        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
     };
 
 }

@@ -1,19 +1,19 @@
 #include "controller.hpp"
 #include "listener.hpp"
-#include "server_certificate.hpp"
 #include "http/routing/router.hpp"
+#if MALLOY_FEATURE_TLS
+    #include "server_certificate.hpp"
+#endif
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#if MALLOY_FEATURE_TLS
+    #include <boost/asio/ssl/context.hpp>
+#endif
 
 #include <memory>
 
 using namespace malloy::server;
-
-controller::controller() :
-    m_tls_ctx{ boost::asio::ssl::context::tlsv12 }
-{
-}
 
 controller::~controller()
 {
@@ -59,14 +59,23 @@ bool controller::init(config cfg)
         std::make_shared<std::filesystem::path>(m_cfg.doc_root)
     );
 
-    // This holds the self-signed certificate used by the server
-    load_server_certificate(m_tls_ctx);
-
     // Don't initialize ever again.
     m_init_done = true;
 
     return true;
 }
+
+#if MALLOY_FEATURE_TLS
+    bool controller::init_tls()
+    {
+        m_tls_ctx = std::make_shared<boost::asio::ssl::context>( boost::asio::ssl::context::tlsv12 );
+
+        // This holds the self-signed certificate used by the server
+        load_server_certificate(*m_tls_ctx);
+
+        return true;
+    }
+#endif
 
 bool controller::start()
 {

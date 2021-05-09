@@ -6,7 +6,7 @@ The main use case for this library is a C++ project which needs to embedd an HTT
 # Features
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
-- Plain or TLS connections
+- Plain or TLS connections (HTTP / HTTPS)
 - HTTP
   - Server
     - Request router
@@ -37,9 +37,12 @@ Building (and using) this library requires:
 - CMake 3.17 or newer
   
 ## Dependencies
-Malloy comes with a small number of dependencies:
+Required:
 - [Boost](https://www.boost.org/) 1.73.0 or newer
 - [spdlog](https://github.com/gabime/spdlog) 1.8.3 or newer
+
+Optional:
+- OpenSSL
 
 # Examples
 A variety of examples can be found in the `/examples` directory.

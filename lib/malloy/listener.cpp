@@ -11,14 +11,14 @@ using namespace malloy::server;
 listener::listener(
     std::shared_ptr<spdlog::logger> logger,
     boost::asio::io_context& ioc,
-    boost::asio::ssl::context& tls_ctx,
+    std::shared_ptr<boost::asio::ssl::context> tls_ctx,
     const boost::asio::ip::tcp::endpoint& endpoint,
     std::shared_ptr<http::server::router> router,
     std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
     m_logger(std::move(logger)),
     m_io_ctx(ioc),
-    m_tls_ctx(tls_ctx),
+    m_tls_ctx(std::move(tls_ctx)),
     m_acceptor(boost::asio::make_strand(ioc)),
     m_router(std::move(router)),
     m_doc_root(std::move(http_doc_root))
