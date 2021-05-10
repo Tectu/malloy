@@ -51,11 +51,15 @@ namespace malloy::websocket::server
         boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req
     )
     {
-        std::make_shared<connection_tls>(
+        logger->debug("creating TLS websocket connection.");
+
+        auto connection = std::make_shared<connection_tls>(
             std::move(logger),
             std::move(handler),
-            std::move(stream))->run(std::move(req)
+            std::move(stream)
         );
+
+        connection->run(std::move(req));
     }
 
 }

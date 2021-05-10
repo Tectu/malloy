@@ -52,11 +52,15 @@ namespace malloy::websocket::server
         boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req
     )
     {
-        std::make_shared<connection_plain>(
+        logger->debug("creating plain websocket connection.");
+
+        auto connection = std::make_shared<connection_plain>(
             std::move(logger),
             std::move(handler),
-            std::move(stream))->run(std::move(req)
+            std::move(stream)
         );
+
+        connection->run(std::move(req));
     }
 
 }
