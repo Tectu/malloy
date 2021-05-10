@@ -1,6 +1,9 @@
 #include "connection_detector.hpp"
 #include "connection_plain.hpp"
-#include "connection_tls.hpp"
+
+#if MALLOY_FEATURE_TLS
+    #include "connection_tls.hpp"
+#endif
 
 using namespace malloy::http::server;
 
@@ -50,23 +53,25 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
     // ToDo: Check whether it's okay to fall back to a plain session if a handshake was detected
     //       Currently we'd do this if no TLS context was provided.
 
-    if (result and m_ctx) {
-        // Log
-        m_logger->debug("launching TLS connection.");
+    #if MALLOY_FEATURE_TLS
+        if (result and m_ctx) {
+            // Log
+            m_logger->debug("launching TLS connection.");
 
-        // Launch TLS connection
-        std::make_shared<connection_tls>(
-            m_logger,
-            m_stream.release_socket(),
-            m_ctx,
-            std::move(m_buffer),
-            m_doc_root,
-            m_router,
-            m_websocket_handler
-        )->run();
+            // Launch TLS connection
+            std::make_shared<connection_tls>(
+                m_logger,
+                m_stream.release_socket(),
+                m_ctx,
+                std::move(m_buffer),
+                m_doc_root,
+                m_router,
+                m_websocket_handler
+            )->run();
 
-        return;
-    }
+            return;
+        }
+    #endif
 
     // Launch plain connection
     m_logger->debug("launching plain connection.");
