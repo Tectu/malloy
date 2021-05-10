@@ -11,6 +11,11 @@
 #include <thread>
 #include <vector>
 
+namespace boost::asio::ssl
+{
+    class context;
+}
+
 namespace spdlog
 {
     class logger;
@@ -96,6 +101,19 @@ namespace malloy::server
          */
         bool init(config cfg);
 
+        #if MALLOY_FEATURE_TLS
+            /**
+             * Initialize the TLS context.
+             *
+             * @note This must be called after `init()` but before `start()` if TLS is to be used.
+             *
+             * @param cert_path Path to the certificate file.
+             * @param key_path Path to the key file.
+             * @return Whether the initialization was successful.
+             */
+            bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
+        #endif
+
         /**
          * Start the server. This function will not return until the server is stopped.
          *
@@ -115,7 +133,11 @@ namespace malloy::server
          *
          * @return The top-level HTTP router.
          */
-        [[nodiscard]] std::shared_ptr<malloy::http::server::router> router() const;
+        [[nodiscard]]
+        std::shared_ptr<malloy::http::server::router> router() const noexcept
+        {
+            return m_router;
+        }
 
         /**
          * This function can be used to register a handler for incoming websocket
@@ -133,6 +155,8 @@ namespace malloy::server
         std::shared_ptr<listener> m_listener;
         std::vector<std::thread> m_threads;
         boost::asio::io_context m_io_ctx;
+        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+        std::shared_ptr<malloy::http::server::router> m_router;
     };
 
 }

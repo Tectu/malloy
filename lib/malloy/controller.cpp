@@ -1,6 +1,9 @@
 #include "controller.hpp"
 #include "listener.hpp"
 #include "http/routing/router.hpp"
+#if MALLOY_FEATURE_TLS
+    #include "tls/manager.hpp"
+#endif
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -19,6 +22,7 @@ bool controller::init(config cfg)
     // Don't re-initialize
     if (m_init_done)
         return false;
+    m_init_done = true;
 
     // Create a logger if none was provided
     if (not cfg.logger)
@@ -43,26 +47,51 @@ bool controller::init(config cfg)
     // Grab the config
     m_cfg = std::move(cfg);
 
-    // Create and launch a listener
-    m_listener = std::make_shared<malloy::server::listener>(
-        m_cfg.logger->clone("listener"),
-        m_io_ctx,
-        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
-        std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router")),
-        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
-    );
-
-    // Don't initialize ever again.
-    m_init_done = true;
+    // Create the top-level router
+    m_router = std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router"));
 
     return true;
 }
+
+#if MALLOY_FEATURE_TLS
+    bool controller::init_tls(
+        const std::filesystem::path& cert_path,
+        const std::filesystem::path& key_path
+    )
+    {
+        // Sanity check cert
+        if (not std::filesystem::is_regular_file(cert_path)) {
+            m_cfg.logger->critical("could not create TLS context: invalid certificate file path: {}", cert_path.string());
+            return false;
+        }
+
+        // Sanity check key_path
+        if (not std::filesystem::is_regular_file(key_path)) {
+            m_cfg.logger->critical("could not create TLS context: invalid key file path: {}", key_path.string());
+        }
+
+        // Create the context
+        m_tls_ctx = tls::manager::make_context(cert_path, key_path);
+
+        return true;
+    }
+#endif
 
 bool controller::start()
 {
     // Must be initialized
     if (not m_init_done)
         return false;
+
+    // Create the listener
+    m_listener = std::make_shared<malloy::server::listener>(
+        m_cfg.logger->clone("listener"),
+        m_io_ctx,
+        m_tls_ctx,
+        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
+        m_router,
+        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
+    );
 
     // Run the listener
     m_listener->run();
@@ -106,14 +135,6 @@ std::future<void> controller::stop()
             m_cfg.logger->info("all I/O threads stopped.");
         }
     );
-}
-
-std::shared_ptr<malloy::http::server::router> controller::router() const
-{
-    if (m_listener)
-        return m_listener->router();
-
-    return { };
 }
 
 void controller::set_websocket_handler(malloy::websocket::handler_type handler)

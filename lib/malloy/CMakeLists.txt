@@ -6,11 +6,14 @@ set(TARGET_OBJS   ${NAME}-objs)
 
 add_library(${TARGET_OBJS} OBJECT)
 
+add_subdirectory(http)
+add_subdirectory(websocket)
 if (FEATURE_HTML)
     add_subdirectory(html)
 endif()
-add_subdirectory(http)
-add_subdirectory(websocket)
+if (FEATURE_TLS)
+    add_subdirectory(tls)
+endif()
 
 target_compile_features(
     ${TARGET_OBJS}
@@ -22,6 +25,7 @@ target_compile_definitions(
     ${TARGET_OBJS}
     PUBLIC
         BOOST_BEAST_USE_STD_STRING_VIEW
+        $<$<BOOL:${FEATURE_TLS}>:MALLOY_FEATURE_TLS>
         $<$<BOOL:${WIN32}>:UNICODE>
         $<$<BOOL:${WIN32}>:_UNICODE>
         $<$<BOOL:${WIN32}>:WIN32_LEAN_AND_MEAN>
@@ -53,6 +57,8 @@ target_link_libraries(
     PRIVATE
         $<$<BOOL:${WIN32}>:wsock32>
         $<$<BOOL:${WIN32}>:ws2_32>
+        $<$<BOOL:${FEATURE_TLS}>:OpenSSL::Crypto>
+        $<$<BOOL:${FEATURE_TLS}>:OpenSSL::SSL>
 )
 
 target_compile_options(

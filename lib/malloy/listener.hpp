@@ -14,6 +14,11 @@ namespace boost::asio
     class io_context;
 }
 
+namespace boost::asio::ssl
+{
+    class context;
+}
+
 namespace malloy::http::server
 {
     class router;
@@ -39,6 +44,7 @@ namespace malloy::server
          *
          * @param logger The logger instance to use.
          * @param ioc The I/O context to use.
+         * @param tls_ctx The TLS context to use.
          * @param endpoint The enpoint to use.
          * @param router The router to use.
          * @param http_doc_root The path to the HTTP doc root
@@ -46,6 +52,7 @@ namespace malloy::server
         listener(
                 std::shared_ptr<spdlog::logger> logger,
                 boost::asio::io_context& ioc,
+                std::shared_ptr<boost::asio::ssl::context> tls_ctx,
                 const boost::asio::ip::tcp::endpoint& endpoint,
                 std::shared_ptr<malloy::http::server::router> router,
                 std::shared_ptr<const std::filesystem::path> http_doc_root
@@ -114,6 +121,7 @@ namespace malloy::server
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         boost::asio::io_context& m_io_ctx;
+        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         boost::asio::ip::tcp::acceptor m_acceptor;
         std::shared_ptr<malloy::http::server::router> m_router;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
