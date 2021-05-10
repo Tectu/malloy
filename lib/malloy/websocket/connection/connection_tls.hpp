@@ -26,6 +26,8 @@ namespace malloy::websocket::server
             ),
             m_stream(std::move(stream))
         {
+            // We operate in binary mode
+            m_stream.binary(true);
         }
 
         // Called by the base class

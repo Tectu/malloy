@@ -37,9 +37,6 @@ namespace malloy::websocket::server
             // Sanity check logger
             if (not m_logger)
                 throw std::invalid_argument("no valid logger provided.");
-
-            // We operate in binary mode
-            derived().stream().binary(true);
         }
 
         // Start the asynchronous operation
