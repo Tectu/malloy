@@ -6,11 +6,14 @@ set(TARGET_OBJS   ${NAME}-objs)
 
 add_library(${TARGET_OBJS} OBJECT)
 
+add_subdirectory(http)
+add_subdirectory(websocket)
 if (FEATURE_HTML)
     add_subdirectory(html)
 endif()
-add_subdirectory(http)
-add_subdirectory(websocket)
+if (FEATURE_TLS)
+    add_subdirectory(tls)
+endif()
 
 target_compile_features(
     ${TARGET_OBJS}

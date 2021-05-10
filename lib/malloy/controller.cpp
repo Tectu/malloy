@@ -2,14 +2,11 @@
 #include "listener.hpp"
 #include "http/routing/router.hpp"
 #if MALLOY_FEATURE_TLS
-    #include "server_certificate.hpp"
+    #include "tls/manager.hpp"
 #endif
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#if MALLOY_FEATURE_TLS
-    #include <boost/asio/ssl/context.hpp>
-#endif
 
 #include <memory>
 
@@ -57,12 +54,25 @@ bool controller::init(config cfg)
 }
 
 #if MALLOY_FEATURE_TLS
-    bool controller::init_tls()
+    bool controller::init_tls(
+        const std::filesystem::path& cert_path,
+        const std::filesystem::path& key_path,
+        const std::string_view cipher_list
+    )
     {
-        m_tls_ctx = std::make_shared<boost::asio::ssl::context>( boost::asio::ssl::context::tlsv12 );
+        // Sanity check cert
+        if (not std::filesystem::is_regular_file(cert_path)) {
+            m_cfg.logger->critical("could not create TLS context: invalid certificate file path: {}", cert_path.string());
+            return false;
+        }
 
-        // This holds the self-signed certificate used by the server
-        load_server_certificate(*m_tls_ctx);
+        // Sanity check key_path
+        if (not std::filesystem::is_regular_file(key_path)) {
+            m_cfg.logger->critical("could not create TLS context: invalid key file path: {}", key_path.string());
+        }
+
+        // Create the context
+        m_tls_ctx = tls::manager::make_context(cert_path, key_path, cipher_list);
 
         return true;
     }

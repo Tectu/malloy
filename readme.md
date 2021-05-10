@@ -6,9 +6,9 @@ The main use case for this library is a C++ project which needs to embedd an HTT
 # Features
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
-- Plain or TLS connections (HTTP / HTTPS)
 - HTTP
   - Server
+    - Plain or TLS connections (HTTP / HTTPS)
     - Request router
       - Simple handlers (useful for building REST APIs)
       - Sub-routers (nested routers)
