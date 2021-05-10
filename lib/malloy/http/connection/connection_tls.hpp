@@ -20,7 +20,7 @@ namespace malloy::http::server
         connection_tls(
             std::shared_ptr<spdlog::logger> logger,
             boost::asio::ip::tcp::socket&& socket,
-            boost::asio::ssl::context& ctx,
+            std::shared_ptr<boost::asio::ssl::context> ctx,
             boost::beast::flat_buffer buffer,
             std::shared_ptr<const std::filesystem::path> doc_root,
             std::shared_ptr<router> router,
@@ -33,7 +33,8 @@ namespace malloy::http::server
                 std::move(doc_root),
                 std::move(websocket_handler)
             ),
-            m_stream(std::move(socket), ctx)
+            m_ctx(std::move(ctx)),
+            m_stream(std::move(socket), *m_ctx)
         {
         }
 
@@ -102,6 +103,7 @@ namespace malloy::http::server
         }
 
     private:
+        std::shared_ptr<boost::asio::ssl::context> m_ctx;   // Keep the context alive
         boost::beast::ssl_stream<boost::beast::tcp_stream> m_stream;
     };
 

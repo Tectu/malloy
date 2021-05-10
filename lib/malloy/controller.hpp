@@ -131,7 +131,11 @@ namespace malloy::server
          *
          * @return The top-level HTTP router.
          */
-        [[nodiscard]] std::shared_ptr<malloy::http::server::router> router() const;
+        [[nodiscard]]
+        std::shared_ptr<malloy::http::server::router> router() const noexcept
+        {
+            return m_router;
+        }
 
         /**
          * This function can be used to register a handler for incoming websocket
@@ -150,6 +154,7 @@ namespace malloy::server
         std::vector<std::thread> m_threads;
         boost::asio::io_context m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+        std::shared_ptr<malloy::http::server::router> m_router;
     };
 
 }

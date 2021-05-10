@@ -25,11 +25,12 @@ bool controller::init(config cfg)
     // Don't re-initialize
     if (m_init_done)
         return false;
+    m_init_done = true;
 
     // Create a logger if none was provided
     if (not cfg.logger)
     {
-        auto log_level = spdlog::level::debug;
+        auto log_level = spdlog::level::trace;
 
         // Sink
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -49,18 +50,8 @@ bool controller::init(config cfg)
     // Grab the config
     m_cfg = std::move(cfg);
 
-    // Create the listener
-    m_listener = std::make_shared<malloy::server::listener>(
-        m_cfg.logger->clone("listener"),
-        m_io_ctx,
-        m_tls_ctx,
-        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
-        std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router")),
-        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
-    );
-
-    // Don't initialize ever again.
-    m_init_done = true;
+    // Create the top-level router
+    m_router = std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router"));
 
     return true;
 }
@@ -82,6 +73,16 @@ bool controller::start()
     // Must be initialized
     if (not m_init_done)
         return false;
+
+    // Create the listener
+    m_listener = std::make_shared<malloy::server::listener>(
+        m_cfg.logger->clone("listener"),
+        m_io_ctx,
+        m_tls_ctx,
+        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
+        m_router,
+        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
+    );
 
     // Run the listener
     m_listener->run();
@@ -125,14 +126,6 @@ std::future<void> controller::stop()
             m_cfg.logger->info("all I/O threads stopped.");
         }
     );
-}
-
-std::shared_ptr<malloy::http::server::router> controller::router() const
-{
-    if (m_listener)
-        return m_listener->router();
-
-    return { };
 }
 
 void controller::set_websocket_handler(malloy::websocket::handler_type handler)

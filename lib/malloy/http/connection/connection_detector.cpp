@@ -47,9 +47,10 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
         return;
     }
 
-    // ToDo: Check whether it's okay to fall back to a plain session if a handshake was detected.
+    // ToDo: Check whether it's okay to fall back to a plain session if a handshake was detected
+    //       Currently we'd do this if no TLS context was provided.
 
-    if (result and not m_ctx) {
+    if (result and m_ctx) {
         // Log
         m_logger->debug("launching TLS connection.");
 
@@ -57,7 +58,7 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
         std::make_shared<connection_tls>(
             m_logger,
             m_stream.release_socket(),
-            *m_ctx,
+            m_ctx,
             std::move(m_buffer),
             m_doc_root,
             m_router,
