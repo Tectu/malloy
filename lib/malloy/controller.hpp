@@ -109,10 +109,9 @@ namespace malloy::server
              *
              * @param cert_path Path to the certificate file.
              * @param key_path Path to the key file.
-             * @param cipher_list List of ciphers. Will use the default ciphers if not specified.
              * @return Whether the initialization was successful.
              */
-            bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path, std::string_view cipher_list = { });
+            bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
         #endif
 
         /**

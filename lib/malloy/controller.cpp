@@ -56,8 +56,7 @@ bool controller::init(config cfg)
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls(
         const std::filesystem::path& cert_path,
-        const std::filesystem::path& key_path,
-        const std::string_view cipher_list
+        const std::filesystem::path& key_path
     )
     {
         // Sanity check cert
@@ -72,7 +71,7 @@ bool controller::init(config cfg)
         }
 
         // Create the context
-        m_tls_ctx = tls::manager::make_context(cert_path, key_path, cipher_list);
+        m_tls_ctx = tls::manager::make_context(cert_path, key_path);
 
         return true;
     }

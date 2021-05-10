@@ -8,8 +8,7 @@ using namespace malloy::tls;
 
 std::shared_ptr<boost::asio::ssl::context> manager::make_context(
     const std::filesystem::path& cert_path,
-    const std::filesystem::path& key_path,
-    const std::string_view cipher_list
+    const std::filesystem::path& key_path
 )
 {
     // Sanity checks
@@ -30,13 +29,6 @@ std::shared_ptr<boost::asio::ssl::context> manager::make_context(
 
     // Create the context
     auto ctx = std::make_shared<boost::asio::ssl::context>( boost::asio::ssl::context::tls_server );
-
-    // Set ciphers
-    // ToDo: This is only working for TLS 1.2 and lower. See https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_cipher_list.html
-    const char* _cipher_list = (cipher_list.empty() ? default_ciphers : cipher_list.data());
-    SSL_CTX_set_cipher_list(ctx->native_handle(),
-        _cipher_list
-    );
 
     // Options
     ctx->set_options(static_cast<long>(
