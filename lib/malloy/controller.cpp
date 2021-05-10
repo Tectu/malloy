@@ -30,7 +30,7 @@ bool controller::init(config cfg)
     // Create a logger if none was provided
     if (not cfg.logger)
     {
-        auto log_level = spdlog::level::trace;
+        auto log_level = spdlog::level::debug;
 
         // Sink
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
