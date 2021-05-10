@@ -19,9 +19,10 @@ The following list provides an overview of the currently implemented features. S
   - Sessions
 - WebSocket
   - Server
+    - Plain or TLS connections (WS / WSS)
 - HTML
   - Parsing HTML forms
-- Utility wrapper to setup `boost::asio` I/O context, worker threads and more.
+- High-level controller class to setup I/O context, SSL context, worker threads and more.
 
 Coming soon™:
 - Security middleware (CSRF, XSS, ...)

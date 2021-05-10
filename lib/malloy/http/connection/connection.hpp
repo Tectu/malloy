@@ -2,6 +2,10 @@
 
 #include "../routing/router.hpp"
 #include "../../websocket/types.hpp"
+#include "../../websocket/connection/connection_plain.hpp"
+#if MALLOY_FEATURE_TLS
+    #include "../../websocket/connection/connection_tls.hpp"
+#endif
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
@@ -187,22 +191,21 @@ namespace malloy::http::server
             }
 
             // See if it is a WebSocket Upgrade
-// ToDo
-#if 0
             if (boost::beast::websocket::is_upgrade(m_parser->get())) {
                 m_logger->info("upgrading HTTP connection to WS connection.");
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
-                auto ws_connection = std::make_shared<malloy::websocket::server::connection>(
-                        m_logger->clone("websocket_connection"),
-                        m_stream.release_socket(),
-                        m_websocket_handler
+                websocket::server::make_websocket_connection(
+                    m_logger->clone("websocket_connection"),
+                    m_websocket_handler,
+                    derived().release_stream(),
+                    m_parser->release()
                 );
-                ws_connection->do_accept(m_parser->release());
+
                 return;
             }
-#endif
+
             // Parse the request into something more useful from hereon
             request req = m_parser->release();
 

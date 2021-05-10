@@ -33,10 +33,23 @@ namespace malloy::http::server
         }
 
         // Called by the base class
+        [[nodiscard]]
         boost::beast::tcp_stream&
         stream()
         {
             return m_stream;
+        }
+
+        /**
+         * Release the stream.
+         *
+         * @return The stream.
+         */
+        [[nodiscard]]
+        boost::beast::tcp_stream
+        release_stream()
+        {
+            return std::move(m_stream);
         }
 
         /**

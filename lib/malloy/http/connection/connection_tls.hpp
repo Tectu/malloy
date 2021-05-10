@@ -39,10 +39,18 @@ namespace malloy::http::server
         }
 
         // Called by the base class
+        [[nodiscard]]
         boost::beast::ssl_stream<boost::beast::tcp_stream>&
         stream()
         {
             return m_stream;
+        }
+
+        [[nodiscard]]
+        boost::beast::ssl_stream<boost::beast::tcp_stream>
+        release_stream()
+        {
+            return std::move(m_stream);
         }
 
         // Start the asynchronous operation
