@@ -5,6 +5,7 @@
     #include "tls/manager.hpp"
 #endif
 
+#include <boost/asio/io_context.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -47,6 +48,9 @@ bool controller::init(config cfg)
     // Grab the config
     m_cfg = std::move(cfg);
 
+    // Create the I/O context
+    m_io_ctx = std::make_shared<boost::asio::io_context>();
+
     // Create the top-level router
     m_router = std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router"));
 
@@ -86,7 +90,7 @@ bool controller::start()
     // Create the listener
     m_listener = std::make_shared<malloy::server::listener>(
         m_cfg.logger->clone("listener"),
-        m_io_ctx,
+        *m_io_ctx,
         m_tls_ctx,
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
         m_router,
@@ -103,7 +107,7 @@ bool controller::start()
         m_threads.emplace_back(
             [this]
             {
-                m_io_ctx.run();
+                m_io_ctx->run();
             }
         );
     }
@@ -112,7 +116,7 @@ bool controller::start()
     m_cfg.logger->info("starting server.");
 
     // Start the I/O context
-    m_io_ctx.run();
+    m_io_ctx->run();
 
     return true;
 }
@@ -122,7 +126,7 @@ std::future<void> controller::stop()
     // Stop the `io_context`. This will cause `run()`
     // to return immediately, eventually destroying the
     // `io_context` and all of the sockets in it.
-    m_io_ctx.stop();
+    m_io_ctx->stop();
 
     // Wait for all I/O context threads to finish...
     return std::async(

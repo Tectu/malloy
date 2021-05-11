@@ -2,14 +2,17 @@
 
 #include "websocket/types.hpp"
 
-#include <boost/asio/io_context.hpp>
-
 #include <memory>
 #include <filesystem>
 #include <future>
 #include <string>
 #include <thread>
 #include <vector>
+
+namespace boost::asio
+{
+    class io_context;
+}
 
 namespace boost::asio::ssl
 {
@@ -156,7 +159,7 @@ namespace malloy::server
         config m_cfg;
         std::shared_ptr<listener> m_listener;
         std::vector<std::thread> m_threads;
-        boost::asio::io_context m_io_ctx;
+        std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         std::shared_ptr<malloy::http::server::router> m_router;
         websocket::handler_type m_websocket_handler;
