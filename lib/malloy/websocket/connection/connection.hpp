@@ -168,20 +168,16 @@ namespace malloy::websocket::server
             }
 
             // Nothing to do if we didn't read anything
-            m_logger->warn("1");
             if (bytes_transferred == 0)
                 return;
-            m_logger->warn("2");
 
             // Convert to string
             std::string payload = boost::beast::buffers_to_string(m_buffer.cdata());
             if (payload.empty())
                 return;
-            m_logger->warn("3");
 
             // Handle the payload
             if (m_handler) {
-                m_logger->warn("HANDLER");
                 try {
                     m_handler(payload, std::bind(&connection::write, this, std::placeholders::_1));
                 }

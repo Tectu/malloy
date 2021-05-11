@@ -145,6 +145,8 @@ namespace malloy::server
          *
          * @brief Set the websocket handler.
          *
+         * @note This must be called before `start()` to have any effect.
+         *
          * @param handler The handler to use.
          */
         void set_websocket_handler(malloy::websocket::handler_type handler);
@@ -157,6 +159,7 @@ namespace malloy::server
         boost::asio::io_context m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         std::shared_ptr<malloy::http::server::router> m_router;
+        websocket::handler_type m_websocket_handler;
     };
 
 }

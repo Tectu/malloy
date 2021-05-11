@@ -27,7 +27,7 @@ bool controller::init(config cfg)
     // Create a logger if none was provided
     if (not cfg.logger)
     {
-        auto log_level = spdlog::level::trace;
+        auto log_level = spdlog::level::debug;
 
         // Sink
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -90,7 +90,8 @@ bool controller::start()
         m_tls_ctx,
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
         m_router,
-        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
+        std::make_shared<std::filesystem::path>(m_cfg.doc_root),
+        m_websocket_handler
     );
 
     // Run the listener
@@ -139,6 +140,5 @@ std::future<void> controller::stop()
 
 void controller::set_websocket_handler(malloy::websocket::handler_type handler)
 {
-    if (m_listener)
-        m_listener->set_websocket_handler(std::move(handler));
+    m_websocket_handler = std::move(handler);
 }

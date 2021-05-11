@@ -47,15 +47,17 @@ namespace malloy::server
          * @param tls_ctx The TLS context to use.
          * @param endpoint The enpoint to use.
          * @param router The router to use.
-         * @param http_doc_root The path to the HTTP doc root
+         * @param http_doc_root The path to the HTTP doc root.
+         * @param websocket_handler The websocket handler to use.
          */
         listener(
-                std::shared_ptr<spdlog::logger> logger,
-                boost::asio::io_context& ioc,
-                std::shared_ptr<boost::asio::ssl::context> tls_ctx,
-                const boost::asio::ip::tcp::endpoint& endpoint,
-                std::shared_ptr<malloy::http::server::router> router,
-                std::shared_ptr<const std::filesystem::path> http_doc_root
+            std::shared_ptr<spdlog::logger> logger,
+            boost::asio::io_context& ioc,
+            std::shared_ptr<boost::asio::ssl::context> tls_ctx,
+            const boost::asio::ip::tcp::endpoint& endpoint,
+            std::shared_ptr<malloy::http::server::router> router,
+            std::shared_ptr<const std::filesystem::path> http_doc_root,
+            websocket::handler_type websocket_handler
         );
 
         /**
@@ -103,19 +105,6 @@ namespace malloy::server
         std::shared_ptr<malloy::http::server::router> router() const noexcept
         {
             return m_router;
-        }
-
-        /**
-         * This function can be used to register a handler for incoming websocket
-         * requests.
-         *
-         * @brief Set the websocket handler.
-         *
-         * @param handler The handler to use.
-         */
-        void set_websocket_handler(malloy::websocket::handler_type handler)
-        {
-            m_websocket_handler = std::move(handler);
         }
 
     private:
