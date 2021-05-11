@@ -64,7 +64,10 @@ namespace malloy::websocket::server
             // Issue asynchronous write
             derived().stream().async_write(
                 boost::asio::buffer(payload),
-                boost::beast::bind_front_handler(&connection::on_write, derived().shared_from_this())
+                boost::beast::bind_front_handler(
+                    &connection::on_write,
+                    derived().shared_from_this()
+                )
             );
         }
 
@@ -85,6 +88,8 @@ namespace malloy::websocket::server
         void
         do_accept(boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req)
         {
+            m_logger->trace("do_accept()");
+
             // Set suggested timeout settings for the websocket
             derived().stream().set_option(
                 boost::beast::websocket::stream_base::timeout::suggested(
@@ -115,6 +120,8 @@ namespace malloy::websocket::server
         void
         on_accept(boost::beast::error_code ec)
         {
+            m_logger->trace("on_accept()");
+
             // Check for errors
             if (ec) {
                 m_logger->error("on_accept(): {}", ec.message());
@@ -128,6 +135,8 @@ namespace malloy::websocket::server
         void
         do_read()
         {
+            m_logger->trace("do_read()");
+
             // Read a message into our buffer
             derived().stream().async_read(
                 m_buffer,
@@ -144,6 +153,8 @@ namespace malloy::websocket::server
             std::size_t bytes_transferred
         )
         {
+            m_logger->trace("on_read(): bytes read: {}", bytes_transferred);
+
             // This indicates that the connection was closed
             if (ec == boost::beast::websocket::error::closed) {
                 m_logger->info("on_read(): connection was closed.");
@@ -153,19 +164,24 @@ namespace malloy::websocket::server
             // Check for errors
             if (ec) {
                 m_logger->error("on_read(): {}", ec.message());
+                return;
             }
 
             // Nothing to do if we didn't read anything
+            m_logger->warn("1");
             if (bytes_transferred == 0)
                 return;
+            m_logger->warn("2");
 
             // Convert to string
             std::string payload = boost::beast::buffers_to_string(m_buffer.cdata());
             if (payload.empty())
                 return;
+            m_logger->warn("3");
 
             // Handle the payload
             if (m_handler) {
+                m_logger->warn("HANDLER");
                 try {
                     m_handler(payload, std::bind(&connection::write, this, std::placeholders::_1));
                 }
@@ -187,9 +203,11 @@ namespace malloy::websocket::server
         void
         on_write(
             boost::beast::error_code ec,
-            [[maybe_unused]] std::size_t bytes_transferred
+            std::size_t bytes_transferred
         )
         {
+            m_logger->trace("on_write(). bytes transferred: {}", bytes_transferred);
+
             // Clear the buffer
             m_buffer.consume(m_buffer.size());
 
