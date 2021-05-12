@@ -18,7 +18,7 @@ controller::~controller()
     stop().wait();
 }
 
-bool controller::init(config cfg)
+bool controller::init(config cfg, std::shared_ptr<boost::asio::io_context> io_ctx)
 {
     // Don't re-initialize
     if (m_init_done)
@@ -48,8 +48,10 @@ bool controller::init(config cfg)
     // Grab the config
     m_cfg = std::move(cfg);
 
-    // Create the I/O context
-    m_io_ctx = std::make_shared<boost::asio::io_context>();
+    // Create the I/O context (if necessary)
+    m_io_ctx = std::move(io_ctx);
+    if (not m_io_ctx)
+        m_io_ctx = std::make_shared<boost::asio::io_context>();
 
     // Create the top-level router
     m_router = std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router"));
@@ -86,6 +88,9 @@ bool controller::start()
     // Must be initialized
     if (not m_init_done)
         return false;
+
+    // Sanity check
+    assert(m_io_ctx);
 
     // Create the listener
     m_listener = std::make_shared<malloy::server::listener>(

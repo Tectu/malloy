@@ -100,9 +100,10 @@ namespace malloy::server
          * @note This function must be called before any other.
          *
          * @param cfg The configuration to use.
+         * @param io_ctx The I/O context to use. An I/O context will be created automatically if none was supplied.
          * @return Whether the initialization was successful.
          */
-        bool init(config cfg);
+        bool init(config cfg, std::shared_ptr<boost::asio::io_context> io_ctx = nullptr);
 
         #if MALLOY_FEATURE_TLS
             /**
