@@ -1,6 +1,6 @@
 #include "../../test.hpp"
 
-#include <malloy/http/router.hpp>
+#include <malloy/http/routing/router.hpp>
 
 using namespace malloy::http;
 using namespace malloy::http::server;
