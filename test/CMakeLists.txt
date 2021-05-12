@@ -8,6 +8,7 @@ target_include_directories(
     ${TARGET}
     PRIVATE
         3rdparty/doctest
+        "${CMAKE_SOURCE_DIR}/lib"
 )
 
 target_sources(

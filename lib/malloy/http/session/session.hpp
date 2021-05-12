@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include <optional>
 
 namespace malloy::http::sessions
 {

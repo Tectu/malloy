@@ -76,7 +76,7 @@ namespace malloy::http
          * @return The HTTP status
          */
         [[nodiscard]]
-        status status() const { return result(); }
+        http::status status() const { return result(); }
 
         /**
          * Adds a cookie.
