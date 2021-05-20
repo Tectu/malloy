@@ -1,5 +1,5 @@
 # Set a target name
-set(TARGET malloy-example-basic)
+set(TARGET malloy-example-server-ssl)
 
 # Create the executable
 add_executable(${TARGET})

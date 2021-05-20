@@ -1,5 +1,5 @@
 # Set a target name
-set(TARGET malloy-example-nestedrouters)
+set(TARGET malloy-example-server-html-form)
 
 # Create the executable
 add_executable(${TARGET})

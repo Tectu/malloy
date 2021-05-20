@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 {
-    const std::filesystem::path doc_root = "../../../../examples/static_content";
+    const std::filesystem::path doc_root = "../../../../examples/server/static_content";
 
     // Create malloy controller config
     malloy::server::controller::config cfg;
