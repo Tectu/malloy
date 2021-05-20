@@ -161,7 +161,7 @@ Various `cmake` options are available to control the build:
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `BUILD_EXAMPLES` | `ON` | Whether to build examples. |
-| `BUILD_TESTS` | `ON` | Whether to build the test suite(s). |
-| `FEATURE_HTML` | `ON` | Whether to enable HTML support. |
-| `FEATURE_TLS` | `OFF` | Whether to enable TLS support. |
+| `MALLOY_BUILD_EXAMPLES` | `ON` | Whether to build examples. |
+| `MALLOY_BUILD_TESTS` | `ON` | Whether to build the test suite(s). |
+| `MALLOY_FEATURE_HTML` | `ON` | Whether to enable HTML support. |
+| `MALLOY_FEATURE_TLS` | `OFF` | Whether to enable TLS support. |

@@ -4,6 +4,6 @@ add_subdirectory(nested_routers)
 add_subdirectory(session)
 add_subdirectory(websocket)
 
-if (FEATURE_TLS)
+if (MALLOY_FEATURE_TLS)
     add_subdirectory(ssl)
 endif()
