@@ -1,4 +1,4 @@
-#include "malloy/controller.hpp"
+#include "malloy/server/controller.hpp"
 #include "malloy/http/generator.hpp"
 #include "malloy/http/session/manager.hpp"
 #include "malloy/http/session/session.hpp"

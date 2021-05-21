@@ -1,4 +1,4 @@
-#include "malloy/controller.hpp"
+#include "malloy/server/controller.hpp"
 
 #include <iostream>
 #include <memory>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "websocket/types.hpp"
+#include "malloy/websocket/types.hpp"
 
 #include <memory>
 #include <filesystem>

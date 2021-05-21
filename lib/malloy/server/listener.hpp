@@ -1,6 +1,6 @@
 #pragma once
 
-#include "websocket/types.hpp"
+#include "malloy/websocket/types.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core/error.hpp>

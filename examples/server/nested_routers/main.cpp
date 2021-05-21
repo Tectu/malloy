@@ -1,5 +1,5 @@
-#include "malloy/controller.hpp"
-#include "malloy/listener.hpp"
+#include "malloy/server/controller.hpp"
+#include "malloy/server/listener.hpp"
 #include "malloy/server/routing/router.hpp"
 
 #include <iostream>
