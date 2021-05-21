@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 
-namespace malloy::websocket
+namespace malloy::server::websocket
 {
     using payload_type = std::string;
     using writer_type  = std::function<void(payload_type&&)>;

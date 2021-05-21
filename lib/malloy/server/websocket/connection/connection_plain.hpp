@@ -4,7 +4,7 @@
 
 #include <boost/beast/websocket/stream.hpp>
 
-namespace malloy::websocket::server
+namespace malloy::server::websocket
 {
 
     /**

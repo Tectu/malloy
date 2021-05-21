@@ -8,7 +8,7 @@
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
 
-namespace malloy::websocket::server
+namespace malloy::server::websocket
 {
 
     /**

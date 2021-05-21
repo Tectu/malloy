@@ -21,7 +21,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    c.set_websocket_handler([](const std::string& payload, malloy::websocket::writer_type writer) {
+    c.set_websocket_handler([](const std::string& payload, malloy::server::websocket::writer_type writer) {
         std::cout << "received: " << payload << std::endl;
 
         // Response

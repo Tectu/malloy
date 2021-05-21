@@ -4,7 +4,7 @@
 
 #include <boost/beast/ssl.hpp>
 
-namespace malloy::websocket::server
+namespace malloy::server::websocket
 {
 
     /**

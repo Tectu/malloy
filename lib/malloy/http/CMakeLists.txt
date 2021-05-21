@@ -1,4 +1,3 @@
-add_subdirectory(connection)
 add_subdirectory(session)
 
 target_sources(

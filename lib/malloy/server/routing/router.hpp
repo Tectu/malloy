@@ -27,8 +27,6 @@ namespace spdlog
 
 namespace malloy::server
 {
-    using namespace malloy;
-
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
 
@@ -43,7 +41,7 @@ namespace malloy::server
         /**
          * The method type to use.
          */
-        using method_type   = http::method;
+        using method_type   = malloy::http::method;
 
         /**
          * The request type to use.
@@ -153,7 +151,7 @@ namespace malloy::server
          * @param status The HTTP status code to use. This must be a 3xx status code.
          * @return Whether adding the redirect was successful.
          */
-        bool add_redirect(http::status status, std::string&& resource_old, std::string&& resource_new);
+        bool add_redirect(malloy::http::status status, std::string&& resource_old, std::string&& resource_new);
 
         /**
          * Handle a request.
@@ -166,7 +164,7 @@ namespace malloy::server
         template<class Send>
         void handle_request(
             const std::filesystem::path& doc_root,
-            http::request&& req,
+            malloy::http::request&& req,
             Send&& send
         )
         {
@@ -202,7 +200,7 @@ namespace malloy::server
                     continue;
 
                 // Generate preflight response (if supposed to)
-                if (m_generate_preflights and (req.method() == http::method::options)) {
+                if (m_generate_preflights and (req.method() == malloy::http::method::options)) {
                     // Log
                     m_logger->debug("automatically constructing preflight response.");
 
@@ -227,7 +225,7 @@ namespace malloy::server
             }
 
             // If we end up where we have no meaningful way of handling this request
-            return send_response(req, std::move(http::generator::bad_request("unknown request")), std::forward<Send>(send));
+            return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), std::forward<Send>(send));
         }
 
     private:

@@ -1,8 +1,6 @@
-add_subdirectory(connection)
-
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
-        types.hpp
+        ../server/websocket/types.hpp
         websocket.hpp
 )

@@ -147,7 +147,7 @@ std::future<void> controller::stop()
     );
 }
 
-void controller::set_websocket_handler(malloy::websocket::handler_type handler)
+void controller::set_websocket_handler(websocket::handler_type handler)
 {
     m_websocket_handler = std::move(handler);
 }

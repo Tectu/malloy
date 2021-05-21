@@ -5,7 +5,7 @@
     #include "connection_tls.hpp"
 #endif
 
-using namespace malloy::http::server;
+using namespace malloy::server::http;
 
 connection_detector::connection_detector(
     std::shared_ptr<spdlog::logger> logger,
@@ -13,7 +13,7 @@ connection_detector::connection_detector(
     std::shared_ptr<boost::asio::ssl::context> ctx,
     std::shared_ptr<const std::filesystem::path> doc_root,
     std::shared_ptr<malloy::server::router> router,
-    malloy::websocket::handler_type websocket_handler
+    malloy::server::websocket::handler_type websocket_handler
 ) :
     m_logger(std::move(logger)),
     m_stream(std::move(socket)),

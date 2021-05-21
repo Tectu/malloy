@@ -1,6 +1,6 @@
 #include "listener.hpp"
 
-#include "malloy/http/connection/connection_detector.hpp"
+#include "http/connection/connection_detector.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
@@ -111,7 +111,7 @@ void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::sock
 
     // Create the http detector connection
     // This will automatically spawn the correct type of connection (eg. plain or TLS).
-    auto connection = std::make_shared<http::server::connection_detector>(
+    auto connection = std::make_shared<http::connection_detector>(
         m_logger->clone("http_connection"),
         std::move(socket),
         m_tls_ctx,

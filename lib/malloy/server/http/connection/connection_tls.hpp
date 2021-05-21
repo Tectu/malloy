@@ -4,7 +4,7 @@
 
 #include <boost/beast/ssl/ssl_stream.hpp>
 
-namespace malloy::http::server
+namespace malloy::server::http
 {
 
     /**
@@ -24,7 +24,7 @@ namespace malloy::http::server
             boost::beast::flat_buffer buffer,
             std::shared_ptr<const std::filesystem::path> doc_root,
             std::shared_ptr<malloy::server::router> router,
-            malloy::websocket::handler_type websocket_handler
+            malloy::server::websocket::handler_type websocket_handler
         ) :
             connection<connection_tls>(
                 logger,

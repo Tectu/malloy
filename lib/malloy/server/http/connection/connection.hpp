@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../server/routing/router.hpp"
-#include "../../websocket/types.hpp"
-#include "../../websocket/connection/connection_plain.hpp"
+#include "malloy/server/routing/router.hpp"
+#include "malloy/server/websocket/types.hpp"
+#include "malloy/server/websocket/connection/connection_plain.hpp"
 #if MALLOY_FEATURE_TLS
-    #include "../../websocket/connection/connection_tls.hpp"
+    #include "malloy/server/websocket/connection/connection_tls.hpp"
 #endif
 
 #include <boost/asio/dispatch.hpp>
@@ -25,7 +25,7 @@ namespace spdlog
     class logger;
 }
 
-namespace malloy::http::server
+namespace malloy::server::http
 {
 
     /**
@@ -104,7 +104,7 @@ namespace malloy::http::server
             boost::beast::flat_buffer buffer,
             std::shared_ptr<malloy::server::router> router,
             std::shared_ptr<const std::filesystem::path> http_doc_root,
-            malloy::websocket::handler_type websocket_handler
+            malloy::server::websocket::handler_type websocket_handler
         ) :
             m_logger(std::move(logger)),
             m_buffer(std::move(buffer)),
@@ -156,7 +156,7 @@ namespace malloy::http::server
         std::shared_ptr<spdlog::logger> m_logger;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<malloy::server::router> m_router;
-        malloy::websocket::handler_type m_websocket_handler;
+        malloy::server::websocket::handler_type m_websocket_handler;
         std::shared_ptr<void> m_response;
         send_lambda m_send;
 
@@ -195,7 +195,7 @@ namespace malloy::http::server
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
-                websocket::server::make_websocket_connection(
+                server::websocket::make_websocket_connection(
                     m_logger->clone("websocket_connection"),
                     m_websocket_handler,
                     derived().release_stream(),
@@ -206,12 +206,12 @@ namespace malloy::http::server
             }
 
             // Parse the request into something more useful from hereon
-            request req = m_parser->release();
+            malloy::http::request req = m_parser->release();
 
             // Check request URI for legality
             if (not req.uri().is_legal()) {
                 m_logger->warn("illegal request URI: {}", req.uri().raw());
-                auto resp = generator::bad_request("illegal URI");
+                auto resp = malloy::http::generator::bad_request("illegal URI");
                 m_send(std::move(resp));
                 return;
             }

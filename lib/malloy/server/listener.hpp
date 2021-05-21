@@ -1,6 +1,6 @@
 #pragma once
 
-#include "malloy/websocket/types.hpp"
+#include "malloy/server/websocket/types.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core/error.hpp>
@@ -110,7 +110,7 @@ namespace malloy::server
         boost::asio::ip::tcp::acceptor m_acceptor;
         std::shared_ptr<malloy::server::router> m_router;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
-        malloy::websocket::handler_type m_websocket_handler;
+        websocket::handler_type m_websocket_handler;
 
         /**
          * Start accepting incoming requests.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "malloy/websocket/types.hpp"
+#include "malloy/server/websocket/types.hpp"
 
 #include <memory>
 #include <filesystem>
@@ -148,7 +148,7 @@ namespace malloy::server
          *
          * @param handler The handler to use.
          */
-        void set_websocket_handler(malloy::websocket::handler_type handler);
+        void set_websocket_handler(websocket::handler_type handler);
 
     private:
         bool m_init_done = false;
