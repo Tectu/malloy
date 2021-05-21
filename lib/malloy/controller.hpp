@@ -24,14 +24,9 @@ namespace spdlog
     class logger;
 }
 
-namespace malloy::http::server
-{
-    class router;
-}
-
 namespace malloy::server
 {
-
+    class router;
     class listener;
 
     /**
@@ -138,7 +133,7 @@ namespace malloy::server
          * @return The top-level HTTP router.
          */
         [[nodiscard]]
-        std::shared_ptr<malloy::http::server::router> router() const noexcept
+        std::shared_ptr<malloy::server::router> router() const noexcept
         {
             return m_router;
         }
@@ -162,7 +157,7 @@ namespace malloy::server
         std::vector<std::thread> m_threads;
         std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
-        std::shared_ptr<malloy::http::server::router> m_router;
+        std::shared_ptr<malloy::server::router> m_router;
         websocket::handler_type m_websocket_handler;
     };
 

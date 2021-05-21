@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../request.hpp"
+#include "malloy/http/request.hpp"
 
-namespace malloy::http::server
+namespace malloy::server
 {
 
     template<

@@ -19,11 +19,6 @@ namespace boost::asio::ssl
     class context;
 }
 
-namespace malloy::http::server
-{
-    class router;
-}
-
 namespace spdlog
 {
     class logger;
@@ -31,6 +26,7 @@ namespace spdlog
 
 namespace malloy::server
 {
+    class router;
 
     /**
       * @brief Accepts incoming connections.
@@ -55,7 +51,7 @@ namespace malloy::server
             boost::asio::io_context& ioc,
             std::shared_ptr<boost::asio::ssl::context> tls_ctx,
             const boost::asio::ip::tcp::endpoint& endpoint,
-            std::shared_ptr<malloy::http::server::router> router,
+            std::shared_ptr<malloy::server::router> router,
             std::shared_ptr<const std::filesystem::path> http_doc_root,
             websocket::handler_type websocket_handler
         );
@@ -102,7 +98,7 @@ namespace malloy::server
          * @return The router.
          */
         [[nodiscard]]
-        std::shared_ptr<malloy::http::server::router> router() const noexcept
+        std::shared_ptr<malloy::server::router> router() const noexcept
         {
             return m_router;
         }
@@ -112,7 +108,7 @@ namespace malloy::server
         boost::asio::io_context& m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         boost::asio::ip::tcp::acceptor m_acceptor;
-        std::shared_ptr<malloy::http::server::router> m_router;
+        std::shared_ptr<malloy::server::router> m_router;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         malloy::websocket::handler_type m_websocket_handler;
 

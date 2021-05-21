@@ -1,10 +1,10 @@
 #pragma once
 
 #include "route.hpp"
-#include "../request.hpp"
-#include "../response.hpp"
-#include "../http.hpp"
-#include "../generator.hpp"
+#include "malloy/http/request.hpp"
+#include "malloy/http/response.hpp"
+#include "malloy/http/http.hpp"
+#include "malloy/http/generator.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -25,7 +25,7 @@ namespace spdlog
     class logger;
 }
 
-namespace malloy::http::server
+namespace malloy::server
 {
     using namespace malloy;
 
@@ -166,7 +166,7 @@ namespace malloy::http::server
         template<class Send>
         void handle_request(
             const std::filesystem::path& doc_root,
-            request&& req,
+            http::request&& req,
             Send&& send
         )
         {
@@ -202,7 +202,7 @@ namespace malloy::http::server
                     continue;
 
                 // Generate preflight response (if supposed to)
-                if (m_generate_preflights and (req.method() == method::options)) {
+                if (m_generate_preflights and (req.method() == http::method::options)) {
                     // Log
                     m_logger->debug("automatically constructing preflight response.");
 
@@ -227,7 +227,7 @@ namespace malloy::http::server
             }
 
             // If we end up where we have no meaningful way of handling this request
-            return send_response(req, std::move(generator::bad_request("unknown request")), std::forward<Send>(send));
+            return send_response(req, std::move(http::generator::bad_request("unknown request")), std::forward<Send>(send));
         }
 
     private:

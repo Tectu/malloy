@@ -4,7 +4,7 @@
 
 #include <filesystem>
 
-namespace malloy::http::server
+namespace malloy::server
 {
 
     template<
@@ -32,7 +32,7 @@ namespace malloy::http::server
             req_clone.uri().chop_resource(resource_base);
 
             // Create response
-            auto resp = generator::file(req_clone, base_path);
+            auto resp = http::generator::file(req_clone, base_path);
 
             return resp;
         }

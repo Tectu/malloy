@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-using namespace malloy::http::server;
+using namespace malloy::server;
 
 router::router(std::shared_ptr<spdlog::logger> logger) :
     m_logger(std::move(logger))
@@ -166,7 +166,7 @@ router::response_type router::generate_preflight_response(const request_type& re
             methods_string += ", ";
     }
 
-    response resp{status::ok };
+    http::response resp{ http::status::ok };
     resp.set(boost::beast::http::field::content_type, "text/html");
     resp.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
     resp.base().set("Access-Control-Allow-Methods", methods_string);

@@ -1,5 +1,4 @@
 add_subdirectory(connection)
-add_subdirectory(routing)
 add_subdirectory(session)
 
 target_sources(

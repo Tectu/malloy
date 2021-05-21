@@ -1,9 +1,9 @@
 #pragma once
 
 #include "route.hpp"
-#include "../generator.hpp"
+#include "malloy/http/generator.hpp"
 
-namespace malloy::http::server
+namespace malloy::server
 {
 
     template<
@@ -27,7 +27,7 @@ namespace malloy::http::server
         [[nodiscard]]
         Response handle(const Request& req) const override
         {
-            return generator::redirect(status, resource_new);
+            return http::generator::redirect(status, resource_new);
         }
 
     };

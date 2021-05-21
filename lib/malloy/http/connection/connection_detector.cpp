@@ -12,7 +12,7 @@ connection_detector::connection_detector(
     boost::asio::ip::tcp::socket&& socket,
     std::shared_ptr<boost::asio::ssl::context> ctx,
     std::shared_ptr<const std::filesystem::path> doc_root,
-    std::shared_ptr<http::server::router> router,
+    std::shared_ptr<malloy::server::router> router,
     malloy::websocket::handler_type websocket_handler
 ) :
     m_logger(std::move(logger)),

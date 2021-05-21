@@ -1,6 +1,6 @@
 #include "malloy/controller.hpp"
 #include "malloy/listener.hpp"
-#include "malloy/http/routing/router.hpp"
+#include "malloy/server/routing/router.hpp"
 
 #include <iostream>
 #include <memory>
@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
     // Create top-level router
     auto router = c.router();
     if (router) {
+        using namespace malloy;
         using namespace malloy::http;
 
         router->add(method::get, "/", [](const auto& req) {

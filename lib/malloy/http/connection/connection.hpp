@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../routing/router.hpp"
+#include "../../server/routing/router.hpp"
 #include "../../websocket/types.hpp"
 #include "../../websocket/connection/connection_plain.hpp"
 #if MALLOY_FEATURE_TLS
@@ -27,7 +27,6 @@ namespace spdlog
 
 namespace malloy::http::server
 {
-    class router;
 
     /**
      * An HTTP server connection.
@@ -103,7 +102,7 @@ namespace malloy::http::server
         connection(
             std::shared_ptr<spdlog::logger> logger,
             boost::beast::flat_buffer buffer,
-            std::shared_ptr<class router> router,
+            std::shared_ptr<malloy::server::router> router,
             std::shared_ptr<const std::filesystem::path> http_doc_root,
             malloy::websocket::handler_type websocket_handler
         ) :
@@ -156,7 +155,7 @@ namespace malloy::http::server
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
-        std::shared_ptr<router> m_router;
+        std::shared_ptr<malloy::server::router> m_router;
         malloy::websocket::handler_type m_websocket_handler;
         std::shared_ptr<void> m_response;
         send_lambda m_send;

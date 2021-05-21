@@ -1,13 +1,13 @@
 #pragma once
 
 #include "route.hpp"
-#include "../generator.hpp"
+#include "malloy/http/generator.hpp"
 
 #include <boost/beast/http/verb.hpp>
 
 #include <regex>
 
-namespace malloy::http::server
+namespace malloy::server
 {
 
     template<
@@ -49,7 +49,7 @@ namespace malloy::http::server
             if (handler)
                 return handler(req);
 
-            return generator::server_error("no valid handler available.");
+            return http::generator::server_error("no valid handler available.");
         }
 
     };

@@ -7,6 +7,7 @@ set(TARGET_OBJS   ${NAME}-objs)
 add_library(${TARGET_OBJS} OBJECT)
 
 add_subdirectory(http)
+add_subdirectory(server)
 add_subdirectory(websocket)
 if (MALLOY_FEATURE_HTML)
     add_subdirectory(html)

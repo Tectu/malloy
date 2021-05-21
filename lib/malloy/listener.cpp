@@ -13,7 +13,7 @@ listener::listener(
     boost::asio::io_context& ioc,
     std::shared_ptr<boost::asio::ssl::context> tls_ctx,
     const boost::asio::ip::tcp::endpoint& endpoint,
-    std::shared_ptr<http::server::router> router,
+    std::shared_ptr<server::router> router,
     std::shared_ptr<const std::filesystem::path> http_doc_root,
     websocket::handler_type websocket_handler
 ) :

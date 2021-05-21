@@ -1,9 +1,9 @@
 #include "malloy/controller.hpp"
 #include "malloy/http/generator.hpp"
-#include "malloy/http/routing/router.hpp"
 #include "malloy/http/session/manager.hpp"
 #include "malloy/http/session/session.hpp"
 #include "malloy/http/session/storage_memory.hpp"
+#include "malloy/server/routing/router.hpp"
 
 #include <iostream>
 
@@ -34,6 +34,7 @@ int main()
     // Create the router
     auto router = c.router();
     if (router) {
+        using namespace malloy;
         using namespace malloy::http;
 
         // Use a session to increment a counter

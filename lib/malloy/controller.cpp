@@ -1,6 +1,6 @@
 #include "controller.hpp"
 #include "listener.hpp"
-#include "http/routing/router.hpp"
+#include "server/routing/router.hpp"
 #if MALLOY_FEATURE_TLS
     #include "tls/manager.hpp"
 #endif
@@ -54,7 +54,7 @@ bool controller::init(config cfg, std::shared_ptr<boost::asio::io_context> io_ct
         m_io_ctx = std::make_shared<boost::asio::io_context>();
 
     // Create the top-level router
-    m_router = std::make_shared<malloy::http::server::router>(m_cfg.logger->clone("router"));
+    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"));
 
     return true;
 }
