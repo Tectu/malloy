@@ -6,23 +6,21 @@ The main use case for this library is a C++ project which needs to embedd an HTT
 # Features
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
-- HTTP
-  - Server
-    - Plain or TLS connections (HTTP / HTTPS)
-    - Request router
-      - Simple handlers (useful for building REST APIs)
-      - Sub-routers (nested routers)
-      - Redirections
-      - File serving locations
-      - Automatic preflight responses (optional)
-  - Cookies
-  - Sessions
-- WebSocket
-  - Server
-    - Plain or TLS connections (WS / WSS)
+- Server
+  - Plain or TLS (SSL) connections
+  - HTTP
+    - Sessions
+  - Websocket
+  - Request router
+    - Simple handlers (useful for building REST APIs)
+    - Sub-routers (nested routers)
+    - Redirections
+    - File serving locations
+    - Automatic preflight responses (optional)
+  - High-level controller class to setup I/O context, SSL context, worker threads and more.
+- Cookies
 - HTML
   - Parsing HTML forms
-- High-level controller class to setup I/O context, SSL context, worker threads and more.
 
 Coming soon™:
 - Security middleware (CSRF, XSS, ...)
@@ -63,7 +61,7 @@ int main()
 
     // Create malloy controller
     malloy::server::controller c;
-    if (not c.init(cfg)) {
+    if (!c.init(cfg)) {
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }
