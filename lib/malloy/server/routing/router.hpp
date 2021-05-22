@@ -197,7 +197,7 @@ namespace malloy::server
             }
 
             if constexpr (isWebsocket)
-                handle_ws_request(std::move(req));
+                handle_ws_request(std::move(req), std::forward<Send>(send));
             else
                 handle_http_request(doc_root, std::move(req), std::forward<Send>(send));
         }
@@ -258,8 +258,12 @@ namespace malloy::server
             return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), std::forward<Send>(send));
         }
 
+        template<
+            class Send
+        >
         void handle_ws_request(
-            malloy::http::request&& req
+            malloy::http::request&& req,
+            Send&& send
         )
         {
             m_logger->debug("handling WS request: {} {}",
@@ -267,6 +271,8 @@ namespace malloy::server
                 req.uri().resource_string()
             );
 
+            // Echo the message
+            send("Hello WS!");
         }
 
     private:

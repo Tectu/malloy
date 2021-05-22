@@ -43,7 +43,7 @@ namespace malloy::server::websocket
     };
 
     template<class Body, class Allocator>
-    void
+    std::shared_ptr<connection_tls>
     make_websocket_connection(
         std::shared_ptr<spdlog::logger> logger,
         handler_type handler,
@@ -51,11 +51,15 @@ namespace malloy::server::websocket
         boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req
     )
     {
-        std::make_shared<connection_tls>(
+        auto connection = std::make_shared<connection_tls>(
             std::move(logger),
             std::move(handler),
-            std::move(stream))->run(std::move(req)
+            std::move(stream)
         );
+
+        connection->run(std::move(req));
+
+        return connection;
     }
 
 }

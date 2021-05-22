@@ -8,6 +8,8 @@
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
 
+#include <queue>
+
 namespace malloy::server::websocket
 {
 
@@ -61,20 +63,18 @@ namespace malloy::server::websocket
             if (payload.empty())
                 return;
 
-            // Issue asynchronous write
-            derived().stream().async_write(
-                boost::asio::buffer(payload),
-                boost::beast::bind_front_handler(
-                    &connection::on_write,
-                    derived().shared_from_this()
-                )
-            );
+            // Enqueue
+            m_tx_queue.emplace(std::move(payload));
+
+            // Write
+            do_write();
         }
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         handler_type m_handler;
         boost::beast::flat_buffer m_buffer;
+        std::queue<std::string> m_tx_queue;
 
         [[nodiscard]]
         Derived&
@@ -197,6 +197,26 @@ namespace malloy::server::websocket
         }
 
         void
+        do_write()
+        {
+            // Nothing to do if the queue is empty
+            if (m_tx_queue.empty())
+                return;
+
+            // Issue asynchronous write
+            derived().stream().async_write(
+                boost::asio::buffer(m_tx_queue.front()),
+                boost::beast::bind_front_handler(
+                    &connection::on_write,
+                    derived().shared_from_this()
+                )
+            );
+
+            // Remove from queue
+            m_tx_queue.pop();
+        }
+
+        void
         on_write(
             boost::beast::error_code ec,
             std::size_t bytes_transferred
@@ -212,6 +232,10 @@ namespace malloy::server::websocket
                 m_logger->error("on_write(): {}", ec.message());
                 return;
             }
+
+            // If the queue isn't empty we have more writing to do
+            if (!m_tx_queue.empty())
+                do_write();
         }
     };
 

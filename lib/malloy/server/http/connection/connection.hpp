@@ -206,7 +206,7 @@ namespace malloy::server::http
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
-                server::websocket::make_websocket_connection(
+                auto ws_connection = server::websocket::make_websocket_connection(
                     m_logger->clone("websocket_connection"),
                     m_websocket_handler,
                     derived().release_stream(),
@@ -214,7 +214,10 @@ namespace malloy::server::http
                 );
 
                 // Hand over to router
-                m_router->handle_request<true>(*m_doc_root, std::move(req), m_send);
+                m_router->handle_request<true>(*m_doc_root, std::move(req), [this,ws_connection](std::string&& payload){
+                    m_logger->warn("FOOO: writing: {}", payload);
+                    ws_connection->write(std::move(payload));
+                });
             }
 
             // This is an HTTP request
