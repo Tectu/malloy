@@ -193,7 +193,7 @@ namespace malloy::server::http
             malloy::http::request req = m_parser->release();
 
             // See if it is a WebSocket Upgrade
-            if (boost::beast::websocket::is_upgrade(m_parser->get())) {
+            if (boost::beast::websocket::is_upgrade(req)) {
                 m_logger->info("upgrading HTTP connection to WS connection.");
 
                 // Create a websocket connection, transferring ownership
