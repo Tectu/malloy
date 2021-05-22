@@ -9,6 +9,7 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
+#include <boost/beast/websocket/impl/rfc6455.hpp>
 
 #include <spdlog/logger.h>
 
@@ -153,14 +154,6 @@ namespace malloy::server
          */
         bool add_redirect(malloy::http::status status, std::string&& resource_old, std::string&& resource_new);
 
-        /**
-         * Handle a request.
-         *
-         * @tparam Send The response writer type.
-         * @param doc_root Path to the HTTP document root.
-         * @param req The request to handle.
-         * @param send The response writer to use.
-         */
         template<class Send>
         void handle_request(
             const std::filesystem::path& doc_root,
@@ -168,12 +161,6 @@ namespace malloy::server
             Send&& send
         )
         {
-            // Log
-            m_logger->debug("handling request: {} {}",
-                std::string_view{ req.method_string().data(), req.method_string().size() },
-                req.uri().resource_string()
-            );
-
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
@@ -192,6 +179,52 @@ namespace malloy::server
                 // We're done handling this request
                 return;
             }
+
+            // See if it is a WebSocket Upgrade
+            if (boost::beast::websocket::is_upgrade(req)) {
+                m_logger->info("upgrading HTTP connection to WS connection.");
+
+                /*
+                // Create a websocket connection, transferring ownership
+                // of both the socket and the HTTP request.
+                server::websocket::make_websocket_connection(
+                    m_logger->clone("websocket_connection"),
+                    m_websocket_handler,
+                    derived().release_stream(),
+                    req
+                );
+                */
+
+                return;
+            }
+
+            // This is an HTTP request
+            else {
+                // Handle HTTP request
+                handle_http_request(doc_root, std::move(req), std::forward<Send>(send));
+            }
+        }
+
+        /**
+         * Handle an HTTP request.
+         *
+         * @tparam Send The response writer type.
+         * @param doc_root Path to the HTTP document root.
+         * @param req The request to handle.
+         * @param send The response writer to use.
+         */
+        template<class Send>
+        void handle_http_request(
+            const std::filesystem::path& doc_root,
+            malloy::http::request&& req,
+            Send&& send
+        )
+        {
+            // Log
+            m_logger->debug("handling request: {} {}",
+                std::string_view{ req.method_string().data(), req.method_string().size() },
+                req.uri().resource_string()
+            );
 
             // Check routes
             for (const auto& route : m_routes) {
