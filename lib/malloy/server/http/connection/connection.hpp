@@ -189,6 +189,9 @@ namespace malloy::server::http
                 return;
             }
 
+            // Parse the request into something more useful from hereon
+            malloy::http::request req = m_parser->release();
+
             // See if it is a WebSocket Upgrade
             if (boost::beast::websocket::is_upgrade(m_parser->get())) {
                 m_logger->info("upgrading HTTP connection to WS connection.");
@@ -199,14 +202,11 @@ namespace malloy::server::http
                     m_logger->clone("websocket_connection"),
                     m_websocket_handler,
                     derived().release_stream(),
-                    m_parser->release()
+                    req
                 );
 
                 return;
             }
-
-            // Parse the request into something more useful from hereon
-            malloy::http::request req = m_parser->release();
 
             // Check request URI for legality
             if (not req.uri().is_legal()) {
