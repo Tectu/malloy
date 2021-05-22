@@ -9,7 +9,6 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
-#include <boost/beast/websocket/impl/rfc6455.hpp>
 
 #include <spdlog/logger.h>
 
