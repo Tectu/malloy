@@ -23,15 +23,13 @@ namespace malloy::server::http
             std::shared_ptr<boost::asio::ssl::context> ctx,
             boost::beast::flat_buffer buffer,
             std::shared_ptr<const std::filesystem::path> doc_root,
-            std::shared_ptr<malloy::server::router> router,
-            malloy::server::websocket::handler_type websocket_handler
+            std::shared_ptr<malloy::server::router> router
         ) :
             connection<connection_tls>(
                 logger,
                 std::move(buffer),
                 std::move(router),
-                std::move(doc_root),
-                std::move(websocket_handler)
+                std::move(doc_root)
             ),
             m_ctx(std::move(ctx)),
             m_stream(std::move(socket), *m_ctx)

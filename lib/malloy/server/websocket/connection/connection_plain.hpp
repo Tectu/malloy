@@ -18,13 +18,9 @@ namespace malloy::server::websocket
     public:
         connection_plain(
             std::shared_ptr<spdlog::logger> logger,
-            handler_type handler,
             boost::beast::tcp_stream&& stream
         ) :
-            connection(
-                std::move(logger),
-                std::move(handler)
-            ),
+            connection(std::move(logger)),
             m_stream(std::move(stream))
         {
             // We operate in binary mode
@@ -47,20 +43,14 @@ namespace malloy::server::websocket
     std::shared_ptr<connection_plain>
     make_websocket_connection(
         std::shared_ptr<spdlog::logger> logger,
-        handler_type handler,
         boost::beast::tcp_stream stream,
         boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req
     )
     {
-        auto connection = std::make_shared<connection_plain>(
+        return std::make_shared<connection_plain>(
             std::move(logger),
-            std::move(handler),
             std::move(stream)
         );
-
-        connection->run(std::move(req));
-
-        return connection;
     }
 
 }

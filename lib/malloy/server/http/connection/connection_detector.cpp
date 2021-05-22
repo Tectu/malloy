@@ -12,15 +12,13 @@ connection_detector::connection_detector(
     boost::asio::ip::tcp::socket&& socket,
     std::shared_ptr<boost::asio::ssl::context> ctx,
     std::shared_ptr<const std::filesystem::path> doc_root,
-    std::shared_ptr<malloy::server::router> router,
-    malloy::server::websocket::handler_type websocket_handler
+    std::shared_ptr<malloy::server::router> router
 ) :
     m_logger(std::move(logger)),
     m_stream(std::move(socket)),
     m_ctx(std::move(ctx)),
     m_doc_root(std::move(doc_root)),
-    m_router(std::move(router)),
-    m_websocket_handler(std::move(websocket_handler))
+    m_router(std::move(router))
 {
     // Sanity check logger
     if (not m_logger)
@@ -80,7 +78,6 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
         m_stream.release_socket(),
         std::move(m_buffer),
         m_doc_root,
-        m_router,
-        m_websocket_handler
+        m_router
     )->run();
 }

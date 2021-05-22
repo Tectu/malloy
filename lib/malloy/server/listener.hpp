@@ -1,7 +1,5 @@
 #pragma once
 
-#include "malloy/server/websocket/types.hpp"
-
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/core/error.hpp>
 
@@ -44,7 +42,6 @@ namespace malloy::server
          * @param endpoint The enpoint to use.
          * @param router The router to use.
          * @param http_doc_root The path to the HTTP doc root.
-         * @param websocket_handler The websocket handler to use.
          */
         listener(
             std::shared_ptr<spdlog::logger> logger,
@@ -52,8 +49,7 @@ namespace malloy::server
             std::shared_ptr<boost::asio::ssl::context> tls_ctx,
             const boost::asio::ip::tcp::endpoint& endpoint,
             std::shared_ptr<malloy::server::router> router,
-            std::shared_ptr<const std::filesystem::path> http_doc_root,
-            websocket::handler_type websocket_handler
+            std::shared_ptr<const std::filesystem::path> http_doc_root
         );
 
         /**
@@ -110,7 +106,6 @@ namespace malloy::server
         boost::asio::ip::tcp::acceptor m_acceptor;
         std::shared_ptr<malloy::server::router> m_router;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
-        websocket::handler_type m_websocket_handler;
 
         /**
          * Start accepting incoming requests.

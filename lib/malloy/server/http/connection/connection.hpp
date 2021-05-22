@@ -1,7 +1,6 @@
 #pragma once
 
 #include "malloy/server/routing/router.hpp"
-#include "malloy/server/websocket/types.hpp"
 #include "malloy/server/websocket/connection/connection_plain.hpp"
 #if MALLOY_FEATURE_TLS
     #include "malloy/server/websocket/connection/connection_tls.hpp"
@@ -97,20 +96,17 @@ namespace malloy::server::http
          * @param buffer
          * @param router
          * @param http_doc_root
-         * @param websocket_handler
          */
         connection(
             std::shared_ptr<spdlog::logger> logger,
             boost::beast::flat_buffer buffer,
             std::shared_ptr<malloy::server::router> router,
-            std::shared_ptr<const std::filesystem::path> http_doc_root,
-            malloy::server::websocket::handler_type websocket_handler
+            std::shared_ptr<const std::filesystem::path> http_doc_root
         ) :
             m_logger(std::move(logger)),
             m_buffer(std::move(buffer)),
             m_router(std::move(router)),
             m_doc_root(std::move(http_doc_root)),
-            m_websocket_handler(std::move(websocket_handler)),
             m_send(*this)
         {
             // Sanity check logger
@@ -156,7 +152,6 @@ namespace malloy::server::http
         std::shared_ptr<spdlog::logger> m_logger;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<malloy::server::router> m_router;
-        malloy::server::websocket::handler_type m_websocket_handler;
         std::shared_ptr<void> m_response;
         send_lambda m_send;
 
@@ -208,10 +203,12 @@ namespace malloy::server::http
                 // of both the socket and the HTTP request.
                 auto ws_connection = server::websocket::make_websocket_connection(
                     m_logger->clone("websocket_connection"),
-                    m_websocket_handler,
                     derived().release_stream(),
                     req
                 );
+
+                // Launch the connection
+                ws_connection->run(req);
 
                 // Hand over to router
                 m_router->handle_request<true>(*m_doc_root, std::move(req), [this,ws_connection](std::string&& payload){

@@ -99,8 +99,7 @@ bool controller::start()
         m_tls_ctx,
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
         m_router,
-        std::make_shared<std::filesystem::path>(m_cfg.doc_root),
-        m_websocket_handler
+        std::make_shared<std::filesystem::path>(m_cfg.doc_root)
     );
 
     // Run the listener
@@ -145,9 +144,4 @@ std::future<void> controller::stop()
             m_cfg.logger->info("all I/O threads stopped.");
         }
     );
-}
-
-void controller::set_websocket_handler(websocket::handler_type handler)
-{
-    m_websocket_handler = std::move(handler);
 }

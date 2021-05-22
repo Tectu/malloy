@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../types.hpp"
-
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
 
+#include <future>
 #include <queue>
+#include <thread>
 
 namespace malloy::server::websocket
 {
@@ -30,11 +30,9 @@ namespace malloy::server::websocket
         static const std::string agent_string;
 
         connection(
-            std::shared_ptr<spdlog::logger> logger,
-            handler_type handler
+            std::shared_ptr<spdlog::logger> logger
         ) :
-            m_logger(std::move(logger)),
-            m_handler(std::move(handler))
+            m_logger(std::move(logger))
         {
             // Sanity check logger
             if (not m_logger)
@@ -72,9 +70,9 @@ namespace malloy::server::websocket
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
-        handler_type m_handler;
         boost::beast::flat_buffer m_buffer;
         std::queue<std::string> m_tx_queue;
+        bool m_handshake_done = false;
 
         [[nodiscard]]
         Derived&
@@ -128,6 +126,11 @@ namespace malloy::server::websocket
                 return;
             }
 
+            m_logger->debug("ON_ACCEPT()!!!!!!!");
+
+            // We established a connection
+            m_handshake_done = true;
+
             // Read a message
             do_read();
         }
@@ -176,19 +179,6 @@ namespace malloy::server::websocket
             if (payload.empty())
                 return;
 
-            // Handle the payload
-            if (m_handler) {
-                try {
-                    m_handler(payload, std::bind(&connection::write, this, std::placeholders::_1));
-                }
-                catch (const std::exception& e) {
-                    m_logger->critical("reader exception: {}", e.what());
-                }
-                catch (...) {
-                    m_logger->critical("unknown reader exception.");
-                }
-            }
-
             // Consume the buffer
             m_buffer.consume(m_buffer.size());
 
@@ -199,6 +189,8 @@ namespace malloy::server::websocket
         void
         do_write()
         {
+            using namespace std::chrono_literals;
+
             // Nothing to do if the queue is empty
             if (m_tx_queue.empty())
                 return;
@@ -211,9 +203,6 @@ namespace malloy::server::websocket
                     derived().shared_from_this()
                 )
             );
-
-            // Remove from queue
-            m_tx_queue.pop();
         }
 
         void
@@ -226,6 +215,9 @@ namespace malloy::server::websocket
 
             // Clear the buffer
             m_buffer.consume(m_buffer.size());
+
+            // Remove from queue
+            m_tx_queue.pop();
 
             // Check for errors
             if (ec) {

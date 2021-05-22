@@ -1,7 +1,5 @@
 #pragma once
 
-#include "malloy/server/websocket/types.hpp"
-
 #include <memory>
 #include <filesystem>
 #include <future>
@@ -138,18 +136,6 @@ namespace malloy::server
             return m_router;
         }
 
-        /**
-         * This function can be used to register a handler for incoming websocket
-         * requests.
-         *
-         * @brief Set the websocket handler.
-         *
-         * @note This must be called before `start()` to have any effect.
-         *
-         * @param handler The handler to use.
-         */
-        void set_websocket_handler(websocket::handler_type handler);
-
     private:
         bool m_init_done = false;
         config m_cfg;
@@ -158,7 +144,6 @@ namespace malloy::server
         std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         std::shared_ptr<malloy::server::router> m_router;
-        websocket::handler_type m_websocket_handler;
     };
 
 }

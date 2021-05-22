@@ -14,16 +14,14 @@ listener::listener(
     std::shared_ptr<boost::asio::ssl::context> tls_ctx,
     const boost::asio::ip::tcp::endpoint& endpoint,
     std::shared_ptr<server::router> router,
-    std::shared_ptr<const std::filesystem::path> http_doc_root,
-    websocket::handler_type websocket_handler
+    std::shared_ptr<const std::filesystem::path> http_doc_root
 ) :
     m_logger(std::move(logger)),
     m_io_ctx(ioc),
     m_tls_ctx(std::move(tls_ctx)),
     m_acceptor(boost::asio::make_strand(ioc)),
     m_router(std::move(router)),
-    m_doc_root(std::move(http_doc_root)),
-    m_websocket_handler(std::move(websocket_handler))
+    m_doc_root(std::move(http_doc_root))
 {
     boost::beast::error_code ec;
 
@@ -116,8 +114,7 @@ void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::sock
         std::move(socket),
         m_tls_ctx,
         m_doc_root,
-        m_router,
-        m_websocket_handler
+        m_router
     );
 
     // Run the HTTP connection

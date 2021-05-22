@@ -18,15 +18,13 @@ namespace malloy::server::http
             boost::asio::ip::tcp::socket&& socket,
             boost::beast::flat_buffer buffer,
             std::shared_ptr<const std::filesystem::path> doc_root,
-            std::shared_ptr<malloy::server::router> router,
-            malloy::server::websocket::handler_type websocket_handler
+            std::shared_ptr<malloy::server::router> router
         ) :
             connection<connection_plain>(
                 std::move(logger),
                 std::move(buffer),
                 std::move(router),
-                std::move(doc_root),
-                std::move(websocket_handler)
+                std::move(doc_root)
             ),
             m_stream(std::move(socket))
         {
