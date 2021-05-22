@@ -154,7 +154,24 @@ namespace malloy::server
          */
         bool add_redirect(malloy::http::status status, std::string&& resource_old, std::string&& resource_new);
 
-        template<class Send>
+        /**
+         * Handle a request.
+         *
+         * This function will either:
+         *   - Forward to the appropriate sub-router
+         *   - Handle the HTTP request
+         *   - Handle the WS request
+         *
+         * @tparam isWebsocket
+         * @tparam Send
+         * @param doc_root
+         * @param req
+         * @param send
+         */
+        template<
+            bool isWebsocket = false,
+            class Send
+        >
         void handle_request(
             const std::filesystem::path& doc_root,
             malloy::http::request&& req,
@@ -174,35 +191,16 @@ namespace malloy::server
                 req.uri().chop_resource(resource_base);
 
                 // Let the sub-router handle things from here...
-                router->handle_request(doc_root, std::move(req), std::forward<Send>(send));
+                router->template handle_request<isWebsocket>(doc_root, std::move(req), std::forward<Send>(send));
 
                 // We're done handling this request
                 return;
             }
 
-            // See if it is a WebSocket Upgrade
-            if (boost::beast::websocket::is_upgrade(req)) {
-                m_logger->info("upgrading HTTP connection to WS connection.");
-
-                /*
-                // Create a websocket connection, transferring ownership
-                // of both the socket and the HTTP request.
-                server::websocket::make_websocket_connection(
-                    m_logger->clone("websocket_connection"),
-                    m_websocket_handler,
-                    derived().release_stream(),
-                    req
-                );
-                */
-
-                return;
-            }
-
-            // This is an HTTP request
-            else {
-                // Handle HTTP request
+            if constexpr (isWebsocket)
+                handle_ws_request(std::move(req));
+            else
                 handle_http_request(doc_root, std::move(req), std::forward<Send>(send));
-            }
         }
 
         /**
@@ -221,7 +219,7 @@ namespace malloy::server
         )
         {
             // Log
-            m_logger->debug("handling request: {} {}",
+            m_logger->debug("handling HTTP request: {} {}",
                 std::string_view{ req.method_string().data(), req.method_string().size() },
                 req.uri().resource_string()
             );
@@ -259,6 +257,17 @@ namespace malloy::server
 
             // If we end up where we have no meaningful way of handling this request
             return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), std::forward<Send>(send));
+        }
+
+        void handle_ws_request(
+            malloy::http::request&& req
+        )
+        {
+            m_logger->debug("handling WS request: {} {}",
+                std::string_view{ req.method_string().data(), req.method_string().size() },
+                req.uri().resource_string()
+            );
+
         }
 
     private:

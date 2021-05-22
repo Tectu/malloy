@@ -200,8 +200,28 @@ namespace malloy::server::http
                 return;
             }
 
-            // Hand off to router
-            m_router->handle_request(*m_doc_root, std::move(req), m_send);
+            // Check if this is a WS request
+            if (boost::beast::websocket::is_upgrade(req)) {
+                m_logger->info("upgrading HTTP connection to WS connection.");
+
+                // Create a websocket connection, transferring ownership
+                // of both the socket and the HTTP request.
+                server::websocket::make_websocket_connection(
+                    m_logger->clone("websocket_connection"),
+                    m_websocket_handler,
+                    derived().release_stream(),
+                    req
+                );
+
+                // Hand over to router
+                m_router->handle_request<true>(*m_doc_root, std::move(req), m_send);
+            }
+
+            // This is an HTTP request
+            else {
+                // Hand over to router
+                m_router->handle_request<false>(*m_doc_root, std::move(req), m_send);
+            }
         }
 
         void on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
