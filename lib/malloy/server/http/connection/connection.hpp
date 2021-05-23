@@ -210,10 +210,7 @@ namespace malloy::server::http
                 ws_connection->run(req);
 
                 // Hand over to router
-                m_router->handle_request<true>(*m_doc_root, std::move(req), [this,ws_connection](std::string&& payload){
-                    m_logger->warn("FOOO: writing: {}", payload);
-                    ws_connection->write(std::move(payload));
-                });
+                m_router->handle_request<true>(*m_doc_root, std::move(req), ws_connection);
             }
 
             // This is an HTTP request

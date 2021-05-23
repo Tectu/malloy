@@ -219,7 +219,7 @@ namespace malloy::server
         {
             // Log
             m_logger->debug("handling HTTP request: {} {}",
-                std::string_view{ req.method_string().data(), req.method_string().size() },
+                req.method_string(),
                 req.uri().resource_string()
             );
 
@@ -259,20 +259,22 @@ namespace malloy::server
         }
 
         template<
-            class Send
+            class Connection
         >
         void handle_ws_request(
             malloy::http::request&& req,
-            Send&& send
+            Connection&& connection
         )
         {
             m_logger->debug("handling WS request: {} {}",
-                std::string_view{ req.method_string().data(), req.method_string().size() },
+                req.method_string(),
                 req.uri().resource_string()
             );
 
-            // Echo the message
-            send("Hello WS!");
+            connection->set_handler([this](const std::string& req, auto writer){
+                m_logger->warn("req: {}", req);
+                writer("echo: " + req);
+            });
         }
 
     private:

@@ -12,6 +12,9 @@
 
 namespace malloy::server::websocket
 {
+    using payload_t = std::string;
+    using writer_t  = std::function<void(payload_t&&)>;
+    using handler_t = std::function<void(payload_t, writer_t)>;
 
     /**
      * Base class for a websocket connection/session.
@@ -39,6 +42,11 @@ namespace malloy::server::websocket
                 throw std::invalid_argument("no valid logger provided.");
         }
 
+        void set_handler(handler_t handler)
+        {
+            m_handler = std::move(handler);
+        }
+
         // Start the asynchronous operation
         template<class Body, class Allocator>
         void
@@ -53,7 +61,7 @@ namespace malloy::server::websocket
          *
          * @param payload The payload to send.
          */
-        void write(std::string&& payload)
+        void write(const std::string& payload)
         {
             m_logger->trace("write(). payload size: {}", payload.size());
 
@@ -66,7 +74,7 @@ namespace malloy::server::websocket
                 return;
 
             // Enqueue
-            m_tx_queue.emplace(std::move(payload));
+            m_tx_queue.emplace(payload);
 
             // Are we already writing?
             if (m_tx_queue.size() > 1)
@@ -87,6 +95,7 @@ namespace malloy::server::websocket
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::flat_buffer m_buffer;
         std::queue<std::string> m_tx_queue;
+        handler_t m_handler;
 
         [[nodiscard]]
         Derived&
@@ -190,6 +199,12 @@ namespace malloy::server::websocket
 
             // Consume the buffer
             m_buffer.consume(m_buffer.size());
+
+            // Handle
+            if (m_handler)
+                m_handler(payload, [this](payload_t&& resp) {
+                    write(resp);
+                });
 
             // Do more reading
             do_read();
