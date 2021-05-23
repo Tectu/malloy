@@ -138,8 +138,9 @@ FetchContent_Declare(
 FetchContent_GetProperties(malloy)
 if(NOT malloy_POPULATED)
     FetchContent_Populate(malloy)
-    set(BUILD_EXAMPLES OFF CACHE INTERNAL "")
-    set(BUILD_TESTS OFF CACHE INTERNAL "")
+    set(MALLOY_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+    set(MALLOY_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(MALLOY_FEATURE_TLS ON CACHE INTERNAL "")
     add_subdirectory(${malloy_SOURCE_DIR} ${malloy_BINARY_DIR})
 endif()
 ```
