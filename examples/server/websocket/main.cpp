@@ -27,12 +27,12 @@ int main()
     auto router = c.router();
     if (router) {
         // Add a websocket endpoint
-        router->add_websocket("/ws/echo", [](const std::string& payload, auto writer){
+        router->add_websocket("/echo", [](const std::string& payload, auto writer){
             writer("echo: " + payload);
         });
 
         // Add a websocket endpoint
-        router->add_websocket("/ws/timer", [](const std::string& payload, auto writer){
+        router->add_websocket("/timer", [](const std::string& payload, auto writer){
             using namespace std::chrono_literals;
 
             for (std::size_t i = 0; i < 10; i++) {
