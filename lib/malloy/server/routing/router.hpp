@@ -172,19 +172,19 @@ namespace malloy::server
          *   - Handle the WS request
          *
          * @tparam isWebsocket
-         * @tparam Send
+         * @tparam Connection
          * @param doc_root
-         * @param req
-         * @param send
+         * @param req The HTTP request to handle.
+         * @param connection The HTTP or WS connection.
          */
         template<
             bool isWebsocket = false,
-            class Send
+            class Connection
         >
         void handle_request(
             const std::filesystem::path& doc_root,
             malloy::http::request&& req,
-            Send&& send
+            Connection&& connection
         )
         {
             // Check sub-routers
@@ -200,31 +200,33 @@ namespace malloy::server
                 req.uri().chop_resource(resource_base);
 
                 // Let the sub-router handle things from here...
-                router->template handle_request<isWebsocket>(doc_root, std::move(req), std::forward<Send>(send));
+                router->template handle_request<isWebsocket>(doc_root, std::move(req), std::forward<Connection>(connection));
 
                 // We're done handling this request
                 return;
             }
 
             if constexpr (isWebsocket)
-                handle_ws_request(std::move(req), std::forward<Send>(send));
+                handle_ws_request(std::move(req), std::forward<Connection>(connection));
             else
-                handle_http_request(doc_root, std::move(req), std::forward<Send>(send));
+                handle_http_request(doc_root, std::move(req), std::forward<Connection>(connection));
         }
 
         /**
          * Handle an HTTP request.
          *
-         * @tparam Send The response writer type.
+         * @tparam Connection
          * @param doc_root Path to the HTTP document root.
          * @param req The request to handle.
-         * @param send The response writer to use.
+         * @param connection The HTTP connection.
          */
-        template<class Send>
+        template<
+            class Connection
+        >
         void handle_http_request(
             const std::filesystem::path& doc_root,
             malloy::http::request&& req,
-            Send&& send
+            Connection&& connection
         )
         {
             // Log
@@ -248,7 +250,7 @@ namespace malloy::server
                     auto resp = generate_preflight_response(req);
 
                     // Send the response
-                    send_response(req, std::move(resp), std::forward<Send>(send));
+                    send_response(req, std::move(resp), std::forward<Connection>(connection));
 
                     // We're done handling this request
                     return;
@@ -258,14 +260,14 @@ namespace malloy::server
                 auto resp = route->handle(req);
 
                 // Send the response
-                send_response(req, std::move(resp), std::forward<Send>(send));
+                send_response(req, std::move(resp), std::forward<Connection>(connection));
 
                 // We're done handling this request
                 return;
             }
 
             // If we end up where we have no meaningful way of handling this request
-            return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), std::forward<Send>(send));
+            return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), std::forward<Connection>(connection));
         }
 
         /**
@@ -354,13 +356,13 @@ namespace malloy::server
         /**
          * Send a response.
          *
-         * @tparam Send The response writer type.
+         * @tparam Connection
          * @param req The request to which we're responding.
          * @param resp The response.
-         * @param send The response writer.
+         * @param connection The connection.
          */
-        template<typename Send>
-        void send_response(const request_type& req, response_type&& resp, Send&& send)
+        template<class Connection>
+        void send_response(const request_type& req, response_type&& resp, Connection&& connection)
         {
             // Add more information to the response
             resp.keep_alive(req.keep_alive());
@@ -368,7 +370,7 @@ namespace malloy::server
             resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
             resp.prepare_payload();
 
-            send(std::move(resp));
+            connection->do_write(std::move(resp));
         }
     };
 }

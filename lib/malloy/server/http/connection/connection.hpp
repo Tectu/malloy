@@ -36,45 +36,6 @@ namespace malloy::server::http
     template<class Derived>
     class connection
     {
-        // This is the C++11 equivalent of a generic lambda.
-        // The function object is used to send an HTTP message.
-        // ToDo: This is a C++20 library, use templated lambdas.
-        struct send_lambda
-        {
-            connection& m_self;
-
-            explicit
-            send_lambda(connection & self) :
-                m_self(self)
-            {
-            }
-
-            template<bool isRequest, class Body, class Fields>
-            void
-            operator()(boost::beast::http::message<isRequest, Body, Fields>&& msg) const
-            {
-                // The lifetime of the message has to extend
-                // for the duration of the async operation so
-                // we use a shared_ptr to manage it.
-                auto sp = std::make_shared<boost::beast::http::message<isRequest, Body, Fields>>(std::move(msg));
-
-                // Store a type-erased version of the shared
-                // pointer in the class to keep it alive.
-                m_self.m_response = sp;
-
-                // Write the response
-                boost::beast::http::async_write(
-                    m_self.derived().m_stream,
-                    *sp,
-                    boost::beast::bind_front_handler(
-                        &connection::on_write,
-                        m_self.derived().shared_from_this(),
-                        sp->need_eof()
-                    )
-                );
-            }
-        };
-
     public:
         /**
          * Session configuration structure.
@@ -106,8 +67,7 @@ namespace malloy::server::http
             m_logger(std::move(logger)),
             m_buffer(std::move(buffer)),
             m_router(std::move(router)),
-            m_doc_root(std::move(http_doc_root)),
-            m_send(*this)
+            m_doc_root(std::move(http_doc_root))
         {
             // Sanity check logger
             if (not m_logger)
@@ -116,6 +76,31 @@ namespace malloy::server::http
             // Sanity check router
             if (not m_router)
                 throw std::runtime_error("did not receive a valid router instance.");
+        }
+
+        template<bool isRequest, class Body, class Fields>
+        void
+        do_write(boost::beast::http::message<isRequest, Body, Fields>&& msg)
+        {
+            // The lifetime of the message has to extend
+            // for the duration of the async operation so
+            // we use a shared_ptr to manage it.
+            auto sp = std::make_shared<boost::beast::http::message<isRequest, Body, Fields>>(std::move(msg));
+
+            // Store a type-erased version of the shared
+            // pointer in the class to keep it alive.
+            m_response = sp;
+
+            // Write the response
+            boost::beast::http::async_write(
+                derived().m_stream,
+                *sp,
+                boost::beast::bind_front_handler(
+                    &connection::on_write,
+                    derived().shared_from_this(),
+                    sp->need_eof()
+                )
+            );
         }
 
         // ToDo: Should this be protected?
@@ -153,7 +138,6 @@ namespace malloy::server::http
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<malloy::server::router> m_router;
         std::shared_ptr<void> m_response;
-        send_lambda m_send;
 
         // The parser is stored in an optional container so we can
         // construct it from scratch it at the beginning of each new message.
@@ -216,7 +200,7 @@ namespace malloy::server::http
             // This is an HTTP request
             else {
                 // Hand over to router
-                m_router->handle_request<false>(*m_doc_root, std::move(req), m_send);
+                m_router->handle_request<false>(*m_doc_root, std::move(req), derived().shared_from_this());
             }
         }
 
