@@ -268,6 +268,13 @@ namespace malloy::server
             return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), std::forward<Send>(send));
         }
 
+        /**
+         * Handle a WebSocket connection.
+         *
+         * @tparam Connection The connection type.
+         * @param req The original HTTP request that was upgraded.
+         * @param connection The WebSocket connection.
+         */
         template<
             class Connection
         >
