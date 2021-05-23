@@ -51,11 +51,6 @@ int main()
 
         // Add some file serving
         router->add_file_serving("/files", doc_root);
-
-        // Add a websocket endpoint
-        router->add_websocket("/ws/echo", [](const std::string& payload){
-            return "echo: " + payload;
-        });
     }
 
     // Start

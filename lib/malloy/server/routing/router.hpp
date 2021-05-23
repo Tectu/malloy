@@ -161,7 +161,7 @@ namespace malloy::server
          * @param handler The handler for incoming websocket requests.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_websocket(std::string resource, std::function<std::string(const std::string&)> handler);
+        bool add_websocket(std::string resource, malloy::websocket::handler_t handler);
 
         /**
          * Handle a request.
@@ -294,9 +294,7 @@ namespace malloy::server
                 }
 
                 // Set handler
-                connection->set_handler([route](const std::string& payload, auto writer){
-                    writer(route->handle(payload));
-                });
+                connection->set_handler(route->handler);
 
                 // We're done handling this request. The route handler will handle everything from hereon.
                 return;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "malloy/websocket/types.hpp"
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/bind_executor.hpp>
@@ -12,9 +14,6 @@
 
 namespace malloy::server::websocket
 {
-    using payload_t = std::string;
-    using writer_t  = std::function<void(payload_t&&)>;
-    using handler_t = std::function<void(payload_t, writer_t)>;
 
     /**
      * Base class for a websocket connection/session.
@@ -42,7 +41,7 @@ namespace malloy::server::websocket
                 throw std::invalid_argument("no valid logger provided.");
         }
 
-        void set_handler(handler_t handler)
+        void set_handler(malloy::websocket::handler_t handler)
         {
             m_handler = std::move(handler);
         }
@@ -65,6 +64,7 @@ namespace malloy::server::websocket
         {
             m_logger->trace("write(). payload size: {}", payload.size());
 
+            // ToDo: The write should be asynchronous.
 #if 1
             derived().stream().write(boost::asio::buffer(payload));
             return;
@@ -95,7 +95,7 @@ namespace malloy::server::websocket
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::flat_buffer m_buffer;
         std::queue<std::string> m_tx_queue;
-        handler_t m_handler;
+        malloy::websocket::handler_t m_handler;
 
         [[nodiscard]]
         Derived&
@@ -202,7 +202,7 @@ namespace malloy::server::websocket
 
             // Handle
             if (m_handler)
-                m_handler(payload, [this](payload_t&& resp) {
+                m_handler(payload, [this](malloy::websocket::payload_t&& resp) {
                     write(resp);
                 });
 

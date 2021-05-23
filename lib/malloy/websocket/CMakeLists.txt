@@ -1,6 +1,6 @@
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
-        ../server/websocket/types.hpp
+        types.hpp
         websocket.hpp
 )

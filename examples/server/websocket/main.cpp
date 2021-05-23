@@ -1,7 +1,9 @@
-#include "malloy/server/controller.hpp"
+#include <malloy/server/controller.hpp>
+#include <malloy/server/routing/router.hpp>
 
 #include <iostream>
 #include <memory>
+#include <thread>
 
 int main()
 {
@@ -21,15 +23,27 @@ int main()
         return EXIT_FAILURE;
     }
 
-    c.set_websocket_handler([](const std::string& payload, malloy::server::websocket::writer_type writer) {
-        std::cout << "received: " << payload << std::endl;
+    // Add some routes
+    auto router = c.router();
+    if (router) {
+        // Add a websocket endpoint
+        router->add_websocket("/ws/echo", [](const std::string& payload, auto writer){
+            writer("echo: " + payload);
+        });
 
-        // Response
-        std::string resp = "received: " + payload;
+        // Add a websocket endpoint
+        router->add_websocket("/ws/timer", [](const std::string& payload, auto writer){
+            using namespace std::chrono_literals;
 
-        // Echo back
-        writer(std::move(resp));
-    });
+            for (std::size_t i = 0; i < 10; i++) {
+                // Write to socket
+                writer("i = " + std::to_string(i));
+
+                // Sleep
+                std::this_thread::sleep_for(1s);
+            }
+        });
+    }
 
     // Start
     c.start();

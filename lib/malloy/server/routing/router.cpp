@@ -139,7 +139,7 @@ bool router::add_redirect(const http::status status, std::string&& resource_old,
     return add_route(std::move(route));
 }
 
-bool router::add_websocket(std::string resource, std::function<std::string(const std::string&)> handler)
+bool router::add_websocket(std::string resource, malloy::websocket::handler_t handler)
 {
     // Log
     if (m_logger)

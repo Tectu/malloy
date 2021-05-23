@@ -1,5 +1,5 @@
 # Set a target name
-set(TARGET malloy-server-websocket)
+set(TARGET malloy-example-server-websocket)
 
 # Create the executable
 add_executable(${TARGET})
