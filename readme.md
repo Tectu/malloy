@@ -17,6 +17,7 @@ The following list provides an overview of the currently implemented features. S
     - Redirections
     - File serving locations
     - Automatic preflight responses (optional)
+    - Websocket endpoints
   - High-level controller class to setup I/O context, SSL context, worker threads and more.
 - Cookies
 - HTML
