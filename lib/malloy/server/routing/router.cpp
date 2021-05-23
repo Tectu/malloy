@@ -139,6 +139,30 @@ bool router::add_redirect(const http::status status, std::string&& resource_old,
     return add_route(std::move(route));
 }
 
+bool router::add_websocket(std::string resource, std::function<std::string(const std::string&)> handler)
+{
+    // Log
+    if (m_logger)
+        m_logger->debug("adding websocket endpoint at {}", resource);
+
+    // Check handler
+    if (not handler) {
+        if (m_logger)
+            m_logger->warn("route has invalid handler. ignoring.");
+        return false;
+    }
+
+    // Create route
+    auto route = std::make_shared<route_websocket>();
+    route->resource = std::move(resource);
+    route->handler = std::move(handler);
+
+    // Add route
+    m_routes_websocket.emplace_back(std::move(route));
+
+    return true;
+}
+
 router::response_type router::generate_preflight_response(const request_type& req) const
 {
     // Create list of methods

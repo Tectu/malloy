@@ -1,6 +1,7 @@
 #pragma once
 
 #include "route.hpp"
+#include "route_websocket.hpp"
 #include "malloy/http/request.hpp"
 #include "malloy/http/response.hpp"
 #include "malloy/http/http.hpp"
@@ -154,6 +155,15 @@ namespace malloy::server
         bool add_redirect(malloy::http::status status, std::string&& resource_old, std::string&& resource_new);
 
         /**
+         * Add a websocket endpoint.
+         *
+         * @param resource The resource path.
+         * @param handler The handler for incoming websocket requests.
+         * @return Whether adding the endpoint was successful.
+         */
+        bool add_websocket(std::string resource, std::function<std::string(const std::string&)> handler);
+
+        /**
          * Handle a request.
          *
          * This function will either:
@@ -271,16 +281,33 @@ namespace malloy::server
                 req.uri().resource_string()
             );
 
-            connection->set_handler([this](const std::string& req, auto writer){
-                m_logger->warn("req: {}", req);
-                writer("echo: " + req);
-            });
+            // Check routes
+            for (const auto& route : m_routes_websocket) {
+                // Check match
+                if (route->resource != req.uri().resource_string())
+                    continue;
+
+                // Validate route handler
+                if (!route->handler) {
+                    m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+                    continue;
+                }
+
+                // Set handler
+                connection->set_handler([route](const std::string& payload, auto writer){
+                    writer(route->handle(payload));
+                });
+
+                // We're done handling this request. The route handler will handle everything from hereon.
+                return;
+            }
         }
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
         std::vector<std::shared_ptr<route<request_type, response_type>>> m_routes;
+        std::vector<std::shared_ptr<route_websocket>> m_routes_websocket;
         bool m_generate_preflights = false;
 
         /**
