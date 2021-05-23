@@ -38,12 +38,10 @@ namespace malloy::server::websocket
         boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>> m_stream;
     };
 
-    template<class Body, class Allocator>
     std::shared_ptr<connection_tls>
     make_websocket_connection(
         std::shared_ptr<spdlog::logger> logger,
-        boost::beast::ssl_stream<boost::beast::tcp_stream> stream,
-        boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req
+        boost::beast::ssl_stream<boost::beast::tcp_stream> stream
     )
     {
         return std::make_shared<connection_tls>(

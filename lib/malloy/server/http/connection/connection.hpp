@@ -203,8 +203,7 @@ namespace malloy::server::http
                 // of both the socket and the HTTP request.
                 auto ws_connection = server::websocket::make_websocket_connection(
                     m_logger->clone("websocket_connection"),
-                    derived().release_stream(),
-                    req
+                    derived().release_stream()
                 );
 
                 // Launch the connection

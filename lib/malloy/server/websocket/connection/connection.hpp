@@ -57,6 +57,10 @@ namespace malloy::server::websocket
         {
             m_logger->trace("write(). payload size: {}", payload.size());
 
+#if 1
+            derived().stream().write(boost::asio::buffer(payload));
+            return;
+#else
             // Sanity check
             if (payload.empty())
                 return;
@@ -64,15 +68,25 @@ namespace malloy::server::websocket
             // Enqueue
             m_tx_queue.emplace(std::move(payload));
 
-            // Write
-            do_write();
+            // Are we already writing?
+            if (m_tx_queue.size() > 1)
+                return;
+
+            // Issue async write
+            derived().stream().async_write(
+                boost::asio::buffer(m_tx_queue.front()),
+                boost::beast::bind_front_handler(
+                    &connection::on_write,
+                    derived().shared_from_this()
+                )
+            );
+#endif
         }
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::flat_buffer m_buffer;
         std::queue<std::string> m_tx_queue;
-        bool m_handshake_done = false;
 
         [[nodiscard]]
         Derived&
@@ -125,11 +139,6 @@ namespace malloy::server::websocket
                 m_logger->error("on_accept(): {}", ec.message());
                 return;
             }
-
-            m_logger->debug("ON_ACCEPT()!!!!!!!");
-
-            // We established a connection
-            m_handshake_done = true;
 
             // Read a message
             do_read();
@@ -187,34 +196,12 @@ namespace malloy::server::websocket
         }
 
         void
-        do_write()
-        {
-            using namespace std::chrono_literals;
-
-            // Nothing to do if the queue is empty
-            if (m_tx_queue.empty())
-                return;
-
-            // Issue asynchronous write
-            derived().stream().async_write(
-                boost::asio::buffer(m_tx_queue.front()),
-                boost::beast::bind_front_handler(
-                    &connection::on_write,
-                    derived().shared_from_this()
-                )
-            );
-        }
-
-        void
         on_write(
             boost::beast::error_code ec,
             std::size_t bytes_transferred
         )
         {
             m_logger->trace("on_write(). bytes transferred: {}", bytes_transferred);
-
-            // Clear the buffer
-            m_buffer.consume(m_buffer.size());
 
             // Remove from queue
             m_tx_queue.pop();
@@ -227,7 +214,13 @@ namespace malloy::server::websocket
 
             // If the queue isn't empty we have more writing to do
             if (!m_tx_queue.empty())
-                do_write();
+                derived().stream().async_write(
+                    boost::asio::buffer(m_tx_queue.front()),
+                    boost::beast::bind_front_handler(
+                        &connection::on_write,
+                        derived().shared_from_this()
+                    )
+                );
         }
     };
 
