@@ -1,38 +1,34 @@
 #pragma once
 
-#include "route.hpp"
+#include "endpoint_http.hpp"
 
 #include <filesystem>
 
 namespace malloy::server
 {
 
-    template<
-        typename Request,
-        typename Response
-    >
-    class route_files :
-        public route<Request, Response>
+    struct endpoint_http_files :
+        endpoint_http
     {
     public:
         std::string resource_base;
         std::filesystem::path base_path;
 
         [[nodiscard]]
-        bool matches(const Request& req) const override
+        bool matches(const malloy::http::request& req) const override
         {
             return req.uri().resource_starts_with(resource_base);
         }
 
         [[nodiscard]]
-        Response handle(const Request& req) const override
+        malloy::http::response handle(const malloy::http::request& req) const override
         {
             // Chop request resource path
-            Request req_clone{ req };
+            malloy::http::request req_clone{ req };
             req_clone.uri().chop_resource(resource_base);
 
             // Create response
-            auto resp = http::generator::file(req_clone, base_path);
+            auto resp = malloy::http::generator::file(req_clone, base_path);
 
             return resp;
         }

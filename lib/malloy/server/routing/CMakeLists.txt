@@ -1,10 +1,12 @@
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
-        route.hpp
-        route_basic.hpp
-        route_files.hpp
-        route_redirect.hpp
+        endpoint.hpp
+        endpoint_http.hpp
+        endpoint_http_files.hpp
+        endpoint_http_redirect.hpp
+        endpoint_http_regex.hpp
+        endpoint_websocket.hpp
         router.cpp
         router.hpp
 )

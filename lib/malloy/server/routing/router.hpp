@@ -1,7 +1,8 @@
 #pragma once
 
-#include "route.hpp"
-#include "route_websocket.hpp"
+#include "endpoint_http.hpp"
+#include "endpoint_http_regex.hpp"
+#include "endpoint_websocket.hpp"
 #include "malloy/http/request.hpp"
 #include "malloy/http/response.hpp"
 #include "malloy/http/http.hpp"
@@ -117,16 +118,6 @@ namespace malloy::server
         }
 
         /**
-         * Add a handler for a specific method & resource.
-         *
-         * @param method The HTTP method.
-         * @param target The resource path.
-         * @param handler The handler to generate the response.
-         * @return Whether adding the route was successful.
-         */
-        bool add(method_type method, std::string_view target, std::function<response_type(const request_type&)>&& handler);
-
-        /**
          * Add a sub-router for a specific resource.
          *
          * @param resource The resource base path for the sub-router.
@@ -136,7 +127,17 @@ namespace malloy::server
         bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
 
         /**
-         * Add a file-serving location.
+         * Add an HTTP regex endpoint.
+         *
+         * @param method The HTTP method.
+         * @param target The resource path (regex).
+         * @param handler The handler to generate the response.
+         * @return Whether adding the route was successful.
+         */
+        bool add(method_type method, std::string_view target, endpoint_http_regex::handler_t&& handler);
+
+        /**
+         * Add an HTTP file-serving location.
          *
          * @param resource
          * @param storage_base_path
@@ -145,7 +146,7 @@ namespace malloy::server
         bool add_file_serving(std::string resource, std::filesystem::path storage_base_path);
 
         /**
-         * Adds a redirection rule.
+         * Adds an HTTP redirection rule.
          *
          * @param resource_old
          * @param resource_new
@@ -236,9 +237,9 @@ namespace malloy::server
             );
 
             // Check routes
-            for (const auto& route : m_routes) {
+            for (const auto& ep : m_endpoints_http) {
                 // Check match
-                if (not route->matches(req))
+                if (not ep->matches(req))
                     continue;
 
                 // Generate preflight response (if supposed to)
@@ -257,7 +258,7 @@ namespace malloy::server
                 }
 
                 // Generate the response for the request
-                auto resp = route->handle(req);
+                auto resp = ep->handle(req);
 
                 // Send the response
                 send_response(req, std::move(resp), std::forward<Connection>(connection));
@@ -291,19 +292,19 @@ namespace malloy::server
             );
 
             // Check routes
-            for (const auto& route : m_routes_websocket) {
+            for (const auto& ep : m_endpoints_websocket) {
                 // Check match
-                if (route->resource != req.uri().resource_string())
+                if (ep->resource != req.uri().resource_string())
                     continue;
 
                 // Validate route handler
-                if (!route->handler) {
+                if (!ep->handler) {
                     m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
                     continue;
                 }
 
                 // Set handler
-                connection->set_handler(route->handler);
+                connection->set_handler(ep->handler);
 
                 // We're done handling this request. The route handler will handle everything from hereon.
                 return;
@@ -313,19 +314,29 @@ namespace malloy::server
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
-        std::vector<std::shared_ptr<route<request_type, response_type>>> m_routes;
-        std::vector<std::shared_ptr<route_websocket>> m_routes_websocket;
+        std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
+        std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
         bool m_generate_preflights = false;
 
         /**
-         * Adds a route to the list of routes.
+         * Adds an HTTP endpoint.
          *
          * @note This uses @ref log_or_throw() internally and might therefore throw if no logger is available.
          *
-         * @param r The route to add.
-         * @return Whether adding the route was successful.
+         * @param ep The endpoint to add.
+         * @return Whether adding the endpoint was successful.
          */
-        bool add_route(std::shared_ptr<route<request_type, response_type>>&& r);
+        bool add_http_endpoint(std::shared_ptr<endpoint_http>&& ep);
+
+        /**
+         * Adds a WebSocket endpoint.
+         *
+         * @note This uses @ref log_or_throw() internally and might therefore throw if no logger is available.
+         *
+         * @param ep The endpoint to add.
+         * @return Whether adding the endpoint was successful.
+         */
+        bool add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep);
 
         response_type generate_preflight_response(const request_type& req) const;
 

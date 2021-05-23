@@ -175,7 +175,7 @@ namespace malloy::server::http
             if (not req.uri().is_legal()) {
                 m_logger->warn("illegal request URI: {}", req.uri().raw());
                 auto resp = malloy::http::generator::bad_request("illegal URI");
-                m_send(std::move(resp));
+                do_write(std::move(resp));
                 return;
             }
 
