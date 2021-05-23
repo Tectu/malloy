@@ -63,8 +63,7 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
                 m_ctx,
                 std::move(m_buffer),
                 m_doc_root,
-                m_router,
-                m_websocket_handler
+                m_router
             )->run();
 
             return;
