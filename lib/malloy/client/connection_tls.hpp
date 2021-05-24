@@ -34,15 +34,16 @@ namespace malloy::client
 
         // Start the asynchronous operation
         void
-        run(const std::string& host, const std::string& port, const std::string& text)
+        run(std::string host, const std::string& port, std::string endpoint, const std::string& text)
         {
             // Save these for later
-            m_host = host;
+            m_host = std::move(host);
+            m_endpoint = std::move(endpoint);
             m_text = text;
 
             // Look up the domain name
             m_resolver.async_resolve(
-                host,
+                m_host,
                 port,
                 boost::beast::bind_front_handler(
                     &connection_tls::on_resolve,
@@ -56,6 +57,7 @@ namespace malloy::client
         boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>> m_stream;
         boost::beast::flat_buffer m_buffer;
         std::string m_host;
+        std::string m_endpoint;
         std::string m_text;
 
         void
@@ -135,7 +137,9 @@ namespace malloy::client
             );
 
             // Perform the websocket handshake
-            m_stream.async_handshake(m_host, "/",
+            m_stream.async_handshake(
+                m_host,
+                m_endpoint,
                 boost::beast::bind_front_handler(
                     &connection_tls::on_handshake,
                     shared_from_this()

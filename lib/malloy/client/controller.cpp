@@ -14,13 +14,14 @@ void controller::test_plain()
 {
     auto const host = "127.0.0.1";
     auto const port = "8080";
+    std::string endpoint = "/echo";
     auto const text = "Hello malloy client [plain]";
 
     // The io_context is required for all I/O
     net::io_context ioc;
 
     // Launch the asynchronous operation
-    std::make_shared<connection_plain>(ioc)->run(host, port, text);
+    std::make_shared<connection_plain>(ioc)->run(host, port, endpoint, text);
 
     // Run the I/O service. The call will return when
     // the socket is closed.
@@ -31,6 +32,7 @@ void controller::test_tls()
 {
     std::string host = "127.0.0.1";
     std::string port = "8080";
+    std::string endpoint = "/echo";
     std::string text = "Hello malloy client [tls]";
 
     // The io_context is required for all I/O
@@ -43,7 +45,7 @@ void controller::test_tls()
     boost::certify::enable_native_https_server_verification(ctx);
 
     // Launch the asynchronous operation
-    std::make_shared<connection_tls>(ioc, ctx)->run(host, port, text);
+    std::make_shared<connection_tls>(ioc, ctx)->run(host, port, endpoint, text);
 
     // Run the I/O service. The call will return when
     // the socket is closed.
