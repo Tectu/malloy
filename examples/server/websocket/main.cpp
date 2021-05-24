@@ -27,8 +27,13 @@ int main()
     auto router = c.router();
     if (router) {
         // Add a websocket endpoint
+        router->add_websocket("/", [](const std::string& payload, auto writer){
+            writer("echo at /: " + payload);
+        });
+
+        // Add a websocket endpoint
         router->add_websocket("/echo", [](const std::string& payload, auto writer){
-            writer("echo: " + payload);
+            writer("echo at /echo: " + payload);
         });
 
         // Add a websocket endpoint

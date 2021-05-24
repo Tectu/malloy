@@ -6,11 +6,14 @@ The main use case for this library is a C++ project which needs to embedd an HTT
 # Features
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
+- Client
+  - Websocket (Plain or TLS/SSL connections)
 - Server
-  - Plain or TLS (SSL) connections
   - HTTP
+    - Plain or TLS (SSL) connections
     - Sessions
   - Websocket
+    - Plain or TLS (SSL) connections
   - Request router
     - Simple handlers (useful for building REST APIs)
     - Sub-routers (nested routers)
@@ -26,7 +29,6 @@ The following list provides an overview of the currently implemented features. S
 Coming soon™:
 - Security middleware (CSRF, XSS, ...)
 - HTTP client
-- Websocket client
 
 # Licensing
 This library is MIT licensed. Dependencies ship with their own licensing models.
@@ -140,6 +142,8 @@ if(NOT malloy_POPULATED)
     FetchContent_Populate(malloy)
     set(MALLOY_BUILD_EXAMPLES OFF CACHE INTERNAL "")
     set(MALLOY_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(MALLOY_FEATURE_CLIENT OFF CACHE INTERNAL "")
+    set(MALLOY_FEATURE_SERVER ON CACHE INTERNAL "")
     set(MALLOY_FEATURE_TLS ON CACHE INTERNAL "")
     add_subdirectory(${malloy_SOURCE_DIR} ${malloy_BINARY_DIR})
 endif()
@@ -163,5 +167,7 @@ Various `cmake` options are available to control the build:
 | --- | --- | --- |
 | `MALLOY_BUILD_EXAMPLES` | `ON` | Whether to build examples. |
 | `MALLOY_BUILD_TESTS` | `ON` | Whether to build the test suite(s). |
+| `MALLOY_FEATURE_CLIENT` | `ON` | Enable client features. |
+| `MALLOY_FEATURE_SERVER` | `ON` | Enable server features. |
 | `MALLOY_FEATURE_HTML` | `ON` | Whether to enable HTML support. |
 | `MALLOY_FEATURE_TLS` | `OFF` | Whether to enable TLS support. |

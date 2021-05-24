@@ -10,6 +10,8 @@ project(
 # Options
 option(MALLOY_BUILD_EXAMPLES "Whether to build examples"       ON)
 option(MALLOY_BUILD_TESTS    "Whether to build tests"          ON)
+option(MALLOY_FEATURE_CLIENT "Whether to build the client"     ON)
+option(MALLOY_FEATURE_SERVER "Whether to build the server"     ON)
 option(MALLOY_FEATURE_HTML   "Whether to enable HTML features" ON)
 option(MALLOY_FEATURE_TLS    "Whether to enable TLS features"  OFF)
 
@@ -39,6 +41,8 @@ message("  Build:")
 message("    Examples : " ${MALLOY_BUILD_EXAMPLES})
 message("    Tests    : " ${MALLOY_BUILD_TESTS})
 message("  Features:")
+message("    Client   : " ${MALLOY_FEATURE_CLIENT})
+message("    SERVER   : " ${MALLOY_FEATURE_SERVER})
 message("    HTML     : " ${MALLOY_FEATURE_HTML})
 message("    TLS      : " ${MALLOY_FEATURE_TLS})
 message("---------------------")
