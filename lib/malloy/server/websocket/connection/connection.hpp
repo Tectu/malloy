@@ -26,6 +26,14 @@ namespace malloy::server::websocket
     class connection
     {
     public:
+        enum class state
+        {
+            handshaking,
+            active,
+            closing,
+            closed
+        };
+
         /**
          * The agent string.
          */
@@ -51,8 +59,24 @@ namespace malloy::server::websocket
         void
         run(boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req)
         {
+            // Update state
+            m_state = state::handshaking;
+
             // Accept the WebSocket upgrade request
             do_accept(std::move(req));
+        }
+
+        // ToDo: Test this
+        void stop()
+        {
+            m_state = state::closing;
+
+            boost::asio::dispatch(
+                boost::beast::bind_front_handler(
+                    &connection::on_close(),
+                    derived().shared_from_this()
+                )
+            );
         }
 
         /**
@@ -60,42 +84,34 @@ namespace malloy::server::websocket
          *
          * @param payload The payload to send.
          */
-        void write(const std::string& payload)
+        void send(std::string payload)
         {
-            m_logger->trace("write(). payload size: {}", payload.size());
+            m_logger->trace("send(). payload size: {}", payload.size());
 
-            // ToDo: The write should be asynchronous.
-#if 1
-            derived().stream().write(boost::asio::buffer(payload));
-            return;
-#else
-            // Sanity check
-            if (payload.empty())
-                return;
-
-            // Enqueue
-            m_tx_queue.emplace(payload);
-
-            // Are we already writing?
-            if (m_tx_queue.size() > 1)
-                return;
-
-            // Issue async write
-            derived().stream().async_write(
-                boost::asio::buffer(m_tx_queue.front()),
-                boost::beast::bind_front_handler(
-                    &connection::on_write,
-                    derived().shared_from_this()
+            boost::asio::dispatch(
+                boost::asio::bind_executor(
+                    derived().stream().get_executor(),
+                    [self = derived().shared_from_this(), msg = std::move(payload)]() mutable {
+                        self->handle_send(std::move(msg));
+                    }
                 )
             );
-#endif
         }
 
     private:
+        enum class sending_state
+        {
+            idling,
+            sending
+        };
+
+        enum sending_state m_sending_state = sending_state::idling;
+
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::flat_buffer m_buffer;
         std::queue<std::string> m_tx_queue;
         malloy::websocket::handler_t m_handler;
+        enum state m_state = state::closed;
 
         [[nodiscard]]
         Derived&
@@ -149,14 +165,18 @@ namespace malloy::server::websocket
                 return;
             }
 
-            // Read a message
-            do_read();
+            // We're good to go
+            m_state = state::active;
+            initiate_rx();
+            maybe_send_next();
         }
 
         void
-        do_read()
+        initiate_rx()
         {
             m_logger->trace("do_read()");
+
+            assert(m_state == state::active);
 
             // Read a message into our buffer
             derived().stream().async_read(
@@ -203,39 +223,75 @@ namespace malloy::server::websocket
             // Handle
             if (m_handler)
                 m_handler(payload, [this](malloy::websocket::payload_t&& resp) {
-                    write(resp);
+                    send(resp);
                 });
 
             // Do more reading
-            do_read();
+            initiate_rx();
         }
 
         void
-        on_write(
-            boost::beast::error_code ec,
-            std::size_t bytes_transferred
-        )
+        handle_send(std::string msg)
         {
-            m_logger->trace("on_write(). bytes transferred: {}", bytes_transferred);
+            m_logger->trace("handle_send()");
 
-            // Remove from queue
-            m_tx_queue.pop();
+            m_tx_queue.push(std::move(msg));
+            maybe_send_next();
+        }
 
-            // Check for errors
+        void
+        maybe_send_next()
+        {
+            m_logger->trace("maybe_send_next()");
+
+            if (m_state != state::active)
+                return;
+            if (m_sending_state == sending_state::sending)
+                return;
+            if (m_tx_queue.empty())
+                return;
+
+            initiate_tx();
+        }
+
+        void
+        initiate_tx()
+        {
+            m_logger->trace("initiate_tx()");
+
+            assert(m_sending_state == sending_state::idle);
+            assert(!m_tx_queue.empty());
+
+            m_sending_state = sending_state::sending;
+            derived().stream().async_write(
+                boost::asio::buffer(m_tx_queue.front()),
+                [self = derived().shared_from_this()](const boost::beast::error_code& ec, std::size_t) {
+                    // we don't care about bytes_transferred
+                    self->handle_tx(ec);
+                });
+        }
+
+        void
+        handle_tx(const boost::beast::error_code& ec)
+        {
+            m_logger->trace("handle_tx()");
+
             if (ec) {
-                m_logger->error("on_write(): {}", ec.message());
+                m_logger->error("failed to send message: {}", ec.message());
                 return;
             }
 
-            // If the queue isn't empty we have more writing to do
-            if (!m_tx_queue.empty())
-                derived().stream().async_write(
-                    boost::asio::buffer(m_tx_queue.front()),
-                    boost::beast::bind_front_handler(
-                        &connection::on_write,
-                        derived().shared_from_this()
-                    )
-                );
+            m_tx_queue.pop();
+            m_sending_state = sending_state::idle;
+            maybe_send_next();
+        }
+
+        void
+        on_close()
+        {
+            m_logger->trace("on_close()");
+
+            m_state = state::closed;
         }
     };
 
