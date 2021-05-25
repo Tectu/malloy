@@ -12,6 +12,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <queue>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -31,15 +32,15 @@ namespace malloy::client
     class connection_plain :
         public std::enable_shared_from_this<connection_plain>
     {
-        std::shared_ptr<spdlog::logger> m_logger;
-        boost::asio::ip::tcp::resolver m_resolver;
-        boost::beast::websocket::stream<beast::tcp_stream> m_stream;
-        beast::flat_buffer m_buffer;
-        std::string m_host;
-        std::string m_endpoint;
-        malloy::websocket::handler_t m_handler;
-
     public:
+        enum class state
+        {
+            handshaking,
+            active,
+            closing,
+            closed
+        };
+
         // Resolver and socket require an io_context
         explicit
         connection_plain(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& ioc, malloy::websocket::handler_t&& handler) :
@@ -75,9 +76,11 @@ namespace malloy::client
         }
 
         void
-        close()
+        disconnect()
         {
             m_logger->trace("close()");
+
+            m_state = state::closing;
 
             // Close the WebSocket connection
             m_stream.async_close(boost::beast::websocket::close_code::normal,
@@ -88,29 +91,104 @@ namespace malloy::client
             );
         }
 
-        void write(const std::string& data)
+        void send(const std::string& payload)
         {
-            m_logger->trace("write()");
+            m_logger->trace("send()");
 
             // Sanity check
-            if (data.empty())
+            if (payload.empty())
                 return;
 
-            m_logger->trace("write(): payload: {}", data);
-
-            // Send
-            m_stream.async_write(
-                boost::asio::buffer(data),
-                beast::bind_front_handler(
-                    &connection_plain::on_write,
-                    shared_from_this()
+            boost::asio::dispatch(
+                boost::asio::bind_executor(
+                    m_stream.get_executor(),
+                    [self = shared_from_this(), msg = std::move(payload)]() mutable {
+                        self->handle_send(std::move(msg));
+                    }
                 )
             );
         }
 
-        void do_read()
+    private:
+        enum class sending_state
+        {
+            idling,
+            sending
+        };
+
+        std::shared_ptr<spdlog::logger> m_logger;
+        boost::asio::ip::tcp::resolver m_resolver;
+        boost::beast::websocket::stream<beast::tcp_stream> m_stream;
+        beast::flat_buffer m_buffer;
+        std::string m_host;
+        std::string m_endpoint;
+        malloy::websocket::handler_t m_handler;
+        std::queue<std::string> m_tx_queue;
+        enum state m_state = state::closed;
+        enum sending_state m_sending_state = sending_state::idling;
+
+        void
+        handle_send(std::string msg)
+        {
+            m_logger->trace("handle_send()");
+
+            m_tx_queue.push(std::move(msg));
+            maybe_send_next();
+        }
+
+        void
+        maybe_send_next()
+        {
+            m_logger->trace("maybe_send_next()");
+
+            if (m_state != state::active)
+                return;
+            if (m_sending_state == sending_state::sending)
+                return;
+            if (m_tx_queue.empty())
+                return;
+
+            initiate_tx();
+        }
+
+        void
+        initiate_tx()
+        {
+            m_logger->trace("initiate_tx()");
+
+            assert(m_sending_state == sending_state::idling);
+            assert(!m_tx_queue.empty());
+
+            m_sending_state = sending_state::sending;
+            m_stream.async_write(
+                boost::asio::buffer(m_tx_queue.front()),
+                [self = shared_from_this()](const boost::beast::error_code& ec, std::size_t) {
+                    // we don't care about bytes_transferred
+                    self->handle_tx(ec);
+                }
+            );
+        }
+
+        void
+        handle_tx(const boost::beast::error_code& ec)
+        {
+            m_logger->trace("handle_tx()");
+
+            if (ec) {
+                m_logger->error("failed to send message: {}", ec.message());
+                return;
+            }
+
+            m_tx_queue.pop();
+            m_sending_state = sending_state::idling;
+            maybe_send_next();
+        }
+
+        void initiate_rx()
         {
             m_logger->trace("do_read()");
+
+            assert(m_state == state::active);
 
             // Read a message into our buffer
             m_stream.async_read(
@@ -192,7 +270,10 @@ namespace malloy::client
             if (ec)
                 return fail(ec, "handshake");
 
-            do_read();
+            // We're good to go
+            m_state = state::active;
+            initiate_rx();
+            maybe_send_next();
         }
 
         void
@@ -218,21 +299,20 @@ namespace malloy::client
 
             // Convert to string
             std::string payload = boost::beast::buffers_to_string(m_buffer.cdata());
-            m_logger->trace("on_read(): payload: {}", payload);
             if (payload.empty())
                 return;
 
             // Handle
             if (m_handler)
                 m_handler(payload, [this](const std::string& payload){
-                    write(payload);
+                    send(payload);
                 });
 
             // Consume the buffer
             m_buffer.consume(m_buffer.size());
 
             // Read more
-            do_read();
+            initiate_rx();
         }
 
         void

@@ -31,6 +31,16 @@ int main()
         }
     );
 
+    c.add_connection(
+        "id[1]",
+        "127.0.0.1",
+        8080,
+        "/timer",
+        [](const auto& foo, auto writer) {
+            std::cout << "id[1]: " << foo << std::endl;
+        }
+    );
+
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(15s);
 

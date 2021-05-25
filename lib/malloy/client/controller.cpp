@@ -30,7 +30,7 @@ bool controller::init(config cfg)
     // Create a logger if none was provided
     if (not cfg.logger)
     {
-        auto log_level = spdlog::level::trace;
+        auto log_level = spdlog::level::debug;
 
         // Sink
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -120,7 +120,7 @@ bool controller::add_connection(std::string id, const std::string& host, std::ui
 
     // Launch the connection
     conn->connect(host, std::to_string(port), endpoint);
-    conn->write("Hello World!");
+    conn->send("Hello World!");
 
     // Store
     m_connections.try_emplace(std::move(id), std::move(conn));
