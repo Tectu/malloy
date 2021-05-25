@@ -1,5 +1,10 @@
 #pragma once
 
+#include "../websocket/types.hpp"
+
+#include <boost/asio/executor_work_guard.hpp>
+#include <boost/asio/io_context.hpp>
+
 #include <future>
 #include <memory>
 #include <thread>
@@ -37,6 +42,9 @@ namespace malloy::client
             std::shared_ptr<spdlog::logger> logger;
         };
 
+        controller() = default;
+        virtual ~controller();
+
         [[nodiscard("init may fail")]]
         bool init(config cfg);
 
@@ -45,13 +53,17 @@ namespace malloy::client
 
         std::future<void> stop();
 
-        bool add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint);
+        bool add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler);
+        [[nodiscard]] std::vector<std::string> connections() const;
 
         void test_plain();
         void test_tls();
 
     private:
+        using workguard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
+
         config m_cfg;
+        std::unique_ptr<workguard_t> m_workguard;
         std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::vector<std::thread> m_io_threads;
         std::unordered_map<std::string, std::shared_ptr<connection_plain>> m_connections;

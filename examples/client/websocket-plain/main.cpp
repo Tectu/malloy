@@ -21,7 +21,18 @@ int main()
         return EXIT_FAILURE;
     }
 
-    c.test_plain();
+    c.add_connection(
+        "id[0]",
+        "127.0.0.1",
+        8080,
+        "/echo",
+        [](const auto& foo, auto writer) {
+            std::cout << "id[0]: " << foo << std::endl;
+        }
+    );
+
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(15s);
 
     // Stop
     c.stop().wait();

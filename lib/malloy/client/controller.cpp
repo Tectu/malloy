@@ -10,7 +10,14 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <algorithm>
+
 using namespace malloy::client;
+
+controller::~controller()
+{
+    stop().wait();
+}
 
 bool controller::init(config cfg)
 {
@@ -23,7 +30,7 @@ bool controller::init(config cfg)
     // Create a logger if none was provided
     if (not cfg.logger)
     {
-        auto log_level = spdlog::level::debug;
+        auto log_level = spdlog::level::trace;
 
         // Sink
         auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -48,7 +55,10 @@ bool controller::init(config cfg)
 
     // Create a worker thread to run the boost::asio::io_context.
     // The work guard is used to prevent the io_context::run() from returning if there's no work scheduled.
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard = boost::asio::make_work_guard(*m_io_ctx);
+    //boost::asio::executor_work_guard<boost::asio::io_context::executor_type> m_work_guard = boost::asio::make_work_guard(*m_io_ctx);
+
+    //m_workguard = std::make_unique<workguard_t>(m_io_ctx->get_executor());
+    m_workguard = std::make_unique<workguard_t>(boost::asio::make_work_guard(*m_io_ctx));
 
     return true;
 }
@@ -75,9 +85,6 @@ bool controller::start()
     // Log
     m_cfg.logger->info("starting i/o context.");
 
-    // Start the I/O context
-    m_io_ctx->run();
-
     return true;
 }
 
@@ -102,20 +109,44 @@ std::future<void> controller::stop()
     );
 }
 
-bool controller::add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint)
+bool controller::add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, websocket::handler_t&& handler)
 {
+    // Sanity check
+    if (!handler)
+        return false;
+
     // Create connection
-    auto conn = std::make_shared<connection_plain>(*m_io_ctx);
+    auto conn = std::make_shared<connection_plain>(m_cfg.logger->clone("connection"), *m_io_ctx, std::move(handler));
 
     // Launch the connection
-    conn->run(host, std::to_string(port), endpoint, id);
+    conn->connect(host, std::to_string(port), endpoint);
+    conn->write("Hello World!");
 
     // Store
     m_connections.try_emplace(std::move(id), std::move(conn));
+
+    return true;
+}
+
+std::vector<std::string> controller::connections() const
+{
+    std::vector<std::string> ret;
+    ret.reserve(m_connections.size());
+    std::transform(
+        std::cbegin(m_connections),
+        std::cend(m_connections),
+        std::back_inserter(ret),
+        [](const auto& pair) {
+            return pair.first;
+        }
+    );
+
+    return ret;
 }
 
 void controller::test_plain()
 {
+    /*
     auto const host = "127.0.0.1";
     auto const port = "8080";
     std::string endpoint = "/echo";
@@ -130,10 +161,12 @@ void controller::test_plain()
     // Run the I/O service. The call will return when
     // the socket is closed.
     ioc.run();
+     */
 }
 
 void controller::test_tls()
 {
+    /*
     std::string host = "127.0.0.1";
     std::string port = "8080";
     std::string endpoint = "/echo";
@@ -154,4 +187,5 @@ void controller::test_tls()
     // Run the I/O service. The call will return when
     // the socket is closed.
     ioc.run();
+     */
 }
