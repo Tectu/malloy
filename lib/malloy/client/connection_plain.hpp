@@ -22,13 +22,6 @@ using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 namespace malloy::client
 {
 
-    // Report a failure
-    void
-    fail(beast::error_code ec, char const* what)
-    {
-        std::cerr << what << ": " << ec.message() << "\n";
-    }
-
     class connection_plain :
         public std::enable_shared_from_this<connection_plain>
     {
@@ -205,8 +198,10 @@ namespace malloy::client
         {
             m_logger->trace("on_resolve()");
 
-            if (ec)
-                return fail(ec, "resolve");
+            if (ec) {
+                m_logger->error("on_resolve(): {}", ec.message());
+                return;
+            }
 
             // Set the timeout for the operation
             beast::get_lowest_layer(m_stream).expires_after(std::chrono::seconds(30));
@@ -226,8 +221,10 @@ namespace malloy::client
         {
             m_logger->trace("on_connect()");
 
-            if (ec)
-                return fail(ec, "connect");
+            if (ec) {
+                m_logger->error("on_connect(): {}", ec.message());
+                return;
+            }
 
             // Turn off the timeout on the tcp_stream, because
             // the websocket stream has its own timeout system.
@@ -267,24 +264,15 @@ namespace malloy::client
         {
             m_logger->trace("on_handshake()");
 
-            if (ec)
-                return fail(ec, "handshake");
+            if (ec) {
+                m_logger->error("on_handshake(): {}", ec.message());
+                return;
+            }
 
             // We're good to go
             m_state = state::active;
             initiate_rx();
             maybe_send_next();
-        }
-
-        void
-        on_write(beast::error_code ec, std::size_t bytes_transferred)
-        {
-            boost::ignore_unused(bytes_transferred);
-
-            m_logger->trace("on_write()");
-
-            if (ec)
-                return fail(ec, "write");
         }
 
         void
@@ -294,8 +282,10 @@ namespace malloy::client
 
             m_logger->trace("on_read()");
 
-            if(ec)
-                return fail(ec, "read");
+            if (ec) {
+                m_logger->error("on_read(): {}", ec.message());
+                return;
+            }
 
             // Convert to string
             std::string payload = boost::beast::buffers_to_string(m_buffer.cdata());
@@ -320,10 +310,13 @@ namespace malloy::client
         {
             m_logger->trace("on_close()");
 
-            if (ec)
-                return fail(ec, "close");
+            if (ec) {
+                m_logger->error("on_close(): {}", ec.message());
+                return;
+            }
 
             // If we get here then the connection is closed gracefully
+            m_state = state::closed;
         }
     };
 
