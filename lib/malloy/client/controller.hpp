@@ -23,7 +23,10 @@ namespace spdlog
 
 namespace malloy::client
 {
-    class connection_plain;
+    namespace websocket
+    {
+        class connection_plain;
+    }
 
     class controller
     {
@@ -56,7 +59,6 @@ namespace malloy::client
         bool add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler);
         [[nodiscard]] std::vector<std::string> connections() const;
 
-        void test_plain();
         void test_tls();
 
     private:
@@ -66,7 +68,7 @@ namespace malloy::client
         std::unique_ptr<workguard_t> m_workguard;
         std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::vector<std::thread> m_io_threads;
-        std::unordered_map<std::string, std::shared_ptr<connection_plain>> m_connections;
+        std::unordered_map<std::string, std::shared_ptr<websocket::connection_plain>> m_connections;
     };
 
 }

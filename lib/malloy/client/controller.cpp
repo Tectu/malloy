@@ -109,14 +109,14 @@ std::future<void> controller::stop()
     );
 }
 
-bool controller::add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, websocket::handler_t&& handler)
+bool controller::add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler)
 {
     // Sanity check
     if (!handler)
         return false;
 
     // Create connection
-    auto conn = std::make_shared<connection_plain>(m_cfg.logger->clone("connection"), *m_io_ctx, std::move(handler));
+    auto conn = std::make_shared<websocket::connection_plain>(m_cfg.logger->clone("connection"), *m_io_ctx, std::move(handler));
 
     // Launch the connection
     conn->connect(host, std::to_string(port), endpoint);
@@ -142,26 +142,6 @@ std::vector<std::string> controller::connections() const
     );
 
     return ret;
-}
-
-void controller::test_plain()
-{
-    /*
-    auto const host = "127.0.0.1";
-    auto const port = "8080";
-    std::string endpoint = "/echo";
-    auto const text = "Hello malloy client [plain]";
-
-    // The io_context is required for all I/O
-    net::io_context ioc;
-
-    // Launch the asynchronous operation
-    std::make_shared<connection_plain>(ioc)->run(host, port, endpoint, text);
-
-    // Run the I/O service. The call will return when
-    // the socket is closed.
-    ioc.run();
-     */
 }
 
 void controller::test_tls()
