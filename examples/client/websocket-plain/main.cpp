@@ -1,4 +1,5 @@
 #include <malloy/client/controller.hpp>
+#include <malloy/client/websocket/connection_plain.hpp>
 
 #include <iostream>
 
@@ -29,7 +30,7 @@ int main()
         [](const auto& foo, auto writer) {
             std::cout << "id[0]: " << foo << std::endl;
         }
-    );
+    )->send("Hello from Malloy!");
 
     c.add_connection(
         "id[1]",
@@ -39,7 +40,7 @@ int main()
         [](const auto& foo, auto writer) {
             std::cout << "id[1]: " << foo << std::endl;
         }
-    );
+    )->send("");
 
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(15s);

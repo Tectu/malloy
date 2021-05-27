@@ -56,7 +56,9 @@ namespace malloy::client
 
         std::future<void> stop();
 
-        bool add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler);
+        std::shared_ptr<websocket::connection_plain>
+        add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler);
+
         [[nodiscard]] std::vector<std::string> connections() const;
 
         void test_tls();

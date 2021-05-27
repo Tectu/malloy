@@ -108,23 +108,23 @@ std::future<void> controller::stop()
     );
 }
 
-bool controller::add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler)
+std::shared_ptr<websocket::connection_plain>
+controller::add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler)
 {
     // Sanity check
     if (!handler)
-        return false;
+        return { };
 
     // Create connection
     auto conn = std::make_shared<websocket::connection_plain>(m_cfg.logger->clone("connection"), *m_io_ctx, std::move(handler));
 
     // Launch the connection
     conn->connect(host, std::to_string(port), endpoint);
-    conn->send("Hello World!");
 
     // Store
-    m_connections.try_emplace(std::move(id), std::move(conn));
+    m_connections.try_emplace(std::move(id), conn);
 
-    return true;
+    return conn;
 }
 
 std::vector<std::string> controller::connections() const

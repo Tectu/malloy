@@ -82,10 +82,9 @@ namespace malloy::client::websocket
         {
             m_logger->trace("send()");
 
-            // Sanity check
-            if (payload.empty())
-                return;
-
+            // Make this async for both consistency and to ensure that we can check that we're executing
+            // with the proper executor
+            // See https://github.com/boostorg/beast/issues/2242#issuecomment-848283514
             boost::asio::dispatch(
                 boost::asio::bind_executor(
                     derived().stream().get_executor(),
