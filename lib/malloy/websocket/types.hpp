@@ -6,6 +6,6 @@
 namespace malloy::websocket
 {
     using payload_t = std::string;
-    using writer_t  = std::function<void(payload_t&&)>;
-    using handler_t = std::function<void(payload_t, writer_t)>;
+    using writer_t  = std::function<void(const payload_t&)>;
+    using handler_t = std::function<void(const payload_t&, writer_t)>;
 }

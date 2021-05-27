@@ -222,7 +222,7 @@ namespace malloy::server::websocket
 
             // Handle
             if (m_handler)
-                m_handler(payload, [this](malloy::websocket::payload_t&& resp) {
+                m_handler(payload, [this](const malloy::websocket::payload_t& resp) {
                     send(resp);
                 });
 
