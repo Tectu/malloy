@@ -62,7 +62,7 @@ namespace malloy::server::http
             // thread-safe by default.
             boost::asio::dispatch(m_stream.get_executor(),
                 boost::beast::bind_front_handler(
-                    &connection::do_read,
+                    &connection_plain::do_read,
                     shared_from_this()
                 )
             );
