@@ -259,7 +259,7 @@ namespace malloy::server::websocket
         {
             m_logger->trace("initiate_tx()");
 
-            assert(m_sending_state == sending_state::idle);
+            assert(m_sending_state == sending_state::idling);
             assert(!m_tx_queue.empty());
 
             m_sending_state = sending_state::sending;
@@ -282,7 +282,7 @@ namespace malloy::server::websocket
             }
 
             m_tx_queue.pop();
-            m_sending_state = sending_state::idle;
+            m_sending_state = sending_state::idling;
             maybe_send_next();
         }
 
