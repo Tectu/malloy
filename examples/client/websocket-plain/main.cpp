@@ -40,7 +40,7 @@ int main()
         [](const auto& foo, auto writer) {
             std::cout << "id[1]: " << foo << std::endl;
         }
-    )->send("");
+    )->send("Whoop Whoop");
 
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(15s);

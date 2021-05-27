@@ -82,6 +82,10 @@ namespace malloy::client::websocket
         {
             m_logger->trace("send()");
 
+            // Don't allow sending empty payloads
+            if (payload.empty())
+                return;
+
             // Make this async for both consistency and to ensure that we can check that we're executing
             // with the proper executor
             // See https://github.com/boostorg/beast/issues/2242#issuecomment-848283514
