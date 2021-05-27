@@ -1,8 +1,8 @@
+add_subdirectory(websocket)
+
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
-        connection_plain.hpp
-        connection_tls.hpp
         controller.cpp
         controller.hpp
 )

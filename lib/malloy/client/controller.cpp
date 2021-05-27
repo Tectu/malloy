@@ -1,6 +1,5 @@
 #include "controller.hpp"
-#include "connection_plain.hpp"
-#include "connection_tls.hpp"
+#include "websocket/connection_plain.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
