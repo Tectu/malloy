@@ -61,6 +61,10 @@ namespace malloy::client
 
         [[nodiscard]] std::vector<std::string> connections() const;
 
+        [[nodiscard]]
+        std::shared_ptr<websocket::connection_plain>
+        connection(const std::string& id);
+
         void test_tls();
 
     private:

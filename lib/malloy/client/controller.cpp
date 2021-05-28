@@ -143,6 +143,15 @@ std::vector<std::string> controller::connections() const
     return ret;
 }
 
+std::shared_ptr<websocket::connection_plain>
+controller::connection(const std::string& id)
+{
+    if (!m_connections.contains(id))
+        return { };
+
+    return m_connections.at(id);
+}
+
 void controller::test_tls()
 {
     /*
