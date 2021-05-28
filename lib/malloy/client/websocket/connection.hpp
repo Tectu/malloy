@@ -64,7 +64,7 @@ namespace malloy::client::websocket
         void
         disconnect()
         {
-            m_logger->trace("close()");
+            m_logger->trace("disconnect()");
 
             m_state = state::closing;
 
