@@ -1,12 +1,13 @@
 # Overview
-Malloy is a small, embeddable HTTP & WebSocket server built on top of [boost.beast](https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/index.html).
+Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [boost.beast](https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/index.html).
 
-The main use case for this library is a C++ project which needs to embedd an HTTP and/or WebSocket server.
+The main use case for this library is a C++ project which needs to embedd an HTTP and/or WebSocket server and/or client.
 
 # Features
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
 - Client
+  - HTTP (Plain or TLS/SSL connections)
   - Websocket (Plain or TLS/SSL connections)
 - Server
   - HTTP
@@ -25,10 +26,6 @@ The following list provides an overview of the currently implemented features. S
 - Cookies
 - HTML
   - Parsing HTML forms
-
-Coming soon™:
-- Security middleware (CSRF, XSS, ...)
-- HTTP client
 
 # Licensing
 This library is MIT licensed. Dependencies ship with their own licensing models.

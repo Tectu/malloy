@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../http/request.hpp"
+#include "../http/response.hpp"
 #include "../websocket/types.hpp"
 
 #include <boost/asio/executor_work_guard.hpp>
@@ -49,6 +51,45 @@ namespace malloy::client
         bool start();
 
         std::future<void> stop();
+
+        template<class Connection>
+        [[nodiscard]]
+        std::future<http::response>
+        http_request(malloy::http::request req)
+        {
+            // ToDo: This can maybe be rewritten to use coroutines
+            http::response ret_resp;
+
+            return std::async(
+                std::launch::async,
+                [req = std::move(req), &ret_resp, this] {
+                    std::atomic_bool done = false;      // ToDo: Use std::atomic_flag instead
+                    // Create connection
+                    auto conn = std::make_shared<Connection>(
+                        m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                        *m_io_ctx
+                    );
+
+                    // Launch
+                    // ToDo: Don't hardcode host/port
+                    conn->run(
+                        "80",
+                        req,
+                        [&ret_resp, &done](http::response&& resp){
+                            ret_resp = std::move(resp);
+                            done = true;
+                        }
+                    );
+
+                    while (!done.load()) {
+                        using namespace std::chrono_literals;
+                        std::this_thread::sleep_for(5ms);
+                    }
+
+                    return ret_resp;
+                }
+            );
+        }
 
         template<class Connection>
         [[nodiscard]]

@@ -2,6 +2,7 @@
 
 #include "cookie.hpp"
 #include "uri.hpp"
+#include "types.hpp"
 
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
@@ -16,10 +17,19 @@ namespace malloy::http
         public boost::beast::http::request<boost::beast::http::string_body>
     {
     public:
-        /**
-         * Default constructor
-         */
-        request() = delete;
+        request() = default;
+
+        request(
+            http::method method_,
+            const char* host,
+            const char* target_
+        )
+        {
+            version(11);
+            method(method_);
+            target(target_);
+            set(http::field::host, host);
+        }
 
         /**
          * Constructor
