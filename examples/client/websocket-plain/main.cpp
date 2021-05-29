@@ -22,22 +22,20 @@ int main()
         return EXIT_FAILURE;
     }
 
-    c.add_connection(
-        "id[0]",
+    c.make_websocket_connection<malloy::client::websocket::connection_plain>(
         "127.0.0.1",
         8080,
         "/echo",
-        [](const auto& foo, auto writer) {
+        [](const auto& foo, auto send) {
             std::cout << "id[0]: " << foo << std::endl;
         }
     )->send("Hello from Malloy!");
 
-    c.add_connection(
-        "id[1]",
+    c.make_websocket_connection<malloy::client::websocket::connection_plain>(
         "127.0.0.1",
         8080,
         "/timer",
-        [](const auto& foo, auto writer) {
+        [](const auto& foo, auto send) {
             std::cout << "id[1]: " << foo << std::endl;
         }
     )->send("Whoop Whoop");

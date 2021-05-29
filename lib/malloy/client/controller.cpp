@@ -1,15 +1,11 @@
 #include "controller.hpp"
-#include "websocket/connection_plain.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/certify/extensions.hpp>
 #include <boost/certify/https_verification.hpp>
-#include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-
-#include <algorithm>
 
 using namespace malloy::client;
 
@@ -106,50 +102,6 @@ std::future<void> controller::stop()
             m_cfg.logger->info("all I/O threads stopped.");
         }
     );
-}
-
-std::shared_ptr<websocket::connection_plain>
-controller::add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler)
-{
-    // Sanity check
-    if (!handler)
-        return { };
-
-    // Create connection
-    auto conn = std::make_shared<websocket::connection_plain>(m_cfg.logger->clone("connection"), *m_io_ctx, std::move(handler));
-
-    // Launch the connection
-    conn->connect(host, std::to_string(port), endpoint);
-
-    // Store
-    m_connections.try_emplace(std::move(id), conn);
-
-    return conn;
-}
-
-std::vector<std::string> controller::connections() const
-{
-    std::vector<std::string> ret;
-    ret.reserve(m_connections.size());
-    std::transform(
-        std::cbegin(m_connections),
-        std::cend(m_connections),
-        std::back_inserter(ret),
-        [](const auto& pair) {
-            return pair.first;
-        }
-    );
-
-    return ret;
-}
-
-std::shared_ptr<websocket::connection_plain>
-controller::connection(const std::string& id)
-{
-    if (!m_connections.contains(id))
-        return { };
-
-    return m_connections.at(id);
 }
 
 void controller::test_tls()

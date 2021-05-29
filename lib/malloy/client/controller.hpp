@@ -4,21 +4,15 @@
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
+#include <spdlog/logger.h>
 
 #include <future>
 #include <memory>
 #include <thread>
-#include <unordered_map>
-#include <vector>
 
 namespace boost::asio
 {
     class io_context;
-}
-
-namespace spdlog
-{
-    class logger;
 }
 
 namespace malloy::client
@@ -56,14 +50,23 @@ namespace malloy::client
 
         std::future<void> stop();
 
-        std::shared_ptr<websocket::connection_plain>
-        add_connection(std::string id, const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler);
-
-        [[nodiscard]] std::vector<std::string> connections() const;
-
+        template<class Connection>
         [[nodiscard]]
-        std::shared_ptr<websocket::connection_plain>
-        connection(const std::string& id);
+        std::shared_ptr<Connection>
+        make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler)
+        {
+            // Sanity check
+            if (!handler)
+                return { };
+
+            // Create connection
+            auto conn = std::make_shared<Connection>(m_cfg.logger->clone("connection"), *m_io_ctx, std::move(handler));
+
+            // Launch the connection
+            conn->connect(host, std::to_string(port), endpoint);
+
+            return conn;
+        }
 
         void test_tls();
 
@@ -74,7 +77,6 @@ namespace malloy::client
         std::unique_ptr<workguard_t> m_workguard;
         std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::vector<std::thread> m_io_threads;
-        std::unordered_map<std::string, std::shared_ptr<websocket::connection_plain>> m_connections;
     };
 
 }
