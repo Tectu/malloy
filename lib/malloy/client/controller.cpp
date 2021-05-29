@@ -52,9 +52,6 @@ bool controller::init(config cfg)
 
     // Create a worker thread to run the boost::asio::io_context.
     // The work guard is used to prevent the io_context::run() from returning if there's no work scheduled.
-    //boost::asio::executor_work_guard<boost::asio::io_context::executor_type> m_work_guard = boost::asio::make_work_guard(*m_io_ctx);
-
-    //m_workguard = std::make_unique<workguard_t>(m_io_ctx->get_executor());
     m_workguard = std::make_unique<workguard_t>(boost::asio::make_work_guard(*m_io_ctx));
 
     return true;
