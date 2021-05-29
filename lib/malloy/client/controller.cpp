@@ -3,9 +3,11 @@
 
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/certify/extensions.hpp>
-#include <boost/certify/https_verification.hpp>
+#if MALLOY_FEATURE_TLS
+    #include <boost/beast/ssl.hpp>
+    #include <boost/certify/extensions.hpp>
+    #include <boost/certify/https_verification.hpp>
+#endif
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
