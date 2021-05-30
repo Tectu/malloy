@@ -27,6 +27,14 @@ namespace malloy::client
     class controller
     {
     public:
+        enum class state
+        {
+            starting,
+            running,
+            stopping,
+            stopped
+        };
+
         struct config
         {
             /**
@@ -118,6 +126,7 @@ namespace malloy::client
         std::unique_ptr<workguard_t> m_workguard;
         std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::vector<std::thread> m_io_threads;
+        std::atomic<enum state> m_state = state::stopped;
     };
 
 }

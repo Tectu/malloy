@@ -18,6 +18,10 @@ controller::~controller()
 
 bool controller::init(config cfg)
 {
+    // Don't initialize if not stopped
+    if (m_state != state::stopped)
+        return false;
+
     // Don't re-initialize
     static bool m_init_done = false;
     if (m_init_done)
@@ -79,24 +83,39 @@ bool controller::start()
     // Log
     m_cfg.logger->info("starting i/o context.");
 
+    // Update state
+    m_state = state::running;
+
     return true;
 }
 
 std::future<void> controller::stop()
 {
-    // Stop the `io_context`. This will cause `run()`
-    // to return immediately, eventually destroying the
-    // `io_context` and all of the sockets in it.
-    m_io_ctx->stop();
-
     // Wait for all I/O context threads to finish...
     return std::async(
         [this]
         {
+            // Check state
+            if (m_state != state::running)
+                return;
+
+            // Update state
+            m_state = state::stopping;
+
+            // Stop the `io_context`. This will cause `run()`
+            // to return immediately, eventually destroying the
+            // `io_context` and all of the sockets in it.
+            m_io_ctx->stop();
+
+            // Tell the workguard that we no longer need it's service
+            m_workguard->reset();
+
             m_cfg.logger->info("waiting for I/O threads to stop...");
 
             for (auto& thread : m_io_threads)
                 thread.join();
+
+            m_state = state::stopped;
 
             m_cfg.logger->info("all I/O threads stopped.");
         }

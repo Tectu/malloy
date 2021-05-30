@@ -27,8 +27,5 @@ int main()
 
     std::cout << resp.get() << std::endl;
 
-    // Stop
-    c.stop().wait();
-
     return EXIT_SUCCESS;
 }
