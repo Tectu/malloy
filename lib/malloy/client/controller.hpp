@@ -45,7 +45,6 @@ namespace malloy::client
                     );
 
                     // Launch
-                    // ToDo: Don't hardcode host/port
                     conn->run(
                         std::to_string(req.port()).c_str(),
                         req,
