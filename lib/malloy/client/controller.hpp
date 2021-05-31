@@ -14,6 +14,9 @@ namespace malloy::client
         class connection_plain;
     }
 
+    /**
+     * High-level controller for client activities.
+     */
     class controller :
         public malloy::controller
     {
@@ -26,6 +29,13 @@ namespace malloy::client
         controller() = default;
         ~controller() = default;
 
+        /**
+         * Issue an HTTP request.
+         *
+         * @tparam Connection The type of connection to use.
+         * @param req The request to perform.
+         * @return The corresponding response.
+         */
         template<class Connection>
         [[nodiscard]]
         std::future<http::response>
@@ -64,6 +74,17 @@ namespace malloy::client
             );
         }
 
+        /**
+         * Create a websocket connection.
+         *
+         * @tparam Connection The type of connection to use.
+         * @param host The host.
+         * @param port The port.
+         * @param endpoint The endpoint.
+         * @param handler Handler that gets called when data is received.
+         *
+         * @return The connection.
+         */
         template<class Connection>
         [[nodiscard]]
         std::shared_ptr<Connection>

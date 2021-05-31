@@ -10,6 +10,11 @@
 namespace malloy::client::http
 {
 
+    /**
+     * An HTTP connection.
+     *
+     * @tparam Derived The type inheriting from this class.
+     */
     template<class Derived>
     class connection
     {

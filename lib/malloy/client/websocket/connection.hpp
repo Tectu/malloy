@@ -17,6 +17,11 @@
 namespace malloy::client::websocket
 {
 
+    /**
+     * A WebSocket connection.
+     *
+     * @tparam Derived The type inheriting from this class.
+     */
     template<class Derived>
     class connection
     {
