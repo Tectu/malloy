@@ -60,6 +60,7 @@ namespace malloy
          *
          * @return A future indicating when the stopping operation was completed.
          */
+        [[nodiscard]]
         virtual
         std::future<void> stop();
 
