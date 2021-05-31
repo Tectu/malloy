@@ -48,6 +48,8 @@ target_include_directories(
 target_sources(
     ${TARGET_OBJS}
     PRIVATE
+        controller.cpp
+        controller.hpp
         malloy.hpp
         utils.hpp
 )

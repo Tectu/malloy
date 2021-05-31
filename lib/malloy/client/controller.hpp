@@ -1,21 +1,11 @@
 #pragma once
 
+#include "../controller.hpp"
 #include "../http/request.hpp"
 #include "../http/response.hpp"
 #include "../websocket/types.hpp"
 
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/io_context.hpp>
 #include <spdlog/logger.h>
-
-#include <future>
-#include <memory>
-#include <thread>
-
-namespace boost::asio
-{
-    class io_context;
-}
 
 namespace malloy::client
 {
@@ -24,41 +14,17 @@ namespace malloy::client
         class connection_plain;
     }
 
-    class controller
+    class controller :
+        public malloy::controller
     {
     public:
-        enum class state
+        struct config :
+            malloy::controller::config
         {
-            starting,
-            running,
-            stopping,
-            stopped
-        };
-
-        struct config
-        {
-            /**
-             * The number of worked threads for the I/O context to use.
-             */
-            std::size_t num_threads        = 1;
-
-            /**
-             * The logger instance to use.
-             * A logger will be automatically created if none was provided.
-             */
-            std::shared_ptr<spdlog::logger> logger;
         };
 
         controller() = default;
-        virtual ~controller();
-
-        [[nodiscard("init may fail")]]
-        bool init(config cfg);
-
-        [[nodiscard("start may fail")]]
-        bool start();
-
-        std::future<void> stop();
+        ~controller() = default;
 
         template<class Connection>
         [[nodiscard]]
@@ -75,7 +41,7 @@ namespace malloy::client
                     // Create connection
                     auto conn = std::make_shared<Connection>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                        *m_io_ctx
+                        io_ctx()
                     );
 
                     // Launch
@@ -109,7 +75,7 @@ namespace malloy::client
                 return { };
 
             // Create connection
-            auto conn = std::make_shared<Connection>(m_cfg.logger->clone("connection"), *m_io_ctx, std::move(handler));
+            auto conn = std::make_shared<Connection>(m_cfg.logger->clone("connection"), io_ctx(), std::move(handler));
 
             // Launch the connection
             conn->connect(host, std::to_string(port), endpoint);
@@ -118,15 +84,6 @@ namespace malloy::client
         }
 
         void test_tls();
-
-    private:
-        using workguard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
-
-        config m_cfg;
-        std::unique_ptr<workguard_t> m_workguard;
-        std::shared_ptr<boost::asio::io_context> m_io_ctx;
-        std::vector<std::thread> m_io_threads;
-        std::atomic<enum state> m_state = state::stopped;
     };
 
 }
