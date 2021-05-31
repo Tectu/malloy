@@ -21,8 +21,8 @@ namespace malloy::http
 
         request(
             http::method method_,
-            const char* host,
-            const char* target_
+            std::string_view host,
+            std::string_view target_
         )
         {
             version(11);
