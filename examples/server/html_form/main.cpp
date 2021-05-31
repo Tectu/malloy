@@ -1,7 +1,9 @@
-#include "malloy/server/controller.hpp"
-#include "malloy/http/generator.hpp"
-#include "malloy/server/routing/router.hpp"
-#include "malloy/html/form.hpp"
+#include "../../example_logger.hpp"
+
+#include <malloy/server/controller.hpp>
+#include <malloy/http/generator.hpp>
+#include <malloy/server/routing/router.hpp>
+#include <malloy/html/form.hpp>
 
 #include <iostream>
 #include <memory>
@@ -16,6 +18,7 @@ int main()
     cfg.port        = 8080;
     cfg.doc_root    = doc_root;
     cfg.num_threads = 1;
+    cfg.logger      = create_example_logger();
 
     // Create malloy controller
     malloy::server::controller c;
@@ -54,6 +57,10 @@ int main()
 
     // Start
     c.start();
+
+    // Keep the application alive
+    while (true)
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
     return EXIT_SUCCESS;
 }

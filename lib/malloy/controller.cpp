@@ -3,7 +3,6 @@
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <spdlog/logger.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 
 using namespace malloy;
 
@@ -24,19 +23,9 @@ bool controller::init(config cfg)
         return false;
     m_init_done = true;
 
-    // Create a logger if none was provided
-    if (not cfg.logger)
-    {
-        auto log_level = spdlog::level::debug;
-
-        // Sink
-        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-        console_sink->set_level(log_level);
-
-        // Create logger
-        cfg.logger = std::make_shared<spdlog::logger>("", spdlog::sinks_init_list{ console_sink });
-        cfg.logger->set_level(log_level);
-    }
+    // Sanity check logger
+    if (!cfg.logger)
+        throw std::invalid_argument("no valid logger provided.");
 
     // Sanity check number of threads
     if (cfg.num_threads < 1) {

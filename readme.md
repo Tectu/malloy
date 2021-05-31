@@ -6,6 +6,7 @@ The main use case for this library is a C++ project which needs to embedd an HTT
 # Features
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
+- High-level controller to setup I/O context, SSL context, worker threads and more
 - Client
   - HTTP (Plain or TLS/SSL connections)
   - Websocket (Plain or TLS/SSL connections)
@@ -22,7 +23,6 @@ The following list provides an overview of the currently implemented features. S
     - File serving locations
     - Automatic preflight responses (optional)
     - Websocket endpoints
-  - High-level controller class to setup I/O context, SSL context, worker threads and more.
 - Cookies
 - HTML
   - Parsing HTML forms

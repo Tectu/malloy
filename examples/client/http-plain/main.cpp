@@ -1,3 +1,5 @@
+#include "../../example_logger.hpp"
+
 #include <malloy/client/controller.hpp>
 #include <malloy/client/http/connection_plain.hpp>
 
@@ -8,6 +10,7 @@ int main()
     // Create the controller config
     malloy::client::controller::config cfg;
     cfg.num_threads = 1;
+    cfg.logger      = create_example_logger();
 
     // Create the controller
     malloy::client::controller c;

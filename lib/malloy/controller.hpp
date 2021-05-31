@@ -43,11 +43,24 @@ namespace malloy
         virtual ~controller();
 
         [[nodiscard("init may fail")]]
+        virtual
         bool init(config cfg);
 
+        /**
+         * Start the server. This function will not return until the server is stopped.
+         *
+         * @return Whether starting the server was successful.
+         */
         [[nodiscard("start may fail")]]
+        virtual
         bool start();
 
+        /**
+         * Stop the server.
+         *
+         * @return A future indicating when the stopping operation was completed.
+         */
+        virtual
         std::future<void> stop();
 
     protected:

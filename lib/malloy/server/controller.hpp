@@ -1,25 +1,14 @@
 #pragma once
 
+#include "../controller.hpp"
+
 #include <memory>
 #include <filesystem>
-#include <future>
 #include <string>
-#include <thread>
-#include <vector>
-
-namespace boost::asio
-{
-    class io_context;
-}
 
 namespace boost::asio::ssl
 {
     class context;
-}
-
-namespace spdlog
-{
-    class logger;
 }
 
 namespace malloy::server
@@ -33,13 +22,15 @@ namespace malloy::server
      *
      * @brief A high-level controller.
      */
-    class controller
+    class controller :
+        public malloy::controller
     {
     public:
         /**
-         * Controller configuration
+         * Controller configuration.
          */
-        struct config
+        struct config :
+            malloy::controller::config
         {
             /**
              * The interface to bind to.
@@ -58,31 +49,12 @@ namespace malloy::server
              * to the working directory.
              */
             std::filesystem::path doc_root = ".";
-
-            /**
-             * The number of worked threads for the I/O context to use.
-             */
-            std::size_t num_threads        = 1;
-
-            /**
-             * The logger instance to use.
-             * A logger will be automatically created if none was provided.
-             */
-            std::shared_ptr<spdlog::logger> logger;
-
-            config() = default;
-            config(const config& other) = default;
-            config(config&& other) noexcept = default;
-            virtual ~config() = default;
-
-            config& operator=(const config& cfg) = default;
-            config& operator=(config&& cfg) noexcept = default;
         };
 
         controller() = default;
         controller(const controller& other) = delete;
         controller(controller&& other) noexcept = delete;
-        virtual ~controller();
+        ~controller() = default;
 
         controller& operator=(const controller& rhs) = delete;
         controller& operator=(controller&& rhs) noexcept = delete;
@@ -93,10 +65,16 @@ namespace malloy::server
          * @note This function must be called before any other.
          *
          * @param cfg The configuration to use.
-         * @param io_ctx The I/O context to use. An I/O context will be created automatically if none was supplied.
          * @return Whether the initialization was successful.
          */
-        bool init(config cfg, std::shared_ptr<boost::asio::io_context> io_ctx = nullptr);
+        bool init(config cfg);
+
+        /**
+         * Start the server. This function will not return until the server is stopped.
+         *
+         * @return Whether starting the server was successful.
+         */
+        bool start() override;
 
         #if MALLOY_FEATURE_TLS
             /**
@@ -112,20 +90,6 @@ namespace malloy::server
         #endif
 
         /**
-         * Start the server. This function will not return until the server is stopped.
-         *
-         * @return Whether starting the server was successful.
-         */
-        bool start();
-
-        /**
-         * Stop the server.
-         *
-         * @return A future indicating when the stopping operation was completed.
-         */
-        std::future<void> stop();
-
-        /**
          * Get the top-level HTTP router.
          *
          * @return The top-level HTTP router.
@@ -137,11 +101,8 @@ namespace malloy::server
         }
 
     private:
-        bool m_init_done = false;
         config m_cfg;
         std::shared_ptr<listener> m_listener;
-        std::vector<std::thread> m_threads;
-        std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         std::shared_ptr<malloy::server::router> m_router;
     };
