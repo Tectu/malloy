@@ -45,8 +45,9 @@ namespace malloy::client
                     );
 
                     // Launch
+                    const std::string& port_str = std::to_string(req.port()); // Keep the string alive
                     conn->run(
-                        std::to_string(req.port()).c_str(),
+                        port_str.c_str(),
                         req,
                         [&ret_resp, &done](http::response&& resp){
                             ret_resp = std::move(resp);
