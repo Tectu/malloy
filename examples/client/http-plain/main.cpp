@@ -25,7 +25,12 @@ int main()
         return EXIT_FAILURE;
     }
 
-    malloy::http::request req(malloy::http::method::get, "www.google.com", "/");
+    malloy::http::request req(
+        malloy::http::method::get,
+        "www.google.com",
+        80,
+        "/"
+    );
     auto resp = c.http_request<malloy::client::http::connection_plain>(req);
 
     std::cout << resp.get() << std::endl;

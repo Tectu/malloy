@@ -22,8 +22,10 @@ namespace malloy::http
         request(
             http::method method_,
             std::string_view host,
+            const std::uint16_t port,
             std::string_view target_
-        )
+        ) :
+            m_port(port)
         {
             version(11);
             method(method_);
@@ -102,6 +104,14 @@ namespace malloy::http
         request& operator=(request&& rhs) noexcept = default;
 
         /**
+         * Retrieve the port.
+         *
+         * @return The port.
+         */
+        [[nodiscard]]
+        std::uint16_t port() const noexcept { return m_port; }
+
+        /**
          * Returns the URI portion of the request.
          *
          * @return A copy of the URI.
@@ -160,6 +170,7 @@ namespace malloy::http
         }
 
     private:
+        std::uint16_t m_port;
         class uri m_uri;
         std::unordered_map<std::string, std::string> m_cookies;
     };

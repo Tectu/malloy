@@ -47,7 +47,7 @@ namespace malloy::client
                     // Launch
                     // ToDo: Don't hardcode host/port
                     conn->run(
-                        "80",
+                        std::to_string(req.port()).c_str(),
                         req,
                         [&ret_resp, &done](http::response&& resp){
                             ret_resp = std::move(resp);
