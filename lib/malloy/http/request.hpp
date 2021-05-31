@@ -19,54 +19,27 @@ namespace malloy::http
     public:
         request() = default;
 
+        /**
+         * Cosntructor.
+         *
+         * @param method_ The HTTP method
+         * @param host The host to connect to.
+         * @param port The port at which the host serves requests.
+         * @param target_ The target.
+         */
         request(
             http::method method_,
             std::string_view host,
             const std::uint16_t port,
             std::string_view target_
-        ) :
-            m_port(port)
-        {
-            version(11);
-            method(method_);
-            target(target_);
-            set(http::field::host, host);
-        }
+        );
 
         /**
          * Constructor
          *
          * @param raw The underlying raw HTTP message
          */
-        request(boost::beast::http::request<boost::beast::http::string_body>&& raw)
-        {
-            using namespace boost::beast::http;
-
-            using base_type = boost::beast::http::request<boost::beast::http::string_body>;
-
-            // Underlying
-            base_type::operator=(std::move(raw));
-
-            // URI
-            class uri u{ std::string{target().data(), target().size()} };
-            m_uri = std::move(u);
-
-            // Cookies
-            {
-                const auto& [begin, end] = base().equal_range(field::cookie);
-                for (auto it = begin; it != end; it++) {
-                    const auto& str = it->value();
-
-                    const auto& sep_pos = it->value().find('=');
-                    if (sep_pos == std::string::npos)
-                        continue;
-
-                    std::string key{ str.substr(0, sep_pos) };
-                    std::string value{ str.substr(sep_pos+1) };
-                    m_cookies.insert_or_assign(std::move(key), std::move(value));
-                }
-            }
-        }
+        request(boost::beast::http::request<boost::beast::http::string_body>&& raw);
 
         /**
          * Copy constructor.
@@ -133,10 +106,7 @@ namespace malloy::http
          * @return The cookies.
          */
         [[nodiscard]]
-        std::unordered_map<std::string, std::string> cookies() const noexcept
-        {
-            return m_cookies;
-        }
+        std::unordered_map<std::string, std::string> cookies() const noexcept { return m_cookies; }
 
         /**
          * Checks whether a particular cookie is present.
@@ -153,24 +123,10 @@ namespace malloy::http
          * Gets the value of a cookie.
          */
         [[nodiscard]]
-        std::string_view cookie(const std::string_view& name) const
-        {
-            const auto& it = std::find_if(
-                std::cbegin(m_cookies),
-                std::cend(m_cookies),
-                [&name]( const auto& pair ) {
-                    return pair.first == name;
-                }
-            );
-
-            if (it == std::cend(m_cookies))
-                return { };
-
-            return it->second;
-        }
+        std::string_view cookie(const std::string_view& name) const;
 
     private:
-        std::uint16_t m_port;
+        std::uint16_t m_port = 0;
         class uri m_uri;
         std::unordered_map<std::string, std::string> m_cookies;
     };
