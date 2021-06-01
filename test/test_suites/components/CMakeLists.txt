@@ -2,6 +2,7 @@ target_sources(
     ${TARGET}
     PRIVATE
         http_generator.cpp
+        response.cpp
         router.cpp
         uri.cpp
 )
