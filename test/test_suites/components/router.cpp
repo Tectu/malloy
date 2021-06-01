@@ -1,9 +1,9 @@
 #include "../../test.hpp"
 
-#include <malloy/http/routing/router.hpp>
+#include <malloy/server/routing/router.hpp>
 
 using namespace malloy::http;
-using namespace malloy::http::server;
+using namespace malloy::server;
 
 TEST_SUITE("components - router")
 {
@@ -31,7 +31,7 @@ TEST_SUITE("components - router")
         {
             SUBCASE("empty")
             {
-                CHECK_FALSE(r.add_redirect(status::permanent_redirect, "/foo", "/bar"));
+                CHECK_FALSE(r.add_redirect(status::permanent_redirect, "", "/bar"));
             }
 
             SUBCASE("no leading slash")
