@@ -145,6 +145,14 @@ bool router::add_redirect(const http::status status, std::string&& resource_old,
         return false;
     }
 
+    // Sanity check old resource
+    if (!resource_old.starts_with("/"))
+        return false;
+
+    // Sanity check new resource
+    if (!resource_new.starts_with("/"))
+        return false;
+
     // Create endpoint
     auto ep = std::make_shared<endpoint_http_redirect>();
     ep->resource_old = std::move(resource_old);
