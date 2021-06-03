@@ -41,13 +41,12 @@ namespace malloy::client
         std::future<http::response>
         http_request(malloy::http::request req)
         {
-            // ToDo: This can maybe be rewritten to use coroutines
-            http::response ret_resp;
-
             return std::async(
                 std::launch::async,
-                [req = std::move(req), &ret_resp, this] {
+                [req = std::move(req), this] {
+                    http::response ret_resp;
                     std::atomic_bool done = false;      // ToDo: Use std::atomic_flag instead
+
                     // Create connection
                     auto conn = std::make_shared<Connection>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
