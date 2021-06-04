@@ -127,7 +127,7 @@ namespace malloy::client::http
         }
 
         void
-        on_read(const boost::beast::error_code& ec, [[maybe_unused]] std::size_t bytes_transferred)
+        on_read(boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred)
         {
             if (ec)
                 return m_logger->error("on_read(): {}", ec.message());
@@ -137,8 +137,7 @@ namespace malloy::client::http
                 m_cb(std::move(m_resp));
 
             // Gracefully close the socket
-#warning ToDo!
-            //derived().stream().socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+            derived().stream().socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
             // not_connected happens sometimes so don't bother reporting it.
             if (ec && ec != boost::beast::errc::not_connected)
