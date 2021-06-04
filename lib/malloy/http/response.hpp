@@ -71,6 +71,13 @@ namespace malloy::http
         response& operator=(response&& rhs) noexcept = default;
 
         /**
+         * Set the HTTP status code.
+         *
+         * @param status The HTTP status code.
+         */
+        void set_status(http::status status) { result(status); }
+
+        /**
          * Retrieve the HTTP status.
          *
          * @return The HTTP status
