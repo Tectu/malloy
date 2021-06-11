@@ -3,4 +3,5 @@ target_sources(
     PRIVATE
         connection.hpp
         connection_plain.hpp
+        connection_tls.hpp
 )

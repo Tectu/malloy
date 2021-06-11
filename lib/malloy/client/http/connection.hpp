@@ -76,10 +76,10 @@ namespace malloy::client::http
                 return m_logger->error("on_resolve: {}", ec.message());
 
             // Set a timeout on the operation
-            derived().stream().expires_after(std::chrono::seconds(30));
+            boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
 
             // Make the connection on the IP address we get from a lookup
-            derived().stream().async_connect(
+            boost::beast::get_lowest_layer(derived().stream()).async_connect(
                 results,
                 boost::beast::bind_front_handler(
                     &connection::on_connect,
@@ -95,7 +95,7 @@ namespace malloy::client::http
                 return m_logger->error("on_connect: {}", ec.message());
 
             // Set a timeout on the operation
-            derived().stream().expires_after(std::chrono::seconds(30));
+            boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
 
             // Send the HTTP request to the remote host
             boost::beast::http::async_write(
@@ -137,7 +137,7 @@ namespace malloy::client::http
                 m_cb(std::move(m_resp));
 
             // Gracefully close the socket
-            derived().stream().socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+            boost::beast::get_lowest_layer(derived().stream()).socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
             // not_connected happens sometimes so don't bother reporting it.
             if (ec && ec != boost::beast::errc::not_connected)

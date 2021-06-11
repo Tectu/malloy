@@ -40,7 +40,7 @@ namespace malloy::client
         #endif
 
         /**
-         * Perform an HTTP request.
+         * Perform a plain (unencrypted) HTTP request.
          *
          * @param req The HTTP request.
          *
@@ -48,7 +48,20 @@ namespace malloy::client
          */
         [[nodiscard]]
         std::future<http::response>
-        http_request(http::request req);
+        http_request_plain(http::request req);
+
+        #if MALLOY_FEATURE_TLS
+            /**
+             * Perform a TLS encrypted HTTPS request.
+             *
+             * @param req The HTTPS request.
+             *
+             * @return The corresponding response.
+             */
+            [[nodiscard]]
+            std::future<http::response>
+            http_request_tls(http::request req);
+        #endif
 
         /**
          * Create a websocket connection.

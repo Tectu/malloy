@@ -17,6 +17,10 @@ int main()
         std::cerr << "initializing controller failed." << std::endl;
         return EXIT_FAILURE;
     }
+    if (!c.init_tls()) {
+        std::cerr << "initializing TLS context failed." << std::endl;
+        return EXIT_FAILURE;
+    }
 
     // Start
     if (!c.start()) {
@@ -27,10 +31,10 @@ int main()
     malloy::http::request req(
         malloy::http::method::get,
         "www.google.com",
-        80,
+        443,
         "/"
     );
-    auto resp = c.http_request_plain(req);
+    auto resp = c.http_request_tls(req);
 
     std::cout << resp.get() << std::endl;
 
