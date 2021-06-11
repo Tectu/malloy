@@ -7,6 +7,11 @@
 
 #include <spdlog/logger.h>
 
+namespace boost::asio::ssl
+{
+    class context;
+}
+
 namespace malloy::client
 {
     namespace websocket
@@ -28,6 +33,11 @@ namespace malloy::client
 
         controller() = default;
         ~controller() = default;
+
+        #if MALLOY_FEATURE_TLS
+            [[nodiscard("init might fail")]]
+            bool init_tls();
+        #endif
 
         /**
          * Issue an HTTP request.
@@ -102,7 +112,8 @@ namespace malloy::client
             return conn;
         }
 
-        void test_tls();
+    private:
+        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
     };
 
 }
