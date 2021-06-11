@@ -40,48 +40,15 @@ namespace malloy::client
         #endif
 
         /**
-         * Issue an HTTP request.
+         * Perform an HTTP request.
          *
-         * @tparam Connection The type of connection to use.
-         * @param req The request to perform.
+         * @param req The HTTP request.
+         *
          * @return The corresponding response.
          */
-        template<class Connection>
         [[nodiscard]]
         std::future<http::response>
-        http_request(malloy::http::request req)
-        {
-            return std::async(
-                std::launch::async,
-                [req = std::move(req), this] {
-                    http::response ret_resp;
-                    std::atomic_bool done = false;      // ToDo: Use std::atomic_flag instead
-
-                    // Create connection
-                    auto conn = std::make_shared<Connection>(
-                        m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                        io_ctx()
-                    );
-
-                    // Launch
-                    conn->run(
-                        std::to_string(req.port()).c_str(),
-                        req,
-                        [&ret_resp, &done](http::response&& resp){
-                            ret_resp = std::move(resp);
-                            done = true;
-                        }
-                    );
-
-                    while (!done.load()) {
-                        using namespace std::chrono_literals;
-                        std::this_thread::sleep_for(5ms);
-                    }
-
-                    return ret_resp;
-                }
-            );
-        }
+        http_request(http::request req);
 
         /**
          * Create a websocket connection.

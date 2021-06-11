@@ -1,7 +1,6 @@
 #include "../../example_logger.hpp"
 
 #include <malloy/client/controller.hpp>
-#include <malloy/client/http/connection_plain.hpp>
 
 #include <iostream>
 
@@ -31,7 +30,7 @@ int main()
         80,
         "/"
     );
-    auto resp = c.http_request<malloy::client::http::connection_plain>(req);
+    auto resp = c.http_request(req);
 
     std::cout << resp.get() << std::endl;
 
