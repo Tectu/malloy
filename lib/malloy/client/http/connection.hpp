@@ -54,8 +54,10 @@ namespace malloy::client::http
             );
         }
 
-    private:
+    protected:
         std::shared_ptr<spdlog::logger> m_logger;
+
+    private:
         boost::asio::ip::tcp::resolver m_resolver;
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
         malloy::http::request m_req;
