@@ -48,7 +48,7 @@ namespace malloy::client
          */
         [[nodiscard]]
         std::future<http::response>
-        http_request_plain(http::request req);
+        http_request(http::request req);
 
         #if MALLOY_FEATURE_TLS
             /**
@@ -60,7 +60,7 @@ namespace malloy::client
              */
             [[nodiscard]]
             std::future<http::response>
-            http_request_tls(http::request req);
+            https_request(http::request req);
         #endif
 
         /**

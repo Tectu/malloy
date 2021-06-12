@@ -30,7 +30,7 @@ int main()
         80,
         "/"
     );
-    auto resp = c.http_request_plain(req);
+    auto resp = c.http_request(req);
 
     std::cout << resp.get() << std::endl;
 

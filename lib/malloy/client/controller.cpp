@@ -65,7 +65,7 @@ http_request_(malloy::http::request req, std::shared_ptr<Connection> connection)
 #endif // MALLOY_FEATURE_TLS
 
 std::future<malloy::http::response>
-controller::http_request_plain(malloy::http::request req)
+controller::http_request(malloy::http::request req)
 {
     // Create connection
     auto conn = std::make_shared<http::connection_plain>(
@@ -79,8 +79,12 @@ controller::http_request_plain(malloy::http::request req)
 
 #if MALLOY_FEATURE_TLS
     std::future<malloy::http::response>
-    controller::http_request_tls(malloy::http::request req)
+    controller::https_request(malloy::http::request req)
     {
+        // Check whether TLS context was initialized
+        if (!m_tls_ctx)
+            return { };
+
         // Create connection
         auto conn = std::make_shared<http::connection_tls>(
             m_cfg.logger->clone(m_cfg.logger->name() + " | HTTPS connection"),

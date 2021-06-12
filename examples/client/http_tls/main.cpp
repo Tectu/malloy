@@ -34,7 +34,7 @@ int main()
         443,
         "/"
     );
-    auto resp = c.http_request_tls(req);
+    auto resp = c.https_request(req);
 
     std::cout << resp.get() << std::endl;
 
