@@ -27,6 +27,13 @@ namespace malloy::client::http
             return m_stream;
         }
 
+        void
+        hook_connected()
+        {
+            // Send the HTTP request to the remote host
+            send_request();
+        }
+
     private:
         boost::beast::tcp_stream m_stream;
     };

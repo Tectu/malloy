@@ -1,8 +1,9 @@
 #include "controller.hpp"
 #include "http/connection_plain.hpp"
-#include "http/connection_tls.hpp"
 
 #if MALLOY_FEATURE_TLS
+    #include "http/connection_tls.hpp"
+
     #include <boost/beast/ssl.hpp>
     #include <boost/certify/extensions.hpp>
     #include <boost/certify/https_verification.hpp>

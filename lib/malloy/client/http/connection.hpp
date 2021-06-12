@@ -57,6 +57,20 @@ namespace malloy::client::http
     protected:
         std::shared_ptr<spdlog::logger> m_logger;
 
+        void
+        send_request()
+        {
+            // Send the HTTP request to the remote host
+            boost::beast::http::async_write(
+                derived().stream(),
+                m_req,
+                boost::beast::bind_front_handler(
+                    &connection::on_write,
+                    derived().shared_from_this()
+                )
+            );
+        }
+
     private:
         boost::asio::ip::tcp::resolver m_resolver;
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
@@ -99,15 +113,8 @@ namespace malloy::client::http
             // Set a timeout on the operation
             boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
 
-            // Send the HTTP request to the remote host
-            boost::beast::http::async_write(
-                derived().stream(),
-                m_req,
-                boost::beast::bind_front_handler(
-                    &connection::on_write,
-                    derived().shared_from_this()
-                )
-            );
+            // Call hook
+            derived().hook_connected();
         }
 
         void
