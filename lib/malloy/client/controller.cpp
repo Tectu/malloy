@@ -83,7 +83,7 @@ controller::http_request(malloy::http::request req)
     {
         // Check whether TLS context was initialized
         if (!m_tls_ctx)
-            return { };
+            throw std::logic_error("TLS context not initialized.");
 
         // Create connection
         auto conn = std::make_shared<http::connection_tls>(
