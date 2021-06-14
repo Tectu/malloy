@@ -12,12 +12,14 @@ find_package(
 ########################################################################################################################
 # spdlog
 ########################################################################################################################
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog
-    GIT_TAG        v1.8.3
-)
-FetchContent_MakeAvailable(spdlog)
+if (MALLOY_INCLUDE_SPDLOG)
+    FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog
+        GIT_TAG        v1.8.3
+    )
+    FetchContent_MakeAvailable(spdlog)
+endif()
 
 ########################################################################################################################
 # OpenSSL
