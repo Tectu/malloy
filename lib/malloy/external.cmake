@@ -12,13 +12,15 @@ find_package(
 ########################################################################################################################
 # spdlog
 ########################################################################################################################
-if (MALLOY_INCLUDE_SPDLOG)
+if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
     FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog
         GIT_TAG        v1.8.3
     )
     FetchContent_MakeAvailable(spdlog)
+else()
+    find_package(spdlog REQUIRED)
 endif()
 
 ########################################################################################################################

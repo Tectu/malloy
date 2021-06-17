@@ -168,3 +168,4 @@ Various `cmake` options are available to control the build:
 | `MALLOY_FEATURE_SERVER` | `ON` | Enable server features. |
 | `MALLOY_FEATURE_HTML` | `ON` | Whether to enable HTML support. |
 | `MALLOY_FEATURE_TLS` | `OFF` | Whether to enable TLS support. |
+| `MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD` | `ON` | Whether to use `FetchContent()` to pull in `spdlog`. If set to `OFF`, `find_package()` is used instead. |
