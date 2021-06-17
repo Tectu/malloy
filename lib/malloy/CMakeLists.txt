@@ -66,8 +66,14 @@ target_link_libraries(
         $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::SSL>
 )
 
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND WIN32 AND NOT MINGW)
+    set(MSYS_GCC 1)
+    message(STATUS "Assuming compiler is GCC on MSYS2")
+endif()
+
 target_compile_options(
     ${TARGET_OBJS}
     PRIVATE
-        $<$<NOT:${WIN32}>:-O3>
+    $<$<BOOL:${MSYS_GCC}>:-Wa,-mbig-obj>
+    $<$<BOOL:${MSVC}>:-O3>
 )
