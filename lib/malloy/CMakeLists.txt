@@ -75,5 +75,5 @@ target_compile_options(
     ${TARGET_OBJS}
     PRIVATE
     $<$<BOOL:${MSYS_GCC}>:-Wa,-mbig-obj>
-    $<$<BOOL:${MSVC}>:-O3>
+    $<$<BOOL:${MSYS_GCC}>:-O3>
 )
