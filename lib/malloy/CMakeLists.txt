@@ -69,6 +69,5 @@ target_link_libraries(
 target_compile_options(
     ${TARGET_OBJS}
     PRIVATE
-        $<$<BOOL:${WIN32}>:-Wa,-mbig-obj>
-        $<$<BOOL:${WIN32}>:-O3>
+        $<$<NOT:${WIN32}>:-O3>
 )
