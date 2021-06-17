@@ -54,6 +54,10 @@ target_sources(
         utils.hpp
 )
 
+if (NOT MALLOY_INCLUDE_SPDLOG)
+    find_package(spdlog REQUIRED)
+endif()
+
 target_link_libraries(
     ${TARGET_OBJS}
     PUBLIC
