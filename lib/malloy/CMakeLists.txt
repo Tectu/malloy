@@ -58,6 +58,7 @@ target_link_libraries(
     ${TARGET_OBJS}
     PUBLIC
         spdlog::spdlog
+        Boost::headers
     PRIVATE
         $<$<BOOL:${WIN32}>:wsock32>
         $<$<BOOL:${WIN32}>:ws2_32>
