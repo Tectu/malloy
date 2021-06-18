@@ -5,7 +5,7 @@
 
 using namespace malloy::http;
 
-TEST_SUITE("components - http_generator")
+TEST_SUITE("components - http - generator")
 {
 
     TEST_CASE("built-in responses")
