@@ -22,7 +22,7 @@ int main()
 
     // Create malloy controller
     malloy::server::controller c;
-    if (not c.init(cfg)) {
+    if (!c.init(cfg)) {
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }
@@ -42,7 +42,7 @@ int main()
         router->add(method::post, "/form1", [](const auto& req) {
             // Parse the form
             form f;
-            if (not f.parse(req))
+            if (!f.parse(req))
                 return generator::bad_request("invalid form data.");
 
             // Print the form data

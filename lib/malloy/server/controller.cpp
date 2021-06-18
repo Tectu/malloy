@@ -35,13 +35,13 @@ bool controller::init(config cfg)
     )
     {
         // Sanity check cert
-        if (not std::filesystem::is_regular_file(cert_path)) {
+        if (!std::filesystem::is_regular_file(cert_path)) {
             m_cfg.logger->critical("could not create TLS context: invalid certificate file path: {}", cert_path.string());
             return false;
         }
 
         // Sanity check key_path
-        if (not std::filesystem::is_regular_file(key_path)) {
+        if (!std::filesystem::is_regular_file(key_path)) {
             m_cfg.logger->critical("could not create TLS context: invalid key file path: {}", key_path.string());
         }
 

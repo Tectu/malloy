@@ -25,7 +25,7 @@ int main()
 
     // Create malloy controller
     malloy::server::controller c;
-    if (not c.init(cfg)) {
+    if (!c.init(cfg)) {
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }
@@ -47,7 +47,7 @@ int main()
 
             // Get the session
             auto ses = session_manager->start(req, res);
-            if (not ses)
+            if (!ses)
                 return generator::server_error("session management error.");
 
             // Get counter value

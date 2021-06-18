@@ -70,11 +70,11 @@ namespace malloy::server::http
             m_doc_root(std::move(http_doc_root))
         {
             // Sanity check logger
-            if (not m_logger)
+            if (!m_logger)
                 throw std::runtime_error("did not receive a valid logger instance.");
 
             // Sanity check router
-            if (not m_router)
+            if (!m_router)
                 throw std::runtime_error("did not receive a valid router instance.");
         }
 
@@ -172,7 +172,7 @@ namespace malloy::server::http
             malloy::http::request req = m_parser->release();
 
             // Check request URI for legality
-            if (not req.uri().is_legal()) {
+            if (!req.uri().is_legal()) {
                 m_logger->warn("illegal request URI: {}", req.uri().raw());
                 auto resp = malloy::http::generator::bad_request("illegal URI");
                 do_write(std::move(resp));

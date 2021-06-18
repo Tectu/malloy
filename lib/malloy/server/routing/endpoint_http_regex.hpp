@@ -27,7 +27,7 @@ namespace malloy::server
         bool matches(const malloy::http::request& req) const override
         {
             // Resource
-            if (not matches_resource(req))
+            if (!matches_resource(req))
                 return false;
 
             // Base class

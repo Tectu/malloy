@@ -79,7 +79,7 @@ namespace malloy::http::sessions
          */
         bool set(const key_type& key, value_type value)
         {
-            if (key.empty() or value.empty())
+            if (key.empty() || value.empty())
                 return false;
 
             update_access_time();
@@ -102,7 +102,7 @@ namespace malloy::http::sessions
             const auto& value_opt = storage_get(key);
 
             // Prevent returning empty values
-            if (value_opt and value_opt.value().empty())
+            if (value_opt && value_opt.value().empty())
                 return std::nullopt;
 
             return value_opt;

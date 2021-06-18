@@ -45,7 +45,7 @@ namespace malloy::server::websocket
             m_logger(std::move(logger))
         {
             // Sanity check logger
-            if (not m_logger)
+            if (!m_logger)
                 throw std::invalid_argument("no valid logger provided.");
         }
 

@@ -21,7 +21,7 @@ int main()
 
     // Create malloy controller
     malloy::server::controller c;
-    if (not c.init(cfg)) {
+    if (!c.init(cfg)) {
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }
@@ -29,7 +29,7 @@ int main()
     // Setup TLS (SSL)
     const auto& cert_path = doc_root / "malloy.cert";
     const auto& key_path  = doc_root / "malloy.key";
-    if (not c.init_tls(cert_path, key_path)) {
+    if (!c.init_tls(cert_path, key_path)) {
         std::cerr<< "could not initialize TLS context." << std::endl;
         return EXIT_FAILURE;
     }

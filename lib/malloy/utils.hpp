@@ -15,14 +15,14 @@ namespace malloy
     static inline std::string file_contents(const std::filesystem::path& path)
     {
         // Sanity check
-        if (not std::filesystem::is_regular_file(path))
+        if (!std::filesystem::is_regular_file(path))
             return { };
 
         // Open the file
         // Note that we have to use binary mode as we want to return a string
         // representing matching the bytes of the file on the file system.
         std::ifstream file(path, std::ios::in | std::ios::binary);
-        if (not file.is_open())
+        if (!file.is_open())
             return { };
 
         // Read contents

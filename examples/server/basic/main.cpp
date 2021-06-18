@@ -21,7 +21,7 @@ int main()
 
     // Create malloy controller
     malloy::server::controller c;
-    if (not c.init(cfg)) {
+    if (!c.init(cfg)) {
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }

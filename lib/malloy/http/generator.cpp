@@ -14,7 +14,7 @@ response generator::ok()
 response generator::redirect(const status code, const std::string_view location)
 {
     const int& icode = static_cast<int>(code);
-    if (icode < 300 or icode >= 400)
+    if (icode < 300 || icode >= 400)
         return generator::server_error("invalid redirection status code.");
 
     response resp{ code };
@@ -75,7 +75,7 @@ response generator::file(const std::filesystem::path& storage_base_path, std::st
     const std::filesystem::path& path = storage_base_path / rel_path;
 
     // Check whether this is a valid file path
-    if (not std::filesystem::is_regular_file(path))
+    if (!std::filesystem::is_regular_file(path))
         return not_found(rel_path);
 
     // Get file content

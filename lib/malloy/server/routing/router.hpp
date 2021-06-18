@@ -191,7 +191,7 @@ namespace malloy::server
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
-                if (not req.uri().resource_starts_with(resource_base))
+                if (!req.uri().resource_starts_with(resource_base))
                     continue;
 
                 // Log
@@ -239,11 +239,11 @@ namespace malloy::server
             // Check routes
             for (const auto& ep : m_endpoints_http) {
                 // Check match
-                if (not ep->matches(req))
+                if (!ep->matches(req))
                     continue;
 
                 // Generate preflight response (if supposed to)
-                if (m_generate_preflights and (req.method() == malloy::http::method::options)) {
+                if (m_generate_preflights && (req.method() == malloy::http::method::options)) {
                     // Log
                     m_logger->debug("automatically constructing preflight response.");
 

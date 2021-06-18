@@ -78,7 +78,7 @@ namespace malloy::http::sessions
         [[nodiscard]]
         std::shared_ptr<session> get(const id_type& id) override
         {
-            if (not m_sessions.contains(id))
+            if (!m_sessions.contains(id))
                 return { };
 
             return m_sessions.at(id);

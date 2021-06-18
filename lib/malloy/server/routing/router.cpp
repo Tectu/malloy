@@ -62,7 +62,7 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
     }
 
     // Sanity check router
-    if (not sub_router) {
+    if (!sub_router) {
         if (m_logger)
             m_logger->error("invalid sub-router supplied.");
         return false;
@@ -90,7 +90,7 @@ bool router::add(const method_type method, const std::string_view target, endpoi
         m_logger->debug("adding route: {}", target);
 
     // Check handler
-    if (not handler) {
+    if (!handler) {
         if (m_logger)
             m_logger->warn("route has invalid handler. ignoring.");
         return false;
@@ -139,7 +139,7 @@ bool router::add_redirect(const http::status status, std::string&& resource_old,
         m_logger->debug("adding redirection: {}: {} -> {}", static_cast<int>(status), resource_old, resource_new);
 
     // Sanity check status
-    if (static_cast<int>(status) < 300 or static_cast<int>(status) >= 400) {
+    if (static_cast<int>(status) < 300 || static_cast<int>(status) >= 400) {
         if (m_logger)
             m_logger->error("invalid redirection status code. must be one of the 3xxx status codes. received {} instead.", static_cast<int>(status));
         return false;
@@ -170,7 +170,7 @@ bool router::add_websocket(std::string resource, malloy::websocket::handler_t ha
         m_logger->debug("adding websocket endpoint at {}", resource);
 
     // Check handler
-    if (not handler) {
+    if (!handler) {
         if (m_logger)
             m_logger->warn("route has invalid handler. ignoring.");
         return false;
@@ -192,11 +192,11 @@ router::response_type router::generate_preflight_response(const request_type& re
     for (const auto& route : m_endpoints_http) {
         // Only support this for regex routes (for now?)
         const auto& basic_route = std::dynamic_pointer_cast<endpoint_http_regex>(route);
-        if (not basic_route)
+        if (!basic_route)
             continue;
 
         // Check match
-        if (not basic_route->matches_resource(req))
+        if (!basic_route->matches_resource(req))
             continue;
 
         // Add method string

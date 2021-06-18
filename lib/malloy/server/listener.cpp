@@ -26,7 +26,7 @@ listener::listener(
     boost::beast::error_code ec;
 
     // Sanity check on logger
-    if (not m_logger)
+    if (!m_logger)
         throw std::runtime_error("did not receive a valid logger instance.");
 
     // Open the acceptor

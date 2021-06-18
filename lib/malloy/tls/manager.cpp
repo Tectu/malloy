@@ -12,9 +12,9 @@ std::shared_ptr<boost::asio::ssl::context> manager::make_context(
 )
 {
     // Sanity checks
-    if (not std::filesystem::is_regular_file(cert_path))
+    if (!std::filesystem::is_regular_file(cert_path))
         return { };
-    if (not std::filesystem::is_regular_file(key_path))
+    if (!std::filesystem::is_regular_file(key_path))
         return { };
 
     // Load cert

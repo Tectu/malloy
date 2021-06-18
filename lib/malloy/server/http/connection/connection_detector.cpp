@@ -21,7 +21,7 @@ connection_detector::connection_detector(
     m_router(std::move(router))
 {
     // Sanity check logger
-    if (not m_logger)
+    if (!m_logger)
         throw std::invalid_argument("no valid logger provided.");
 }
 
@@ -52,7 +52,7 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
     //       Currently we'd do this if no TLS context was provided.
 
     #if MALLOY_FEATURE_TLS
-        if (result and m_ctx) {
+        if (result && m_ctx) {
             // Log
             m_logger->debug("launching TLS connection.");
 

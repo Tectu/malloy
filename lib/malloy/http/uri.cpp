@@ -29,9 +29,9 @@ bool uri::is_legal() const
 bool uri::chop_resource(const std::string_view str)
 {
     // Sanity check
-    if (not m_raw.starts_with(str))
+    if (!m_raw.starts_with(str))
         return false;
-    if (not m_resource_string.starts_with(str))
+    if (!m_resource_string.starts_with(str))
         return false;
 
     // Modify the resource string
@@ -95,12 +95,12 @@ void uri::parse_resource()
     m_resource.clear();
 
     // Split
-    if (not m_resource_string.empty()) {
+    if (!m_resource_string.empty()) {
         std::string_view str = m_resource_string.substr(1);
         boost::split(m_resource, str, boost::is_any_of("/"));
 
         // Ignore if it's "/" or ""
-        if (m_resource_string.size() == 1 and m_resource_string.at(0) == '/')
+        if (m_resource_string.size() == 1 && m_resource_string.at(0) == '/')
             m_resource.clear();
     }
 }

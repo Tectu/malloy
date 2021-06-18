@@ -13,10 +13,10 @@ std::string cookie::to_string() const
     if (max_age not_eq std::chrono::seconds::zero())
         ss << "Max-Age=" << max_age.count() << ";";
 
-    if (not domain.empty())
+    if (!domain.empty())
         ss << "Domain=" << domain << ";";
 
-    if (not path.empty())
+    if (!path.empty())
         ss << "Path=" << path << ";";
 
     ss << "SameSite=";
@@ -27,7 +27,7 @@ std::string cookie::to_string() const
     }
     ss << ";";
 
-    if (secure or same_site == same_site_t::none)
+    if (secure || same_site == same_site_t::none)
         ss << "Secure;";
 
     if (http_only)

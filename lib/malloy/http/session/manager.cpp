@@ -14,14 +14,14 @@ using namespace malloy::http::sessions;
 manager::manager(std::shared_ptr<storage> storage) :
     m_storage(std::move(storage))
 {
-    if (not m_storage)
+    if (!m_storage)
         throw std::invalid_argument("no valid storage provided.");
 }
 
 std::shared_ptr<session> manager::start(const request& req, response& resp)
 {
     // Nothing to do if no storage was provided
-    if (not m_storage)
+    if (!m_storage)
         return { };
 
     // Acquire the mutex
@@ -36,7 +36,7 @@ std::shared_ptr<session> manager::start(const request& req, response& resp)
     }
 
     // Otherwise create a new one
-    if (not session) {
+    if (!session) {
         // Generate a new session ID
         const id_type id = generate_id();
 
@@ -56,10 +56,10 @@ std::shared_ptr<session> manager::start(const request& req, response& resp)
 
 void manager::destroy(const request& req, response& resp)
 {
-    if (not m_storage)
+    if (!m_storage)
         return;
 
-    if (not req.has_cookie(m_cookie_name))
+    if (!req.has_cookie(m_cookie_name))
         return;
 
     // Acquire mutex
@@ -78,7 +78,7 @@ void manager::destroy(const request& req, response& resp)
 
 std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
 {
-    if (not m_storage)
+    if (!m_storage)
         return 0;
 
     // Make sure that storage::destroy_expired_sessions() doesn't get a maximum
