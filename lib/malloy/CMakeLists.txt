@@ -58,6 +58,7 @@ target_link_libraries(
     ${TARGET_OBJS}
     PUBLIC
         spdlog::spdlog
+        Boost::headers
     PRIVATE
         $<$<BOOL:${WIN32}>:wsock32>
         $<$<BOOL:${WIN32}>:ws2_32>
@@ -72,3 +73,10 @@ target_compile_options(
         $<$<BOOL:${WIN32}>:-Wa,-mbig-obj>
         $<$<BOOL:${WIN32}>:-O3>
 )
+
+target_compile_definitions(
+    ${TARGET_OBJS}
+    PRIVATE 
+        $<$<BOOL:${WIN32}>:BOOST_DATE_TIME_NO_LIB>
+
+    )
