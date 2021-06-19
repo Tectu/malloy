@@ -9,7 +9,7 @@ namespace malloy::server
         endpoint_http
     {
     public:
-        http::status status;
+        malloy::http::status status;
         std::string resource_old;
         std::string resource_new;
 

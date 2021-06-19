@@ -14,12 +14,15 @@
 namespace malloy::server
 {
 
-    /**
+     /**
      * An HTTP endpoint.
      */
     struct endpoint_http :
         endpoint
     {
+        template<typename... Bodies>
+        using writer_t = std::function<void(const malloy::http::request&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
+
         using handle_retr = std::optional<malloy::http::response<boost::beast::http::string_body>>;
 
         malloy::http::method method = malloy::http::method::unknown;

@@ -11,7 +11,6 @@
 #include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
 
-#include <boost/beast/http/status.hpp>
 
 #if MALLOY_FEATURE_TLS
     #include "malloy/server/http/connection/connection_tls.hpp"
@@ -182,7 +181,10 @@ namespace malloy::server
             ep->resource_base = std::move(regex);
             ep->method = method;
             ep->handler = std::move(handler);
-            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { send_response(req, std::move(resp), conn); };
+            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { 
+                    std::visit([&, this](auto&& resp) { send_response(req, std::move(resp), conn);  }, std::move(resp));
+            };
+
 
             // Add route
             return add_http_endpoint(std::move(ep));

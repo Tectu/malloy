@@ -14,15 +14,15 @@ namespace malloy::server
         virtual bool matches_resource(const malloy::http::request& req) const = 0;
     };
 
-    template<typename Body>
+    template<typename... Bodies>
     struct endpoint_http_regex :
         endpoint_http, public resource_matcher
     {
-        using handler_t = std::function<malloy::http::response<Body>(const malloy::http::request&)>;
+        using handler_t = std::function<std::variant<malloy::http::response<Bodies>...>(const malloy::http::request&)>;
 
         std::regex resource_base;
         handler_t handler;
-        std::function<void(const malloy::http::request&, malloy::http::response<Body>&&, const http::connection_t&)> writer;
+        writer_t<Bodies...> writer;
 
         [[nodiscard]]
         bool matches_resource(const malloy::http::request& req) const override
