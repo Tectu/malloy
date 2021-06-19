@@ -18,7 +18,7 @@ manager::manager(std::shared_ptr<storage> storage) :
         throw std::invalid_argument("no valid storage provided.");
 }
 
-std::shared_ptr<session> manager::start(const request& req, response& resp)
+std::shared_ptr<session> manager::start(const request& req, response<>& resp)
 {
     // Nothing to do if no storage was provided
     if (!m_storage)
@@ -54,7 +54,7 @@ std::shared_ptr<session> manager::start(const request& req, response& resp)
     return session;
 }
 
-void manager::destroy(const request& req, response& resp)
+void manager::destroy(const request& req, response<>& resp)
 {
     if (!m_storage)
         return;

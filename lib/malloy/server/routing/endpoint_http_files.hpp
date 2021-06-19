@@ -13,7 +13,7 @@ namespace malloy::server
     public:
         std::string resource_base;
         std::filesystem::path base_path;
-        writer_t<boost::beast::http::file_body> writer;
+        writer_t<boost::beast::http::file_body, boost::beast::http::string_body> writer;
 
         [[nodiscard]]
         bool matches(const malloy::http::request& req) const override

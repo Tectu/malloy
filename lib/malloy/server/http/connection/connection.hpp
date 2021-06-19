@@ -1,6 +1,7 @@
 #pragma once
 
 #include "malloy/http/request.hpp"
+#include "malloy/http/generator.hpp"
 #include "malloy/server/http/connection/connection_t.hpp"
 
 #include "malloy/server/websocket/connection/connection_plain.hpp"

@@ -184,7 +184,7 @@ router::response_type router::generate_preflight_response(const request_type& re
             methods_string += ", ";
     }
 
-    malloy::http::response resp{ http::status::ok };
+    malloy::http::response resp{ malloy::http::status::ok };
     resp.set(boost::beast::http::field::content_type, "text/html");
     resp.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
     resp.base().set("Access-Control-Allow-Methods", methods_string);

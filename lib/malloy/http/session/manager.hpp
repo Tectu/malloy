@@ -74,7 +74,7 @@ namespace malloy::http::sessions
          * @return The session.
          */
         [[nodiscard]]
-        std::shared_ptr<session> start(const request& req, response& resp);
+        std::shared_ptr<session> start(const request& req, response<>& resp);
 
         /**
          * Destroys an existing session.
@@ -82,7 +82,7 @@ namespace malloy::http::sessions
          * @param req The request.
          * @param resp The response.
          */
-        void destroy(const request& req, response& resp);
+        void destroy(const request& req, response<>& resp);
 
         /**
          * Destroys any sessions older than the specified max lifetime.
