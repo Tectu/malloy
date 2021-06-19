@@ -10,6 +10,8 @@
 #include "malloy/server/http/connection/connection_t.hpp"
 #include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
+#include <type_traits>
+#include <concepts>
 
 
 #if MALLOY_FEATURE_TLS
@@ -38,11 +40,20 @@ namespace spdlog
 namespace malloy::server
 {
     namespace detail {
+        struct any_callable {
+                template<typename T>
+                void operator()(T&&) {}
+        };
         template<typename T, typename H>
         concept has_handler = requires(T t, H h) { t.set_handler(h); };
 
         template<typename T, typename... Args>
         concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
+
+        template<typename V>
+        concept is_variant = requires(V v) { 
+            std::visit(any_callable{}, v); 
+        };
 
     }
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
@@ -151,19 +162,15 @@ namespace malloy::server
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<typename Body>
-        bool add(const method_type method, const std::string_view target, typename endpoint_http_regex<Body>::handler_t&& handler)
+        template<std::invocable<const request_type&> Func>
+        bool add(const method_type method, const std::string_view target, Func&& handler)
         {
             // Log
             if (m_logger)
                 m_logger->debug("adding route: {}", target);
 
-            // Check handler
-            if (!handler) {
-                if (m_logger)
-                    m_logger->warn("route has invalid handler. ignoring.");
-                return false;
-            }
+            using func_t = std::decay_t<Func>;
+            using Body = std::invoke_result_t<func_t, const request_type&>;
 
             // Build regex
             std::regex regex;
@@ -175,12 +182,29 @@ namespace malloy::server
                     m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
                 return false;
             }
+            constexpr bool wrapped = detail::is_variant<Body>;
+            using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
 
             // Build endpoint
-            auto ep = std::make_shared<endpoint_http_regex<Body>>();
+            auto ep = std::make_shared<endpoint_http_regex<bodies_t>>();
             ep->resource_base = std::move(regex);
             ep->method = method;
-            ep->handler = std::move(handler);
+            if constexpr (wrapped) {
+                ep->handler = std::move(handler);
+            } else {
+                ep->handler = 
+                    [w = std::move(handler)](const auto& req) { 
+                        return std::variant<Body>{w(req)}; 
+                    };
+            }
+
+            // Check handler
+            if (!ep->handler) {
+                if (m_logger)
+                    m_logger->warn("route has invalid handler. ignoring.");
+                return false;
+            }
+                
             ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { 
                     std::visit([&, this](auto&& resp) { send_response(req, std::move(resp), conn);  }, std::move(resp));
             };
