@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string_view>
+#include <variant>
 
 #include "types.hpp"
 #include "response.hpp"
@@ -17,6 +18,7 @@ namespace malloy::http
      */
     class generator
     {
+        using file_response = std::variant<response<boost::beast::http::file_body>, response<boost::beast::http::string_body>>;
     public:
         /**
          * Default constructor.
@@ -86,7 +88,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<boost::beast::http::file_body> file(const request& req, const std::filesystem::path& storage_path);
+        static auto file(const request& req, const std::filesystem::path& storage_path) -> file_response;
 
         /**
          * Construct a file response.
@@ -96,7 +98,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<boost::beast::http::file_body> file(const std::filesystem::path& storage_path, std::string_view rel_path);
+        static auto file(const std::filesystem::path& storage_path, std::string_view rel_path) -> file_response;
     };
 
 }
