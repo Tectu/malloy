@@ -3,6 +3,7 @@
 #include "endpoint_http_redirect.hpp"
 #include "endpoint_http_regex.hpp"
 #include "endpoint_websocket.hpp"
+#include "malloy/server/http/connection/connection.hpp"
 
 #include <stdexcept>
 
@@ -83,39 +84,7 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
     return true;
 }
 
-bool router::add(const method_type method, const std::string_view target, endpoint_http_regex::handler_t&& handler)
-{
-    // Log
-    if (m_logger)
-        m_logger->debug("adding route: {}", target);
 
-    // Check handler
-    if (!handler) {
-        if (m_logger)
-            m_logger->warn("route has invalid handler. ignoring.");
-        return false;
-    }
-
-    // Build regex
-    std::regex regex;
-    try {
-        regex = std::move(std::regex{ target.cbegin(), target.cend() });
-    }
-    catch (const std::regex_error& e) {
-        if (m_logger)
-            m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
-        return false;
-    }
-
-    // Build endpoint
-    auto ep = std::make_shared<endpoint_http_regex>();
-    ep->resource_base = std::move(regex);
-    ep->method = method;
-    ep->handler = std::move(handler);
-
-    // Add route
-    return add_http_endpoint(std::move(ep));
-}
 
 bool router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
 {
@@ -127,6 +96,7 @@ bool router::add_file_serving(std::string resource, std::filesystem::path storag
     auto ep = std::make_shared<endpoint_http_files>();
     ep->resource_base = resource;
     ep->base_path = std::move(storage_base_path);
+    ep->writer = [this](const auto& req, auto&& resp, auto& conn) { send_response(req, std::move(resp), &conn); };
 
     // Add
     return add_http_endpoint(std::move(ep));
@@ -191,7 +161,7 @@ router::response_type router::generate_preflight_response(const request_type& re
     std::vector<std::string> method_strings;
     for (const auto& route : m_endpoints_http) {
         // Only support this for regex routes (for now?)
-        const auto& basic_route = std::dynamic_pointer_cast<endpoint_http_regex>(route);
+        const auto& basic_route = std::dynamic_pointer_cast<resource_matcher>(route);
         if (!basic_route)
             continue;
 
@@ -200,7 +170,7 @@ router::response_type router::generate_preflight_response(const request_type& re
             continue;
 
         // Add method string
-        method_strings.emplace_back(boost::beast::http::to_string(basic_route->method));
+        method_strings.emplace_back(boost::beast::http::to_string(route->method));
     }
 
     // Create a string representing all supported methods
@@ -212,7 +182,7 @@ router::response_type router::generate_preflight_response(const request_type& re
             methods_string += ", ";
     }
 
-    http::response resp{ http::status::ok };
+    malloy::http::response resp{ http::status::ok };
     resp.set(boost::beast::http::field::content_type, "text/html");
     resp.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
     resp.base().set("Access-Control-Allow-Methods", methods_string);

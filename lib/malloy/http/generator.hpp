@@ -4,10 +4,10 @@
 #include <string_view>
 
 #include "types.hpp"
+#include "response.hpp"
 
 namespace malloy::http
 {
-    class response;
     class request;
 
     /**
@@ -39,7 +39,7 @@ namespace malloy::http
          * Construct a 200 response.
          */
         [[nodiscard]]
-        static response ok();
+        static response<> ok();
 
         /**
          * Construct a 3xx response.
@@ -49,7 +49,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response redirect(status code, std::string_view location);
+        static response<> redirect(status code, std::string_view location);
 
         /**
          * Construct a 400 error.
@@ -58,7 +58,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response bad_request(std::string_view reason);
+        static response<> bad_request(std::string_view reason);
 
         /**
          * Construct a 404 error.
@@ -67,7 +67,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response not_found(std::string_view resource);
+        static response<> not_found(std::string_view resource);
 
         /**
          * Construct a 500 error.
@@ -76,7 +76,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response server_error(std::string_view what);
+        static response<> server_error(std::string_view what);
 
         /**
          * Construct a file response.
@@ -86,7 +86,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response file(const request& req, const std::filesystem::path& storage_path);
+        static response<> file(const request& req, const std::filesystem::path& storage_path);
 
         /**
          * Construct a file response.
@@ -96,7 +96,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response file(const std::filesystem::path& storage_path, std::string_view rel_path);
+        static response<> file(const std::filesystem::path& storage_path, std::string_view rel_path);
     };
 
 }

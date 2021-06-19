@@ -7,10 +7,11 @@
 #include <mutex>
 #include <string>
 
+#include "malloy/http/response.hpp"
+
 namespace malloy::http
 {
     class request;
-    class response;
 }
 
 namespace malloy::http::sessions

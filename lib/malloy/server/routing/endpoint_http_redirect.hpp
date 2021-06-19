@@ -13,6 +13,7 @@ namespace malloy::server
         std::string resource_old;
         std::string resource_new;
 
+
         [[nodiscard]]
         bool matches(const malloy::http::request& req) const override
         {
@@ -20,7 +21,7 @@ namespace malloy::server
         }
 
         [[nodiscard]]
-        malloy::http::response handle(const malloy::http::request& req) const override
+        handle_retr handle(const malloy::http::request& req, http::connection_t&) const override
         {
             return malloy::http::generator::redirect(status, resource_new);
         }

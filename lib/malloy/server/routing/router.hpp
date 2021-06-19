@@ -53,7 +53,7 @@ namespace malloy::server
         /**
          * The response type to use.
          */
-        using response_type = malloy::http::response;
+        using response_type = malloy::http::response<>;
 
         /**
          * Default constructor.
@@ -126,6 +126,7 @@ namespace malloy::server
          */
         bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
 
+
         /**
          * Add an HTTP regex endpoint.
          *
@@ -134,8 +135,41 @@ namespace malloy::server
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        bool add(method_type method, std::string_view target, endpoint_http_regex::handler_t&& handler);
+        template<typename Body>
+        bool add(const method_type method, const std::string_view target, typename endpoint_http_regex<Body>::handler_t&& handler)
+        {
+            // Log
+            if (m_logger)
+                m_logger->debug("adding route: {}", target);
 
+            // Check handler
+            if (!handler) {
+                if (m_logger)
+                    m_logger->warn("route has invalid handler. ignoring.");
+                return false;
+            }
+
+            // Build regex
+            std::regex regex;
+            try {
+                regex = std::move(std::regex{ target.cbegin(), target.cend() });
+            }
+            catch (const std::regex_error& e) {
+                if (m_logger)
+                    m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
+                return false;
+            }
+
+            // Build endpoint
+            auto ep = std::make_shared<endpoint_http_regex<Body>>();
+            ep->resource_base = std::move(regex);
+            ep->method = method;
+            ep->handler = std::move(handler);
+            ep->writer = [this](const auto& req, auto&& resp, auto& conn) { /*send_response(req, std::move(resp), &conn);*/ };
+
+            // Add route
+            return add_http_endpoint(std::move(ep));
+        }
         /**
          * Add an HTTP file-serving location.
          *
@@ -258,10 +292,12 @@ namespace malloy::server
                 }
 
                 // Generate the response for the request
-                auto resp = ep->handle(req);
+                auto resp = ep->handle(req, *connection);
+                if (resp) {
 
-                // Send the response
-                send_response(req, std::move(resp), std::forward<Connection>(connection));
+                    // Send the response
+                    send_response(req, std::move(*resp), std::forward<Connection>(connection));
+                }
 
                 // We're done handling this request
                 return;
@@ -372,8 +408,8 @@ namespace malloy::server
          * @param resp The response.
          * @param connection The connection.
          */
-        template<class Connection>
-        void send_response(const request_type& req, response_type&& resp, Connection&& connection)
+        template<class Connection, typename Body>
+        void send_response(const request_type& req, malloy::http::response<Body>&& resp, Connection&& connection)
         {
             // Add more information to the response
             resp.keep_alive(req.keep_alive());

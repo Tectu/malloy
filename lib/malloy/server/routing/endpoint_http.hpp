@@ -6,6 +6,11 @@
 #include "../../http/response.hpp"
 #include "../../http/types.hpp"
 
+#include "malloy/server/http/connection/connection_t.hpp"
+
+#include <optional>
+#include <functional>
+
 namespace malloy::server
 {
 
@@ -15,6 +20,7 @@ namespace malloy::server
     struct endpoint_http :
         endpoint
     {
+        using handle_retr = std::optional<malloy::http::response<boost::beast::http::string_body>>;
 
         malloy::http::method method = malloy::http::method::unknown;
 
@@ -49,7 +55,7 @@ namespace malloy::server
          */
         [[nodiscard]]
         virtual
-        malloy::http::response handle(const malloy::http::request& req) const = 0;
+        handle_retr handle(const malloy::http::request& req, http::connection_t& conn) const = 0;
     };
 
 }

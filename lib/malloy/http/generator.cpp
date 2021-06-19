@@ -4,14 +4,14 @@
 
 using namespace malloy::http;
 
-response generator::ok()
+response<> generator::ok()
 {
     response resp { status::ok };
 
     return resp;
 }
 
-response generator::redirect(const status code, const std::string_view location)
+response<> generator::redirect(const status code, const std::string_view location)
 {
     const int& icode = static_cast<int>(code);
     if (icode < 300 || icode >= 400)
@@ -24,7 +24,7 @@ response generator::redirect(const status code, const std::string_view location)
     return resp;
 }
 
-response generator::bad_request(std::string_view reason)
+response<> generator::bad_request(std::string_view reason)
 {
     response res(status::bad_request);
     res.set(field::content_type, "text/html");
@@ -34,7 +34,7 @@ response generator::bad_request(std::string_view reason)
     return res;
 }
 
-response generator::not_found(std::string_view resource)
+response<> generator::not_found(std::string_view resource)
 {
     response res(status::not_found);
     res.set(field::content_type, "text/html");
@@ -44,7 +44,7 @@ response generator::not_found(std::string_view resource)
     return res;
 }
 
-response generator::server_error(std::string_view what)
+response<> generator::server_error(std::string_view what)
 {
     response res(status::internal_server_error);
     res.set(field::content_type, "text/html");
@@ -54,12 +54,12 @@ response generator::server_error(std::string_view what)
     return res;
 }
 
-response generator::file(const request& req, const std::filesystem::path& storage_base_path)
+response<> generator::file(const request& req, const std::filesystem::path& storage_base_path)
 {
 	return file(storage_base_path, req.uri().resource_string());
 }
 
-response generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path)
+response<> generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path)
 {
     // Sanitize rel_path
     {
