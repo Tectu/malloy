@@ -22,7 +22,7 @@ namespace malloy::server
 
         std::regex resource_base;
         handler_t handler;
-        std::function<void(const malloy::http::request&, malloy::http::response<Body>&&, http::connection_t&)> writer;
+        std::function<void(const malloy::http::request&, malloy::http::response<Body>&&, const http::connection_t&)> writer;
 
         [[nodiscard]]
         bool matches_resource(const malloy::http::request& req) const override
@@ -44,7 +44,7 @@ namespace malloy::server
         }
 
         [[nodiscard]]
-        handle_retr handle(const malloy::http::request& req, http::connection_t& conn) const override
+        handle_retr handle(const malloy::http::request& req, const http::connection_t& conn) const override
         {
             if (handler) {
                 writer(req, handler(req), conn);

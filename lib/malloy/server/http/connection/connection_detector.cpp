@@ -1,5 +1,6 @@
 #include "connection_detector.hpp"
 #include "connection_plain.hpp"
+#include "malloy/server/routing/router.hpp"
 
 #if MALLOY_FEATURE_TLS
     #include "connection_tls.hpp"
@@ -41,6 +42,25 @@ void connection_detector::run()
     );
 }
 
+/// This is needed to break the dependency cycle between connection and router
+template<typename Derived>
+class router_adaptor: public connection<Derived>::handler {
+    using router_t = std::shared_ptr<malloy::server::router>;
+public:
+    using conn_t = const connection_t&;
+
+    router_adaptor(router_t router) : router_{std::move(router)} {}
+
+    void websocket(const std::filesystem::path& root, malloy::http::request&& req, conn_t conn) override { 
+        router_->handle_request<true>(root, std::move(req), conn); 
+    }
+    void http(const std::filesystem::path& root, malloy::http::request&& req, conn_t conn) override { 
+        router_->handle_request<false>(root, std::move(req), conn); 
+    }
+private:
+    router_t router_;
+};
+
 void connection_detector::on_detect(boost::beast::error_code ec, bool result)
 {
     if (ec) {
@@ -63,7 +83,7 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
                 m_ctx,
                 std::move(m_buffer),
                 m_doc_root,
-                m_router
+                std::make_shared<router_adaptor<connection_tls>>(m_router)
             )->run();
 
             return;
@@ -77,6 +97,6 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
         m_stream.release_socket(),
         std::move(m_buffer),
         m_doc_root,
-        m_router
+        std::make_shared<router_adaptor<connection_plain>>(m_router)
     )->run();
 }

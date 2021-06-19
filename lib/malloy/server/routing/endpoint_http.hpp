@@ -55,7 +55,7 @@ namespace malloy::server
          */
         [[nodiscard]]
         virtual
-        handle_retr handle(const malloy::http::request& req, http::connection_t& conn) const = 0;
+        handle_retr handle(const malloy::http::request& req, const http::connection_t& conn) const = 0;
     };
 
 }

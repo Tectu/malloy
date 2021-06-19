@@ -13,7 +13,7 @@ namespace malloy::server
     public:
         std::string resource_base;
         std::filesystem::path base_path;
-        std::function<void(const malloy::http::request&, malloy::http::response<boost::beast::http::file_body>&&, http::connection_t&)> writer;
+        std::function<void(const malloy::http::request&, malloy::http::response<boost::beast::http::file_body>&&, const http::connection_t&)> writer;
 
         [[nodiscard]]
         bool matches(const malloy::http::request& req) const override
@@ -22,7 +22,7 @@ namespace malloy::server
         }
 
         [[nodiscard]]
-        handle_retr handle(const malloy::http::request& req, http::connection_t& conn) const override
+        handle_retr handle(const malloy::http::request& req, const http::connection_t& conn) const override
         {
             // Chop request resource path
             malloy::http::request req_clone{ req };

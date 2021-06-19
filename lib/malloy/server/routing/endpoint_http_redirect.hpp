@@ -21,7 +21,7 @@ namespace malloy::server
         }
 
         [[nodiscard]]
-        handle_retr handle(const malloy::http::request& req, http::connection_t&) const override
+        handle_retr handle(const malloy::http::request& req, const http::connection_t&) const override
         {
             return malloy::http::generator::redirect(status, resource_new);
         }

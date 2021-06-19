@@ -96,7 +96,7 @@ bool router::add_file_serving(std::string resource, std::filesystem::path storag
     auto ep = std::make_shared<endpoint_http_files>();
     ep->resource_base = resource;
     ep->base_path = std::move(storage_base_path);
-    ep->writer = [this](const auto& req, auto&& resp, auto& conn) { send_response(req, std::move(resp), &conn); };
+    ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { send_response(req, std::move(resp), conn); };
 
     // Add
     return add_http_endpoint(std::move(ep));

@@ -7,6 +7,13 @@
 #include "malloy/http/response.hpp"
 #include "malloy/http/http.hpp"
 #include "malloy/http/generator.hpp"
+#include "malloy/server/http/connection/connection_t.hpp"
+#include "malloy/server/http/connection/connection_plain.hpp"
+#include "malloy/server/http/connection/connection.hpp"
+
+#if MALLOY_FEATURE_TLS
+    #include "malloy/server/http/connection/connection_tls.hpp"
+#endif
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -29,6 +36,14 @@ namespace spdlog
 
 namespace malloy::server
 {
+    namespace detail {
+        template<typename T, typename H>
+        concept has_handler = requires(T t, H h) { t.set_handler(h); };
+
+        template<typename T, typename... Args>
+        concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
+
+    }
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
 
@@ -165,7 +180,7 @@ namespace malloy::server
             ep->resource_base = std::move(regex);
             ep->method = method;
             ep->handler = std::move(handler);
-            ep->writer = [this](const auto& req, auto&& resp, auto& conn) { /*send_response(req, std::move(resp), &conn);*/ };
+            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { send_response(req, std::move(resp), conn); };
 
             // Add route
             return add_http_endpoint(std::move(ep));
@@ -213,13 +228,12 @@ namespace malloy::server
          * @param connection The HTTP or WS connection.
          */
         template<
-            bool isWebsocket = false,
-            class Connection
+            bool isWebsocket = false
         >
         void handle_request(
             const std::filesystem::path& doc_root,
             malloy::http::request&& req,
-            Connection&& connection
+            const http::connection_t& connection
         )
         {
             // Check sub-routers
@@ -235,16 +249,16 @@ namespace malloy::server
                 req.uri().chop_resource(resource_base);
 
                 // Let the sub-router handle things from here...
-                router->template handle_request<isWebsocket>(doc_root, std::move(req), std::forward<Connection>(connection));
+                router->template handle_request<isWebsocket>(doc_root, std::move(req), connection);
 
                 // We're done handling this request
                 return;
             }
 
             if constexpr (isWebsocket)
-                handle_ws_request(std::move(req), std::forward<Connection>(connection));
+                handle_ws_request(std::move(req), connection);
             else
-                handle_http_request(doc_root, std::move(req), std::forward<Connection>(connection));
+                handle_http_request(doc_root, std::move(req), connection);
         }
 
         /**
@@ -255,13 +269,10 @@ namespace malloy::server
          * @param req The request to handle.
          * @param connection The HTTP connection.
          */
-        template<
-            class Connection
-        >
         void handle_http_request(
             const std::filesystem::path& doc_root,
             malloy::http::request&& req,
-            Connection&& connection
+            const http::connection_t& connection
         )
         {
             // Log
@@ -285,18 +296,18 @@ namespace malloy::server
                     auto resp = generate_preflight_response(req);
 
                     // Send the response
-                    send_response(req, std::move(resp), std::forward<Connection>(connection));
+                    send_response(req, std::move(resp), connection);
 
                     // We're done handling this request
                     return;
                 }
 
                 // Generate the response for the request
-                auto resp = ep->handle(req, *connection);
+                auto resp = ep->handle(req, connection);
                 if (resp) {
 
                     // Send the response
-                    send_response(req, std::move(*resp), std::forward<Connection>(connection));
+                    send_response(req, std::move(*resp), connection);
                 }
 
                 // We're done handling this request
@@ -304,7 +315,7 @@ namespace malloy::server
             }
 
             // If we end up where we have no meaningful way of handling this request
-            return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), std::forward<Connection>(connection));
+            return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), connection);
         }
 
         /**
@@ -314,12 +325,10 @@ namespace malloy::server
          * @param req The original HTTP request that was upgraded.
          * @param connection The WebSocket connection.
          */
-        template<
-            class Connection
-        >
+        
         void handle_ws_request(
             malloy::http::request&& req,
-            Connection&& connection
+            http::connection_t connection
         )
         {
             m_logger->debug("handling WS request: {} {}",
@@ -340,7 +349,11 @@ namespace malloy::server
                 }
 
                 // Set handler
-                connection->set_handler(ep->handler);
+                std::visit([&ep](auto& c){ 
+                    if constexpr (detail::has_handler<decltype(*c), decltype(ep->handler)>){
+                        c->set_handler(ep->handler); 
+                    }
+                 }, connection);
 
                 // We're done handling this request. The route handler will handle everything from hereon.
                 return;
@@ -408,8 +421,8 @@ namespace malloy::server
          * @param resp The response.
          * @param connection The connection.
          */
-        template<class Connection, typename Body>
-        void send_response(const request_type& req, malloy::http::response<Body>&& resp, Connection&& connection)
+        template<typename Body>
+        void send_response(const request_type& req, malloy::http::response<Body>&& resp, http::connection_t connection)
         {
             // Add more information to the response
             resp.keep_alive(req.keep_alive());
@@ -417,7 +430,11 @@ namespace malloy::server
             resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
             resp.prepare_payload();
 
-            connection->do_write(std::move(resp));
+            std::visit([resp = std::move(resp)](auto& c) mutable { 
+                if constexpr (detail::has_write<decltype(*c), decltype(resp)>) {
+                    c->do_write(std::move(resp)); 
+                }
+            }, connection);
         }
     };
 }
