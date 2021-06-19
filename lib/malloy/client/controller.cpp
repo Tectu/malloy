@@ -23,7 +23,7 @@ using namespace malloy::client;
 template<class Connection>
 [[nodiscard]]
 static
-std::future<malloy::http::response>
+std::future<malloy::http::response<>>
 http_request_(malloy::http::request req, std::shared_ptr<Connection> connection)
 {
     return std::async(
@@ -36,7 +36,7 @@ http_request_(malloy::http::request req, std::shared_ptr<Connection> connection)
             conn->run(
                 std::to_string(req.port()).c_str(),
                 req,
-                [&ret_resp, &done](malloy::http::response&& resp){
+                [&ret_resp, &done](malloy::http::response<>&& resp){
                     ret_resp = std::move(resp);
                     done = true;
                 }
@@ -64,7 +64,7 @@ http_request_(malloy::http::request req, std::shared_ptr<Connection> connection)
     }
 #endif // MALLOY_FEATURE_TLS
 
-std::future<malloy::http::response>
+std::future<malloy::http::response<>>
 controller::http_request(malloy::http::request req)
 {
     // Create connection
@@ -78,7 +78,7 @@ controller::http_request(malloy::http::request req)
 }
 
 #if MALLOY_FEATURE_TLS
-    std::future<malloy::http::response>
+    std::future<malloy::http::response<>>
     controller::https_request(malloy::http::request req)
     {
         // Check whether TLS context was initialized
