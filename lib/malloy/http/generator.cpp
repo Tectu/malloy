@@ -1,6 +1,7 @@
 #include "generator.hpp"
 #include "response.hpp"
 #include "request.hpp"
+#include <boost/beast/core/file_base.hpp>
 
 using namespace malloy::http;
 
@@ -78,16 +79,18 @@ auto generator::file(const std::filesystem::path& storage_base_path, std::string
     if (!std::filesystem::is_regular_file(path))
         return not_found(rel_path);
 
-    // Get file content
-    const std::string& file_content = malloy::file_contents(path);
-
     // Get mime type
     const std::string_view& mime_type = malloy::mime_type(path);
 
     // Create response
-    response resp{status::ok};
+    response<boost::beast::http::file_body> resp{status::ok};
     resp.set(field::content_type, mime_type);
-    resp.body() = file_content;
+
+    boost::beast::error_code ec;
+    resp.body().open(path.string().c_str(), boost::beast::file_mode::scan, ec);
+    if (ec) {
+        return server_error(ec.message());
+    }
 
     return resp;
 }
