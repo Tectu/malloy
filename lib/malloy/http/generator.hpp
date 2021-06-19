@@ -86,7 +86,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<> file(const request& req, const std::filesystem::path& storage_path);
+        static response<boost::beast::http::file_body> file(const request& req, const std::filesystem::path& storage_path);
 
         /**
          * Construct a file response.
@@ -96,7 +96,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<> file(const std::filesystem::path& storage_path, std::string_view rel_path);
+        static response<boost::beast::http::file_body> file(const std::filesystem::path& storage_path, std::string_view rel_path);
     };
 
 }

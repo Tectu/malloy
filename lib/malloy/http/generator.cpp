@@ -54,12 +54,12 @@ response<> generator::server_error(std::string_view what)
     return res;
 }
 
-response<> generator::file(const request& req, const std::filesystem::path& storage_base_path)
+response<boost::beast::http::file_body> generator::file(const request& req, const std::filesystem::path& storage_base_path)
 {
 	return file(storage_base_path, req.uri().resource_string());
 }
 
-response<> generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path)
+response<boost::beast::http::file_body> generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path)
 {
     // Sanitize rel_path
     {
