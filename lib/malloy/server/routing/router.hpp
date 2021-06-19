@@ -11,6 +11,8 @@
 #include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
 
+#include <boost/beast/http/status.hpp>
+
 #if MALLOY_FEATURE_TLS
     #include "malloy/server/http/connection/connection_tls.hpp"
 #endif
