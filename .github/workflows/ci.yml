@@ -19,14 +19,17 @@ jobs:
         experimental: [false]
         boost_version: [1.73.0, 1.76.0]
         malloy_tls: [ON, OFF]
-        include:
-          - os: macos-latest # clang is behind msvc and gcc in c++20 support
-            experimental: true
+        msvc: [false, true]
+        exclude:
+          - os: ubuntu-latest 
+            msvc: false
+
     continue-on-error: ${{ matrix.experimental }}
     runs-on: ${{ matrix.os }}
     env:
       BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
 
+    name: '${{ runner.os }}: boost ${{ matrix.boost_version }} tls: ${{ matrix.malloy_tls }}'
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
@@ -77,6 +80,12 @@ jobs:
           cd $BOOST_ROOT && cp -r boost_*/* .
           rm -rf boost_*/* download.tar.bz2 download.tar
         shell: bash
+      - name: Install latest mingw
+        if: runner.os == 'Windows' && !matrix.msvc
+        run: choco upgrade mingw 
+      - name: Install latest MSVC 
+        if: runner.os == 'Windows' && matrix.msvc
+        uses: ilammy/msvc-dev-cmd@v1
       
       - name: Configure 
         run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=OFF -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }}
