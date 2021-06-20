@@ -27,8 +27,6 @@ target_compile_features(
         cxx_std_20
 )
 
-message("MINGW: " ${MSVC})
-
 target_compile_options(
     ${TARGET_OBJS}
     PRIVATE
