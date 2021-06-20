@@ -27,6 +27,16 @@ target_compile_features(
         cxx_std_20
 )
 
+message("MINGW: " ${MSVC})
+
+target_compile_options(
+    ${TARGET_OBJS}
+    PRIVATE
+        $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
+        $<$<BOOL:${MINGW}>:-O3>
+        $<$<BOOL:${MSVC}>:/bigobj>
+)
+
 target_compile_definitions(
     ${TARGET_OBJS}
     PUBLIC
@@ -67,11 +77,4 @@ target_link_libraries(
         $<$<BOOL:${MALLOY_FEATURE_TLS}>:crypt32>        # ToDo: This is only needed when MALLOY_FEATURE_CLIENT is ON
         $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::Crypto>
         $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::SSL>
-)
-
-target_compile_options(
-    ${TARGET_OBJS}
-    PRIVATE
-        $<$<BOOL:${WIN32}>:-Wa,-mbig-obj>
-        $<$<BOOL:${WIN32}>:-O3>
 )
