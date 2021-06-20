@@ -1,0 +1,92 @@
+name: CI
+
+on: 
+  push:
+    branches: [main, feat-ci]
+  pull_request: 
+    branches: [main]
+
+env: 
+  BUILD_TYPE: Release 
+  INSTALL_LOCATION: .local 
+
+jobs:
+  build:
+    strategy: 
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        experimental: [false]
+        boost_version: [1.73.0, 1.76.0]
+        malloy_tls: [ON, OFF]
+        include:
+          - os: macos-latest # clang is behind msvc and gcc in c++20 support
+            experimental: true
+    continue-on-error: ${{ matrix.experimental }}
+    runs-on: ${{ matrix.os }}
+    env:
+      BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
+
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: cache boost
+        uses: actions/cache@v2 
+        id: cache-boost
+        with: 
+          path: ${{ env.BOOST_ROOT }}
+          key: boost-${{ matrix.boost_version }}
+      - name: Install Ninja 
+        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Setup boost env
+        run: |
+          BOOST_URL="https://boostorg.jfrog.io/artifactory/main/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
+          echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
+        shell: bash
+      - name: install gcc11
+        if: runner.os == 'Linux'
+        run: | 
+          sudo apt install gcc-11 g++-11 -y
+          echo "CC=gcc-11" >> $GITHUB_ENV 
+          echo "CXX=g++-11" >> $GITHUB_ENV 
+
+      - name: Install openssl (via choco)
+        if: runner.os == 'Windows'
+        run: choco install openssl 
+
+      - name: Install openssl (via apt) 
+        if: runner.os == 'Linux'
+        run: sudo apt install libssl-dev -y 
+
+      - name: Install openssl (via homebrew)
+        if: runner.os == 'macOS'
+        run: brew install openssl
+
+      - name: Install Boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          if [ "$OS" == "Windows_NT" ]; then
+            # fix up paths to be forward slashes consistently
+            BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
+          fi
+          mkdir -p $BOOST_ROOT
+          curl --progress-bar --location --output $BOOST_ROOT/download.tar.bz2 $BOOST_URL
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar.bz2 -y -bd
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar -y -bd
+          cd $BOOST_ROOT && cp -r boost_*/* .
+          rm -rf boost_*/* download.tar.bz2 download.tar
+        shell: bash
+      
+      - name: Configure 
+        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=OFF -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }}
+
+      - name: Build 
+        run: cmake --build build 
+
+      - name: Run tests 
+        run: ./build/test/malloy-tests
+
+
+    
+
