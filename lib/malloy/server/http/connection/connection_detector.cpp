@@ -48,14 +48,15 @@ class router_adaptor: public connection<Derived>::handler {
     using router_t = std::shared_ptr<malloy::server::router>;
 public:
     using conn_t = const connection_t&;
+    using req_t = std::shared_ptr<typename connection<Derived>::request_generator>;
 
     router_adaptor(router_t router) : router_{std::move(router)} {}
 
-    void websocket(const std::filesystem::path& root, malloy::http::request&& req, conn_t conn) override { 
-        router_->handle_request<true>(root, std::move(req), conn); 
+    void websocket(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
+        router_->handle_request<true>(root, req, conn); 
     }
-    void http(const std::filesystem::path& root, malloy::http::request&& req, conn_t conn) override { 
-        router_->handle_request<false>(root, std::move(req), conn); 
+    void http(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
+        router_->handle_request<false>(root, req, conn); 
     }
 private:
     router_t router_;

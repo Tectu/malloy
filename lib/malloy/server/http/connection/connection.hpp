@@ -42,12 +42,16 @@ namespace malloy::server::http
     class connection
     {
     public:
-        class request_generator {
+        class request_generator: public std::enable_shared_from_this<request_generator> {
         public:
             using h_parser_t = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
             using header_t = boost::beast::http::header<false>;
 
             auto header() -> header_t& {
+                return header_;
+            }
+
+            auto header() const -> const header_t& {
                 return header_;
             }
             template<typename Body, std::invocable<malloy::http::request<Body>> Callback>
@@ -62,7 +66,7 @@ namespace malloy::server::http
                   parent_->derived().m_stream, buff_, *parser,
                   [_ = parent_, initial = std::forward<Body>(initial),
                    done = std::forward<Callback>(done),
-                   p = parser](const auto& ec, auto size) {
+                   p = parser, this_ = shared_from_this()](const auto& ec, auto size) {
                     done(malloy::http::request<Body>{p->release()});
                   });
             }
@@ -85,9 +89,10 @@ namespace malloy::server::http
             using request = malloy::http::request<>;
             using conn_t = const connection_t&;
             using path = std::filesystem::path;
+            using req_t = std::shared_ptr<request_generator>;
 
-            virtual void websocket(const path& root, request&& req, conn_t) = 0;
-            virtual void http(const path& root, request&& req, conn_t) = 0;
+            virtual void websocket(const path& root, const req_t& req, conn_t) = 0;
+            virtual void http(const path& root, const req_t& req, conn_t) = 0;
             
         
         };

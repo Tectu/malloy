@@ -68,6 +68,9 @@ namespace malloy::server
     class router
     {
     public:
+        template<typename Derived>
+        using req_generator = std::shared_ptr<http::connection<Derived>::request_generator>;
+
         /**
          * The method type to use.
          */
@@ -257,11 +260,12 @@ namespace malloy::server
          * @param connection The HTTP or WS connection.
          */
         template<
-            bool isWebsocket = false
+            bool isWebsocket = false,
+            typename Derived
         >
         void handle_request(
             const std::filesystem::path& doc_root,
-            malloy::http::request&& req,
+            const req_generator<Derived>& req,
             const http::connection_t& connection
         )
         {
@@ -298,9 +302,10 @@ namespace malloy::server
          * @param req The request to handle.
          * @param connection The HTTP connection.
          */
+        template<typename Derived>
         void handle_http_request(
             const std::filesystem::path& doc_root,
-            malloy::http::request&& req,
+            const req_generator<Derived>& req,
             const http::connection_t& connection
         )
         {
@@ -310,14 +315,15 @@ namespace malloy::server
                 req.uri().resource_string()
             );
 
+            const auto& header = req->header();
             // Check routes
             for (const auto& ep : m_endpoints_http) {
                 // Check match
-                if (!ep->matches(req))
+                if (!ep->matches(header))
                     continue;
 
                 // Generate preflight response (if supposed to)
-                if (m_generate_preflights && (req.method() == malloy::http::method::options)) {
+                if (m_generate_preflights && (header.method() == malloy::http::method::options)) {
                     // Log
                     m_logger->debug("automatically constructing preflight response.");
 
@@ -355,38 +361,41 @@ namespace malloy::server
          * @param connection The WebSocket connection.
          */
         
+        template<typename Derived>
         void handle_ws_request(
-            malloy::http::request&& req,
+            const req_generator<Derived>& gen,
             http::connection_t connection
         )
         {
-            m_logger->debug("handling WS request: {} {}",
-                req.method_string(),
-                req.uri().resource_string()
-            );
+            gen->body(boost::beast::http::string_body{}, [this, connection](const auto& req){
+                m_logger->debug("handling WS request: {} {}",
+                    req.method_string(),
+                    req.uri().resource_string()
+                );
 
-            // Check routes
-            for (const auto& ep : m_endpoints_websocket) {
-                // Check match
-                if (ep->resource != req.uri().resource_string())
-                    continue;
+                // Check routes
+                for (const auto& ep : m_endpoints_websocket) {
+                    // Check match
+                    if (ep->resource != req.uri().resource_string())
+                        continue;
 
-                // Validate route handler
-                if (!ep->handler) {
-                    m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
-                    continue;
-                }
-
-                // Set handler
-                std::visit([&ep](auto& c){ 
-                    if constexpr (detail::has_handler<decltype(*c), decltype(ep->handler)>){
-                        c->set_handler(ep->handler); 
+                    // Validate route handler
+                    if (!ep->handler) {
+                        m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+                        continue;
                     }
-                 }, connection);
 
-                // We're done handling this request. The route handler will handle everything from hereon.
-                return;
-            }
+                    // Set handler
+                    std::visit([&ep](auto& c){ 
+                        if constexpr (detail::has_handler<decltype(*c), decltype(ep->handler)>){
+                            c->set_handler(ep->handler); 
+                        }
+                     }, connection);
+
+                    // We're done handling this request. The route handler will handle everything from hereon.
+                    return;
+                }
+            });
         }
 
     private:

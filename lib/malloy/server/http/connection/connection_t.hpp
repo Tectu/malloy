@@ -34,4 +34,18 @@ using connection_t = std::variant<
     ,std::shared_ptr<malloy::server::websocket::connection_tls>
 #endif 
     >;
+namespace detail {
+template<typename... Args>
+using req_gen_helper = std::variant<std::shared_ptr<Args::request_generator...>>;
+}
+
+using request_generator_t = detail::req_gen_helper<
+    connection_plain,
+    malloy::server::websocket::connection_plain,
+#if MALLOY_FEATURE_TLS 
+    ,connection_tls
+    ,malloy::server::websocket::connection_tls
+#endif 
+
+
 }
