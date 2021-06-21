@@ -16,9 +16,12 @@ namespace malloy::http
     /**
      * The response type.
      */
+    template<typename Body = boost::beast::http::string_body, typename Fields = boost::beast::http::fields>
     class response :
-        public boost::beast::http::response<boost::beast::http::string_body>
+        public boost::beast::http::response<Body, Fields>
     {
+        using msg_t = boost::beast::http::response<Body, Fields>;
+
     public:
         /**
          * Default constructor.
@@ -32,7 +35,7 @@ namespace malloy::http
          */
         response(const status& status_)
         {
-            result(status_);
+            msg_t::result(status_);
         }
 
         /**
@@ -75,7 +78,7 @@ namespace malloy::http
          *
          * @param status The HTTP status code.
          */
-        void set_status(http::status status) { result(status); }
+        void set_status(http::status status) { msg_t::result(status); }
 
         /**
          * Retrieve the HTTP status.
@@ -83,7 +86,7 @@ namespace malloy::http
          * @return The HTTP status
          */
         [[nodiscard]]
-        http::status status() const { return result(); }
+        http::status status() const { return msg_t::result(); }
 
         /**
          * Adds a cookie.
@@ -92,7 +95,7 @@ namespace malloy::http
          */
         void add_cookie(const cookie& c)
         {
-            insert(boost::beast::http::field::set_cookie, c.to_string());
+            msg_t::insert(boost::beast::http::field::set_cookie, c.to_string());
         }
     };
 
