@@ -2,6 +2,8 @@
 
 #include "endpoint_http.hpp"
 
+#include "malloy/http/uri.hpp"
+
 namespace malloy::server
 {
 
@@ -15,13 +17,13 @@ namespace malloy::server
 
 
         [[nodiscard]]
-        bool matches(const malloy::http::request& req) const override
+        bool matches(const req_header_t& req) const override
         {
-            return resource_old == req.uri().resource_string();
+            return uri{req.target().data(), req.target().size}.resource_string() == resource_old;
         }
 
         [[nodiscard]]
-        handle_retr handle(const malloy::http::request& req, const http::connection_t&) const override
+        handle_retr handle(const req_t&, const http::connection_t&) const override
         {
             return malloy::http::generator::redirect(status, resource_new);
         }

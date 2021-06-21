@@ -10,6 +10,7 @@
 #include "malloy/server/http/connection/connection_t.hpp"
 #include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
+#include "malloy/server/routing/type_traits.hpp"
 #include <type_traits>
 #include <concepts>
 
@@ -40,20 +41,11 @@ namespace spdlog
 namespace malloy::server
 {
     namespace detail {
-        struct any_callable {
-                template<typename T>
-                void operator()(T&&) {}
-        };
         template<typename T, typename H>
         concept has_handler = requires(T t, H h) { t.set_handler(h); };
 
         template<typename T, typename... Args>
         concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
-
-        template<typename V>
-        concept is_variant = requires(V v) { 
-            std::visit(any_callable{}, v); 
-        };
 
         
     }
@@ -186,7 +178,7 @@ namespace malloy::server
                     m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
                 return false;
             }
-            constexpr bool wrapped = detail::is_variant<Body>;
+            constexpr bool wrapped = concepts::is_variant<Body>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
 
             // Build endpoint
