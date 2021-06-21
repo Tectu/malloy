@@ -55,10 +55,7 @@ namespace malloy::server
             std::visit(any_callable{}, v); 
         };
 
-        template<typename H, typename Req>
-        concept advanced_route_handler = std::invocable<H, Req> && requires(H handler, const typename Req::header_type& h) {
-            handler.body_for(h);
-        };
+        
     }
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!

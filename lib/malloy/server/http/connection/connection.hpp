@@ -5,6 +5,7 @@
 #include "malloy/server/http/connection/connection_t.hpp"
 
 #include "malloy/server/websocket/connection/connection_plain.hpp"
+#include <boost/beast/http/detail/type_traits.hpp>
 #if MALLOY_FEATURE_TLS
     #include "malloy/server/websocket/connection/connection_tls.hpp"
 #endif
@@ -41,9 +42,47 @@ namespace malloy::server::http
     class connection
     {
     public:
+        class request_generator {
+        public:
+            using h_parser_t = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
+            using header_t = boost::beast::http::header<false>;
+
+            auto header() -> header_t& {
+                return header_;
+            }
+            template<typename Body, std::invocable<malloy::http::request<Body>> Callback>
+            auto body(Body&& initial, Callback&& done) && {
+              using namespace boost::beast::http;
+              using body_t = std::decay_t<Body>;
+              auto parser = std::make_shared<request_parser<body_t>>(
+                  h_parser_, std::piecewise_construct,
+                  std::tuple{std::move(initial)});
+
+              boost::beast::http::async_read(
+                  parent_->derived().m_stream, buff_, *parser,
+                  [_ = parent_, initial = std::forward<Body>(initial),
+                   done = std::forward<Callback>(done),
+                   p = parser](const auto& ec, auto size) {
+                    done(malloy::http::request<Body>{p->release()});
+                  });
+            }
+
+        private:
+          request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent)
+              : h_parser_{std::move(hparser)}, header_{std::move(header)}, parent_{std::move(parent)} {
+            assert(parent_); // TODO: Should this be BOOST_ASSERT?
+          }
+
+            boost::beast::flat_buffer buff_;
+            h_parser_t h_parser_;
+            header_t header_;
+            std::shared_ptr<connection> parent_;
+            
+            friend class connection;
+        };
         class handler {
         public:
-            using request = malloy::http::request;
+            using request = malloy::http::request<>;
             using conn_t = const connection_t&;
             using path = std::filesystem::path;
 
@@ -157,7 +196,6 @@ namespace malloy::server::http
         // The parser is stored in an optional container so we can
         // construct it from scratch it at the beginning of each new message.
         boost::optional<boost::beast::http::request_parser<boost::beast::http::string_body>> m_parser;
-
         /**
          * Cast to derived class type.
          *

@@ -8,7 +8,6 @@ target_sources(
         generator.cpp
         generator.hpp
         http.hpp
-		request.cpp
         request.hpp
         response.hpp
 		types.hpp
