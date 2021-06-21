@@ -1,6 +1,8 @@
 #pragma once
 
 #include "endpoint_http.hpp"
+#include "malloy/http/request.hpp"
+#include "malloy/http/uri.hpp"
 
 #include <filesystem>
 
@@ -16,9 +18,9 @@ namespace malloy::server
         writer_t<boost::beast::http::file_body, boost::beast::http::string_body> writer;
 
         [[nodiscard]]
-        bool matches(const malloy::http::request& req) const override
+        bool matches(const req_header_t& req) const override
         {
-            return req.uri().resource_starts_with(resource_base);
+            return http::uri{req.target().data(), req.target().size()}.resource_starts_with(resource_base);
         }
 
         [[nodiscard]]

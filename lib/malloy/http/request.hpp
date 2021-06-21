@@ -9,7 +9,6 @@
 
 namespace malloy::http
 {
-
     /**
      * Represents an HTTP request.
      */
@@ -173,5 +172,5 @@ namespace malloy::http
         class uri m_uri;
         std::unordered_map<std::string, std::string> m_cookies;
     };
-
 }
+

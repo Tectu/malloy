@@ -6,10 +6,10 @@
 
 #include "types.hpp"
 #include "response.hpp"
+#include "request.hpp"
 
 namespace malloy::http
 {
-    class request;
 
     /**
      * A generator for HTTP responses.
@@ -88,7 +88,7 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static auto file(const request& req, const std::filesystem::path& storage_path) -> file_response;
+        static auto file(const request<>& req, const std::filesystem::path& storage_path) -> file_response;
 
         /**
          * Construct a file response.

@@ -7,6 +7,7 @@
 #include "../../http/types.hpp"
 
 #include "malloy/server/http/connection/connection_t.hpp"
+#include "malloy/server/http/connection/request_generator_t.hpp"
 
 #include <optional>
 #include <functional>
@@ -20,12 +21,12 @@ namespace malloy::server
     struct endpoint_http :
         endpoint
     {
-        template<typename... Bodies>
-        using writer_t = std::function<void(const malloy::http::request&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
+        template<typename Req, typename... Bodies>
+        using writer_t = std::function<void(const malloy::http::request<Req>&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
 
         using handle_retr = std::optional<malloy::http::response<boost::beast::http::string_body>>;
-        using req_header_t = boost::beast::http::request_header;
-        using req_t = http::req_generator_t;
+        using req_header_t = boost::beast::http::request_header<>;
+        using req_t = http::request_generator_t;
 
         malloy::http::method method = malloy::http::method::unknown;
 

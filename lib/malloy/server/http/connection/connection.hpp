@@ -51,7 +51,7 @@ namespace malloy::server::http
                 return header_;
             }
 
-            auto header() const -> const header_t& {
+            auto header() const -> header_t& {
                 return header_;
             }
             template<typename Body, std::invocable<malloy::http::request<Body>> Callback>
