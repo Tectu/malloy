@@ -39,7 +39,7 @@ namespace malloy::server::websocket
         boost::beast::websocket::stream<boost::beast::tcp_stream> m_stream;
     };
 
-    std::shared_ptr<connection_plain>
+    inline std::shared_ptr<connection_plain>
     make_websocket_connection(
         std::shared_ptr<spdlog::logger> logger,
         boost::beast::tcp_stream stream

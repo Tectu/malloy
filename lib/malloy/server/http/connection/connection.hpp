@@ -1,6 +1,9 @@
 #pragma once
 
-#include "malloy/server/routing/router.hpp"
+#include "malloy/http/request.hpp"
+#include "malloy/http/generator.hpp"
+#include "malloy/server/http/connection/connection_t.hpp"
+
 #include "malloy/server/websocket/connection/connection_plain.hpp"
 #if MALLOY_FEATURE_TLS
     #include "malloy/server/websocket/connection/connection_tls.hpp"
@@ -27,6 +30,7 @@ namespace spdlog
 namespace malloy::server::http
 {
 
+
     /**
      * An HTTP server connection.
      *
@@ -37,6 +41,17 @@ namespace malloy::server::http
     class connection
     {
     public:
+        class handler {
+        public:
+            using request = malloy::http::request;
+            using conn_t = const connection_t&;
+            using path = std::filesystem::path;
+
+            virtual void websocket(const path& root, request&& req, conn_t) = 0;
+            virtual void http(const path& root, request&& req, conn_t) = 0;
+            
+        
+        };
         /**
          * Session configuration structure.
          */
@@ -61,7 +76,7 @@ namespace malloy::server::http
         connection(
             std::shared_ptr<spdlog::logger> logger,
             boost::beast::flat_buffer buffer,
-            std::shared_ptr<malloy::server::router> router,
+            std::shared_ptr<handler> router,
             std::shared_ptr<const std::filesystem::path> http_doc_root
         ) :
             m_logger(std::move(logger)),
@@ -136,7 +151,7 @@ namespace malloy::server::http
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
-        std::shared_ptr<malloy::server::router> m_router;
+        std::shared_ptr<handler> m_router;
         std::shared_ptr<void> m_response;
 
         // The parser is stored in an optional container so we can
@@ -194,13 +209,13 @@ namespace malloy::server::http
                 ws_connection->run(req);
 
                 // Hand over to router
-                m_router->handle_request<true>(*m_doc_root, std::move(req), ws_connection);
+                m_router->websocket(*m_doc_root, std::move(req), ws_connection);
             }
 
             // This is an HTTP request
             else {
                 // Hand over to router
-                m_router->handle_request<false>(*m_doc_root, std::move(req), derived().shared_from_this());
+                m_router->http(*m_doc_root, std::move(req), derived().shared_from_this());
             }
         }
 

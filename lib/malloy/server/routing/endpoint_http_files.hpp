@@ -13,6 +13,7 @@ namespace malloy::server
     public:
         std::string resource_base;
         std::filesystem::path base_path;
+        writer_t<boost::beast::http::file_body, boost::beast::http::string_body> writer;
 
         [[nodiscard]]
         bool matches(const malloy::http::request& req) const override
@@ -21,16 +22,16 @@ namespace malloy::server
         }
 
         [[nodiscard]]
-        malloy::http::response handle(const malloy::http::request& req) const override
+        handle_retr handle(const malloy::http::request& req, const http::connection_t& conn) const override
         {
             // Chop request resource path
             malloy::http::request req_clone{ req };
             req_clone.uri().chop_resource(resource_base);
 
             // Create response
-            auto resp = malloy::http::generator::file(req_clone, base_path);
+            writer(req, malloy::http::generator::file(req_clone, base_path), conn);
 
-            return resp;
+            return std::nullopt;
         }
 
     };

@@ -19,7 +19,7 @@ namespace malloy::client::http
     class connection
     {
     public:
-        using callback_t = std::function<void(malloy::http::response&&)>;
+        using callback_t = std::function<void(malloy::http::response<>&&)>;
 
         connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx) :
             m_logger(std::move(logger)),
@@ -75,7 +75,7 @@ namespace malloy::client::http
         boost::asio::ip::tcp::resolver m_resolver;
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
         malloy::http::request m_req;
-        malloy::http::response m_resp;
+        malloy::http::response<> m_resp;
         callback_t m_cb;
 
         [[nodiscard]]
