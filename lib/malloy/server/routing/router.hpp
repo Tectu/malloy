@@ -248,7 +248,9 @@ namespace malloy::server
                     continue;
 
                 // Log
-                m_logger->debug("invoking sub-router on {}", resource_base);
+                if (m_logger) {
+                    m_logger->debug("invoking sub-router on {}", resource_base);
+                }
 
                 // Chop request resource path
                 req.uri().chop_resource(resource_base);
@@ -281,10 +283,11 @@ namespace malloy::server
         )
         {
             // Log
-            m_logger->debug("handling HTTP request: {} {}",
-                req.method_string(),
-                req.uri().resource_string()
-            );
+            if (m_logger) {
+                m_logger->debug("handling HTTP request: {} {}",
+                                req.method_string(),
+                                req.uri().resource_string());
+            }
 
             // Check routes
             for (const auto& ep : m_endpoints_http) {
@@ -295,7 +298,9 @@ namespace malloy::server
                 // Generate preflight response (if supposed to)
                 if (m_generate_preflights && (req.method() == malloy::http::method::options)) {
                     // Log
-                    m_logger->debug("automatically constructing preflight response.");
+                    if (m_logger) {
+                        m_logger->debug("automatically constructing preflight response.");
+                    }
 
                     // Generate
                     auto resp = generate_preflight_response(req);
@@ -336,10 +341,11 @@ namespace malloy::server
             http::connection_t connection
         )
         {
-            m_logger->debug("handling WS request: {} {}",
-                req.method_string(),
-                req.uri().resource_string()
-            );
+            if (m_logger) {
+                m_logger->debug("handling WS request: {} {}",
+                                req.method_string(),
+                                req.uri().resource_string());
+            }
 
             // Check routes
             for (const auto& ep : m_endpoints_websocket) {
@@ -349,7 +355,9 @@ namespace malloy::server
 
                 // Validate route handler
                 if (!ep->handler) {
-                    m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+                    if (m_logger) {
+                        m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+                    }
                     continue;
                 }
 
