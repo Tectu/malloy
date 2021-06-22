@@ -7,7 +7,7 @@ using namespace malloy::server;
 
 
 void endpt_handle(const auto& endpt, const std::string& url) {
-    request req{method::get, "", 0, url};
+    request req{boost::beast::http::request<boost::beast::http::string_body>{method::get, url, 1}};
     [[maybe_unused]]const auto rs = endpt.handle(req, http::connection_t{std::shared_ptr<http::connection_plain>{nullptr}});
 }
 
