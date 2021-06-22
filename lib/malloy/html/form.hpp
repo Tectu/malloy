@@ -4,10 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-namespace malloy::http
-{
-    class request;
-}
+#include "malloy/http/request.hpp"
+
 
 namespace malloy::html
 {
@@ -31,7 +29,7 @@ namespace malloy::html
          * @param req The request.
          * @return Whether the parsing was successful.
          */
-        bool parse(const malloy::http::request& req);
+        bool parse(const malloy::http::request<>& req);
 
         /**
          * Checks whether a specific key-value pair is present.

@@ -7,7 +7,7 @@
 
 using namespace malloy::html;
 
-bool form::parse(const malloy::http::request& req)
+bool form::parse(const malloy::http::request<>& req)
 {
     // Split pairs
     std::vector<std::string> pairs;
