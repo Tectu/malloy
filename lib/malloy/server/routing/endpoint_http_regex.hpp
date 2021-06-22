@@ -16,10 +16,9 @@ namespace malloy::server
     };
 
     template<typename Response, bool WantsCapture>
-    class endpoint_http_regex :
+    struct endpoint_http_regex :
         endpoint_http, public resource_matcher
     {
-    public:
         using handler_t = std::conditional_t<
             WantsCapture,
             std::function<Response(const malloy::http::request&,
@@ -33,7 +32,7 @@ namespace malloy::server
         [[nodiscard]]
         bool matches_resource(const malloy::http::request& req) const override
         {
-            return !match_target(req).empty();
+            return std::regex_match(req.target().begin(), req.target().end(), resource_base);
         }
 
         [[nodiscard]]
@@ -52,12 +51,15 @@ namespace malloy::server
         {
             if (handler) {
                 if constexpr (WantsCapture) {
-                    const auto url_matches = match_target(req);
+                    std::smatch url_matches;
+                    std::string url{req.target()};
+                    std::regex_match(url, url_matches, resource_base);
+
                     if (url_matches.empty()) {
                         throw std::logic_error{
-                                R"(endpoint_http_regex passed request which does not match: )" +
+                            R"(endpoint_http_regex passed request which does not match: )" +
                             std::string{req.target()}};
-                    }
+                    } 
 
                     std::vector<std::string> matches{
                     // match_results[0] is the input string
@@ -72,14 +74,6 @@ namespace malloy::server
             }
 
             return malloy::http::generator::server_error("no valid handler available.");
-        }
-    private:
-        auto match_target(const malloy::http::request& req) const -> std::smatch {
-            std::smatch match_result;
-            std::string str{ req.uri().raw() };
-            std::regex_match(str, match_result, resource_base);
-
-            return match_result;
         }
 
 
