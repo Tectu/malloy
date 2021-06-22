@@ -32,7 +32,8 @@ namespace malloy::server
         [[nodiscard]]
         bool matches_resource(const malloy::http::request& req) const override
         {
-            return std::regex_match(req.target().begin(), req.target().end(), resource_base);
+            const auto url = req.uri();
+            return std::regex_match(url.raw().begin(), url.raw().end(), resource_base);
         }
 
         [[nodiscard]]
