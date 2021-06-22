@@ -57,6 +57,7 @@ public:
     }
     void http(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
         router_->handle_request<false>(root, req, conn); 
+
     }
 private:
     router_t router_;

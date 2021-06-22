@@ -93,7 +93,6 @@ namespace malloy::server::http
 
             virtual void websocket(const path& root, const req_t& req, conn_t) = 0;
             virtual void http(const path& root, const req_t& req, conn_t) = 0;
-            
         
         };
         /**

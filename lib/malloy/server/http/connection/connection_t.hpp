@@ -34,5 +34,4 @@ using connection_t = std::variant<
     ,std::shared_ptr<malloy::server::websocket::connection_tls>
 #endif 
     >;
-
 }

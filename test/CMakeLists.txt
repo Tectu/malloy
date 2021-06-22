@@ -24,12 +24,6 @@ target_link_libraries(
         malloy-objs
 )
 
-target_compile_options(
-    ${TARGET}
-    PRIVATE
-        -Og
-)
-
 ###
 # CTest
 ###

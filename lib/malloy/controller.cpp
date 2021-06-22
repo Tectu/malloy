@@ -18,7 +18,6 @@ bool controller::init(config cfg)
         return false;
 
     // Don't re-initialize
-    static bool m_init_done = false;
     if (m_init_done)
         return false;
     m_init_done = true;

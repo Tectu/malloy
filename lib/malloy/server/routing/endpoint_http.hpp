@@ -28,6 +28,7 @@ namespace malloy::server
         using req_header_t = boost::beast::http::request_header<>;
         using req_t = http::request_generator_t;
 
+
         malloy::http::method method = malloy::http::method::unknown;
 
         endpoint_http() = default;
