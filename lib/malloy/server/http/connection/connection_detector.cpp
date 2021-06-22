@@ -53,10 +53,10 @@ public:
     router_adaptor(router_t router) : router_{std::move(router)} {}
 
     void websocket(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
-        router_->handle_request<true>(root, req, conn); 
+        router_->handle_request<true, Derived>(root, req, conn); 
     }
     void http(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
-        router_->handle_request<false>(root, req, conn); 
+        router_->handle_request<false, Derived>(root, req, conn); 
 
     }
 private:

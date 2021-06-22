@@ -4,7 +4,7 @@ include(external.cmake)
 set(NAME malloy)
 set(TARGET_OBJS   ${NAME}-objs)
 
-add_library(${TARGET_OBJS} OBJECT)
+add_library(${TARGET_OBJS} SHARED)
 
 if (MALLOY_FEATURE_CLIENT)
     add_subdirectory(client)

@@ -44,8 +44,8 @@ namespace malloy::server::http
     public:
         class request_generator: public std::enable_shared_from_this<request_generator> {
         public:
-            using h_parser_t = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
-            using header_t = boost::beast::http::header<false>;
+            using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::string_body>>;
+            using header_t = boost::beast::http::request_header<>;
 
             auto header() -> header_t& {
                 return header_;
@@ -55,7 +55,7 @@ namespace malloy::server::http
                 return header_;
             }
             template<typename Body, std::invocable<malloy::http::request<Body>> Callback>
-            auto body(Body&& initial, Callback&& done) && {
+            auto body(Body&& initial, Callback&& done)  {
               using namespace boost::beast::http;
               using body_t = std::decay_t<Body>;
               auto parser = std::make_shared<request_parser<body_t>>(
@@ -167,7 +167,7 @@ namespace malloy::server::http
             m_logger->trace("do_read()");
 
             // Construct a new parser for each message
-            m_parser.emplace();
+            m_parser = std::make_unique<std::decay_t<decltype(*m_parser)>>();
 
             // Apply a reasonable limit to the allowed size
             // of the body in bytes to prevent abuse.
@@ -177,7 +177,7 @@ namespace malloy::server::http
             boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
 
             // Read a request using the parser-oriented interface
-            boost::beast::http::async_read(
+            boost::beast::http::async_read_header(
                 derived().m_stream,
                 m_buffer,
                 *m_parser,
@@ -197,9 +197,9 @@ namespace malloy::server::http
         std::shared_ptr<handler> m_router;
         std::shared_ptr<void> m_response;
 
-        // The parser is stored in an optional container so we can
-        // construct it from scratch it at the beginning of each new message.
-        boost::optional<boost::beast::http::request_parser<boost::beast::http::string_body>> m_parser;
+        // Pointer to allow handoff to generator since it cannot be copied or
+        // moved
+        typename request_generator::h_parser_t m_parser;
         /**
          * Cast to derived class type.
          *
@@ -225,19 +225,21 @@ namespace malloy::server::http
                 return;
             }
 
+            auto header = m_parser->get().base();
             // Parse the request into something more useful from hereon
-            malloy::http::request req = m_parser->release();
+            auto gen = std::make_shared<request_generator>(std::move(m_parser), std::move(header), derived().shared_from_this());
+            malloy::http::uri req_uri{std::string{gen->header().target().begin()}};
 
             // Check request URI for legality
-            if (!req.uri().is_legal()) {
-                m_logger->warn("illegal request URI: {}", req.uri().raw());
+            if (!req_uri.is_legal()) {
+                m_logger->warn("illegal request URI: {}", req_uri.raw());
                 auto resp = malloy::http::generator::bad_request("illegal URI");
                 do_write(std::move(resp));
                 return;
             }
 
             // Check if this is a WS request
-            if (boost::beast::websocket::is_upgrade(req)) {
+            if (boost::beast::websocket::is_upgrade(gen->header())) {
                 m_logger->info("upgrading HTTP connection to WS connection.");
 
                 // Create a websocket connection, transferring ownership
@@ -248,16 +250,20 @@ namespace malloy::server::http
                 );
 
                 // Launch the connection
-                ws_connection->run(req);
+                gen->template body<boost::beast::http::string_body>(
+                    {}, [this](const auto& req) {
+                        ws_connection->run(req);
 
-                // Hand over to router
-                m_router->websocket(*m_doc_root, std::move(req), ws_connection);
+                        // Hand over to router
+                        m_router->websocket(*m_doc_root, std::move(req),
+                                            ws_connection);
+                    });
             }
 
             // This is an HTTP request
             else {
                 // Hand over to router
-                m_router->http(*m_doc_root, std::move(req), derived().shared_from_this());
+                m_router->http(*m_doc_root, std::move(gen), derived().shared_from_this());
             }
         }
 

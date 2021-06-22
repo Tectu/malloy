@@ -378,6 +378,7 @@ namespace malloy::server
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
         bool m_generate_preflights = false;
 
+
         template<bool UsesCaptures, typename Body, typename Func>
         auto add_regex_endpoint(method_type method, std::string_view target,
                                 Func&& handler) -> bool
@@ -400,9 +401,16 @@ namespace malloy::server
 
 
             constexpr bool wrapped = concepts::is_variant<Body>;
+            using func_t = std::decay_t<Func>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
             // Build endpoint
-            auto ep = std::make_shared<endpoint_http_regex<bodies_t, UsesCaptures>>();
+            auto ep = []{  
+                if constexpr (concepts::advanced_route_handler<func_t>) {
+                    return std::make_shared<endpoint_http_regex<typename func_t::request_type, bodies_t, func_t, UsesCaptures>>();
+                } else {
+                    return std::make_shared<endpoint_http_regex<malloy::http::request<>, bodies_t, func_t, UsesCaptures>>();
+                }
+            }();
             ep->resource_base = std::move(regex);
             ep->method = method;
             if constexpr (wrapped) {
