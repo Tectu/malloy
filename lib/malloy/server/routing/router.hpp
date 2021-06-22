@@ -55,6 +55,11 @@ namespace malloy::server
             std::visit(any_callable{}, v); 
         };
 
+        template<typename F>
+        concept route_handler =
+            std::invocable<F, const malloy::http::request&> ||
+            std::invocable<F, const malloy::http::request&,
+                           const std::vector<std::string>>;
     }
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
@@ -162,7 +167,7 @@ namespace malloy::server
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<std::invocable<const request_type&> Func>
+        template<detail::route_handler Func>
         bool add(const method_type method, const std::string_view target, Func&& handler)
         {
             // Log
@@ -185,16 +190,20 @@ namespace malloy::server
             constexpr bool wrapped = detail::is_variant<Body>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
 
+            constexpr bool uses_captures =
+                std::invocable<Func, const request_type&,
+                               const std::vector<std::string>&>;
+
             // Build endpoint
-            auto ep = std::make_shared<endpoint_http_regex<bodies_t>>();
+            auto ep = std::make_shared<endpoint_http_regex<bodies_t, uses_captures>>();
             ep->resource_base = std::move(regex);
             ep->method = method;
             if constexpr (wrapped) {
                 ep->handler = std::move(handler);
             } else {
                 ep->handler = 
-                    [w = std::move(handler)](const auto& req) { 
-                        return std::variant<Body>{w(req)}; 
+                    [w = std::forward<Func>(handler)](auto&&... args) { 
+                        return std::variant<Body>{w(std::forward<decltype(args)>(args)...)}; 
                     };
             }
 
