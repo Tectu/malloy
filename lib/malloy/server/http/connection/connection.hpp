@@ -66,7 +66,7 @@ namespace malloy::server::http
                   parent_->derived().m_stream, buff_, *parser,
                   [_ = parent_, initial = std::forward<Body>(initial),
                    done = std::forward<Callback>(done),
-                   p = parser, this_ = shared_from_this()](const auto& ec, auto size) {
+                   p = parser, this_ = this->shared_from_this()](const auto& ec, auto size) {
                     done(malloy::http::request<Body>{p->release()});
                   });
             }
@@ -251,7 +251,7 @@ namespace malloy::server::http
 
                 // Launch the connection
                 gen->template body<boost::beast::http::string_body>(
-                    {}, [this](const auto& req) {
+                    {}, [ws_connection, this](const auto& req) {
                         ws_connection->run(req);
 
                         // Hand over to router

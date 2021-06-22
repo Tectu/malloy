@@ -49,8 +49,8 @@ namespace malloy::server
 
         template<typename F>
         concept route_handler =
-            std::invocable<F, const malloy::http::request&> ||
-            std::invocable<F, const malloy::http::request&,
+            std::invocable<F, const malloy::http::request<>&> ||
+            std::invocable<F, const malloy::http::request<>&,
                            const std::vector<std::string>>;
     }
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
@@ -65,7 +65,7 @@ namespace malloy::server
     {
     public:
         template<typename Derived>
-        using req_generator = std::shared_ptr<http::connection<Derived>::request_generator>;
+        using req_generator = std::shared_ptr<typename http::connection<Derived>::request_generator>;
 
         /**
          * The method type to use.
@@ -75,7 +75,7 @@ namespace malloy::server
         /**
          * The request type to use.
          */
-        using request_type  = malloy::http::request;
+        using request_type  = malloy::http::request<>;
 
         /**
          * The response type to use.

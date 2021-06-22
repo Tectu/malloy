@@ -48,7 +48,7 @@ namespace malloy::client
          */
         [[nodiscard]]
         std::future<http::response<>>
-        http_request(http::request req);
+        http_request(http::request<> req);
 
         #if MALLOY_FEATURE_TLS
             /**

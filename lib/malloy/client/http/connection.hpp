@@ -34,7 +34,7 @@ namespace malloy::client::http
         void
         run(
             char const* port,
-            malloy::http::request req,
+            malloy::http::request<> req,
             callback_t&& cb
         )
         {
@@ -74,7 +74,7 @@ namespace malloy::client::http
     private:
         boost::asio::ip::tcp::resolver m_resolver;
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
-        malloy::http::request m_req;
+        malloy::http::request<> m_req;
         malloy::http::response<> m_resp;
         callback_t m_cb;
 

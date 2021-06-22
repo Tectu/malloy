@@ -24,7 +24,7 @@ template<class Connection>
 [[nodiscard]]
 static
 std::future<malloy::http::response<>>
-http_request_(malloy::http::request req, std::shared_ptr<Connection> connection)
+http_request_(malloy::http::request<> req, std::shared_ptr<Connection> connection)
 {
     return std::async(
         std::launch::async,
@@ -65,7 +65,7 @@ http_request_(malloy::http::request req, std::shared_ptr<Connection> connection)
 #endif // MALLOY_FEATURE_TLS
 
 std::future<malloy::http::response<>>
-controller::http_request(malloy::http::request req)
+controller::http_request(malloy::http::request<> req)
 {
     // Create connection
     auto conn = std::make_shared<http::connection_plain>(
