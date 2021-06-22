@@ -5,4 +5,5 @@ target_sources(
         response.cpp
         router.cpp
         uri.cpp
+        endpoints.cpp
 )

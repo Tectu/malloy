@@ -52,10 +52,13 @@ namespace malloy::server
             if (handler) {
                 if constexpr (WantsCapture) {
                     const auto url_matches = match_target(req);
-                    std::vector matches{url_matches.begin() + 1, url_matches.end()}; // match_results[0] is the input string
-                    // TODO: Should we assert !matches.empty()? Might help catch bugs 
-                    writer(req, handler(req), matches);
-                } else {
+                    std::vector<std::string> matches{
+                    // match_results[0] is the input string
+                    url_matches.begin() + 1, url_matches.end()}; 
+
+                    writer(req, handler(req, matches), conn);
+                }
+                else {
                     writer(req, handler(req), conn);
                 }
                 return std::nullopt;
@@ -64,7 +67,7 @@ namespace malloy::server
             return malloy::http::generator::server_error("no valid handler available.");
         }
     private:
-        auto match_target(const malloy::http::request& req) -> std::smatch {
+        auto match_target(const malloy::http::request& req) const -> std::smatch {
             std::smatch match_result;
             std::string str{ req.uri().raw() };
             std::regex_match(str, match_result, resource_base);
