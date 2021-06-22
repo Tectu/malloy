@@ -6,4 +6,5 @@ target_sources(
         router.cpp
         uri.cpp
         endpoints.cpp
+        request.cpp
 )

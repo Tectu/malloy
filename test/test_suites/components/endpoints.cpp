@@ -6,7 +6,7 @@ using namespace malloy::http;
 using namespace malloy::server;
 
 
-void endpt_handle(const auto& endpt, const std::string_view& url) {
+void endpt_handle(const auto& endpt, const std::string& url) {
     request req{method::get, "", 0, url};
     [[maybe_unused]]const auto rs = endpt.handle(req, http::connection_t{std::shared_ptr<http::connection_plain>{nullptr}});
 }
@@ -21,7 +21,7 @@ TEST_SUITE("components - endpoints") {
         constexpr auto second_cap = "42";
 
         const auto input_url = std::string{"/content/"} + first_cap + "/" + second_cap;
-        std::regex input_reg{R"(/content/(\w+)/([0-9]+))"};
+        std::regex input_reg{R"(/content/(\w+)/(\d+))"};
         endpoint_http_regex<response<>, true> endpt;
 
         bool handler_called{false};
@@ -33,6 +33,7 @@ TEST_SUITE("components - endpoints") {
 
             return generator::ok();
         };
+        endpt.resource_base = input_reg;
         endpt.writer = [](auto&&...){};
 
         endpt_handle(endpt, input_url);
@@ -49,6 +50,7 @@ TEST_SUITE("components - endpoints") {
             (*called) = true;
             return generator::ok();
         };
+        endpt.resource_base = input_reg;
         endpt.writer = [](auto&&...) {};
 
         endpt_handle(endpt, input_url);
