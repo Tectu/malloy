@@ -174,8 +174,16 @@ namespace malloy::server
             if (m_logger)
                 m_logger->debug("adding route: {}", target);
 
+            constexpr bool uses_captures =
+                std::invocable<Func, const request_type&,
+                               const std::vector<std::string>&>;
+
             using func_t = std::decay_t<Func>;
-            using Body = std::invoke_result_t<func_t, const request_type&>;
+            using Body = std::conditional_t<
+                uses_captures,
+                std::invoke_result_t<func_t, const request_type&,
+                                     const std::vector<std::string>&>,
+                std::invoke_result_t<func_t, const request_type&>>;
 
             // Build regex
             std::regex regex;
@@ -189,11 +197,6 @@ namespace malloy::server
             }
             constexpr bool wrapped = detail::is_variant<Body>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
-
-            constexpr bool uses_captures =
-                std::invocable<Func, const request_type&,
-                               const std::vector<std::string>&>;
-
             // Build endpoint
             auto ep = std::make_shared<endpoint_http_regex<bodies_t, uses_captures>>();
             ep->resource_base = std::move(regex);
