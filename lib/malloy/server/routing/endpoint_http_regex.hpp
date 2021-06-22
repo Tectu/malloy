@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <regex>
+#include <cassert>
 
 namespace malloy::server
 {
@@ -52,6 +53,12 @@ namespace malloy::server
             if (handler) {
                 if constexpr (WantsCapture) {
                     const auto url_matches = match_target(req);
+                    if (url_matches.empty()) {
+                        throw std::logic_error{
+                                R"(endpoint_http_regex passed request which does not match: )" +
+                            std::string{req.target()}};
+                    }
+
                     std::vector<std::string> matches{
                     // match_results[0] is the input string
                     url_matches.begin() + 1, url_matches.end()}; 
