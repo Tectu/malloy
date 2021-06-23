@@ -192,6 +192,8 @@ namespace malloy::server::http
         boost::beast::flat_buffer m_buffer;
 
     private:
+        friend class request_generator;
+
         std::shared_ptr<spdlog::logger> m_logger;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<handler> m_router;
@@ -228,7 +230,7 @@ namespace malloy::server::http
             auto header = m_parser->get().base();
             // Parse the request into something more useful from hereon
             auto gen = std::make_shared<request_generator>(std::move(m_parser), std::move(header), derived().shared_from_this());
-            malloy::http::uri req_uri{std::string{gen->header().target().begin()}};
+            malloy::http::uri req_uri{std::string{gen->header().target()}};
 
             // Check request URI for legality
             if (!req_uri.is_legal()) {
@@ -251,12 +253,12 @@ namespace malloy::server::http
 
                 // Launch the connection
                 gen->template body<boost::beast::http::string_body>(
-                    {}, [ws_connection, this](const auto& req) {
+                    {}, [ws_connection, this](auto&& req) {
                         ws_connection->run(req);
 
                         // Hand over to router
-                        m_router->websocket(*m_doc_root, std::move(req),
-                                            ws_connection);
+                      //  m_router->websocket(*m_doc_root, std::make_shared<std::decay_t<decltype(req)>>(std::move(req)),
+                                            //ws_connection);
                     });
             }
 

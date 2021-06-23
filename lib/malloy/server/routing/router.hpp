@@ -240,7 +240,7 @@ namespace malloy::server
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
-                if (!req.uri().resource_starts_with(resource_base))
+                if (malloy::http::uri{ std::string{req->header().target()} }.resource_starts_with(resource_base))
                     continue;
 
                 // Log
@@ -249,19 +249,19 @@ namespace malloy::server
                 }
 
                 // Chop request resource path
-                req.uri().chop_resource(resource_base);
+                //req.uri().chop_resource(resource_base);
 
                 // Let the sub-router handle things from here...
-                router->template handle_request<isWebsocket>(doc_root, std::move(req), connection);
+                router->template handle_request<isWebsocket, Derived>(doc_root, std::move(req), connection);
 
                 // We're done handling this request
                 return;
             }
 
             if constexpr (isWebsocket)
-                handle_ws_request(std::move(req), connection);
+                handle_ws_request<Derived>(std::move(req), connection);
             else
-                handle_http_request(doc_root, std::move(req), connection);
+                handle_http_request<Derived>(doc_root, std::move(req), connection);
         }
 
         /**
@@ -283,7 +283,7 @@ namespace malloy::server
             if (m_logger) {
                 m_logger->debug("handling HTTP request: {} {}",
                                 req.method_string(),
-                                req.uri().resource_string());
+                                req->header().target());
             }
 
             const auto& header = req->header();
@@ -315,7 +315,7 @@ namespace malloy::server
                 if (resp) {
 
                     // Send the response
-                    send_response(req, std::move(*resp), connection);
+                    send_response(req->header(), std::move(*resp), connection);
                 }
 
                 // We're done handling this request
@@ -493,7 +493,7 @@ namespace malloy::server
          * @param connection The connection.
          */
         template<typename Body>
-        void send_response(const request_type& req, malloy::http::response<Body>&& resp, http::connection_t connection)
+        void send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection)
         {
             // Add more information to the response
             resp.keep_alive(req.keep_alive());

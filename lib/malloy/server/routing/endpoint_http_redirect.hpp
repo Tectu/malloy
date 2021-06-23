@@ -19,7 +19,7 @@ namespace malloy::server
         [[nodiscard]]
         bool matches(const req_header_t& req) const override
         {
-            return uri{req.target().data(), req.target().size}.resource_string() == resource_old;
+            return malloy::http::uri{ std::string{req.target()} }.resource_string() == resource_old;
         }
 
         [[nodiscard]]
