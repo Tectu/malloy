@@ -22,8 +22,8 @@ jobs:
         exclude:
           - os: ubuntu-latest 
             msvc: false
-          - os: windows-latest 
-            msvc: false
+          - os: windows-latest  
+            msvc: false # choco package for mingw 10.2.0 does not support threads, see: #21
 
     continue-on-error: ${{ matrix.experimental }}
     runs-on: ${{ matrix.os }}
