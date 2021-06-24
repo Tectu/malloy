@@ -23,7 +23,7 @@ jobs:
           - os: ubuntu-latest 
             msvc: false
           - os: windows-latest 
-            msvc: true
+            msvc: false
 
     continue-on-error: ${{ matrix.experimental }}
     runs-on: ${{ matrix.os }}
