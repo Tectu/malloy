@@ -40,10 +40,6 @@ namespace spdlog
 namespace malloy::server
 {
     namespace detail {
-        struct any_callable {
-                template<typename T>
-                void operator()(T&&) {}
-        };
         template<typename T, typename H>
         concept has_handler = requires(T t, H h) { t.set_handler(h); };
 
@@ -52,7 +48,7 @@ namespace malloy::server
 
         template<typename V>
         concept is_variant = requires(V v) { 
-            std::visit(any_callable{}, v); 
+            []<typename... Args>(const std::variant<Args...>& vs){}(v); // https://stackoverflow.com/q/68115853/12448530
         };
 
     }
