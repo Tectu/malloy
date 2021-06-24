@@ -32,8 +32,8 @@ namespace malloy::http
          */
         generator() = default;
 
-        generator(const generator &other) = delete;
-        generator(generator &&other) = delete;
+        generator(const generator& other) = delete;
+        generator(generator&& other) = delete;
 
         /**
          * Destructor
@@ -41,8 +41,8 @@ namespace malloy::http
         virtual ~generator() = default;
 
         // Operators
-        generator &operator=(const generator &rhs) = delete;
-        generator &operator=(generator &&rhs) = delete;
+        generator& operator=(const generator& rhs) = delete;
+        generator& operator=(generator&& rhs) = delete;
 
         /**
          * Construct a 200 response.
