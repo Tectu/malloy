@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <regex>
+#include <cassert>
 
 namespace malloy::server
 {
@@ -14,11 +15,15 @@ namespace malloy::server
         virtual bool matches_resource(const malloy::http::request& req) const = 0;
     };
 
-    template<typename Response>
+    template<typename Response, bool WantsCapture>
     struct endpoint_http_regex :
         endpoint_http, public resource_matcher
     {
-        using handler_t = std::function<Response(const malloy::http::request&)>;
+        using handler_t = std::conditional_t<
+            WantsCapture,
+            std::function<Response(const malloy::http::request&,
+                                   const std::vector<std::string>&)>,
+            std::function<Response(const malloy::http::request&)>>;
 
         std::regex resource_base;
         handler_t handler;
@@ -27,9 +32,8 @@ namespace malloy::server
         [[nodiscard]]
         bool matches_resource(const malloy::http::request& req) const override
         {
-            std::smatch match_result;
-            std::string str{ req.uri().raw() };
-            return std::regex_match(str, match_result, resource_base);
+            const auto url = req.uri();
+            return std::regex_match(url.raw().begin(), url.raw().end(), resource_base);
         }
 
         [[nodiscard]]
@@ -47,12 +51,32 @@ namespace malloy::server
         handle_retr handle(const malloy::http::request& req, const http::connection_t& conn) const override
         {
             if (handler) {
-                writer(req, handler(req), conn);
+                if constexpr (WantsCapture) {
+                    std::smatch url_matches;
+                    std::string url{req.target()};
+                    std::regex_match(url, url_matches, resource_base);
+
+                    if (url_matches.empty()) {
+                        throw std::logic_error{
+                            R"(endpoint_http_regex passed request which does not match: )" +
+                            std::string{req.target()}};
+                    } 
+
+                    std::vector<std::string> matches{
+                    // match_results[0] is the input string
+                    url_matches.begin() + 1, url_matches.end()}; 
+
+                    writer(req, handler(req, matches), conn);
+                }
+                else {
+                    writer(req, handler(req), conn);
+                }
                 return std::nullopt;
             }
 
             return malloy::http::generator::server_error("no valid handler available.");
         }
+
 
     };
 

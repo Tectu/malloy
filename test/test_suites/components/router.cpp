@@ -8,6 +8,16 @@ using namespace malloy::server;
 TEST_SUITE("components - router")
 {
 
+    TEST_CASE("add [regex]") {
+        router r;
+        SUBCASE("Adding a handler with only a request compiles") {
+            r.add(method::get, "", [](const auto&) { return generator::ok(); });
+        }
+        SUBCASE("Adding a handler with a request and capture results compiles") {
+            r.add(method::get, "", [](const auto&, const auto&){ return generator::ok(); });
+        }
+    }
+
     TEST_CASE("add [redirect]")
     {
         router r;

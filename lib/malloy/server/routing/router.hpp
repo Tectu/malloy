@@ -51,6 +51,11 @@ namespace malloy::server
             []<typename... Args>(const std::variant<Args...>& vs){}(v); // https://stackoverflow.com/q/68115853/12448530
         };
 
+        template<typename F>
+        concept route_handler =
+            std::invocable<F, const malloy::http::request&> ||
+            std::invocable<F, const malloy::http::request&,
+                           const std::vector<std::string>>;
     }
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
@@ -158,56 +163,28 @@ namespace malloy::server
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<std::invocable<const request_type&> Func>
+        template<detail::route_handler Func>
         bool add(const method_type method, const std::string_view target, Func&& handler)
         {
-            // Log
-            if (m_logger)
-                m_logger->debug("adding route: {}", target);
-
             using func_t = std::decay_t<Func>;
-            using Body = std::invoke_result_t<func_t, const request_type&>;
 
-            // Build regex
-            std::regex regex;
-            try {
-                regex = std::move(std::regex{ target.cbegin(), target.cend() });
+            constexpr bool uses_captures =
+                std::invocable<func_t, const request_type&,
+                               const std::vector<std::string>&>;
+
+            if constexpr (uses_captures) {
+                return add_regex_endpoint<
+                    uses_captures,
+                    std::invoke_result_t<func_t, const request_type&,
+                                         const std::vector<std::string>&>>(
+                    method, target, std::forward<Func>(handler));
             }
-            catch (const std::regex_error& e) {
-                if (m_logger)
-                    m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
-                return false;
+            else {
+                return add_regex_endpoint<
+                    uses_captures,
+                    std::invoke_result_t<func_t, const request_type&>>(
+                    method, target, std::forward<Func>(handler));
             }
-            constexpr bool wrapped = detail::is_variant<Body>;
-            using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
-
-            // Build endpoint
-            auto ep = std::make_shared<endpoint_http_regex<bodies_t>>();
-            ep->resource_base = std::move(regex);
-            ep->method = method;
-            if constexpr (wrapped) {
-                ep->handler = std::move(handler);
-            } else {
-                ep->handler = 
-                    [w = std::move(handler)](const auto& req) { 
-                        return std::variant<Body>{w(req)}; 
-                    };
-            }
-
-            // Check handler
-            if (!ep->handler) {
-                if (m_logger)
-                    m_logger->warn("route has invalid handler. ignoring.");
-                return false;
-            }
-                
-            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { 
-                    std::visit([&, this](auto&& resp) { send_response(req, std::move(resp), conn);  }, std::move(resp));
-            };
-
-
-            // Add route
-            return add_http_endpoint(std::move(ep));
         }
         /**
          * Add an HTTP file-serving location.
@@ -267,7 +244,9 @@ namespace malloy::server
                     continue;
 
                 // Log
-                m_logger->debug("invoking sub-router on {}", resource_base);
+                if (m_logger) {
+                    m_logger->debug("invoking sub-router on {}", resource_base);
+                }
 
                 // Chop request resource path
                 req.uri().chop_resource(resource_base);
@@ -300,10 +279,11 @@ namespace malloy::server
         )
         {
             // Log
-            m_logger->debug("handling HTTP request: {} {}",
-                req.method_string(),
-                req.uri().resource_string()
-            );
+            if (m_logger) {
+                m_logger->debug("handling HTTP request: {} {}",
+                                req.method_string(),
+                                req.uri().resource_string());
+            }
 
             // Check routes
             for (const auto& ep : m_endpoints_http) {
@@ -314,7 +294,9 @@ namespace malloy::server
                 // Generate preflight response (if supposed to)
                 if (m_generate_preflights && (req.method() == malloy::http::method::options)) {
                     // Log
-                    m_logger->debug("automatically constructing preflight response.");
+                    if (m_logger) {
+                        m_logger->debug("automatically constructing preflight response.");
+                    }
 
                     // Generate
                     auto resp = generate_preflight_response(req);
@@ -355,10 +337,11 @@ namespace malloy::server
             http::connection_t connection
         )
         {
-            m_logger->debug("handling WS request: {} {}",
-                req.method_string(),
-                req.uri().resource_string()
-            );
+            if (m_logger) {
+                m_logger->debug("handling WS request: {} {}",
+                                req.method_string(),
+                                req.uri().resource_string());
+            }
 
             // Check routes
             for (const auto& ep : m_endpoints_websocket) {
@@ -368,7 +351,9 @@ namespace malloy::server
 
                 // Validate route handler
                 if (!ep->handler) {
-                    m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+                    if (m_logger) {
+                        m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+                    }
                     continue;
                 }
 
@@ -390,6 +375,58 @@ namespace malloy::server
         std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
         bool m_generate_preflights = false;
+
+        template<bool UsesCaptures, typename Body, typename Func>
+        auto add_regex_endpoint(method_type method, std::string_view target,
+                                Func&& handler) -> bool
+        {
+            // Log
+            if (m_logger)
+                m_logger->debug("adding route: {}", target);
+
+
+            // Build regex
+            std::regex regex;
+            try {
+                regex = std::move(std::regex{ target.cbegin(), target.cend() });
+            }
+            catch (const std::regex_error& e) {
+                if (m_logger)
+                    m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
+                return false;
+            }
+
+
+            constexpr bool wrapped = detail::is_variant<Body>;
+            using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
+            // Build endpoint
+            auto ep = std::make_shared<endpoint_http_regex<bodies_t, UsesCaptures>>();
+            ep->resource_base = std::move(regex);
+            ep->method = method;
+            if constexpr (wrapped) {
+                ep->handler = std::move(handler);
+            } else {
+                ep->handler = 
+                    [w = std::forward<Func>(handler)](auto&&... args) { 
+                        return std::variant<Body>{w(std::forward<decltype(args)>(args)...)}; 
+                    };
+            }
+
+            // Check handler
+            if (!ep->handler) {
+                if (m_logger)
+                    m_logger->warn("route has invalid handler. ignoring.");
+                return false;
+            }
+                
+            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { 
+                    std::visit([&, this](auto&& resp) { send_response(req, std::move(resp), conn);  }, std::move(resp));
+            };
+
+
+            // Add route
+            return add_http_endpoint(std::move(ep));
+        }
 
         /**
          * Adds an HTTP endpoint.
