@@ -56,9 +56,16 @@ int main()
         });
 
         // A regex route with capturing
-        router->add(method::get, "^/regex/(\\w+)$", [](const auto& req, std::vector<std::string> captures) {
+        router->add(method::get, "^/regex/(\\w+)$", [](const auto& req, const std::vector<std::string>& captures) {
+            std::string body;
+            body += "^/regex/(\\w)$\n";
+            body += "\n";
+            body += "  captures:\n";
+            for (std::size_t i = 0; i < captures.size(); i++)
+                body += std::to_string(i) + ": " + captures[i] + "\n";
+
             response resp{ status::ok };
-            resp.body() = "/regex/" + captures.at(0);
+            resp.body() = body;
 
             return resp;
         });
