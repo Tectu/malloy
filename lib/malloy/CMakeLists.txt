@@ -62,10 +62,10 @@ target_link_libraries(
     PUBLIC
         spdlog::spdlog
         Boost::headers
+        $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::Crypto>
+        $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::SSL>
+        $<$<AND:$<BOOL:${MALLOY_FEATURE_TLS}>,$<BOOL:${WIN32}>>:crypt32>        # ToDo: This is only needed when MALLOY_FEATURE_CLIENT is ON
     PRIVATE
         $<$<BOOL:${WIN32}>:wsock32>
         $<$<BOOL:${WIN32}>:ws2_32>
-        $<$<AND:$<BOOL:${MALLOY_FEATURE_TLS}>,$<BOOL:${WIN32}>>:crypt32>        # ToDo: This is only needed when MALLOY_FEATURE_CLIENT is ON
-        $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::Crypto>
-        $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::SSL>
-)
+    )
