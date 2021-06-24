@@ -46,7 +46,7 @@ Optional:
 # Examples
 A variety of examples can be found in the `/examples` directory.
 
-The most basic use looks like this:
+HTTP Server:
 ```cpp
 int main()
 {
@@ -92,7 +92,44 @@ int main()
 
     return EXIT_SUCCESS;
 }
+```
 
+HTTP client:
+```cpp
+int main()
+{
+    // Create the controller config
+    malloy::client::controller::config cfg;
+    cfg.num_threads = 1;
+    cfg.logger      = std::make_shared<spdlog::logger>();
+
+    // Create the controller
+    malloy::client::controller c;
+    if (!c.init(cfg)) {
+        std::cerr << "initializing controller failed." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // Start
+    if (!c.start()) {
+        std::cerr << "starting controller failed." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // Make request
+    malloy::http::request req(
+        malloy::http::method::get,
+        "www.google.com",
+        80,
+        "/"
+    );
+    auto resp = c.http_request(req);
+
+    // Print HTTP response
+    std::cout << resp.get() << std::endl;
+
+    return EXIT_SUCCESS;
+}
 ```
 
 # Motivation
