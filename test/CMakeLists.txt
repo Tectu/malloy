@@ -4,6 +4,9 @@ add_executable(${TARGET})
 
 add_subdirectory(test_suites)
 
+
+malloy_setup_defines(${TARGET})
+
 target_include_directories(
     ${TARGET}
     PRIVATE

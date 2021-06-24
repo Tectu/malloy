@@ -5,10 +5,5 @@ function(malloy_example_setup_client target)
             malloy-objs
     )
 
-    target_compile_options(
-        ${target}
-        PRIVATE
-            $<$<BOOL:${WIN32}>:-Wa,-mbig-obj>
-            $<$<BOOL:${WIN32}>:-O3>
-    )
+    malloy_setup_defines(${target})
 endfunction()
