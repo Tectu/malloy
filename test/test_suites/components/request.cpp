@@ -23,9 +23,7 @@ TEST_SUITE("components - request") {
             request req{method::get, "", 0, target};
             
             CHECK(req.target() == target);
-
-            // ToDo: This fails
-            //CHECK(req.uri().raw() == target);
+            CHECK(req.uri().raw() == target);
         }
     }
 

@@ -14,6 +14,10 @@ request::request(
     method(method_);
     target(target_);
     set(http::field::host, host);
+
+    // URI
+    class uri u{ std::string{ target_.data(), target_.size() }};
+    m_uri = std::move(u);
 }
 
 request::request(boost::beast::http::request<boost::beast::http::string_body>&& raw)
