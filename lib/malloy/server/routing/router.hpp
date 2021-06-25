@@ -65,7 +65,7 @@ namespace malloy::server
          * @param connection The connection.
          */
         template<typename Body>
-        void send_response(const boost::beast::http::request_header& req, malloy::http::response<Body>&& resp, http::connection_t connection)
+        void send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection)
         {
             // Add more information to the response
             //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works 
@@ -94,6 +94,8 @@ namespace malloy::server
     public:
         template<typename Derived>
         using req_generator = std::shared_ptr<typename http::connection<Derived>::request_generator>;
+
+        using request_header = boost::beast::http::request_header<>;
 
         /**
          * The method type to use.
@@ -309,7 +311,7 @@ namespace malloy::server
             // Log
             if (m_logger) {
                 m_logger->debug("handling HTTP request: {} {}",
-                                req.method_string(),
+                                req->header().method_string(),
                                 req->header().target());
             }
 
@@ -326,13 +328,11 @@ namespace malloy::server
                     if (m_logger) {
                         m_logger->debug("automatically constructing preflight response.");
                     }
-                    req->body<boost::beast::http::string_body>([req](const auto& request) {
-						// Generate
-						auto resp = generate_preflight_response(request);
+					// Generate
+					auto resp = generate_preflight_response(header);
 
-						// Send the response
-						detail::send_response(request, std::move(resp), connection);
-                    });
+					// Send the response
+					detail::send_response(header, std::move(resp), connection);
                     // We're done handling this request
                     return;
                 }
@@ -342,7 +342,7 @@ namespace malloy::server
                 if (resp) {
 
                     // Send the response
-                    detail::send_response(info, std::move(*resp), connection);
+                    detail::send_response(req->header(), std::move(*resp), connection);
                 }
 
                 // We're done handling this request
@@ -388,7 +388,7 @@ namespace malloy::server
                     }
 
                     // Set handler
-                    std::visit([&ep](auto& c){ 
+                    std::visit([&ep = ep](auto& c){ 
                         if constexpr (detail::has_handler<decltype(*c), decltype(ep->handler)>){
                             c->set_handler(ep->handler); 
                         }
@@ -487,7 +487,7 @@ namespace malloy::server
          */
         bool add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep);
 
-        response_type generate_preflight_response(const request_type& req) const;
+        response_type generate_preflight_response(const request_header& req) const;
 
         /**
          * Adds a message to the log or throws an exception if no logger is available.

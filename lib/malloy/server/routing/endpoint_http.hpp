@@ -25,7 +25,7 @@ namespace malloy::server
         using response_t = std::variant<malloy::http::response<Bodies>...>;
 
         template<typename... Bodies>
-        using writer_t = std::function<void(const malloy::http::request_header&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
+        using writer_t = std::function<void(const boost::beast::http::request_header<>&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
 
         using handle_retr = std::optional<malloy::http::response<boost::beast::http::string_body>>;
         using req_header_t = boost::beast::http::request_header<>;

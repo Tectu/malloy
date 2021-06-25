@@ -55,20 +55,15 @@ namespace malloy::server::http
             auto header() const -> const header_t& {
                 return header_;
             }
-            
-            template<typename Body, typename Callback, 
+            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback, 
                 typename SetupCb>
-                //std::invocable<malloy::http::request<Body>&&>
+                //
                 //std::invocable<Body::value_type&>
-            auto body(Callback&& done, const std::optional<SetupCb>& setup = std::nullopt) {
+            auto body(Callback&& done, SetupCb&& setup) {
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
-                auto parser = [this]()->std::shared_ptr<request_parser<body_t>>{
-                    return std::make_shared<request_body<body_t>>(std::move(*h_parser_));
-                }();
-                if (setup) {
-                    std::invoke(*setup, parser->get().body());
-                }
+                auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
+                std::invoke(setup, parser->get().body());
 
                 boost::beast::http::async_read(
                     parent_->derived().m_stream, buff_, *parser,
@@ -78,6 +73,12 @@ namespace malloy::server::http
                     done(malloy::http::request<Body>{p->release()});
                 });
             }
+            
+            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
+            auto body(Callback&& done) {
+                return body<Body>(std::forward<Callback>(done), [](auto) {});
+            }
+            
 
         private:
           request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent)
