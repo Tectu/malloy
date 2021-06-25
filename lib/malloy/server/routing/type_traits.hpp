@@ -4,6 +4,9 @@
 #include <variant>
 
 
+#include "malloy/server/routing/body_type.hpp"
+
+
 namespace malloy::server::concepts {
 namespace detail {
     struct any_callable {
@@ -23,13 +26,15 @@ concept route_handler =
 	std::invocable<F, const Req&,
 				   const std::vector<std::string>>;
 
+template<typename T, typename H>
+concept valid_body_retr = is_variant<T> || std::same_as<T, body_type<typename H::request_type::body_type>>;
 
 template<typename H>
-concept advanced_route_handler = requires(const typename H::request_type::header_type& h, typename H::body_type::value_type& v)
+concept advanced_route_handler = requires(const typename H::request_type::header_type& h, typename H::request_type::body_type::value_type& v)
 
 // clang-format off
 {
-    { H::body_for(h) };
+    { H::body_for(h) } -> valid_body_retr<H>;
     { H::setup_body(h, v) };
 
 // clang-format on

@@ -20,6 +20,8 @@ namespace malloy::server
     struct endpoint_http_regex :
         endpoint_http, public resource_matcher
     {
+        template<typename Derived>
+        using req_gen_t = std::shared_ptr<typename http::connection<Derived>::request_generator>;
         template<typename Req>
         using handler_t = std::conditional_t<
             WantsCapture,
@@ -29,7 +31,7 @@ namespace malloy::server
 
 
         std::regex resource_base;
-        handler_t<typename Handler::body_type> handler;
+        handler_t<typename Handler::request_type> handler;
         std::function<void(const boost::beast::http::request_header<>&, Response&&, const http::connection_t&)> writer;
 
         [[nodiscard]]
@@ -49,7 +51,7 @@ namespace malloy::server
             // Base class
             return endpoint_http::matches(req);
         }
-        void handle_req(const auto& req, const http::connection_t& conn)
+        void handle_req(const auto& req, const http::connection_t& conn) const
         {
             if constexpr (WantsCapture) {
                 std::smatch url_matches;
@@ -75,19 +77,19 @@ namespace malloy::server
             }
         }
 
-        void load_body(auto&& body, auto& gen, const http::connection_t& conn)
+        void load_body(auto&& body, auto gen, const http::connection_t& conn) const
         {
-            using T = std::decay_t<decltype(body)>;
-            gen.template body<T>(
+            using T = std::decay_t<decltype(body)>::value_type;
+            gen->template body<T>(
                 [this, conn](const auto& req) {
                     handle_req(req, conn);
-                }, [&gen](auto& body) { Handler::setup_body(gen.header(), body); });
+                }, [&gen](auto& body) { Handler::setup_body(gen->header(), body); });
         }
 
-        void visit_bodies(auto& gen, const http::connection_t& conn)
+        void visit_bodies(const auto& gen, const http::connection_t& conn) const
         {
-            auto bodies = [this, gen] {
-                auto body = Handler::body_for(gen.header());
+            auto bodies = [this, &gen] {
+                auto body = Handler::body_for(gen->header());
                 using body_t = std::decay_t<decltype(body)>;
 
                 if constexpr (concepts::is_variant<body_t>) {
@@ -98,7 +100,7 @@ namespace malloy::server
                 }
             }();
             std::visit(
-                [this, gen, conn](auto&& body) mutable {
+                [this, gen, conn](auto&& body) {
                     load_body(std::move(body), gen, conn);
                 },
                 std::move(bodies));
@@ -108,7 +110,8 @@ namespace malloy::server
         handle(const req_t& gens, const http::connection_t& conn) const override
         {
             if (handler) {
-                std::visit([this, conn](auto& gen) { visit_bodies(gen, conn); },
+                std::visit([this, conn]<typename Generator>(Generator&& gen) { 
+                    visit_bodies(std::forward<Generator>(gen), conn); },
                            gens);
                 return std::nullopt;
             } else {

@@ -11,6 +11,7 @@
 #include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
 #include "malloy/server/routing/type_traits.hpp"
+#include "malloy/server/routing/body_type.hpp"
 #include <type_traits>
 #include <concepts>
 
@@ -42,6 +43,7 @@ namespace spdlog
 
 namespace malloy::server
 {
+    
     namespace detail {
         template<typename T, typename H>
         concept has_handler = requires(T t, H h) { t.set_handler(h); };
@@ -53,17 +55,14 @@ namespace malloy::server
             using request_type = malloy::http::request<boost::beast::http::string_body>;
             using header_type = boost::beast::http::request_header<>;
 
-            static constexpr bool wants_capture = WantsCapture;
-
-            default_route_handler(Func&& f) : handler{ std::move(func) } {}
-
-            auto body_for(const header_type) -> request_type {
-                return request_type{};
+            static auto body_for(const header_type&) -> body_type<typename request_type::body_type> {
+                return {};
             }
 
-            auto setup_body(const header_type&, typename request_type::value_type&) {}
+            static auto setup_body(const header_type&, typename request_type::body_type::value_type&) {}
 
         };
+        static_assert(concepts::advanced_route_handler<default_route_handler>, "Default handler must satisfy advanced router handler");
 
         /**
          * Send a response.
@@ -221,7 +220,8 @@ namespace malloy::server
             else {
                 return add_regex_endpoint<
                     uses_captures,
-                    std::invoke_result_t<func_t, const request_type&>, ExtraInfo>(
+                    std::invoke_result_t<func_t, const request_type&>, 
+                    ExtraInfo>(
                     method, target, std::forward<Func>(handler));
             }
         }
@@ -424,7 +424,7 @@ namespace malloy::server
         bool m_generate_preflights = false;
 
 
-        template<bool UsesCaptures, typename Body, typename Func, concepts::advanced_route_handler ExtraInfo>
+        template<bool UsesCaptures, typename Body, concepts::advanced_route_handler ExtraInfo, typename Func>
         auto add_regex_endpoint(method_type method, std::string_view target,
                                 Func&& handler) -> bool
         {
@@ -469,7 +469,7 @@ namespace malloy::server
             }
                 
             ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { 
-                    std::visit([&, this](auto&& resp) { send_response(req, std::move(resp), conn);  }, std::move(resp));
+                    std::visit([&, this](auto&& resp) { detail::send_response(req, std::move(resp), conn);  }, std::move(resp));
             };
 
 
