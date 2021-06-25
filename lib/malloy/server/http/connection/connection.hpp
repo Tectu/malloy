@@ -254,7 +254,7 @@ namespace malloy::server::http
 
                 // Launch the connection
                 gen->template body<boost::beast::http::string_body>(
-                    {}, [ws_connection, this](auto&& req) {
+                    [ws_connection, this](auto&& req) {
                         ws_connection->run(req);
 
                         // Hand over to router

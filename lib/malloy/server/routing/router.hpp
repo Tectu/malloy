@@ -65,11 +65,11 @@ namespace malloy::server
          * @param connection The connection.
          */
         template<typename Body>
-        void send_response(const request_info& req, malloy::http::response<Body>&& resp, http::connection_t connection)
+        void send_response(const boost::beast::http::request_header& req, malloy::http::response<Body>&& resp, http::connection_t connection)
         {
             // Add more information to the response
-            resp.keep_alive(req.keep_alive);
-            resp.version(req.version);
+            //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works 
+            resp.version(req.version());
             resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
             resp.prepare_payload();
 
@@ -338,12 +338,11 @@ namespace malloy::server
                 }
 
                 // Generate the response for the request
-                auto info_resp = ep->handle(req, connection);
-                const auto&[info, resp] = info_resp;
+                auto resp = ep->handle(req, connection);
                 if (resp) {
 
                     // Send the response
-                    detail::send_response(info, std::move(*(info_resp.second)), connection);
+                    detail::send_response(info, std::move(*resp), connection);
                 }
 
                 // We're done handling this request

@@ -29,7 +29,7 @@ namespace malloy::server
 
         std::regex resource_base;
         handler_t handler;
-        std::function<void(const Req&, Response&&, const http::connection_t&)> writer;
+        std::function<void(const boost::beast::http::request_header&, Response&&, const http::connection_t&)> writer;
 
         [[nodiscard]]
         bool matches_resource(const req_header_t& req) const override
