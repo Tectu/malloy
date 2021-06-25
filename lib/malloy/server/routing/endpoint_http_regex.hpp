@@ -77,16 +77,16 @@ namespace malloy::server
         void load_body(auto&& body, auto& gen, const http::connection_t& conn)
         {
             using T = std::decay_t<decltype(body)>;
-            gen.template body<T>(std::forward<decltype(body)>(body),
-                                 [this, conn](const auto& req) {
-                                     handle_req(req, conn);
-                                 });
+            gen.template body<T>(
+                [this, conn](const auto& req) {
+                    handle_req(req, conn);
+                }, std::forward<decltype(body)>(body));
         }
 
         void visit_bodies(auto& gen, const http::connection_t& conn)
         {
             auto bodies = [this, gen] {
-                if constexpr (concepts::advanced_route_handler<Handler, Req>) {
+                if constexpr (concepts::advanced_route_handler<Handler>) {
                     return handler.body_for(gen.header());
                 }
                 else {

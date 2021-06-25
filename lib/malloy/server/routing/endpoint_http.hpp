@@ -15,6 +15,17 @@
 namespace malloy::server
 {
 
+    namespace detail {
+        struct request_info {
+            template<typename T>
+            request_info(const boost::beast::http::request<T>& req) : version{ req.version() }, keep_alive{ req.keep_alive() } {} // Implicit 
+            request_info(int version_, bool keep_alive_) : version{ version_ }, keep_alive{ keep_alive_ } {}
+
+
+            int version;
+            bool keep_alive;
+        };
+    }
      /**
      * An HTTP endpoint.
      */
@@ -24,7 +35,7 @@ namespace malloy::server
         template<typename Req, typename... Bodies>
         using writer_t = std::function<void(const malloy::http::request<Req>&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
 
-        using handle_retr = std::optional<malloy::http::response<boost::beast::http::string_body>>;
+        using handle_retr = std::pair<detail::request_info, std::optional<malloy::http::response<boost::beast::http::string_body>>;
         using req_header_t = boost::beast::http::request_header<>;
         using req_t = http::request_generator_t;
 

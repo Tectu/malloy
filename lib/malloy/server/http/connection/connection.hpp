@@ -54,8 +54,9 @@ namespace malloy::server::http
             auto header() const -> const header_t& {
                 return header_;
             }
+            
             template<typename Body, std::invocable<malloy::http::request<Body>> Callback>
-            auto body(Body&& initial, Callback&& done)  {
+            auto body(Callback&& done, Body&& initial = {}) {
               using namespace boost::beast::http;
               using body_t = std::decay_t<Body>;
               auto parser = std::make_shared<request_parser<body_t>>(

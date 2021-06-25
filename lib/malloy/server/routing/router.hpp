@@ -54,6 +54,31 @@ namespace malloy::server
             std::invocable<F, const malloy::http::request<>&> ||
             std::invocable<F, const malloy::http::request<>&,
                            const std::vector<std::string>>;
+
+
+        /**
+         * Send a response.
+         *
+         * @tparam Connection
+         * @param req The request to which we're responding.
+         * @param resp The response.
+         * @param connection The connection.
+         */
+        template<typename Body>
+        void send_response(const request_info& req, malloy::http::response<Body>&& resp, http::connection_t connection)
+        {
+            // Add more information to the response
+            resp.keep_alive(req.keep_alive);
+            resp.version(req.version);
+            resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+            resp.prepare_payload();
+
+            std::visit([resp = std::move(resp)](auto& c) mutable { 
+                if constexpr (detail::has_write<decltype(*c), decltype(resp)>) {
+                    c->do_write(std::move(resp)); 
+                }
+            }, connection);
+        }
     }
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
@@ -65,6 +90,7 @@ namespace malloy::server
      */
     class router
     {
+        using str_body = boost::beast::http::string_body;
     public:
         template<typename Derived>
         using req_generator = std::shared_ptr<typename http::connection<Derived>::request_generator>;
@@ -300,23 +326,24 @@ namespace malloy::server
                     if (m_logger) {
                         m_logger->debug("automatically constructing preflight response.");
                     }
+                    req->body<boost::beast::http::string_body>([req](const auto& request) {
+						// Generate
+						auto resp = generate_preflight_response(request);
 
-                    // Generate
-                    auto resp = generate_preflight_response(req);
-
-                    // Send the response
-                    send_response(req, std::move(resp), connection);
-
+						// Send the response
+						detail::send_response(request, std::move(resp), connection);
+                    });
                     // We're done handling this request
                     return;
                 }
 
                 // Generate the response for the request
-                auto resp = ep->handle(req, connection);
+                auto info_resp = ep->handle(req, connection);
+                const auto&[info, resp] = info_resp;
                 if (resp) {
 
                     // Send the response
-                    send_response(req->header(), std::move(*resp), connection);
+                    detail::send_response(info, std::move(*(info_resp.second)), connection);
                 }
 
                 // We're done handling this request
@@ -324,7 +351,9 @@ namespace malloy::server
             }
 
             // If we end up where we have no meaningful way of handling this request
-            return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), connection);
+            req->body<str_body>([connection](const auto& request) {
+                detail::send_response(request, malloy::http::generator::bad_request("unknown request"), connection);
+                });
         }
 
         /**
@@ -341,7 +370,7 @@ namespace malloy::server
             http::connection_t connection
         )
         {
-            gen->body(boost::beast::http::string_body{}, [this, connection](const auto& req){
+            gen->body<str_body>([this, connection](const auto& req){
                 m_logger->debug("handling WS request: {} {}",
                     req.method_string(),
                     req.uri().resource_string()
@@ -485,28 +514,5 @@ namespace malloy::server
             }
         }
 
-        /**
-         * Send a response.
-         *
-         * @tparam Connection
-         * @param req The request to which we're responding.
-         * @param resp The response.
-         * @param connection The connection.
-         */
-        template<typename Body>
-        void send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection)
-        {
-            // Add more information to the response
-            resp.keep_alive(req.keep_alive());
-            resp.version(req.version());
-            resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-            resp.prepare_payload();
-
-            std::visit([resp = std::move(resp)](auto& c) mutable { 
-                if constexpr (detail::has_write<decltype(*c), decltype(resp)>) {
-                    c->do_write(std::move(resp)); 
-                }
-            }, connection);
-        }
     };
 }
