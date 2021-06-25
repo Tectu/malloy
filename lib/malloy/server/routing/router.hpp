@@ -10,10 +10,6 @@
 #include "malloy/server/http/connection/connection_t.hpp"
 #include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
-#include <type_traits>
-#include <concepts>
-
-
 #if MALLOY_FEATURE_TLS
     #include "malloy/server/http/connection/connection_tls.hpp"
 #endif
@@ -24,13 +20,15 @@
 
 #include <spdlog/logger.h>
 
+#include <concepts>
 #include <filesystem>
 #include <functional>
 #include <memory>
-#include <string>
-#include <string_view>
 #include <vector>
 #include <ranges>
+#include <string>
+#include <string_view>
+#include <type_traits>
 
 namespace spdlog
 {
@@ -154,7 +152,6 @@ namespace malloy::server
          */
         bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
 
-
         /**
          * Add an HTTP regex endpoint.
          *
@@ -276,53 +273,7 @@ namespace malloy::server
             const std::filesystem::path& doc_root,
             malloy::http::request&& req,
             const http::connection_t& connection
-        )
-        {
-            // Log
-            if (m_logger) {
-                m_logger->debug("handling HTTP request: {} {}",
-                                req.method_string(),
-                                req.uri().resource_string());
-            }
-
-            // Check routes
-            for (const auto& ep : m_endpoints_http) {
-                // Check match
-                if (!ep->matches(req))
-                    continue;
-
-                // Generate preflight response (if supposed to)
-                if (m_generate_preflights && (req.method() == malloy::http::method::options)) {
-                    // Log
-                    if (m_logger) {
-                        m_logger->debug("automatically constructing preflight response.");
-                    }
-
-                    // Generate
-                    auto resp = generate_preflight_response(req);
-
-                    // Send the response
-                    send_response(req, std::move(resp), connection);
-
-                    // We're done handling this request
-                    return;
-                }
-
-                // Generate the response for the request
-                auto resp = ep->handle(req, connection);
-                if (resp) {
-
-                    // Send the response
-                    send_response(req, std::move(*resp), connection);
-                }
-
-                // We're done handling this request
-                return;
-            }
-
-            // If we end up where we have no meaningful way of handling this request
-            return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), connection);
-        }
+        );
 
         /**
          * Handle a WebSocket connection.
@@ -331,43 +282,10 @@ namespace malloy::server
          * @param req The original HTTP request that was upgraded.
          * @param connection The WebSocket connection.
          */
-        
         void handle_ws_request(
             malloy::http::request&& req,
             http::connection_t connection
-        )
-        {
-            if (m_logger) {
-                m_logger->debug("handling WS request: {} {}",
-                                req.method_string(),
-                                req.uri().resource_string());
-            }
-
-            // Check routes
-            for (const auto& ep : m_endpoints_websocket) {
-                // Check match
-                if (ep->resource != req.uri().resource_string())
-                    continue;
-
-                // Validate route handler
-                if (!ep->handler) {
-                    if (m_logger) {
-                        m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
-                    }
-                    continue;
-                }
-
-                // Set handler
-                std::visit([&ep](auto& c){ 
-                    if constexpr (detail::has_handler<decltype(*c), decltype(ep->handler)>){
-                        c->set_handler(ep->handler); 
-                    }
-                 }, connection);
-
-                // We're done handling this request. The route handler will handle everything from hereon.
-                return;
-            }
-        }
+        );
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
