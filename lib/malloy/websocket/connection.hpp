@@ -8,15 +8,18 @@
 
 #include <boost/beast/core/error.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 
 #include "malloy/type_traits.hpp"
 #include "malloy/websocket/stream.hpp"
+#include "malloy/websocket/types.hpp"
 
 namespace malloy::websocket {
 
 template<bool isClient> 
 class connection : public std::enable_shared_from_this<connection<isClient>> {
 public:
+    using handler_t = std::function<void(const malloy::http::request_header<>&, const std::shared_ptr<connection>&)>;
     enum class state
     {
         handshaking,
@@ -35,7 +38,7 @@ public:
         connection* me = nullptr;
         try {
             me = new connection{ logger, std::move(ws) };
-            return std::shared_ptr{ me };
+            return std::shared_ptr<connection>{ me };
         }
         catch (...) {
             delete me;
@@ -147,6 +150,7 @@ private:
         std::shared_ptr<spdlog::logger> logger, stream&& ws
     ) :
         m_logger(std::move(logger)),
+        ioc_sync_{ws.get_executor()},
         ws_{std::move(ws)}
     {
         // Sanity check logger

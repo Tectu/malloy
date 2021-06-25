@@ -70,6 +70,10 @@ namespace malloy::websocket {
 			return std::visit([req](auto& s) { return s.accept(req); }, underlying_conn_);
 		}
 
+		auto get_executor() {
+			return std::visit([](auto& s) { return s.get_executor(); }, underlying_conn_);
+		}
+
 		constexpr auto is_tls() -> bool { 
 #if MALLOY_FEATURE_TLS
 			return std::holds_alternative<detail::tls_stream>(underlying_conn_);  

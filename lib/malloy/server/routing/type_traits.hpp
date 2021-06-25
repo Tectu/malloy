@@ -29,8 +29,8 @@ concept route_handler =
 template<typename T, typename H>
 concept valid_body_retr = is_variant<T> || std::same_as<T, body_type<typename H::request_type::body_type>>;
 
-template<typename Func, typename Body, typename Response>
-concept websocket_handler = std::invocable<Func, typename Body::value_type&&, const std::function<void(Response&&)>&>;
+template<typename Func>
+concept websocket_handler = std::invocable <Func, const malloy::http::request_header<>&, const std::shared_ptr<websocket::connection>&>;
 
 template<typename H>
 concept advanced_route_handler = requires(const typename H::request_type::header_type& h, typename H::request_type::body_type::value_type& v)

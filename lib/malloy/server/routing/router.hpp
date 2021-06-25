@@ -79,10 +79,8 @@ namespace malloy::server
             resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
             resp.prepare_payload();
 
-            std::visit([resp = std::move(resp)](auto& c) mutable { 
-                if constexpr (detail::has_write<decltype(*c), decltype(resp)>) {
-                    c->do_write(std::move(resp)); 
-                }
+            std::visit([resp = std::move(resp)](auto& c) mutable {
+                c->do_write(std::move(resp));
             }, connection);
         }
     }
@@ -254,8 +252,7 @@ namespace malloy::server
          * @param handler The handler for incoming websocket requests.
          * @return Whether adding the endpoint was successful.
          */
-        template<typename Body, typename Response, concepts::websocket_handler<Body, Response> Func>
-        bool add_websocket(std::string resource, Func&& handler) {
+        auto add_websocket(const std::string& resource, typename websocket::connection::handler_t&& handler) {
             // Log
             if (m_logger)
                 m_logger->debug("adding websocket endpoint at {}", resource);
@@ -268,16 +265,12 @@ namespace malloy::server
             }
 
             // Create endpoint
-            auto ep = std::make_shared<endpoint_websocket_impl<Body, Response>>();
+            auto ep = std::make_shared<endpoint_websocket>();
             ep->resource = std::move(resource);
             ep->handler = std::move(handler);
 
             // Add
             return add_websocket_endpoint(std::move(ep));
-        }
-        template<concepts::websocket_handler<malloy::http::request<str_body>, std::string> Func>
-        auto add_websocket(const std::string& resource, Func&& handler) {
-            return add_websocket<malloy::http::request<str_body>, std::string>(resource, std::forward<Func>(handler));
         }
 
         /**

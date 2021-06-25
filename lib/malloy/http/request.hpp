@@ -9,6 +9,8 @@
 
 namespace malloy::http
 {
+    template<typename Fields = boost::beast::http::fields>
+    using request_header = boost::beast::http::request_header<Fields>;
     /**
      * Represents an HTTP request.
      */

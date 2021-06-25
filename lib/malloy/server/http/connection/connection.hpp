@@ -256,15 +256,6 @@ namespace malloy::server::http
                 );
                 m_router->websocket(*m_doc_root, gen, ws_connection);
 
-                // Launch the connection
-                gen->template body<boost::beast::http::string_body>(
-                    [ws_connection, this](auto&& req) {
-                        ws_connection->run(req);
-
-                        // Hand over to router
-                      //  m_router->websocket(*m_doc_root, std::make_shared<std::decay_t<decltype(req)>>(std::move(req)),
-                                            //ws_connection);
-                    });
             }
 
             // This is an HTTP request
