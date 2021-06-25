@@ -44,7 +44,7 @@ namespace malloy::server::http
     public:
         class request_generator: public std::enable_shared_from_this<request_generator> {
         public:
-            using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::string_body>>;
+            using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
             using header_t = boost::beast::http::request_header<>;
 
             auto header() -> header_t& {
@@ -55,21 +55,31 @@ namespace malloy::server::http
                 return header_;
             }
             
-            template<typename Body, std::invocable<malloy::http::request<Body>> Callback>
-            auto body(Callback&& done, Body&& initial = {}) {
-              using namespace boost::beast::http;
-              using body_t = std::decay_t<Body>;
-              auto parser = std::make_shared<request_parser<body_t>>(
-                  h_parser_, std::piecewise_construct,
-                  std::tuple{std::move(initial)});
+            template<typename Body, std::invocable<malloy::http::request<Body>> Callback, std::invocable<Body::value_type&> SetupCb, typename... BodyArgs>
+            auto body(Callback&& done, const std::optional<SetupCb>& setup = std::nullopt) {
+                using namespace boost::beast::http;
+                using body_t = std::decay_t<Body>;
+                auto parser = [initial = std::move(initial), this]()->std::shared_ptr<request_parser<body_t>>{
+                    if constexpr (sizeof...(BodyArgs) == 0) {
+                        return std::make_shared<request_body<body_t>>(std::move(*h_parser_));
+                    }
+                    else {
+                        return std::make_shared<request_parser<body_t>>(
+                            std::move(*h_parser_), std::piecewise_construct,
+                            std::tuple<body_t::value_type>{ std::move(initial) });
+                    }
+                }();
+                if (setup) {
+                    std::invoke(*setup, parser->get().body());
+                }
 
-              boost::beast::http::async_read(
-                  parent_->derived().m_stream, buff_, *parser,
-                  [_ = parent_, initial = std::forward<Body>(initial),
-                   done = std::forward<Callback>(done),
-                   p = parser, this_ = this->shared_from_this()](const auto& ec, auto size) {
+                boost::beast::http::async_read(
+                    parent_->derived().m_stream, buff_, *parser,
+                    [_ = parent_,
+                    done = std::forward<Callback>(done),
+                    p = parser, this_ = this->shared_from_this()](const auto& ec, auto size) {
                     done(malloy::http::request<Body>{p->release()});
-                  });
+                });
             }
 
         private:
@@ -230,7 +240,7 @@ namespace malloy::server::http
 
             auto header = m_parser->get().base();
             // Parse the request into something more useful from hereon
-            auto gen = std::make_shared<request_generator>(std::move(m_parser), std::move(header), derived().shared_from_this());
+            auto gen = std::shared_ptr<request_generator>{new request_generator{ std::move(m_parser), std::move(header), derived().shared_from_this() }}; // Private ctor
             malloy::http::uri req_uri{std::string{gen->header().target()}};
 
             // Check request URI for legality
