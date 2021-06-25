@@ -77,7 +77,7 @@ namespace malloy::client
         template<class Connection>
         [[nodiscard]]
         std::shared_ptr<Connection>
-        make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t&& handler)
+        make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t<>&& handler)
         {
             // Sanity check
             if (!handler)

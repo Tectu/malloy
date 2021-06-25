@@ -35,7 +35,7 @@ namespace malloy::client::websocket
         };
 
         explicit
-        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& ioc, malloy::websocket::handler_t&& handler) :
+        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& ioc, malloy::websocket::handler_t<>&& handler) :
             m_logger(std::move(logger)),
             m_resolver(boost::asio::make_strand(ioc)),
             m_handler(std::move(handler))
@@ -116,7 +116,7 @@ namespace malloy::client::websocket
         boost::beast::flat_buffer m_buffer;
         std::string m_host;
         std::string m_endpoint;
-        malloy::websocket::handler_t m_handler;
+        malloy::websocket::handler_t<> m_handler;
         std::queue<std::string> m_tx_queue;
         enum state m_state = state::closed;
         enum sending_state m_sending_state = sending_state::idling;

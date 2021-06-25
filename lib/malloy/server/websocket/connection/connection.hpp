@@ -26,8 +26,7 @@ namespace malloy::server::websocket
     class connection
     {
     public:
-        using request_generator = malloy::server::http::request_generator<connection<Derived>>;
-        using handler_t = std::function<void(request_generator&, connection&)>;
+        using handler_t = malloy::websocket::handler_t<>;
 
         enum class state
         {
