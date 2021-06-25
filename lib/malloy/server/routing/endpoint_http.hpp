@@ -30,6 +30,7 @@ namespace malloy::server
         using handle_retr = std::optional<malloy::http::response<boost::beast::http::string_body>>;
         using req_header_t = boost::beast::http::request_header<>;
         using req_t = http::request_generator_t;
+        using url_t = malloy::http::uri;
 
 
         malloy::http::method method = malloy::http::method::unknown;
@@ -52,7 +53,7 @@ namespace malloy::server
          */
         [[nodiscard]]
         virtual
-        bool matches(const req_header_t& req) const
+        bool matches(const req_header_t& req, const url_t&) const
         {
             return method == req.method();
         }

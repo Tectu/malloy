@@ -20,9 +20,9 @@ namespace malloy::server
         
 
         [[nodiscard]]
-        bool matches(const req_header_t& req) const override
+        bool matches(const req_header_t&, const url_t& url) const override
         {
-            return malloy::http::uri{std::string{req.target()}}.resource_starts_with(resource_base);
+            return url.resource_starts_with(resource_base);
         }
 
         [[nodiscard]]

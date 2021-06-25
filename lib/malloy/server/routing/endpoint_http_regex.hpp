@@ -42,14 +42,14 @@ namespace malloy::server
         }
 
         [[nodiscard]]
-        bool matches(const req_header_t& req) const override
+        bool matches(const req_header_t& req, const url_t& url) const override
         {
             // Resource
             if (!matches_resource(req))
                 return false;
 
             // Base class
-            return endpoint_http::matches(req);
+            return endpoint_http::matches(req, url);
         }
         void handle_req(const auto& req, const http::connection_t& conn) const
         {

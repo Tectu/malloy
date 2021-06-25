@@ -53,13 +53,17 @@ public:
     router_adaptor(router_t router) : router_{std::move(router)} {}
 
     void websocket(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
-        router_->handle_request<true, Derived>(root, req, conn); 
+        send_msg<true>(root, req, conn); 
     }
     void http(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
-        router_->handle_request<false, Derived>(root, req, conn); 
-
+        send_msg<false>(root, req, conn); 
     }
 private:
+    template<bool isWs>
+    void send_msg(const std::filesystem::path& root, const req_t& req, conn_t conn) {
+        router_->handle_request<isWs, Derived>(root, req, conn, malloy::http::uri{std::string{req->header().target()}}); 
+    }
+
     router_t router_;
 };
 
