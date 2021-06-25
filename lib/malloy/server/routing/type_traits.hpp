@@ -14,7 +14,7 @@ namespace detail {
 
 template<typename V>
 concept is_variant = requires(V v) { 
-    std::visit(detail::any_callable{}, v); 
+    []<typename... Args>(const std::variant<Args...>& vs){}(v); // https://stackoverflow.com/q/68115853/12448530
 };
 
 template<typename H>

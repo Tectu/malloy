@@ -49,11 +49,6 @@ namespace malloy::server
         template<typename T, typename... Args>
         concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
 
-        template<typename V>
-        concept is_variant = requires(V v) { 
-            []<typename... Args>(const std::variant<Args...>& vs){}(v); // https://stackoverflow.com/q/68115853/12448530
-        };
-
         template<typename F>
         concept route_handler =
             std::invocable<F, const malloy::http::request<>&> ||
