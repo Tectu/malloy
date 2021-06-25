@@ -21,14 +21,14 @@ namespace malloy::websocket {
 	namespace detail {
 #if MALLOY_FEATURE_TLS
 		using tls_stream = boost::beast::websocket::stream<
-			boost::beast::ssl_stream<boost::asio::ip::tcp::socket>
+			boost::beast::ssl_stream<boost::beast::tcp_stream>
 		>;
 #endif
 		using websocket_t = std::variant<
 #if MALLOY_FEATURE_TLS
 			tls_stream,
 #endif
-			boost::beast::websocket::stream<boost::asio::ip::tcp::socket>
+			boost::beast::websocket::stream<boost::beast::tcp_stream>
 		>;
 
 	}
@@ -41,12 +41,17 @@ namespace malloy::websocket {
 	public:
 		stream(detail::websocket_t&& ws) : underlying_conn_{ std::move(ws) } {}
 
-		stream(boost::beast::websocket::stream<boost::asio::ip::tcp::socket>&& ws) : underlying_conn_{std::move(ws)} {}
+		stream(boost::beast::websocket::stream<boost::beast::tcp_stream>&& s) : underlying_conn_{ std::move(s) } {}
+
 #if MALLOY_FEATURE_TLS
 		stream(detail::tls_stream&& ws) : underlying_conn_{std::move(ws)} {}
 #endif
 
 
+		template<concepts::const_buffer_sequence Buff>
+		void write_asnyc(const Buff& buffers, const concepts::async_read_handler auto& done)  {
+			std::visit([&buffers, done](auto& stream) mutable { return stream.write_async(buffers, done); }, underlying_conn_);
+		}
 		template<concepts::const_buffer_sequence Buff>
 		auto write(const Buff& buffers) -> std::size_t {
 			return std::visit([&buffers](auto& stream) mutable { return stream.write(buffers); }, underlying_conn_);
@@ -64,7 +69,10 @@ namespace malloy::websocket {
 		void set_option(auto opt) {
 			std::visit([opt](auto& s) { s.set_option(opt);  }, underlying_conn_);
 		}
-
+		template<typename Body, typename Fields>
+		auto async_accept(const boost::beast::http::request<Body, Fields>& req, const concepts::accept_handler auto& done) {
+			std::visit([req, done](auto& s) { return s.async_accept(req, done); }, underlying_conn_);
+		}
 		template<typename Body, typename Fields>
 		auto accept(const boost::beast::http::request<Body, Fields>& req) -> boost::beast::error_code {
 			return std::visit([req](auto& s) { return s.accept(req); }, underlying_conn_);

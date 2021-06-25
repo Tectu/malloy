@@ -419,8 +419,8 @@ namespace malloy::server
                     continue;
                 }
 
-                // Set handler
-                ep->bind_to(connection);
+                ep->handler(gen->header(), connection);
+              
 
                 // We're done handling this request. The route handler will handle everything from hereon.
                 return;

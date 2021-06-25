@@ -8,7 +8,7 @@
 
 #include <boost/beast/core/error.hpp>
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/strand.hpp>
+#include <boost/asio/post.hpp>
 
 #include "malloy/type_traits.hpp"
 #include "malloy/websocket/stream.hpp"
@@ -75,8 +75,7 @@ public:
         );
 
         // Accept the websocket handshake
-        ioc_sync_.post([me = this->shared_from_this(), req, done = std::forward<decltype(done)>(done)]{
-                const auto ec = ws_.accept(req);
+        ws_.async_accept(req, [me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec){
                 m_logger->trace("on_accept()");
 
                 // Check for errors
@@ -97,14 +96,11 @@ public:
     {
         m_state = state::closing;
 
-        ioc_sync_.post([me = this->shared_from_this()]{
-            me->on_close();
-            });
+        ws_.close();
+        on_close();
     }
     void read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done) {
-        ioc_sync_.post([me = this->shared_from_this(), done = std::forward<decltype(done)>(done), buff]{
-            boost::beast::error_code ec;
-            const auto size = ws_.read(buff, ec);
+        ws_.async_read(buff, [me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec, auto size){
             // This indicates that the connection was closed
             if (ec == boost::beast::websocket::error::closed) {
                 m_logger->info("on_read(): connection was closed.");
@@ -112,7 +108,7 @@ public:
                 return;
             }
             std::invoke(done, ec, size);
-            });
+        });
     }
 
     /**
@@ -124,9 +120,17 @@ public:
     {
         m_logger->trace("send(). payload size: {}", payload.size());
 
-        ioc_sync_.post(
-            [payload]() mutable {
-                ws_.write(payload);
+        boost::asio::post(
+            ws_.get_executor(),
+            [payload, me = this->shared_from_this()]() mutable {
+            me->msg_queue_.push_back([me, payload] { me->ws_.async_write(payload, [me](auto ec, auto size) { me->on_write(ec, size); }); });
+
+                if (me->msg_queue_.size() > 1) {
+                    return;
+                }
+                else {
+
+                }
             }
         );
     }
@@ -140,8 +144,8 @@ private:
 
     enum sending_state m_sending_state = sending_state::idling;
 
+    std::vector<std::function<void()>> msg_queue_;
     std::shared_ptr<spdlog::logger> m_logger;
-    boost::asio::io_context::strand ioc_sync_;
     stream ws_;
 
     enum state m_state = state::closed;
@@ -150,7 +154,6 @@ private:
         std::shared_ptr<spdlog::logger> logger, stream&& ws
     ) :
         m_logger(std::move(logger)),
-        ioc_sync_{ws.get_executor()},
         ws_{std::move(ws)}
     {
         // Sanity check logger
@@ -158,7 +161,23 @@ private:
             throw std::invalid_argument("no valid logger provided.");
     }
 
+    void on_write(auto ec, auto size) {
+        if (ec) {
+            m_logger->error("on_write failed for websocket connection: '{}'", ec.message());
+            return;
+        }
+        m_logger->trace("on_write() wrote: '{}' bytes", size);
 
+        assert(!msg_queue_.empty());
+        
+        msg_queue_.erase(msg_queue_.begin());
+
+        if (!msg_queue_.empty()) {
+            msg_queue_.front()();
+        }
+
+
+    }
 
     void
         on_close()
