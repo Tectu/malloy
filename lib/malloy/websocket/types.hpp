@@ -5,7 +5,10 @@
 
 namespace malloy::websocket
 {
-    using payload_t = std::string;
-    using writer_t  = std::function<void(const payload_t&)>;
-    using handler_t = std::function<void(const payload_t&, writer_t)>;
+
+    template<typename Payload>
+    using writer_t  = std::function<void(Payload&&)>;
+
+    template<typename Payload, typename Resp>
+    using handler_t = std::function<void(Payload&&, writer_t<Resp>)>;
 }

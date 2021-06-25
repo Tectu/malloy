@@ -1,6 +1,7 @@
 #pragma once
 
 #include "malloy/websocket/types.hpp"
+#include "malloy/server/http/connection/connection.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -14,7 +15,6 @@
 
 namespace malloy::server::websocket
 {
-
     /**
      * Base class for a websocket connection/session.
      *
@@ -26,6 +26,9 @@ namespace malloy::server::websocket
     class connection
     {
     public:
+        using request_generator = malloy::server::http::request_generator<connection<Derived>>;
+        using handler_t = std::function<void(request_generator&, connection&)>;
+
         enum class state
         {
             handshaking,
@@ -49,7 +52,7 @@ namespace malloy::server::websocket
                 throw std::invalid_argument("no valid logger provided.");
         }
 
-        void set_handler(malloy::websocket::handler_t handler)
+        void set_handler(handler_t&& handler)
         {
             m_handler = std::move(handler);
         }
@@ -110,7 +113,7 @@ namespace malloy::server::websocket
         std::shared_ptr<spdlog::logger> m_logger;
         boost::beast::flat_buffer m_buffer;
         std::queue<std::string> m_tx_queue;
-        malloy::websocket::handler_t m_handler;
+        handler_t m_handler;
         enum state m_state = state::closed;
 
         [[nodiscard]]

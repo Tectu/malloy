@@ -45,8 +45,6 @@ namespace malloy::server
 {
     
     namespace detail {
-        template<typename T, typename H>
-        concept has_handler = requires(T t, H h) { t.set_handler(h); };
 
         template<typename T, typename... Args>
         concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
@@ -256,7 +254,31 @@ namespace malloy::server
          * @param handler The handler for incoming websocket requests.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_websocket(std::string resource, malloy::websocket::handler_t handler);
+        template<typename Body, typename Response, concepts::websocket_handler<Body, Response> Func>
+        bool add_websocket(std::string resource, Func&& handler) {
+            // Log
+            if (m_logger)
+                m_logger->debug("adding websocket endpoint at {}", resource);
+
+            // Check handler
+            if (!handler) {
+                if (m_logger)
+                    m_logger->warn("route has invalid handler. ignoring.");
+                return false;
+            }
+
+            // Create endpoint
+            auto ep = std::make_shared<endpoint_websocket_impl<Body, Response>>();
+            ep->resource = std::move(resource);
+            ep->handler = std::move(handler);
+
+            // Add
+            return add_websocket_endpoint(std::move(ep));
+        }
+        template<concepts::websocket_handler<malloy::http::request<str_body>, std::string> Func>
+        auto add_websocket(const std::string& resource, Func&& handler) {
+            return add_websocket<malloy::http::request<str_body>, std::string>(resource, std::forward<Func>(handler));
+        }
 
         /**
          * Handle a request.
@@ -386,35 +408,29 @@ namespace malloy::server
             const malloy::http::uri& location
         )
         {
-            gen->body<str_body>([this, connection, location](const auto& req){
-                m_logger->debug("handling WS request: {} {}",
-                    req.method_string(),
-                    req.uri().resource_string()
-                );
+            m_logger->debug("handling WS request: {} {}",
+                req.method_string(),
+                req.uri().resource_string()
+            );
 
-                // Check routes
-                for (const auto& ep : m_endpoints_websocket) {
-                    // Check match
-                    if (ep->resource != location.resource_string())
-                        continue;
+            // Check routes
+            for (const auto& ep : m_endpoints_websocket) {
+                // Check match
+                if (ep->resource != location.resource_string())
+                    continue;
 
-                    // Validate route handler
-                    if (!ep->handler) {
-                        m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
-                        continue;
-                    }
-
-                    // Set handler
-                    std::visit([&ep = ep](auto& c){ 
-                        if constexpr (detail::has_handler<decltype(*c), decltype(ep->handler)>){
-                            c->set_handler(ep->handler); 
-                        }
-                     }, connection);
-
-                    // We're done handling this request. The route handler will handle everything from hereon.
-                    return;
+                // Validate route handler
+                if (!ep->handler) {
+                    m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+                    continue;
                 }
-            });
+
+                // Set handler
+                ep->bind_to(connection);
+
+                // We're done handling this request. The route handler will handle everything from hereon.
+                return;
+            }
         }
 
     private:
