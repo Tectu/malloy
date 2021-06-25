@@ -1,7 +1,7 @@
 #pragma once
 
 #include "malloy/websocket/types.hpp"
-#include "malloy/server/http/connection/connection.hpp"
+#include "malloy/websocket/connection.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -15,6 +15,10 @@
 
 namespace malloy::server::websocket
 {
+
+    using connection = malloy::websocket::connection<false>;
+
+#if 0
     /**
      * Base class for a websocket connection/session.
      *
@@ -299,5 +303,5 @@ namespace malloy::server::websocket
 
     template<typename Derived>
     const std::string connection<Derived>::agent_string = std::string(BOOST_BEAST_VERSION_STRING) + " malloy";
-
+#endif
 }

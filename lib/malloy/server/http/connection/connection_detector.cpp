@@ -52,7 +52,7 @@ public:
 
     router_adaptor(router_t router) : router_{std::move(router)} {}
 
-    void websocket(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 
+    void websocket(const std::filesystem::path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>& conn) override { 
         send_msg<true>(root, req, conn); 
     }
     void http(const std::filesystem::path& root, const req_t& req, conn_t conn) override { 

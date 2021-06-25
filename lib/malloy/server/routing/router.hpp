@@ -296,12 +296,13 @@ namespace malloy::server
          */
         template<
             bool isWebsocket = false,
-            typename Derived
+            typename Derived,
+            typename Connection
         >
         void handle_request(
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
-            const http::connection_t& connection,
+            Connection&& connection,
             malloy::http::uri location
         )
         {
@@ -404,13 +405,13 @@ namespace malloy::server
         template<typename Derived>
         void handle_ws_request(
             const req_generator<Derived>& gen,
-            http::connection_t connection,
+            std::shared_ptr<websocket::connection> connection,
             const malloy::http::uri& location
         )
         {
             m_logger->debug("handling WS request: {} {}",
-                req.method_string(),
-                req.uri().resource_string()
+                gen->header().method_string(),
+                location.resource_string()
             );
 
             // Check routes

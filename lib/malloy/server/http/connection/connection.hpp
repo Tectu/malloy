@@ -4,11 +4,7 @@
 #include "malloy/http/generator.hpp"
 #include "malloy/server/http/connection/connection_t.hpp"
 
-#include "malloy/server/websocket/connection/connection_plain.hpp"
 #include <boost/beast/http/detail/type_traits.hpp>
-#if MALLOY_FEATURE_TLS
-    #include "malloy/server/websocket/connection/connection_tls.hpp"
-#endif
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
@@ -31,57 +27,6 @@ namespace spdlog
 
 namespace malloy::server::http
 {
-    template<typename Parent>
-    class request_generator : public std::enable_shared_from_this<request_generator<Parent>> {
-    public:
-        using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
-        using header_t = boost::beast::http::request_header<>;
-
-        auto header() -> header_t& {
-            return header_;
-        }
-
-        auto header() const -> const header_t& {
-            return header_;
-        }
-        template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback,
-            typename SetupCb>
-            //
-            //std::invocable<Body::value_type&>
-            auto body(Callback&& done, SetupCb&& setup) {
-            using namespace boost::beast::http;
-            using body_t = std::decay_t<Body>;
-            auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
-            std::invoke(setup, parser->get().body());
-
-            boost::beast::http::async_read(
-                parent_->derived().m_stream, buff_, *parser,
-                [_ = parent_,
-                done = std::forward<Callback>(done),
-                p = parser, this_ = this->shared_from_this()](const auto& ec, auto size) {
-                done(malloy::http::request<Body>{p->release()});
-            });
-        }
-
-        template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
-        auto body(Callback&& done) {
-            return body<Body>(std::forward<Callback>(done), [](auto) {});
-        }
-
-
-    private:
-        request_generator(h_parser_t hparser, header_t header, std::shared_ptr<Parent> parent)
-            : h_parser_{ std::move(hparser) }, header_{ std::move(header) }, parent_{ std::move(parent) } {
-            assert(parent_); // TODO: Should this be BOOST_ASSERT?
-        }
-
-        boost::beast::flat_buffer buff_;
-        h_parser_t h_parser_;
-        header_t header_;
-        std::shared_ptr<Parent> parent_;
-
-        friend typename Parent;
-    };
 
     /**
      * An HTTP server connection.
@@ -93,7 +38,54 @@ namespace malloy::server::http
     class connection
     {
     public:
-        using request_generator = request_generator<connection<Derived>>;
+        class request_generator : public std::enable_shared_from_this<request_generator> {
+        public:
+            using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
+            using header_t = boost::beast::http::request_header<>;
+
+            auto header() -> header_t& {
+                return header_;
+            }
+
+            auto header() const -> const header_t& {
+                return header_;
+            }
+            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback,
+               typename SetupCb>
+            auto body(Callback&& done, SetupCb&& setup) {
+                using namespace boost::beast::http;
+                using body_t = std::decay_t<Body>;
+                auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
+                std::invoke(setup, parser->get().body());
+
+                boost::beast::http::async_read(
+                    parent_->derived().m_stream, buff_, *parser,
+                    [_ = parent_,
+                    done = std::forward<Callback>(done),
+                    p = parser, this_ = this->shared_from_this()](const auto& ec, auto size) {
+                    done(malloy::http::request<Body>{p->release()});
+                });
+            }
+
+            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
+            auto body(Callback&& done) {
+                return body<Body>(std::forward<Callback>(done), [](auto) {});
+            }
+
+
+        private:
+            request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent)
+                : h_parser_{ std::move(hparser) }, header_{ std::move(header) }, parent_{ std::move(parent) } {
+                assert(parent_); // TODO: Should this be BOOST_ASSERT?
+            }
+
+            boost::beast::flat_buffer buff_;
+            h_parser_t h_parser_;
+            header_t header_;
+            std::shared_ptr<connection> parent_;
+
+            friend class connection;
+        };
         
         class handler {
         public:
@@ -102,7 +94,7 @@ namespace malloy::server::http
             using path = std::filesystem::path;
             using req_t = std::shared_ptr<request_generator>;
 
-            virtual void websocket(const path& root, const req_t& req, conn_t) = 0;
+            virtual void websocket(const path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>&) = 0;
             virtual void http(const path& root, const req_t& req, conn_t) = 0;
         
         };
@@ -257,10 +249,12 @@ namespace malloy::server::http
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
-                auto ws_connection = server::websocket::make_websocket_connection(
+                auto ws_connection = server::websocket::connection::make(
                     m_logger->clone("websocket_connection"),
-                    derived().release_stream()
+                    malloy::websocket::stream{
+                        boost::beast::websocket::stream<boost::asio::ip::tcp::socket>{ derived().release_stream() } }
                 );
+                m_router->websocket(*m_doc_root, gen, ws_connection);
 
                 // Launch the connection
                 gen->template body<boost::beast::http::string_body>(
