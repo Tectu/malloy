@@ -31,7 +31,7 @@ public:
     /**
      * The agent string.
      */
-    inline static const std::string agent_string = std::string{BOOST_BEAST_VERSION_STRING} + " malloy";
+    static const std::string agent_string;
 
     static auto make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> {
         // We have to emulate make_shared here because the ctor is private
@@ -45,7 +45,48 @@ public:
             throw;
         }
     }
-    
+    // Start the asynchronous operation
+    template<concepts::accept_handler Callback>
+        requires (isClient)
+    void
+        connect(std::string host, const std::string& port, std::string endpoint, Callback&& done)
+    {
+        m_logger->trace("connect({}, {}, {})", host, port, endpoint);
+
+        // Save these for later
+        host_ = std::move(host);
+        endpoint_ = std::move(endpoint);
+
+        // Look up the domain name
+        auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>();
+        resolver->async_resolve(
+            host_,
+            port,
+            [this, resolver, me = this->shared_from_this(), done = std::forward<Callback>(done)](auto ec, auto results){
+            m_logger->trace("on_resolve()");
+
+            if (ec) {
+                m_logger->error("on_resolve(): {}", ec.message());
+                return;
+            }
+
+            // Set the timeout for the operation
+            ws_.get_lowest_layer([&, this](auto& sock) {
+                sock.expires_after(std::chrono::seconds(30));
+
+                // Make the connection on the IP address we get from a lookup
+                sock.async_connect(
+                    results,
+                    boost::beast::bind_front_handler(
+                        &connection::on_connect,
+                        this->shared_from_this()
+                    )
+                );
+            });
+        }
+        );
+    }
+
     // Start the asynchronous operation
     template<class Body, class Fields>
     requires (!isClient)
@@ -57,38 +98,23 @@ public:
 
         m_logger->trace("do_accept()");
 
-        // Set suggested timeout settings for the websocket
-        ws_.set_option(
-            boost::beast::websocket::stream_base::timeout::suggested(
-                boost::beast::role_type::server
-            )
-        );
-
-        // Set a decorator to change the Server of the handshake
-        ws_.set_option(
-            boost::beast::websocket::stream_base::decorator(
-                [](boost::beast::websocket::response_type& res)
-                {
-                    res.set(boost::beast::http::field::server, agent_string);
-                }
-            )
-        );
+        setup_connection();
 
         // Accept the websocket handshake
         ws_.async_accept(req, [me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec){
-                m_logger->trace("on_accept()");
+            m_logger->trace("on_accept()");
 
-                // Check for errors
-                if (ec) {
-                    m_logger->error("on_accept(): {}", ec.message());
-                    return;
-                }
+            // Check for errors
+            if (ec) {
+                m_logger->error("on_accept(): {}", ec.message());
+                return;
+            }
 
-                // We're good to go
-                m_state = state::active;
+            // We're good to go
+            m_state = state::active;
 
-                done(ec);
-            });
+            done(ec);
+        });
     }
 
     // ToDo: Test this
@@ -125,13 +151,13 @@ public:
             [payload, me = this->shared_from_this()]() mutable {
             me->msg_queue_.push_back([me, payload] { me->ws_.async_write(payload, [me](auto ec, auto size) { me->on_write(ec, size); }); });
 
-                if (me->msg_queue_.size() > 1) {
-                    return;
-                }
-                else {
-
-                }
+            if (me->msg_queue_.size() > 1) {
+                return;
             }
+            else {
+
+            }
+        }
         );
     }
 
@@ -146,6 +172,8 @@ private:
 
     std::vector<std::function<void()>> msg_queue_;
     std::shared_ptr<spdlog::logger> m_logger;
+    std::string host_;
+    std::string endpoint_;
     stream ws_;
 
     enum state m_state = state::closed;
@@ -154,11 +182,71 @@ private:
         std::shared_ptr<spdlog::logger> logger, stream&& ws
     ) :
         m_logger(std::move(logger)),
-        ws_{std::move(ws)}
+        ws_{ std::move(ws) }
     {
         // Sanity check logger
         if (!m_logger)
             throw std::invalid_argument("no valid logger provided.");
+    }
+
+    void setup_connection() {
+        // Set suggested timeout settings for the websocket
+        ws_.set_option(
+            boost::beast::websocket::stream_base::timeout::suggested(
+                isClient ? boost::beast::role_type::client : boost::beast::role_type::server
+            )
+        );
+
+        // Set a decorator to change the Server of the handshake
+        ws_.set_option(
+            boost::beast::websocket::stream_base::decorator(
+                [](boost::beast::websocket::response_type& res)
+                {
+                    res.set(boost::beast::http::field::server, agent_string);
+                }
+            )
+        );
+    }
+
+    void
+        on_connect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type ep)
+    {
+        m_logger->trace("on_connect()");
+
+        if (ec) {
+            m_logger->error("on_connect(): {}", ec.message());
+            return;
+        }
+
+        // Turn off the timeout on the tcp_stream, because
+        // the websocket stream has its own timeout system.
+        ws_.get_lowest_layer([](auto& s) {s.expires_never(); });
+        setup_connection();
+
+        // Set a decorator to change the User-Agent of the handshake
+        ws_.set_option(
+            boost::beast::websocket::stream_base::decorator(
+                [](boost::beast::websocket::request_type& req)
+                {
+                    req.set(boost::beast::http::field::user_agent, agent_string);
+                }
+            )
+        );
+
+        // Update the m_host string. This will provide the value of the
+        // Host HTTP header during the WebSocket handshake.
+        // See https://tools.ietf.org/html/rfc7230#section-5.4
+        host_ += ':' + std::to_string(ep.port());
+
+        // Perform the websocket handshake
+        ws_.async_handshake(
+            host_,
+            endpoint_,
+            boost::beast::bind_front_handler(
+                &connection::on_handshake,
+                this->shared_from_this()
+            )
+        );
     }
 
     void on_write(auto ec, auto size) {
@@ -169,7 +257,7 @@ private:
         m_logger->trace("on_write() wrote: '{}' bytes", size);
 
         assert(!msg_queue_.empty());
-        
+
         msg_queue_.erase(msg_queue_.begin());
 
         if (!msg_queue_.empty()) {
@@ -187,5 +275,11 @@ private:
         m_state = state::closed;
     }
 };
+
+template<>
+const std::string connection<true>::agent_string = std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-async";
+
+template<>
+const std::string connection<false>::agent_string = std::string{BOOST_BEAST_VERSION_STRING} + " malloy";
 
 }

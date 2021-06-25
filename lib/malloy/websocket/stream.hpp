@@ -77,12 +77,21 @@ namespace malloy::websocket {
 		auto accept(const boost::beast::http::request<Body, Fields>& req) -> boost::beast::error_code {
 			return std::visit([req](auto& s) { return s.accept(req); }, underlying_conn_);
 		}
+		template<concepts::accept_handler Callback>
+		void async_handshake(std::string_view host, std::string_view target, Callback&& done)  {
+			std::visit([done = std::forward<Callback>(done)](auto& s) { s.async_handshake(host, target, std::forward<Callback>(done)); }, underlying_conn_);
+		}
+
+		template<typename Func>
+		void get_lowest_layer(Func&& visitor) {
+			std::visit([vistor = std::forward<Func>(visitor)](auto& s) { vistor(boost::beast::get_lowest_layer(s)); }, underlying_conn_);
+		}
 
 		auto get_executor() {
 			return std::visit([](auto& s) { return s.get_executor(); }, underlying_conn_);
 		}
 
-		constexpr auto is_tls() -> bool { 
+		constexpr auto is_tls() const -> bool { 
 #if MALLOY_FEATURE_TLS
 			return std::holds_alternative<detail::tls_stream>(underlying_conn_);  
 #else 
