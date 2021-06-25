@@ -21,6 +21,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <concepts>
 #include <vector>
 
 namespace spdlog
@@ -55,19 +56,15 @@ namespace malloy::server::http
                 return header_;
             }
             
-            template<typename Body, std::invocable<malloy::http::request<Body>> Callback, std::invocable<Body::value_type&> SetupCb, typename... BodyArgs>
+            template<typename Body, typename Callback, 
+                typename SetupCb>
+                //std::invocable<malloy::http::request<Body>&&>
+                //std::invocable<Body::value_type&>
             auto body(Callback&& done, const std::optional<SetupCb>& setup = std::nullopt) {
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
-                auto parser = [initial = std::move(initial), this]()->std::shared_ptr<request_parser<body_t>>{
-                    if constexpr (sizeof...(BodyArgs) == 0) {
-                        return std::make_shared<request_body<body_t>>(std::move(*h_parser_));
-                    }
-                    else {
-                        return std::make_shared<request_parser<body_t>>(
-                            std::move(*h_parser_), std::piecewise_construct,
-                            std::tuple<body_t::value_type>{ std::move(initial) });
-                    }
+                auto parser = [this]()->std::shared_ptr<request_parser<body_t>>{
+                    return std::make_shared<request_body<body_t>>(std::move(*h_parser_));
                 }();
                 if (setup) {
                     std::invoke(*setup, parser->get().body());
