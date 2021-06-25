@@ -19,15 +19,22 @@ namespace malloy::http
      */
     class generator
     {
+        /**
+         * A file response can either have an underlying file body or an underlying string body.
+         *
+         * - A file body allows sending a file from the file system as a response without loading it completely into memory.
+         * - A string body can be used to serve a file with contents from memory.
+         */
         using file_response = std::variant<response<boost::beast::http::file_body>, response<boost::beast::http::string_body>>;
+
     public:
         /**
          * Default constructor.
          */
         generator() = default;
 
-        generator(const generator &other) = delete;
-        generator(generator &&other) = delete;
+        generator(const generator& other) = delete;
+        generator(generator&& other) = delete;
 
         /**
          * Destructor
@@ -35,8 +42,8 @@ namespace malloy::http
         virtual ~generator() = default;
 
         // Operators
-        generator &operator=(const generator &rhs) = delete;
-        generator &operator=(generator &&rhs) = delete;
+        generator& operator=(const generator& rhs) = delete;
+        generator& operator=(generator&& rhs) = delete;
 
         /**
          * Construct a 200 response.

@@ -194,3 +194,91 @@ router::response_type router::generate_preflight_response(const request_type& re
 
     return resp;
 }
+
+void router::handle_http_request(
+    const std::filesystem::path& doc_root,
+    malloy::http::request&& req,
+    const http::connection_t& connection
+)
+{
+    // Log
+    if (m_logger) {
+        m_logger->debug("handling HTTP request: {} {}",
+            req.method_string(),
+            req.uri().resource_string()
+        );
+    }
+
+    // Check routes
+    for (const auto& ep : m_endpoints_http) {
+        // Check match
+        if (!ep->matches(req))
+            continue;
+
+        // Generate preflight response (if supposed to)
+        if (m_generate_preflights && (req.method() == malloy::http::method::options)) {
+            // Log
+            if (m_logger) {
+                m_logger->debug("automatically constructing preflight response.");
+            }
+
+            // Generate
+            auto resp = generate_preflight_response(req);
+
+            // Send the response
+            send_response(req, std::move(resp), connection);
+
+            // We're done handling this request
+            return;
+        }
+
+        // Generate the response for the request
+        auto resp = ep->handle(req, connection);
+        if (resp) {
+
+            // Send the response
+            send_response(req, std::move(*resp), connection);
+        }
+
+        // We're done handling this request
+        return;
+    }
+
+    // If we end up where we have no meaningful way of handling this request
+    return send_response(req, std::move(malloy::http::generator::bad_request("unknown request")), connection);
+}
+
+void router::handle_ws_request(malloy::http::request&& req, http::connection_t connection)
+{
+    if (m_logger) {
+        m_logger->debug("handling WS request: {} {}",
+            req.method_string(),
+            req.uri().resource_string()
+        );
+    }
+
+    // Check routes
+    for (const auto& ep : m_endpoints_websocket) {
+        // Check match
+        if (ep->resource != req.uri().resource_string())
+            continue;
+
+        // Validate route handler
+        if (!ep->handler) {
+            if (m_logger) {
+                m_logger->warn("websocket route with resource path \"{}\" has no valid handler assigned.");
+            }
+            continue;
+        }
+
+        // Set handler
+        std::visit([&ep](auto& c){
+            if constexpr (detail::has_handler<decltype(*c), decltype(ep->handler)>) {
+                c->set_handler(ep->handler);
+            }
+        }, connection);
+
+        // We're done handling this request. The route handler will handle everything from hereon.
+        return;
+    }
+}

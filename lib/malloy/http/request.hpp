@@ -29,12 +29,17 @@ namespace malloy::http
          * @param target_ The target.
          */
         request(http::method method_, std::string_view host,
-                const std::uint16_t port, std::string_view target_)
+            const std::uint16_t port, std::string_view target_)
             : m_port(port) {
-                msg_t::version(11);
-                msg_t::method(method_);
-                msg_t::target(target_);
-                msg_t::set(http::field::host, host);
+            msg_t::version(11);
+            msg_t::method(method_);
+            msg_t::target(target_);
+            msg_t::set(http::field::host, host);
+
+
+            // URI
+            class uri u { std::string{ target_.data(), target_.size() } };
+            m_uri = std::move(u);
         }
 
         /**

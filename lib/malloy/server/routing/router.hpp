@@ -25,13 +25,15 @@
 
 #include <spdlog/logger.h>
 
+#include <concepts>
 #include <filesystem>
 #include <functional>
 #include <memory>
-#include <string>
-#include <string_view>
 #include <vector>
 #include <ranges>
+#include <string>
+#include <string_view>
+#include <type_traits>
 
 namespace spdlog
 {
@@ -46,6 +48,11 @@ namespace malloy::server
 
         template<typename T, typename... Args>
         concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
+
+        template<typename V>
+        concept is_variant = requires(V v) { 
+            []<typename... Args>(const std::variant<Args...>& vs){}(v); // https://stackoverflow.com/q/68115853/12448530
+        };
 
         template<typename F>
         concept route_handler =
@@ -152,7 +159,6 @@ namespace malloy::server
          * @return Whether adding the sub-router was successful.
          */
         bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
-
 
         /**
          * Add an HTTP regex endpoint.
