@@ -16,19 +16,20 @@ namespace malloy::server
         virtual bool matches_resource(const boost::beast::http::request_header<>& req) const = 0;
     };
 
-    template<typename Req, typename Response, typename Handler, bool WantsCapture>
+    template<typename Response, concepts::advanced_route_handler Handler, bool WantsCapture>
     struct endpoint_http_regex :
         endpoint_http, public resource_matcher
     {
+        template<typename Req>
         using handler_t = std::conditional_t<
             WantsCapture,
-            std::function<Response(const malloy::http::request<>&,
+            std::function<Response(const Req&,
                                    const std::vector<std::string>&)>,
-            std::function<Response(const malloy::http::request<>&)>>;
+            std::function<Response(const Req&)>>;
 
 
         std::regex resource_base;
-        handler_t handler;
+        handler_t<typename Handler::body_type> handler;
         std::function<void(const boost::beast::http::request_header<>&, Response&&, const http::connection_t&)> writer;
 
         [[nodiscard]]
@@ -80,18 +81,20 @@ namespace malloy::server
             gen.template body<T>(
                 [this, conn](const auto& req) {
                     handle_req(req, conn);
-                }, std::forward<decltype(body)>(body));
+                }, [&gen](auto& body) { Handler::setup_body(gen.header(), body); });
         }
 
         void visit_bodies(auto& gen, const http::connection_t& conn)
         {
             auto bodies = [this, gen] {
-                if constexpr (concepts::advanced_route_handler<Handler>) {
-                    return handler.body_for(gen.header());
+                auto body = Handler::body_for(gen.header());
+                using body_t = std::decay_t<decltype(body)>;
+
+                if constexpr (concepts::is_variant<body_t>) {
+                    return body;
                 }
                 else {
-                    return std::variant<boost::beast::http::string_body>{
-                        boost::beast::http::string_body{}};
+                    return std::variant<body_t>{ std::move(body) };
                 }
             }();
             std::visit(
