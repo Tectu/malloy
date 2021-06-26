@@ -1,15 +1,19 @@
 #include "../../test.hpp"
+#include "../../mocks.hpp" 
 
 #include <malloy/server/routing/endpoint_http_regex.hpp>
 #include <malloy/server/routing/router.hpp>
+#include <malloy/http/request.hpp>
 
 using namespace malloy::http;
 using namespace malloy::server;
 
 
 void endpt_handle(const auto& endpt, const std::string& url) {
-    //request req{boost::beast::http::request<boost::beast::http::string_body>{method::get, url, 1}};
-    //[[maybe_unused]]const auto rs = endpt.handle(req, http::connection_t{std::shared_ptr<http::connection_plain>{nullptr}});
+    malloy::http::request_header<> reqh;
+    reqh.target(url);
+    reqh.method(method::get);
+    [[maybe_unused]] const auto rs = endpt.handle(std::make_shared<malloy::mock::http::connection::request_generator>(reqh), http::connection_t{ std::shared_ptr<http::connection_plain>{nullptr} });
 }
 
 TEST_SUITE("components - endpoints") {
@@ -38,7 +42,7 @@ TEST_SUITE("components - endpoints") {
         endpt.writer = [](auto&&...){};
 
         endpt_handle(endpt, input_url);
-        //CHECK(handler_called); TODO: Fix me
+        CHECK(handler_called);
         
     }
     TEST_CASE("An endpoint_http_regex with a handler that only accepts malloy::http::request will not try to pass capture group values"){
@@ -55,7 +59,7 @@ TEST_SUITE("components - endpoints") {
         endpt.writer = [](auto&&...) {};
 
         endpt_handle(endpt, input_url);
-        //CHECK(handler_called);
+        CHECK(handler_called);
         
 
 

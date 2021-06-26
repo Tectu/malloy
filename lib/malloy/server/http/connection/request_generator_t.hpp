@@ -21,6 +21,9 @@ using request_generator_t = detail::req_gen_helper<
 #if MALLOY_FEATURE_TLS 
     ,connection_tls
 #endif 
+#ifdef MALLOY_INTERNAL_TESTING
+    ,malloy::mock::http::connection
+#endif
     >;
 
 }
