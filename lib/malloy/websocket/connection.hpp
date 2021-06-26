@@ -11,9 +11,11 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 
+
 #include "malloy/type_traits.hpp"
 #include "malloy/websocket/stream.hpp"
 #include "malloy/websocket/types.hpp"
+#include "malloy/error.hpp"
 
 namespace malloy::websocket {
 
@@ -56,13 +58,13 @@ public:
             // Save these for later
 
             // Set the timeout for the operation
-            ws_.get_lowest_layer([&, this, done = std::forward<Callback>(done)](auto& sock) {
+            ws_.get_lowest_layer([&, this, done = std::forward<Callback>(done)](auto& sock) mutable {
                 sock.expires_after(std::chrono::seconds(30));
 
                 // Make the connection on the IP address we get from a lookup
                 sock.async_connect(
                     target,
-                    [me = this->shared_from_this(), target, done = std::forward<Callback>(done)](auto ec, auto ep){
+                    [me = this->shared_from_this(), target, done = std::forward<Callback>(done)](auto ec, auto ep) mutable {
                     if (ec) {
                         done(ec);
                     }
@@ -75,9 +77,9 @@ public:
         }
 
     // Start the asynchronous operation
-    template<class Body, class Fields>
+    template<class Body, class Fields, std::invocable<> Callback>
     requires (!isClient)
-        void accept(boost::beast::http::request<Body, Fields> req, std::invocable<> auto&& done)
+        void accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
     {
         // Update state
         m_state = state::handshaking;
@@ -88,7 +90,7 @@ public:
         setup_connection();
 
         // Accept the websocket handshake
-        ws_.async_accept(req, [me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec){
+        ws_.async_accept(req, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](malloy::error_code ec) mutable {
             m_logger->trace("on_accept()");
 
             // Check for errors
@@ -100,7 +102,7 @@ public:
             // We're good to go
             m_state = state::active;
 
-            done();
+            std::invoke(std::forward<decltype(done)>(done));
         });
     }
 
@@ -113,14 +115,14 @@ public:
         on_close();
     }
     void read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done) {
-        ws_.async_read(buff, [me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec, auto size){
+        ws_.async_read(buff, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
             // This indicates that the connection was closed
             if (ec == boost::beast::websocket::error::closed) {
                 m_logger->info("on_read(): connection was closed.");
                 stop();
                 return;
             }
-            std::invoke(done, ec, size);
+            std::invoke(std::forward<decltype(done)>(done), ec, size);
         });
     }
 
@@ -136,10 +138,16 @@ public:
 
         boost::asio::post(
             ws_.get_executor(),
-            [payload, me = this->shared_from_this(), done = std::forward<Callback>(done)]() mutable {
-            me->msg_queue_.push_back([me, payload, done = std::forward<Callback>(done)]{ me->ws_.async_write(payload,[me, done = std::forward<Callback>(done)](auto ec, auto size) { me->on_write(ec, size); done(); }); });
+            [this, payload, me = this->shared_from_this(), done = std::forward<Callback>(done)]() mutable {
+            msg_queue_.push_back([this, me, payload, done = std::forward<Callback>(done)]() mutable {
+                me->ws_.async_write(payload,
+                [me, done = std::forward<Callback>(done)](auto ec, auto size) mutable {
+                me->on_write(ec, size); 
+                done();
+            }); }
+            );
 
-            if (me->msg_queue_.size() > 1) {
+            if (msg_queue_.size() > 1) {
                 return;
             }
             else {

@@ -4,7 +4,7 @@ include(external.cmake)
 set(NAME malloy)
 set(TARGET_OBJS   ${NAME}-objs)
 
-add_library(${TARGET_OBJS} SHARED)
+add_library(${TARGET_OBJS} OBJECT)
 
 if (MALLOY_FEATURE_CLIENT)
     add_subdirectory(client)
@@ -55,7 +55,7 @@ target_sources(
         controller.hpp
         malloy.hpp
         utils.hpp
-)
+  "error.hpp" "websocket/resolver.hpp")
 
 target_link_libraries(
     ${TARGET_OBJS}

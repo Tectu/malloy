@@ -87,7 +87,7 @@ namespace malloy::client
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
             resolver->async_resolve(
                 host,
-                post,
+                port,
                 [this, resolver, done = std::forward<decltype(handler)>(handler)](auto ec, auto results){
 
                 if (ec) {

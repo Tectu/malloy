@@ -8,6 +8,35 @@
 #include <iostream>
 #include <memory>
 
+class ws_echo : public std::enable_shared_from_this<ws_echo> {
+public:
+    using conn_t = std::shared_ptr<malloy::server::websocket::connection>;
+    ws_echo(const malloy::http::request<>& req, conn_t conn) : conn_{ std::move(conn) } {
+        conn_->accept(req, boost::beast::bind_front_handler(&ws_echo::do_read, shared_from_this()));
+    }
+
+
+private:
+    void on_read(malloy::error_code ec, std::size_t) {
+        if (ec) {
+            spdlog::error("oh no, I couldn't read: '{}'", ec.message());
+            return;
+        }
+        conn_->send(boost::asio::buffer(buff_.cdata()), boost::beast::bind_front_handler(&ws_echo::do_read, shared_from_this()));
+    }
+    void do_read() {
+        buff_.consume(buff_.size());
+        conn_->read(buff_, boost::beast::bind_front_handler(&ws_echo::on_read, shared_from_this()));
+
+    }
+
+    conn_t conn_;
+    boost::beast::flat_buffer buff_;
+
+
+};
+
+
 int main()
 {
     const std::filesystem::path doc_root = "../../../../examples/server/static_content";
@@ -56,36 +85,9 @@ int main()
         // Add some file serving
         router->add_file_serving("/files", doc_root);
 
-                // Add a websocket echo endpoint
+        // Add a websocket echo endpoint
         router->add_websocket("/echo", [](const auto& req, auto writer) {
-            class ws_echo : public std::enable_shared_from_this<ws_echo> {
-            public:
-                using conn_t = std::shared_ptr<malloy::server::websocket::connection>;
-                ws_echo(const malloy::http::request<>& req, conn_t conn) : conn_{ std::move(conn) } {
-                    conn_->accept(req, boost::beast::bind_front_handler(&ws_echo::do_read, shared_from_this()));
-                }
-
-
-            private:
-                void on_read(malloy::error_code ec, std::size_t) {
-                    if (ec) {
-                        spdlog::error("oh no, I couldn't read: '{}'", ec.message());
-                        return;
-                    }
-                    conn_->send(buff_, boost::beast::bind_front_handler(&ws_echo::do_read, shared_from_this()));
-                }
-                void do_read() {
-                    buff_ = {};
-                    conn_->read(buff_, boost::beast::bind_front_handler(&ws_echo::on_read, shared_from_this()));
-
-                }
-
-                conn_t conn_;
-                boost::beast::flat_buffer buff_;
-
-
-            };
-
+            
             std::make_shared<ws_echo>(req, writer);
             });
     }
