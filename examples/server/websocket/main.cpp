@@ -1,7 +1,12 @@
 #include "../../example_logger.hpp"
+#include "../../ws_handlers.hpp"
 
+            
+#include <malloy/websocket/connection.hpp>
 #include <malloy/server/controller.hpp>
 #include <malloy/server/routing/router.hpp>
+
+#include <spdlog/fmt/fmt.h>
 
 #include <iostream>
 #include <memory>
@@ -28,28 +33,21 @@ int main()
 
     // Add some routes
     auto router = c.router();
-    if (router) {
+    if (router) { // TODO: Should the first two be done via optional capture groups?
         // Add a websocket endpoint
-        router->add_websocket("/", [](const std::string& payload, auto writer){
-            writer("echo at /: " + payload);
+        router->add_websocket("/", [](const malloy::http::request<>& req, auto writer){
+            malloy::examples::ws::oneshot(req, writer, fmt::format("echo at /: {}", req.body()));
         });
 
         // Add a websocket endpoint
-        router->add_websocket("/echo", [](const std::string& payload, auto writer){
-            writer("echo at /echo: " + payload);
+        router->add_websocket("/echo", [](const malloy::http::request<>& req, auto writer){
+            malloy::examples::ws::oneshot(req, writer, fmt::format("echo at /echo: {}", req.body()));
         });
 
         // Add a websocket endpoint
-        router->add_websocket("/timer", [](const std::string& payload, auto writer){
-            using namespace std::chrono_literals;
+        router->add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
+            std::make_shared<malloy::examples::ws::ws_timer>(writer)->run(req);
 
-            for (std::size_t i = 0; i < 10; i++) {
-                // Write to socket
-                writer("i = " + std::to_string(i));
-
-                // Sleep
-                std::this_thread::sleep_for(1s);
-            }
         });
     }
 

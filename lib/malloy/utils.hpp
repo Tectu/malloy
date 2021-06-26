@@ -4,12 +4,14 @@
 #include <fstream>
 
 #include <boost/asio/buffer.hpp>
+#include <boost/beast/core/bind_handler.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 
 namespace malloy
 {
     using boost::asio::buffer;
     using boost::beast::buffers_to_string;
+    using boost::beast::bind_front_handler;
     
     /**
      * Returns an std::string which represents the raw bytes of the file.
