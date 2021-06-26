@@ -82,8 +82,10 @@ namespace malloy::websocket {
 			return std::visit([req](auto& s) { return s.accept(req); }, underlying_conn_);
 		}
 		template<concepts::accept_handler Callback>
-		void async_handshake(std::string_view host, std::string_view target, Callback&& done)  {
-			std::visit([done = std::forward<Callback>(done)](auto& s) mutable { s.async_handshake(host, target, std::forward<Callback>(done)); }, underlying_conn_);
+		void async_handshake(std::string host, std::string target, Callback&& done)  {
+			std::visit([host = std::move(host), target = std::move(target), done = std::forward<Callback>(done)](auto& s) mutable {
+				s.async_handshake(host, target, std::forward<Callback>(done)); 
+			}, underlying_conn_);
 		}
 
 		template<typename Func>

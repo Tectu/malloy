@@ -87,19 +87,19 @@ namespace malloy::client
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
             resolver->async_resolve(
                 host,
-                port,
-                [this, resolver, done = std::forward<decltype(handler)>(handler)](auto ec, auto results){
+                std::to_string(port),
+                [this, resolver, done = std::forward<decltype(handler)>(handler), resource](auto ec, auto results) mutable {
 
                 if (ec) {
-                    std::invoke(std::forward<decltype(done)>(done), ec, nullptr);
+                    std::invoke(std::forward<decltype(done)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
                 }
                 else {
-                    auto conn = std::make_shared<websocket::connection>(m_cfg.logger->clone("connection"), malloy::websocket::stream{
-                        boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}
+                    auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), malloy::websocket::stream{
+                        boost::beast::websocket::stream<boost::beast::tcp_stream>{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}}
                         });
-                    conn->connect(results, resource, [conn, done = std::forward<decltype(handler)>(handler)](auto ec) {
+                    conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
                         if (ec) {
-                            std::invoke(std::forward<decltype(handler)>(done), ec, nullptr);
+                            std::invoke(std::forward<decltype(handler)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
                         }
                         else {
                             std::invoke(std::forward<decltype(handler)>(done), ec, conn);

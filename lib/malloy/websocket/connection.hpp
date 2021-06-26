@@ -36,7 +36,7 @@ public:
      */
     static const std::string agent_string;
 
-    static auto make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> requires (!isClient) {
+    static auto make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> {
         // We have to emulate make_shared here because the ctor is private
         connection* me = nullptr;
         try {
@@ -58,13 +58,13 @@ public:
             // Save these for later
 
             // Set the timeout for the operation
-            ws_.get_lowest_layer([&, this, done = std::forward<Callback>(done)](auto& sock) mutable {
+            ws_.get_lowest_layer([&, me = this->shared_from_this(), this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
                 sock.expires_after(std::chrono::seconds(30));
 
                 // Make the connection on the IP address we get from a lookup
                 sock.async_connect(
                     target,
-                    [me = this->shared_from_this(), target, done = std::forward<Callback>(done)](auto ec, auto ep) mutable {
+                    [me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
                     if (ec) {
                         done(ec);
                     }
@@ -131,7 +131,7 @@ public:
      *
      * @param payload The payload to send.
      */
-    template<std::invocable<> Callback>
+    template<concepts::async_read_handler Callback>
     void send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
     {
         m_logger->trace("send(). payload size: {}", payload.size());
@@ -142,8 +142,8 @@ public:
             msg_queue_.push_back([this, me, payload, done = std::forward<Callback>(done)]() mutable {
                 me->ws_.async_write(payload,
                 [me, done = std::forward<Callback>(done)](auto ec, auto size) mutable {
+                done(ec, size);
                 me->on_write(ec, size); 
-                done();
             }); }
             );
 
@@ -241,7 +241,7 @@ private:
         // Update the m_host string. This will provide the value of the
         // Host HTTP header during the WebSocket handshake.
         // See https://tools.ietf.org/html/rfc7230#section-5.4
-        const std::string host = fmt::format("{}:{}", ep.address().string(), ep.port());
+        const std::string host = fmt::format("{}:{}", ep.address().to_string(), ep.port());
 
         // Perform the websocket handshake
         ws_.async_handshake(
