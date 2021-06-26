@@ -419,7 +419,9 @@ namespace malloy::server
                     continue;
                 }
 
-                ep->handler(gen->header(), connection);
+                gen->template body<boost::beast::http::string_body>([ep, connection](auto&& req) {
+                    ep->handler(std::move(req), connection);
+                    });
               
 
                 // We're done handling this request. The route handler will handle everything from hereon.

@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
 
 #include <boost/beast/core/error.hpp>
 #include <boost/asio/io_context.hpp>
@@ -19,7 +20,7 @@ namespace malloy::websocket {
 template<bool isClient> 
 class connection : public std::enable_shared_from_this<connection<isClient>> {
 public:
-    using handler_t = std::function<void(const malloy::http::request_header<>&, const std::shared_ptr<connection>&)>;
+    using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
     enum class state
     {
         handshaking,
@@ -33,7 +34,7 @@ public:
      */
     static const std::string agent_string;
 
-    static auto make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> {
+    static auto make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> requires (!isClient) {
         // We have to emulate make_shared here because the ctor is private
         connection* me = nullptr;
         try {
@@ -49,48 +50,34 @@ public:
     template<concepts::accept_handler Callback>
         requires (isClient)
     void
-        connect(std::string host, const std::string& port, std::string endpoint, Callback&& done)
-    {
-        m_logger->trace("connect({}, {}, {})", host, port, endpoint);
+            connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done)
+        {
 
-        // Save these for later
-        host_ = std::move(host);
-        endpoint_ = std::move(endpoint);
-
-        // Look up the domain name
-        auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>();
-        resolver->async_resolve(
-            host_,
-            port,
-            [this, resolver, me = this->shared_from_this(), done = std::forward<Callback>(done)](auto ec, auto results){
-            m_logger->trace("on_resolve()");
-
-            if (ec) {
-                m_logger->error("on_resolve(): {}", ec.message());
-                return;
-            }
+            // Save these for later
 
             // Set the timeout for the operation
-            ws_.get_lowest_layer([&, this](auto& sock) {
+            ws_.get_lowest_layer([&, this, done = std::forward<Callback>(done)](auto& sock) {
                 sock.expires_after(std::chrono::seconds(30));
 
                 // Make the connection on the IP address we get from a lookup
                 sock.async_connect(
-                    results,
-                    boost::beast::bind_front_handler(
-                        &connection::on_connect,
-                        this->shared_from_this()
-                    )
+                    target,
+                    [me = this->shared_from_this(), target, done = std::forward<Callback>(done)](auto ec, auto ep){
+                    if (ec) {
+                        done(ec);
+                    }
+                    else {
+                        me->on_connect(ec, ep, resource, std::forward<decltype(done)>(done));
+                    }
+                }
                 );
-            });
+                });
         }
-        );
-    }
 
     // Start the asynchronous operation
     template<class Body, class Fields>
     requires (!isClient)
-        void accept(boost::beast::http::request<Body, Fields> req, concepts::accept_handler auto&& done)
+        void accept(boost::beast::http::request<Body, Fields> req, std::invocable<> auto&& done)
     {
         // Update state
         m_state = state::handshaking;
@@ -113,7 +100,7 @@ public:
             // We're good to go
             m_state = state::active;
 
-            done(ec);
+            done();
         });
     }
 
@@ -142,20 +129,21 @@ public:
      *
      * @param payload The payload to send.
      */
-    void send(const concepts::const_buffer_sequence auto& payload)
+    template<std::invocable<> Callback>
+    void send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
     {
         m_logger->trace("send(). payload size: {}", payload.size());
 
         boost::asio::post(
             ws_.get_executor(),
-            [payload, me = this->shared_from_this()]() mutable {
-            me->msg_queue_.push_back([me, payload] { me->ws_.async_write(payload, [me](auto ec, auto size) { me->on_write(ec, size); }); });
+            [payload, me = this->shared_from_this(), done = std::forward<Callback>(done)]() mutable {
+            me->msg_queue_.push_back([me, payload, done = std::forward<Callback>(done)]{ me->ws_.async_write(payload,[me, done = std::forward<Callback>(done)](auto ec, auto size) { me->on_write(ec, size); done(); }); });
 
             if (me->msg_queue_.size() > 1) {
                 return;
             }
             else {
-
+                msg_queue_.back()(); // Execute this now
             }
         }
         );
@@ -172,8 +160,6 @@ private:
 
     std::vector<std::function<void()>> msg_queue_;
     std::shared_ptr<spdlog::logger> m_logger;
-    std::string host_;
-    std::string endpoint_;
     stream ws_;
 
     enum state m_state = state::closed;
@@ -197,19 +183,38 @@ private:
             )
         );
 
-        // Set a decorator to change the Server of the handshake
-        ws_.set_option(
-            boost::beast::websocket::stream_base::decorator(
-                [](boost::beast::websocket::response_type& res)
-                {
-                    res.set(boost::beast::http::field::server, agent_string);
-                }
-            )
-        );
+        if constexpr (isClient) {
+            // Set a decorator to change the User-Agent of the handshake
+            ws_.set_option(
+                boost::beast::websocket::stream_base::decorator(
+                    [](boost::beast::websocket::request_type& req)
+                    {
+                        req.set(boost::beast::http::field::user_agent, agent_string);
+                    }
+                )
+            );
+        }
+        else {
+
+            // Set a decorator to change the Server of the handshake
+            ws_.set_option(
+                boost::beast::websocket::stream_base::decorator(
+                    [](boost::beast::websocket::response_type& res)
+                    {
+                        res.set(boost::beast::http::field::server, agent_string);
+                    }
+                )
+            );
+        }
     }
 
     void
-        on_connect(boost::beast::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type ep)
+        on_connect(
+            boost::beast::error_code ec, 
+            boost::asio::ip::tcp::resolver::results_type::endpoint_type ep, 
+            const std::string& resource,
+            concepts::accept_handler auto&& on_handshake
+        )
     {
         m_logger->trace("on_connect()");
 
@@ -220,32 +225,21 @@ private:
 
         // Turn off the timeout on the tcp_stream, because
         // the websocket stream has its own timeout system.
-        ws_.get_lowest_layer([](auto& s) {s.expires_never(); });
+        ws_.get_lowest_layer([](auto& s) { s.expires_never(); });
         setup_connection();
 
-        // Set a decorator to change the User-Agent of the handshake
-        ws_.set_option(
-            boost::beast::websocket::stream_base::decorator(
-                [](boost::beast::websocket::request_type& req)
-                {
-                    req.set(boost::beast::http::field::user_agent, agent_string);
-                }
-            )
-        );
+      
 
         // Update the m_host string. This will provide the value of the
         // Host HTTP header during the WebSocket handshake.
         // See https://tools.ietf.org/html/rfc7230#section-5.4
-        host_ += ':' + std::to_string(ep.port());
+        const std::string host = fmt::format("{}:{}", ep.address().string(), ep.port());
 
         // Perform the websocket handshake
         ws_.async_handshake(
-            host_,
-            endpoint_,
-            boost::beast::bind_front_handler(
-                &connection::on_handshake,
-                this->shared_from_this()
-            )
+            host,
+            resource,
+            std::forward<decltype(on_handshake)>(on_handshake)
         );
     }
 

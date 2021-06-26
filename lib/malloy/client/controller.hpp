@@ -4,6 +4,10 @@
 #include "../http/request.hpp"
 #include "../http/response.hpp"
 #include "../websocket/types.hpp"
+#include "malloy/error.hpp"
+#include "malloy/client/websocket/connection.hpp"
+
+#include <boost/asio/strand.hpp>
 
 #include <spdlog/logger.h>
 
@@ -74,22 +78,36 @@ namespace malloy::client
          *
          * @return The connection.
          */
-        template<class Connection>
         [[nodiscard]]
-        std::shared_ptr<Connection>
-        make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& endpoint, malloy::websocket::handler_t<>&& handler)
+        auto
+            make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& resource,
+                std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
         {
-            // Sanity check
-            if (!handler)
-                return { };
-
             // Create connection
-            auto conn = std::make_shared<Connection>(m_cfg.logger->clone("connection"), io_ctx(), std::move(handler));
+            auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
+            resolver->async_resolve(
+                host,
+                post,
+                [this, resolver, done = std::forward<decltype(handler)>(handler)](auto ec, auto results){
 
-            // Launch the connection
-            conn->connect(host, std::to_string(port), endpoint);
-
-            return conn;
+                if (ec) {
+                    std::invoke(std::forward<decltype(done)>(done), ec, nullptr);
+                }
+                else {
+                    auto conn = std::make_shared<websocket::connection>(m_cfg.logger->clone("connection"), malloy::websocket::stream{
+                        boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}
+                        });
+                    conn->connect(results, resource, [conn, done = std::forward<decltype(handler)>(handler)](auto ec) {
+                        if (ec) {
+                            std::invoke(std::forward<decltype(handler)>(done), ec, nullptr);
+                        }
+                        else {
+                            std::invoke(std::forward<decltype(handler)>(done), ec, conn);
+                        }
+                    });
+                }
+            }
+            );
         }
 
     private:
