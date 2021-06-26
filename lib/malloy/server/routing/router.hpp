@@ -53,14 +53,14 @@ namespace malloy::server
             using request_type = malloy::http::request<boost::beast::http::string_body>;
             using header_type = boost::beast::http::request_header<>;
 
-            static auto body_for(const header_type&) -> body_type<typename request_type::body_type> {
+            auto body_for(const header_type&) const -> body_type<typename request_type::body_type> {
                 return {};
             }
 
-            static auto setup_body(const header_type&, typename request_type::body_type::value_type&) {}
+            void setup_body(const header_type&, typename request_type::body_type::value_type&) const {}
 
         };
-        static_assert(concepts::advanced_route_handler<default_route_handler>, "Default handler must satisfy advanced router handler");
+        static_assert(concepts::route_filter<default_route_handler>, "Default handler must satisfy route filter");
 
         /**
          * Send a response.
@@ -192,13 +192,15 @@ namespace malloy::server
         /**
          * Add an HTTP regex endpoint.
          *
+         * @tparam ExtraInfo a type that satisfies route_filter. Used to provide additional customisation of request handling 
+         * @tparam Func invoked on a request to the specified target with the specified method
          * @param method The HTTP method.
          * @param target The resource path (regex).
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<concepts::advanced_route_handler ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
-        bool add(const method_type method, const std::string_view target, Func&& handler)
+        template<concepts::route_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
+        bool add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             using func_t = std::decay_t<Func>;
 
@@ -210,21 +212,21 @@ namespace malloy::server
                 return add_regex_endpoint<
                     uses_captures,
                     std::invoke_result_t<func_t, const request_type&,
-                                         const std::vector<std::string>&>, ExtraInfo>(
-                    method, target, std::forward<Func>(handler));
+                                         const std::vector<std::string>&>>(
+                    method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra));
             }
             else {
                 return add_regex_endpoint<
                     uses_captures,
-                    std::invoke_result_t<func_t, const request_type&>, 
-                    ExtraInfo>(
-                    method, target, std::forward<Func>(handler));
+                    std::invoke_result_t<func_t, const request_type&>
+                    >(
+                    method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra));
             }
         }
 
         template<concepts::route_handler<typename detail::default_route_handler::request_type> Func>
         auto add(const method_type method, const std::string_view target, Func&& handler) {
-            return add<detail::default_route_handler>(method, target, std::forward<Func>(handler));
+            return add(method, target, std::forward<Func>(handler), detail::default_route_handler{});
         }
         /**
          * Add an HTTP file-serving location.
@@ -437,9 +439,9 @@ namespace malloy::server
         bool m_generate_preflights = false;
 
 
-        template<bool UsesCaptures, typename Body, concepts::advanced_route_handler ExtraInfo, typename Func>
+        template<bool UsesCaptures, typename Body, concepts::route_filter ExtraInfo, typename Func>
         auto add_regex_endpoint(method_type method, std::string_view target,
-                                Func&& handler) -> bool
+                                Func&& handler, ExtraInfo&& extra) -> bool
         {
             // Log
             if (m_logger)
@@ -462,9 +464,10 @@ namespace malloy::server
             using func_t = std::decay_t<Func>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
             // Build endpoint
-            auto ep = std::make_shared<endpoint_http_regex<bodies_t, ExtraInfo, UsesCaptures>>();
+            auto ep = std::make_shared<endpoint_http_regex<bodies_t, std::decay_t<ExtraInfo>, UsesCaptures>>();
             ep->resource_base = std::move(regex);
             ep->method = method;
+            ep->filter = std::forward<ExtraInfo>(extra);
             if constexpr (wrapped) {
                 ep->handler = std::move(handler);
             } else {
