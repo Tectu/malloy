@@ -141,10 +141,10 @@ public:
             [this, payload, me = this->shared_from_this(), done = std::forward<Callback>(done)]() mutable {
             msg_queue_.push_back([this, me, payload, done = std::forward<Callback>(done)]() mutable {
                 me->ws_.async_write(payload,
-                [me, done = std::forward<Callback>(done)](auto ec, auto size) mutable {
-                done(ec, size);
-                me->on_write(ec, size); 
-            }); }
+                    [me, done = std::forward<Callback>(done)](auto ec, auto size) mutable {
+                    std::invoke(std::forward<Callback>(done), ec, size);
+                    me->on_write(ec, size);
+                }); }
             );
 
             if (msg_queue_.size() > 1) {
@@ -155,7 +155,7 @@ public:
             }
         }
         );
-    }
+    };
 
 private:
     enum class sending_state

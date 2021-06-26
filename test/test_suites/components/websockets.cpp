@@ -39,20 +39,21 @@ TEST_SUITE("websockets") {
 		std::promise<void> pstop;
 		auto stop_token = pstop.get_future();
 
-		s_ctrl.router()->add_websocket("/", [&](const auto& req, auto conn) mutable {
+		s_ctrl.router()->add_websocket("/", [&server_recieved, pstop = &pstop](const auto& req, auto conn) mutable {
 			server_recieved = true;
-			conn->accept(req, [&, conn] {
-				conn->send(malloy::buffer(server_msg, std::strlen(server_msg)), [&, conn](auto ec, auto size) {
+			conn->accept(req, [conn, pstop]() mutable {
+				conn->send(malloy::buffer(server_msg, std::strlen(server_msg)), [conn, pstop](auto ec, auto size) mutable {
 					CHECK(!ec);
 					CHECK(size == std::strlen(server_msg));
 					auto buffer = std::make_shared<boost::beast::flat_buffer>();
-					conn->read(*buffer, [&, buffer](auto ec, auto size) {
+					conn->read(*buffer, [buffer, pstop](auto ec, auto size) mutable {
 						CHECK(!ec);
 						CHECK(size == std::strlen(cli_msg));
 						
 						CHECK(malloy::buffers_to_string(buffer->cdata()) == cli_msg);
 
-						pstop.set_value();
+						assert(pstop != nullptr);
+						pstop->set_value();
 						});
 					});
 				});
@@ -64,7 +65,7 @@ TEST_SUITE("websockets") {
 			CHECK(conn);
 
 			auto buffer = std::make_shared<boost::beast::flat_buffer>();
-			conn->read(*buffer, [&, buffer](auto ec, auto size) {
+			conn->read(*buffer, [&, conn, buffer](auto ec, auto size) {
 				CHECK(!ec);
 				CHECK(size == std::strlen(server_msg));
 
