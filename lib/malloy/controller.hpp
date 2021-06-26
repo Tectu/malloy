@@ -34,7 +34,6 @@ namespace malloy
 
             /**
              * The logger instance to use.
-             * A logger will be automatically created if none was provided.
              */
             std::shared_ptr<spdlog::logger> logger;
         };
