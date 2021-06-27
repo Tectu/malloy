@@ -3,6 +3,7 @@
 #include "endpoint_http.hpp"
 
 #include "malloy/http/response.hpp"
+#include "malloy/type_traits.hpp"
 #include "malloy/server/routing/type_traits.hpp"
 
 #include <functional>
@@ -16,7 +17,7 @@ namespace malloy::server
         virtual bool matches_resource(const boost::beast::http::request_header<>& req) const = 0;
     };
 
-    template<typename Response, concepts::route_filter Handler, bool WantsCapture>
+    template<typename Response, malloy::concepts::route_filter Handler, bool WantsCapture>
     class endpoint_http_regex :
         public endpoint_http, public resource_matcher
     {
@@ -96,33 +97,13 @@ namespace malloy::server
             }
         }
 
-        void load_body(auto&& body, auto gen, const http::connection_t& conn) const
+        void visit_bodies(const auto& gen, const http::connection_t& conn) const
         {
-            using T = std::decay_t<decltype(body)>::value_type;
-            gen->template body<T>(
+            using body_t = typename Handler::request_type::body_type;
+            gen->template body<body_t>(
                 [this, conn](const auto& req) {
                     handle_req(req, conn);
                 }, [&gen, this](auto& body) { filter.setup_body(gen->header(), body); });
-        }
-
-        void visit_bodies(const auto& gen, const http::connection_t& conn) const
-        {
-            auto bodies = [this, &gen] {
-                auto body = filter.body_for(gen->header());
-                using body_t = std::decay_t<decltype(body)>;
-
-                if constexpr (concepts::is_variant<body_t>) {
-                    return body;
-                }
-                else {
-                    return std::variant<body_t>{ std::move(body) };
-                }
-            }();
-            std::visit(
-                [this, gen, conn](auto&& body) {
-                    load_body(std::move(body), gen, conn);
-                },
-                std::move(bodies));
         }
     };
 

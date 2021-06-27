@@ -12,6 +12,7 @@ namespace malloy
     using boost::asio::buffer;
     using boost::beast::buffers_to_string;
     using boost::beast::bind_front_handler;
+
     
     /**
      * Returns an std::string which represents the raw bytes of the file.

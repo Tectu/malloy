@@ -12,6 +12,8 @@
 #include "malloy/server/http/connection/connection.hpp"
 #include "malloy/server/routing/type_traits.hpp"
 #include "malloy/server/routing/body_type.hpp"
+#include "malloy/type_traits.hpp"
+
 #include <type_traits>
 #include <concepts>
 
@@ -53,14 +55,11 @@ namespace malloy::server
             using request_type = malloy::http::request<boost::beast::http::string_body>;
             using header_type = boost::beast::http::request_header<>;
 
-            auto body_for(const header_type&) const -> body_type<typename request_type::body_type> {
-                return {};
-            }
 
             void setup_body(const header_type&, typename request_type::body_type::value_type&) const {}
 
         };
-        static_assert(concepts::route_filter<default_route_handler>, "Default handler must satisfy route filter");
+        static_assert(malloy::concepts::route_filter<default_route_handler>, "Default handler must satisfy route filter");
 
         /**
          * Send a response.
@@ -199,7 +198,7 @@ namespace malloy::server
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<concepts::route_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
+        template<malloy::concepts::route_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
         bool add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             using func_t = std::decay_t<Func>;
@@ -439,7 +438,7 @@ namespace malloy::server
         bool m_generate_preflights = false;
 
 
-        template<bool UsesCaptures, typename Body, concepts::route_filter ExtraInfo, typename Func>
+        template<bool UsesCaptures, typename Body, malloy::concepts::route_filter ExtraInfo, typename Func>
         auto add_regex_endpoint(method_type method, std::string_view target,
                                 Func&& handler, ExtraInfo&& extra) -> bool
         {
