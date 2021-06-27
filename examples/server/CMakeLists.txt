@@ -3,6 +3,7 @@ add_subdirectory(html_form)
 add_subdirectory(routing)
 add_subdirectory(session)
 add_subdirectory(websocket)
+add_subdirectory(custom-request-filter)
 
 if (MALLOY_FEATURE_TLS)
     add_subdirectory(ssl)
