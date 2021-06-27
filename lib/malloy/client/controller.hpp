@@ -46,7 +46,7 @@ namespace malloy::client
             }
             void setup_body(const header_type&, std::string&) const {}
         };
-        static_assert(malloy::client::concepts::resp_filter<default_resp_filter>, "default_resp_filter must satisfy resp_filter");
+        static_assert(malloy::client::concepts::response_filter<default_resp_filter>, "default_resp_filter must satisfy response_filter");
     }
     /**
      * High-level controller for client activities.
@@ -76,7 +76,7 @@ namespace malloy::client
          * @return The corresponding response.
          */
          
-        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::resp_filter Filter = detail::default_resp_filter>
+        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
         [[nodiscard]]
         auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
 
@@ -108,7 +108,7 @@ namespace malloy::client
              * @return The corresponding response.
              */
 
-        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::resp_filter Filter = detail::default_resp_filter>
+        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
         [[nodiscard]]
         auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
             // Check whether TLS context was initialized

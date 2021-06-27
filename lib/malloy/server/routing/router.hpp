@@ -58,7 +58,7 @@ namespace malloy::server
             void setup_body(const header_type&, typename request_type::body_type::value_type&) const {}
 
         };
-        static_assert(concepts::route_filter<default_route_handler>, "Default handler must satisfy route filter");
+        static_assert(concepts::request_filter<default_route_handler>, "Default handler must satisfy route filter");
 
         /**
          * Send a response.
@@ -190,14 +190,14 @@ namespace malloy::server
         /**
          * Add an HTTP regex endpoint.
          *
-         * @tparam ExtraInfo a type that satisfies route_filter. Used to provide additional customisation of request handling 
+         * @tparam ExtraInfo a type that satisfies request_filter. Used to provide additional customisation of request handling 
          * @tparam Func invoked on a request to the specified target with the specified method
          * @param method The HTTP method.
          * @param target The resource path (regex).
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<concepts::route_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
+        template<concepts::request_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
         bool add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             using func_t = std::decay_t<Func>;
@@ -437,7 +437,7 @@ namespace malloy::server
         bool m_generate_preflights = false;
 
 
-        template<bool UsesCaptures, typename Body, concepts::route_filter ExtraInfo, typename Func>
+        template<bool UsesCaptures, typename Body, concepts::request_filter ExtraInfo, typename Func>
         auto add_regex_endpoint(method_type method, std::string_view target,
                                 Func&& handler, ExtraInfo&& extra) -> bool
         {
