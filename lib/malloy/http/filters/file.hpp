@@ -29,7 +29,7 @@ struct basic_file {
 	static auto open(
 		const std::filesystem::path& location, 
 		std::function<void(malloy::error_code)> on_error, 
-		boost::beast::file_mode mode = boost::beast::file_mode::write) -> basic_file {
+		boost::beast::file_mode mode) -> basic_file {
 		return basic_file{ [location, mode, on_error = std::move(on_error)](auto&&, auto& body) {
 			boost::beast::error_code ec;
 			body.open(location.string().c_str(), mode, ec);
