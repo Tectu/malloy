@@ -156,7 +156,7 @@ namespace malloy::client::http
                     derived().stream(),
                     m_buffer,
                     *parser,
-                    [this, parser](auto ec, auto) {
+                    [this, parser, me = derived().shared_from_this()](auto ec, auto) {
                         if (ec)
                             return m_logger->error("on_read(): {}", ec.message());
                         // Notify via callback
