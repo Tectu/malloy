@@ -16,6 +16,7 @@ namespace malloy::client::http
         public connection<connection_tls<ConnArgs...>, ConnArgs...>,
         public std::enable_shared_from_this<connection_tls<ConnArgs...>>
     {
+        using parent_t = connection<connection_tls<ConnArgs...>, ConnArgs...>;
     public:
         connection_tls(
             std::shared_ptr<spdlog::logger> logger,
@@ -55,13 +56,13 @@ namespace malloy::client::http
         on_handshake(const boost::beast::error_code ec)
         {
             if (ec)
-                return m_logger->error("on_handshake(): {}", ec.message());
+                return parent_t::m_logger->error("on_handshake(): {}", ec.message());
 
             // Set a timeout on the operation
             boost::beast::get_lowest_layer(m_stream).expires_after(std::chrono::seconds(30));
 
             // Send the HTTP request to the remote host
-            send_request();
+            parent_t::send_request();
         }
     };
 }

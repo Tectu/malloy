@@ -18,13 +18,12 @@ namespace malloy::client::http
      *
      * @tparam Derived The type inheriting from this class.
      */
-    template<class Derived, malloy::http::concepts::body ReqBody, concepts::resp_filter Filter>
+    template<class Derived, malloy::http::concepts::body ReqBody, concepts::resp_filter Filter, typename Callback>
     class connection
     {
     public:
         using resp_t = typename Filter::response_type;
-        using body_t = typename Filter::response_type::body_type;
-        using callback_t = std::function<void(malloy::http::response<body_t>&&)>;
+        using callback_t = Callback;
 
         connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx) :
             m_logger(std::move(logger)),
@@ -81,9 +80,8 @@ namespace malloy::client::http
     private:
         boost::asio::ip::tcp::resolver m_resolver;
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
-        boost::beast::http::response_parser<body_t> m_parser;
+        boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
         malloy::http::request<ReqBody> m_req;
-        resp_t m_resp;
         callback_t m_cb;
         Filter m_req_filter;
 
@@ -149,30 +147,34 @@ namespace malloy::client::http
                 m_logger->error("on_read_header: '{}'", ec.message());
                 return;
             }
-            m_req_filter.setup_body(m_parser.get().base(), m_parser.get().body());
 
-            boost::beast::http::async_read(
-                derived().stream(),
-                m_buffer,
-                m_parser,
-                boost::beast::bind_front_handler(
-                    &connection::on_read,
-                    derived().shared_from_this()
-                )
-            );
+            // Pick a body and parse it from the stream
+            auto bodies = m_req_filter.body_for(m_parser.get().base());
+            std::visit([this](auto&& body) {
+                using body_t = std::decay_t<decltype(body)>;
+                auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));
+                m_req_filter.setup_body(parser->get().base(), parser->get().body());
+                boost::beast::http::async_read(
+                    derived().stream(),
+                    m_buffer,
+                    *parser,
+                    [this, parser](auto ec, auto) {
+                        if (ec)
+                            return m_logger->error("on_read(): {}", ec.message());
+                        // Notify via callback
+                        if (m_cb)
+                            m_cb(std::move(parser->release()));
+                        on_read();
+                    }
+                );
+                });
         }
 
         void
-        on_read(boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred)
+        on_read()
         {
-            if (ec)
-                return m_logger->error("on_read(): {}", ec.message());
-
-            // Notify via callback
-            if (m_cb)
-                m_cb(std::move(m_resp));
-
             // Gracefully close the socket
+            malloy::error_code ec;
             boost::beast::get_lowest_layer(derived().stream()).socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
             // not_connected happens sometimes so don't bother reporting it.

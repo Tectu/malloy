@@ -7,13 +7,13 @@
 #include "../websocket/types.hpp"
 #include "malloy/error.hpp"
 #include "malloy/client/type_traits.hpp"
+#include "malloy/client/websocket/connection.hpp"
+#include "malloy/client/http/connection_plain.hpp"
 
 #if MALLOY_FEATURE_TLS
-    #include "http/connection_tls.hpp"
+    #include "malloy/client/http/connection_tls.hpp"
 
     #include <boost/beast/ssl.hpp>
-    #include <boost/certify/extensions.hpp>
-    #include <boost/certify/https_verification.hpp>
 #endif
 
 
@@ -35,11 +35,18 @@ namespace malloy::client
     }
 
     namespace detail {
+        
         struct default_resp_filter {
             using response_type = malloy::http::response<>;
-            void setup_body(const typename response_type::header_type&, typename response_type::body_type::value_type&) const {}
+            using header_type = boost::beast::http::response_header<>;
+            using value_type = std::string;
+
+            auto body_for(const header_type&) const -> std::variant<boost::beast::http::string_body> {
+                return {};
+            }
+            void setup_body(const header_type&, std::string&) const {}
         };
-        static_assert(concepts::resp_filter<default_resp_filter>, "default_resp_filter must satisfy resp_filter");
+        static_assert(malloy::client::concepts::resp_filter<default_resp_filter>, "default_resp_filter must satisfy resp_filter");
     }
     /**
      * High-level controller for client activities.
@@ -69,11 +76,11 @@ namespace malloy::client
          * @return The corresponding response.
          */
          
-        template<malloy::http::concepts::body ReqBody, typename Callback, malloy::concepts::resp_filter Filter = detail::default_resp_filter>
+        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::resp_filter Filter = detail::default_resp_filter>
         void http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) {
 
             // Create connection
-            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter>>(
+            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<decltype(Callback)>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                 io_ctx()
                 );
@@ -96,14 +103,14 @@ namespace malloy::client
              * @return The corresponding response.
              */
 
-        template<malloy::http::concepts::body ReqBody, typename Callback, malloy::concepts::resp_filter Filter = detail::default_resp_filter>
+        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::resp_filter Filter = detail::default_resp_filter>
         void https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) {
             // Check whether TLS context was initialized
             if (!m_tls_ctx)
                 throw std::logic_error("TLS context not initialized.");
 
 
-            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter>>(
+            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<decltype(Callback)>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                 io_ctx(),
                 *m_tls_ctx
@@ -127,9 +134,7 @@ namespace malloy::client
          *
          * @return The connection.
          */
-        [[nodiscard]]
-        auto
-            make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& resource,
+        void make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& resource,
                 std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
         {
             // Create connection

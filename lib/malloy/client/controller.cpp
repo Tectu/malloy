@@ -1,5 +1,9 @@
 #include "controller.hpp"
 
+#if MALLOY_FEATURE_TLS 
+    #include <boost/certify/extensions.hpp>
+    #include <boost/certify/https_verification.hpp>
+#endif
 
 using namespace malloy::client;
 
