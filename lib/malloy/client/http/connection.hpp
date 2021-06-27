@@ -6,6 +6,8 @@
 #include "malloy/client/type_traits.hpp"
 #include "malloy/type_traits.hpp"
 
+#include <optional>
+
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <spdlog/logger.h>
