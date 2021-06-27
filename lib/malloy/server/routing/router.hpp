@@ -11,7 +11,6 @@
 #include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
 #include "malloy/server/routing/type_traits.hpp"
-#include "malloy/server/routing/body_type.hpp"
 #include "malloy/type_traits.hpp"
 
 #include <type_traits>
@@ -59,7 +58,7 @@ namespace malloy::server
             void setup_body(const header_type&, typename request_type::body_type::value_type&) const {}
 
         };
-        static_assert(malloy::concepts::route_filter<default_route_handler>, "Default handler must satisfy route filter");
+        static_assert(concepts::route_filter<default_route_handler>, "Default handler must satisfy route filter");
 
         /**
          * Send a response.
@@ -198,7 +197,7 @@ namespace malloy::server
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<malloy::concepts::route_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
+        template<concepts::route_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
         bool add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             using func_t = std::decay_t<Func>;
@@ -438,7 +437,7 @@ namespace malloy::server
         bool m_generate_preflights = false;
 
 
-        template<bool UsesCaptures, typename Body, malloy::concepts::route_filter ExtraInfo, typename Func>
+        template<bool UsesCaptures, typename Body, concepts::route_filter ExtraInfo, typename Func>
         auto add_regex_endpoint(method_type method, std::string_view target,
                                 Func&& handler, ExtraInfo&& extra) -> bool
         {
@@ -459,7 +458,7 @@ namespace malloy::server
             }
 
 
-            constexpr bool wrapped = concepts::is_variant<Body>;
+            constexpr bool wrapped = malloy::concepts::is_variant<Body>;
             using func_t = std::decay_t<Func>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
             // Build endpoint

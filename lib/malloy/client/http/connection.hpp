@@ -2,6 +2,9 @@
 
 #include "../../http/request.hpp"
 #include "../../http/response.hpp"
+#include "malloy/http/type_traits.hpp"
+#include "malloy/client/type_traits.hpp"
+#include "malloy/type_traits.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
@@ -15,11 +18,13 @@ namespace malloy::client::http
      *
      * @tparam Derived The type inheriting from this class.
      */
-    template<class Derived>
+    template<class Derived, malloy::http::concepts::body ReqBody, concepts::resp_filter Filter>
     class connection
     {
     public:
-        using callback_t = std::function<void(malloy::http::response<>&&)>;
+        using resp_t = typename Filter::response_type;
+        using body_t = typename Filter::response_type::body_type;
+        using callback_t = std::function<void(malloy::http::response<body_t>&&)>;
 
         connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx) :
             m_logger(std::move(logger)),
@@ -35,9 +40,11 @@ namespace malloy::client::http
         run(
             char const* port,
             malloy::http::request<> req,
-            callback_t&& cb
+            callback_t&& cb,
+            Filter&& filter
         )
         {
+            m_req_filter = std::move(filter);
             m_req = std::move(req);
             m_cb = std::move(cb);
             if (!m_cb)
@@ -74,9 +81,11 @@ namespace malloy::client::http
     private:
         boost::asio::ip::tcp::resolver m_resolver;
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
-        malloy::http::request<> m_req;
-        malloy::http::response<> m_resp;
+        boost::beast::http::response_parser<body_t> m_parser;
+        malloy::http::request<ReqBody> m_req;
+        resp_t m_resp;
         callback_t m_cb;
+        Filter m_req_filter;
 
         [[nodiscard]]
         Derived&
@@ -124,10 +133,28 @@ namespace malloy::client::http
                 return m_logger->error("on_write: {}", ec.message());
 
             // Receive the HTTP response
+            boost::beast::http::async_read_header(
+                derived().stream(),
+                m_buffer,
+                m_parser,
+                malloy::bind_front_handler(
+                    &connection::on_read_header,
+                    derived().shared_from_this()
+                )
+            );
+
+       }
+        void on_read_header(malloy::error_code ec, std::size_t) {
+            if (ec) {
+                m_logger->error("on_read_header: '{}'", ec.message());
+                return;
+            }
+            m_req_filter.setup_body(m_parser.get().base(), m_parser.get().body());
+
             boost::beast::http::async_read(
                 derived().stream(),
                 m_buffer,
-                m_resp,
+                m_parser,
                 boost::beast::bind_front_handler(
                     &connection::on_read,
                     derived().shared_from_this()

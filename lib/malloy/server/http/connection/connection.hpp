@@ -249,9 +249,10 @@ namespace malloy::server::http
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
+                auto raw_stream = derived().release_stream();
                 auto ws_connection = server::websocket::connection::make(
                     m_logger->clone("websocket_connection"),
-                    malloy::websocket::stream{ {derived().release_stream()} }
+                    malloy::websocket::stream{ boost::beast::websocket::stream<std::decay_t<decltype(raw_stream)>>{std::move(raw_stream)} }
                 );
                 m_router->websocket(*m_doc_root, gen, ws_connection);
 

@@ -3,9 +3,20 @@
 #include "../controller.hpp"
 #include "../http/request.hpp"
 #include "../http/response.hpp"
+#include "malloy/http/type_traits.hpp"
 #include "../websocket/types.hpp"
 #include "malloy/error.hpp"
-#include "malloy/client/websocket/connection.hpp"
+#include "malloy/client/type_traits.hpp"
+
+#if MALLOY_FEATURE_TLS
+    #include "http/connection_tls.hpp"
+
+    #include <boost/beast/ssl.hpp>
+    #include <boost/certify/extensions.hpp>
+    #include <boost/certify/https_verification.hpp>
+#endif
+
+
 
 #include <boost/asio/strand.hpp>
 
@@ -23,6 +34,13 @@ namespace malloy::client
         class connection_plain;
     }
 
+    namespace detail {
+        struct default_resp_filter {
+            using response_type = malloy::http::response<>;
+            void setup_body(const typename response_type::header_type&, typename response_type::body_type::value_type&) const {}
+        };
+        static_assert(concepts::resp_filter<default_resp_filter>, "default_resp_filter must satisfy resp_filter");
+    }
     /**
      * High-level controller for client activities.
      */
@@ -50,9 +68,24 @@ namespace malloy::client
          *
          * @return The corresponding response.
          */
-        [[nodiscard]]
-        std::future<http::response<>>
-        http_request(http::request<> req);
+         
+        template<malloy::http::concepts::body ReqBody, typename Callback, malloy::concepts::resp_filter Filter = detail::default_resp_filter>
+        void http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) {
+
+            // Create connection
+            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter>>(
+                m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                io_ctx()
+                );
+            conn->run(
+                std::to_string(req.port()).c_str(),
+                req,
+                std::forward<Callback>(done),
+                std::move(filter)
+            );
+
+
+        }
 
         #if MALLOY_FEATURE_TLS
             /**
@@ -62,9 +95,25 @@ namespace malloy::client
              *
              * @return The corresponding response.
              */
-            [[nodiscard]]
-            std::future<http::response<>>
-            https_request(http::request req);
+
+        template<malloy::http::concepts::body ReqBody, typename Callback, malloy::concepts::resp_filter Filter = detail::default_resp_filter>
+        void https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) {
+            // Check whether TLS context was initialized
+            if (!m_tls_ctx)
+                throw std::logic_error("TLS context not initialized.");
+
+
+            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter>>(
+                m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                io_ctx(),
+                *m_tls_ctx
+                );
+            conn->run(
+                std::to_string(req.port()),
+                req,
+                std::forward<Callback>(done),
+                std::move(filter));
+        }
         #endif
 
         /**

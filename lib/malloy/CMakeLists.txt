@@ -56,7 +56,7 @@ target_sources(
         malloy.hpp
         utils.hpp
         error.hpp
-)
+ "client/type_traits.hpp")
 
 target_link_libraries(
     ${TARGET_OBJS}

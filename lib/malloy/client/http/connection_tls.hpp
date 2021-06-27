@@ -10,9 +10,11 @@ namespace malloy::client::http
     /**
      * A TLS (SSL) HTTPS connection.
      */
+
+    template<typename... ConnArgs>
     class connection_tls :
-        public connection<connection_tls>,
-        public std::enable_shared_from_this<connection_tls>
+        public connection<connection_tls<ConnArgs...>, ConnArgs...>,
+        public std::enable_shared_from_this<connection_tls<ConnArgs...>>
     {
     public:
         connection_tls(
@@ -41,7 +43,7 @@ namespace malloy::client::http
                 boost::asio::ssl::stream_base::client,
                 boost::beast::bind_front_handler(
                     &connection_tls::on_handshake,
-                    shared_from_this()
+                    this->shared_from_this()
                 )
             );
         }

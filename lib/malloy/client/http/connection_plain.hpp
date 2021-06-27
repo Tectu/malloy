@@ -8,9 +8,11 @@ namespace malloy::client::http
     /**
      * A plain HTTP connection.
      */
+
+    template<typename... ConnArgs>
     class connection_plain :
-        public connection<connection_plain>,
-        public std::enable_shared_from_this<connection_plain>
+        public connection<connection_plain<ConnArgs...>, ConnArgs...>,
+        public std::enable_shared_from_this<connection_plain<ConnArgs...>>
     {
     public:
         connection_plain(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx) :

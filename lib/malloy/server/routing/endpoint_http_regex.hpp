@@ -17,7 +17,7 @@ namespace malloy::server
         virtual bool matches_resource(const boost::beast::http::request_header<>& req) const = 0;
     };
 
-    template<typename Response, malloy::concepts::route_filter Handler, bool WantsCapture>
+    template<typename Response, concepts::route_filter Handler, bool WantsCapture>
     class endpoint_http_regex :
         public endpoint_http, public resource_matcher
     {
