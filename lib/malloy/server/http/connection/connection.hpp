@@ -74,8 +74,10 @@ namespace malloy::server::http
 
 
         private:
-            request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent)
-                : h_parser_{ std::move(hparser) }, header_{ std::move(header) }, parent_{ std::move(parent) } {
+            request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent, boost::beast::flat_buffer buff)
+                : buff_{ std::move(buff) }, h_parser_ {
+                std::move(hparser)
+            }, header_{ std::move(header) }, parent_{ std::move(parent) } {
                 assert(parent_); // TODO: Should this be BOOST_ASSERT?
             }
 
@@ -232,7 +234,7 @@ namespace malloy::server::http
 
             auto header = m_parser->get().base();
             // Parse the request into something more useful from hereon
-            auto gen = std::shared_ptr<request_generator>{new request_generator{ std::move(m_parser), std::move(header), derived().shared_from_this() }}; // Private ctor
+            auto gen = std::shared_ptr<request_generator>{new request_generator{  std::move(m_parser), std::move(header), derived().shared_from_this(), std::move(m_buffer) }}; // Private ctor
             malloy::http::uri req_uri{std::string{gen->header().target()}};
 
             // Check request URI for legality

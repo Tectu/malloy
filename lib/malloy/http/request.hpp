@@ -52,8 +52,7 @@ namespace malloy::http
         request(msg_t&& raw) {
           using namespace boost::beast::http;
 
-          using base_type =
-              boost::beast::http::request<boost::beast::http::string_body>;
+          using base_type = msg_t;
 
           // Underlying
           base_type::operator=(std::move(raw));
