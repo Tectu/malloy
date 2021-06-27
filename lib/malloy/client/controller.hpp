@@ -110,13 +110,13 @@ namespace malloy::client
                 throw std::logic_error("TLS context not initialized.");
 
 
-            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<Callback>>>(
+            auto conn = std::make_shared<http::connection_tls<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                 io_ctx(),
                 *m_tls_ctx
                 );
             conn->run(
-                std::to_string(req.port()),
+                std::to_string(req.port()).c_str(),
                 req,
                 std::move(done),
                 std::move(filter));

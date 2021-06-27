@@ -23,7 +23,7 @@ namespace malloy::client::http
             boost::asio::io_context& io_ctx,
             boost::asio::ssl::context& tls_ctx
         ) :
-            connection(std::move(logger), io_ctx),
+            parent_t(std::move(logger), io_ctx),
             m_stream(boost::asio::make_strand(io_ctx), tls_ctx)
         {
         }

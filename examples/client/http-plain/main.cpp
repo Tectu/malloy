@@ -32,9 +32,9 @@ int main()
     );
     std::promise<void> stop_prom;
     auto stop_token = stop_prom.get_future();
-    c.http_request(req, [stop_prom = &stop_prom](auto&& resp) mutable {
+    c.http_request(req, [stop_prom = std::move(stop_prom)](auto&& resp) mutable {
         std::cout << resp << std::endl;
-        stop_prom->set_value();
+        stop_prom.set_value();
     });
     stop_token.wait();
 

@@ -34,9 +34,13 @@ int main()
         443,
         "/"
     );
-    auto resp = c.https_request(req);
-
-    std::cout << resp.get() << std::endl;
+    std::promise<void> stop_prom;
+    auto stop_token = stop_prom.get_future();
+    c.https_request(req, [stop = std::move(stop_prom)](auto&& resp) mutable {
+        std::cout << resp << std::endl;
+        stop.set_value();
+    });
+    stop_token.wait();
 
     return EXIT_SUCCESS;
 }
