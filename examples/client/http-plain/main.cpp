@@ -30,9 +30,14 @@ int main()
         80,
         "/"
     );
-    auto resp = c.http_request(req);
+    std::promise<void> stop_prom;
+    auto stop_token = stop_prom.get_future();
+    c.http_request(req, [stop_prom = &stop_prom](auto&& resp) mutable {
+        std::cout << resp << std::endl;
+        stop_prom->set_value();
+    });
+    stop_token.wait();
 
-    std::cout << resp.get() << std::endl;
 
     return EXIT_SUCCESS;
 }

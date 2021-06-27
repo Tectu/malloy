@@ -17,7 +17,7 @@ namespace malloy::client::http
         using parent_t = connection<connection_plain<ConnArgs...>, ConnArgs...>;
     public:
         connection_plain(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx) :
-            connection(std::move(logger), io_ctx),
+            parent_t(std::move(logger), io_ctx),
             m_stream(boost::asio::make_strand(io_ctx))
         {
         }

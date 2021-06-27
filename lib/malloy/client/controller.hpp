@@ -80,14 +80,14 @@ namespace malloy::client
         void http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) {
 
             // Create connection
-            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<decltype(Callback)>>>(
+            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                 io_ctx()
                 );
             conn->run(
                 std::to_string(req.port()).c_str(),
                 req,
-                std::forward<Callback>(done),
+                std::move(done),
                 std::move(filter)
             );
 
@@ -110,7 +110,7 @@ namespace malloy::client
                 throw std::logic_error("TLS context not initialized.");
 
 
-            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<decltype(Callback)>>>(
+            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                 io_ctx(),
                 *m_tls_ctx
@@ -118,7 +118,7 @@ namespace malloy::client
             conn->run(
                 std::to_string(req.port()),
                 req,
-                std::forward<Callback>(done),
+                std::move(done),
                 std::move(filter));
         }
         #endif

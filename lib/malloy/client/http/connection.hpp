@@ -38,16 +38,14 @@ namespace malloy::client::http
         void
         run(
             char const* port,
-            malloy::http::request<> req,
+            malloy::http::request<ReqBody> req,
             callback_t&& cb,
             Filter&& filter
         )
         {
             m_req_filter = std::move(filter);
             m_req = std::move(req);
-            m_cb = std::move(cb);
-            if (!m_cb)
-                return m_logger->error("no callback set. ignoring.");
+            m_cb.emplace(std::move(cb));
 
             // Look up the domain name
             m_resolver.async_resolve(
@@ -82,7 +80,7 @@ namespace malloy::client::http
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
         boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
         malloy::http::request<ReqBody> m_req;
-        callback_t m_cb;
+        std::optional<callback_t> m_cb;
         Filter m_req_filter;
 
         [[nodiscard]]
@@ -162,12 +160,11 @@ namespace malloy::client::http
                         if (ec)
                             return m_logger->error("on_read(): {}", ec.message());
                         // Notify via callback
-                        if (m_cb)
-                            m_cb(std::move(parser->release()));
+                        (*m_cb)(parser->release());
                         on_read();
                     }
                 );
-                });
+                }, std::move(bodies));
         }
 
         void
