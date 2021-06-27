@@ -42,16 +42,18 @@ int main() {
 		80,
 		"/"
 	};
-	std::promise<void> stop;
-	auto stop_token = stop.get_future();
-	ctrl.http_request(req, [stop = std::move(stop)](auto&& req) mutable {
+	auto stop_token = ctrl.http_request(req, [](auto&& req) mutable {
 		if constexpr (std::same_as<std::decay_t<decltype(req)>, malloy::http::response<boost::beast::http::string_body>>) {
 			std::cout << req << '\n';
 		}
 		else {
 			std::cout << "Downloaded webpage to: " << download_path << '\n';
 		}
-		stop.set_value();
 		}, response_filter{});
-	stop_token.wait();
+
+	const auto ec = stop_token.get();
+	if (ec) {
+		spdlog::error(ec.message());
+		return EXIT_FAILURE;
+	}
 }

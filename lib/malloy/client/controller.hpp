@@ -77,19 +77,24 @@ namespace malloy::client
          */
          
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::resp_filter Filter = detail::default_resp_filter>
-        void http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) {
+        [[nodiscard]]
+        auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
 
             // Create connection
             auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                 io_ctx()
                 );
+            std::promise<malloy::error_code> prom;
+            auto err_channel = prom.get_future();
             conn->run(
                 std::to_string(req.port()).c_str(),
                 req,
+                std::move(prom),
                 std::move(done),
                 std::move(filter)
             );
+            return err_channel;
 
 
         }
@@ -104,7 +109,8 @@ namespace malloy::client
              */
 
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::resp_filter Filter = detail::default_resp_filter>
-        void https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) {
+        [[nodiscard]]
+        auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
             // Check whether TLS context was initialized
             if (!m_tls_ctx)
                 throw std::logic_error("TLS context not initialized.");
@@ -115,11 +121,15 @@ namespace malloy::client
                 io_ctx(),
                 *m_tls_ctx
                 );
+            std::promise<malloy::error_code> prom;
+            auto err_channel = prom.get_future();
             conn->run(
                 std::to_string(req.port()).c_str(),
                 req,
+                std::move(prom),
                 std::move(done),
                 std::move(filter));
+            return err_channel;
         }
         #endif
 

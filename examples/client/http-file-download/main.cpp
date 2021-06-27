@@ -29,13 +29,14 @@ int main() {
 		80,
 		"/"
 	};
-	std::promise<void> stop_prom;
-	auto stop_token = stop_prom.get_future();
-	ctrl.http_request(req, [stop = std::move(stop_prom)](auto&&) mutable {
-		stop.set_value();
-	}, malloy::http::filters::file_response::open("./google.com.html", log_error, boost::beast::file_mode::write));
+	auto stop_token = ctrl.http_request(req, [](auto&&) {}, 
+		malloy::http::filters::file_response::open("./google.com.html", log_error, boost::beast::file_mode::write));
 
-	stop_token.wait();
+	const auto ec = stop_token.get();
+	if (ec) {
+		spdlog::error(ec.message());
+		return EXIT_FAILURE;
+	}
 		
 
 }

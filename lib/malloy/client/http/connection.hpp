@@ -39,12 +39,14 @@ namespace malloy::client::http
         run(
             char const* port,
             malloy::http::request<ReqBody> req,
+            std::promise<malloy::error_code> err_channel,
             callback_t&& cb,
             Filter&& filter
         )
         {
             m_req_filter = std::move(filter);
             m_req = std::move(req);
+            m_err_channel = std::move(err_channel);
             m_cb.emplace(std::move(cb));
 
             // Look up the domain name
@@ -80,6 +82,7 @@ namespace malloy::client::http
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
         boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
         malloy::http::request<ReqBody> m_req;
+        std::promise<malloy::error_code> m_err_channel;
         std::optional<callback_t> m_cb;
         Filter m_req_filter;
 
@@ -93,8 +96,11 @@ namespace malloy::client::http
         void
         on_resolve(const boost::beast::error_code& ec, boost::asio::ip::tcp::resolver::results_type results)
         {
-            if (ec)
-                return m_logger->error("on_resolve: {}", ec.message());
+            if (ec) {
+                m_logger->error("on_resolve: {}", ec.message());
+                m_err_channel.set_value(ec);
+                return;
+            }
 
             // Set a timeout on the operation
             boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
@@ -112,8 +118,11 @@ namespace malloy::client::http
         void
         on_connect(const boost::beast::error_code& ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type)
         {
-            if (ec)
-                return m_logger->error("on_connect: {}", ec.message());
+            if (ec) {
+                m_logger->error("on_connect: {}", ec.message());
+                m_err_channel.set_value(ec);
+                return;
+            }
 
             // Set a timeout on the operation
             boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
@@ -125,8 +134,11 @@ namespace malloy::client::http
         void
         on_write(const boost::beast::error_code& ec, [[maybe_unused]] const std::size_t bytes_transferred)
         {
-            if (ec)
-                return m_logger->error("on_write: {}", ec.message());
+            if (ec) {
+                m_logger->error("on_write: {}", ec.message());
+                m_err_channel.set_value(ec);
+                return;
+            }
 
             // Receive the HTTP response
             boost::beast::http::async_read_header(
@@ -143,6 +155,7 @@ namespace malloy::client::http
         void on_read_header(malloy::error_code ec, std::size_t) {
             if (ec) {
                 m_logger->error("on_read_header: '{}'", ec.message());
+                m_err_channel.set_value(ec);
                 return;
             }
 
@@ -157,12 +170,15 @@ namespace malloy::client::http
                     m_buffer,
                     *parser,
                     [this, parser, me = derived().shared_from_this()](auto ec, auto) {
-                        if (ec)
-                            return m_logger->error("on_read(): {}", ec.message());
-                        // Notify via callback
-                        (*m_cb)(parser->release());
-                        on_read();
+                    if (ec) {
+                        m_logger->error("on_read(): {}", ec.message());
+                        m_err_channel.set_value(ec);
+                        return;
                     }
+                    // Notify via callback
+                    (*m_cb)(parser->release());
+                    on_read();
+                }
                 );
                 }, std::move(bodies));
         }
@@ -175,10 +191,11 @@ namespace malloy::client::http
             boost::beast::get_lowest_layer(derived().stream()).socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
             // not_connected happens sometimes so don't bother reporting it.
-            if (ec && ec != boost::beast::errc::not_connected)
-                return m_logger->error("shutdown: {}", ec.message());
+            if (ec && ec != boost::beast::errc::not_connected) {
+                m_logger->error("shutdown: {}", ec.message());
+            }
+            m_err_channel.set_value(ec); // Set it even if its not an error, to signify that we are done
 
-            // If we get here then the connection is closed gracefully
         }
     };
 
