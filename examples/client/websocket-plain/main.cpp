@@ -2,7 +2,6 @@
 #include "../../ws_handlers.hpp"
 
 #include <malloy/client/controller.hpp>
-#include <malloy/client/websocket/connection_plain.hpp>
 
 #include <iostream>
 
