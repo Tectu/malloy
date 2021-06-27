@@ -1,4 +1,5 @@
 add_subdirectory(session)
+add_subdirectory(filters)
 
 target_sources(
     ${TARGET_OBJS}
