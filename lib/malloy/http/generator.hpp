@@ -7,6 +7,7 @@
 #include "types.hpp"
 #include "response.hpp"
 #include "request.hpp"
+#include "malloy/http/type_traits.hpp"
 
 
 namespace malloy::http
@@ -92,11 +93,14 @@ namespace malloy::http
          * Construct a file response.
          *
          * @param req The request to be responded to.
-         * @param storage_path The base path to the local filesystem.
+         * @param storage_base_path The base path to the local filesystem.
          * @return The response.
          */
+        template<malloy::http::concepts::body Body>
         [[nodiscard]]
-        static auto file(const request<>& req, const std::filesystem::path& storage_path) -> file_response;
+        static auto file(const request<Body>& req, const std::filesystem::path& storage_base_path) -> file_response {
+	        return file(storage_base_path, req.uri().resource_string());
+        }
 
         /**
          * Construct a file response.

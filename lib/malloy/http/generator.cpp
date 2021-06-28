@@ -55,10 +55,7 @@ response<> generator::server_error(std::string_view what)
     return res;
 }
 
-auto generator::file(const request<>& req, const std::filesystem::path& storage_base_path) -> file_response
-{
-	return file(storage_base_path, req.uri().resource_string());
-}
+
 
 auto generator::file(const std::filesystem::path& storage_base_path, std::string_view rel_path) -> file_response
 {
