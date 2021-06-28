@@ -1,0 +1,79 @@
+name: MSYS2 CI
+
+on: 
+  push:
+  pull_request: 
+    branches: [main]
+
+env: 
+  BUILD_TYPE: Release 
+  INSTALL_LOCATION: .local 
+
+jobs:
+  build:
+    strategy: 
+      fail-fast: false
+      matrix:
+        boost_version: [1.74.0, 1.76.0]
+        malloy_tls: [ON, OFF]
+        
+    runs-on: windows-latest
+    env:
+      BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
+
+    name: 'mingw: boost ${{ matrix.boost_version }} tls: ${{ matrix.malloy_tls }}'
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    default:
+        run:
+            shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: msys2/setup-msys2@v2
+        with:
+            msystem: MINGW64
+            update: true
+            install: git mingw-w64-x86_64-toolchain 
+      - name: cache boost
+        uses: actions/cache@v2 
+        id: cache-boost
+        with: 
+          path: ${{ env.BOOST_ROOT }}
+          key: boost-${{ matrix.boost_version }}
+      - name: Install Ninja 
+        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Setup boost env
+        run: |
+          BOOST_URL="https://boostorg.jfrog.io/artifactory/main/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
+          echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Install Boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          if [ "$OS" == "Windows_NT" ]; then
+            # fix up paths to be forward slashes consistently
+            BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
+          fi
+          mkdir -p $BOOST_ROOT
+          curl --progress-bar --location --output $BOOST_ROOT/download.tar.bz2 $BOOST_URL
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar.bz2 -y -bd
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar -y -bd
+          cd $BOOST_ROOT && cp -r boost_*/* .
+          rm -rf boost_*/* download.tar.bz2 download.tar
+        shell: bash
+     
+      - name: Configure 
+        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }}
+
+      - name: Build 
+        run: cmake --build build 
+
+      - name: Run tests 
+        run: ./build/test/malloy-tests
+
+
+    
+
+
+
