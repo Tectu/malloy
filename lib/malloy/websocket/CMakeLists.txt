@@ -3,4 +3,6 @@ target_sources(
     PRIVATE
         types.hpp
         websocket.hpp
+        connection.cpp
+        connection.hpp
 )

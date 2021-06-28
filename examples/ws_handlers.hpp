@@ -9,6 +9,8 @@
 
 #include <malloy/websocket/connection.hpp>
 
+#include <thread>
+
 namespace malloy::examples::ws {
 template<bool isClient>
 using ws_connection = std::shared_ptr<malloy::websocket::connection<isClient>>;

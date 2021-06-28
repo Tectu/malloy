@@ -3,6 +3,8 @@
 
 #include <concepts>
 #include <memory>
+#include <functional>
+#include <memory>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/fmt.h>
@@ -15,6 +17,7 @@
 #include "malloy/type_traits.hpp"
 #include "malloy/websocket/stream.hpp"
 #include "malloy/websocket/types.hpp"
+#include "malloy/http/request.hpp"
 #include "malloy/error.hpp"
 
 namespace malloy::websocket {
@@ -277,11 +280,4 @@ private:
         m_state = state::closed;
     }
 };
-
-template<>
-const std::string connection<true>::agent_string = std::string(BOOST_BEAST_VERSION_STRING) + " websocket-client-async";
-
-template<>
-const std::string connection<false>::agent_string = std::string{BOOST_BEAST_VERSION_STRING} + " malloy";
-
 }
