@@ -38,7 +38,7 @@ int main()
                 malloy::examples::ws::oneshot_read(conn, [](malloy::error_code ec, std::string msg) {
                     std::cout << "id[0]: " << msg << '\n';
                     });
-                })
+                });
         });
 
     c.make_websocket_connection(
@@ -53,7 +53,7 @@ int main()
             conn->send(malloy::buffer("Whoop Whoop"), [conn](auto ec, auto) {
                 malloy::examples::ws::oneshot_read(conn, [](malloy::error_code ec, std::string msg) {
                     std::cout << "id[1]: " << msg << std::endl;
-                    })
+                    });
                 });
         }
     );

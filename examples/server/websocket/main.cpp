@@ -46,7 +46,7 @@ int main()
 
         // Add a websocket endpoint
         router->add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
-            std::make_shared<malloy::examples::ws::ws_timer>(writer)->run(req);
+            std::make_shared<malloy::examples::ws::server_timer>(writer)->run(req);
 
         });
     }
