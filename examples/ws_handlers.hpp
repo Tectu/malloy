@@ -23,15 +23,18 @@ void oneshot_read(const ws_connection<isClient>& conn, std::invocable<malloy::er
 }
 
 template<bool isClient>
-void oneshot(const auto& req, ws_connection<isClient> conn, const std::string& msg) {
-    conn->accept(req, [msg, conn] { conn->send(malloy::buffer(msg), [](auto, auto) {}); });
+void oneshot(const auto& req, ws_connection<isClient> conn, const std::string& msg_data) {
+    auto msg = std::make_shared<std::string>(msg_data); // Keep message memory alive
+    conn->accept(req, [msg, conn] { conn->send(malloy::buffer(*msg), [msg](auto, auto) {}); });
 }
 
 template<bool isClient>
 class ws_echo : public std::enable_shared_from_this<ws_echo<isClient>> {
 public:
     using conn_t = std::shared_ptr<malloy::websocket::connection<isClient>>;
-    explicit ws_echo(const malloy::http::request<>& req, conn_t conn) : conn_{ std::move(conn) } {
+    explicit ws_echo(conn_t conn) : conn_{ std::move(conn) } {
+    }
+    void run(const malloy::http::request<>& req) {
         conn_->accept(req, boost::beast::bind_front_handler(&ws_echo::do_read, this->shared_from_this()));
     }
 
@@ -75,7 +78,7 @@ public:
     explicit ws_timer(ws_connection<isClient> conn) : conn_{ std::move(conn) } {}
     template<typename Req>
     void run(const Req& request) {
-        conn_->accept(request, malloy::bind_front_handler(&ws_timer::do_read, this->shared_from_this()));
+        conn_->accept(request, malloy::bind_front_handler(&ws_timer::do_write, this->shared_from_this()));
     }
 private:
     void do_read() {
@@ -85,27 +88,36 @@ private:
         if (ec) {
             spdlog::error("Uh oh, I couldn't write: '{}'", ec.message());
         }
+        if (wrote_secs_ == 9) {
+            conn_->stop(); // Kill the connection, we've finished our job
+        }
+    }
+    void do_write() {
+        using namespace std::chrono_literals;
+        for (std::size_t i = 0; i < 10; i++) {
+            // Write to socket
+            msg_store_[i] = fmt::format("i = {}", i);
+            conn_->send(malloy::buffer(msg_store_[i]), [this, me = this->shared_from_this()](auto ec, auto size) {
+                me->on_write(ec, size);
+                ++wrote_secs_;
+
+                std::this_thread::sleep_for(1s);
+            });
+        }
     }
     void on_read(malloy::error_code ec, std::size_t bytes) {
-        using namespace std::chrono_literals;
         if (ec) {
             spdlog::error("Uh oh, I couldn't read: '{}'", ec.message());
             return;
         }
-        for (std::size_t i = 0; i < 10; i++) {
-            // Write to socket
-            const auto msg = fmt::format("i = {}", i);
-            conn_->send(malloy::buffer(msg.c_str(), msg.size()), [me = this->shared_from_this(), msg](auto ec, auto size) {
-                me->on_write(ec, size);
-            });
-            // Sleep
-            std::this_thread::sleep_for(1s);
-        }
-        do_read();
+        
+        do_write();
     }
 
     boost::beast::flat_buffer buff_;
     ws_connection<isClient> conn_;
+    int wrote_secs_{ 0 };
+    std::array<std::string, 10> msg_store_{}; // Keeps sent messages data alive
 };
 
 using server_timer = ws_timer<false>;

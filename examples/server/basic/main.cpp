@@ -60,7 +60,7 @@ int main()
 
         // Add a websocket echo endpoint
         router->add_websocket("/echo", [](const auto& req, auto writer) {
-            std::make_shared<malloy::examples::ws::server_echo>(req, writer);
+            std::make_shared<malloy::examples::ws::server_echo>(writer)->run(req);
         });
     }
 
