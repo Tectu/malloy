@@ -44,7 +44,6 @@ jobs:
         run: |
           BOOST_URL="https://boostorg.jfrog.io/artifactory/main/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
           echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
-        shell: bash
 
       - name: Install Boost
         if: steps.cache-boost.outputs.cache-hit != 'true'
@@ -59,7 +58,6 @@ jobs:
           7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar -y -bd
           cd $BOOST_ROOT && cp -r boost_*/* .
           rm -rf boost_*/* download.tar.bz2 download.tar
-        shell: bash
      
       - name: Configure 
         run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }}
