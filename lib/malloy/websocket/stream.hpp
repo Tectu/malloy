@@ -96,10 +96,12 @@ namespace malloy::websocket {
         /** 
          * @brief Access get_lowest_layer of wrapped stream type 
          * @param visitor Visitor function over `boost::beast::get_lowest_layer(t) for t in detail::websocket_t`
-         * @example 
+         * @details Example:
+         * @code
          * void set_expires(stream& s) {
          *      s.get_lowest_layer([](auto& st) { st.expires_never(); });
          * }
+         * @endcode
          */
 		template<typename Func>
 		void get_lowest_layer(Func&& visitor) {
