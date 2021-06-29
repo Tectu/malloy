@@ -1,4 +1,5 @@
 add_subdirectory(session)
+add_subdirectory(filters)
 
 target_sources(
     ${TARGET_OBJS}
@@ -8,7 +9,6 @@ target_sources(
         generator.cpp
         generator.hpp
         http.hpp
-		request.cpp
         request.hpp
         response.hpp
 		types.hpp

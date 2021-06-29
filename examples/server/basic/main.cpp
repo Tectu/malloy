@@ -1,11 +1,14 @@
 #include "../../example_logger.hpp"
+#include "../../ws_handlers.hpp"
 
 #include <malloy/server/controller.hpp>
 #include <malloy/http/generator.hpp>
 #include <malloy/server/routing/router.hpp>
+#include <malloy/error.hpp>
 
 #include <iostream>
 #include <memory>
+
 
 int main()
 {
@@ -56,8 +59,8 @@ int main()
         router->add_file_serving("/files", doc_root);
 
         // Add a websocket echo endpoint
-        router->add_websocket("/echo", [](const std::string& payload, auto writer) {
-            writer("echo: " + payload);
+        router->add_websocket("/echo", [](const auto& req, auto writer) {
+            std::make_shared<malloy::examples::ws::server_echo>(writer)->run(req);
         });
     }
 

@@ -7,4 +7,5 @@ target_sources(
         uri.cpp
         endpoints.cpp
         request.cpp
+        websockets.cpp
 )

@@ -19,6 +19,7 @@ target_sources(
     PRIVATE
         test_main.cpp
         test.hpp
+        mocks.hpp
 )
 
 target_link_libraries(

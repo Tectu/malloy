@@ -1,7 +1,7 @@
 #include "../../example_logger.hpp"
+#include "../../ws_handlers.hpp"
 
 #include <malloy/client/controller.hpp>
-#include <malloy/client/websocket/connection_plain.hpp>
 
 #include <iostream>
 
@@ -25,23 +25,38 @@ int main()
         return EXIT_FAILURE;
     }
 
-    c.make_websocket_connection<malloy::client::websocket::connection_plain>(
+    c.make_websocket_connection(
         "127.0.0.1",
         8080,
         "/echo",
-        [](const auto& foo, auto send) {
-            std::cout << "id[0]: " << foo << std::endl;
-        }
-    )->send("Hello from Malloy!");
+        [](malloy::error_code ec, auto conn) {
+            conn->send(malloy::buffer("Hello from Malloy!"), [conn](auto ec, auto) {
+                if (ec) {
+                    std::cerr << "Uh oh, we couldn't send something: " << ec.message();
+                    return;
+                }
+                malloy::examples::ws::oneshot_read(conn, [](malloy::error_code ec, std::string msg) {
+                    std::cout << "id[0]: " << msg << '\n';
+                    });
+                });
+        });
 
-    c.make_websocket_connection<malloy::client::websocket::connection_plain>(
+    c.make_websocket_connection(
         "127.0.0.1",
         8080,
         "/timer",
-        [](const auto& foo, auto send) {
-            std::cout << "id[1]: " << foo << std::endl;
+        [](malloy::error_code ec, auto conn) {
+            if (ec) {
+                std::cerr << "Uh oh, we have a problem: " << ec.message() << '\n';
+                return;
+            }
+            conn->send(malloy::buffer("Whoop Whoop"), [conn](auto ec, auto) {
+                malloy::examples::ws::oneshot_read(conn, [](malloy::error_code ec, std::string msg) {
+                    std::cout << "id[1]: " << msg << std::endl;
+                    });
+                });
         }
-    )->send("Whoop Whoop");
+    );
 
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(15s);

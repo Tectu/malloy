@@ -4,10 +4,7 @@
 #include "malloy/http/generator.hpp"
 #include "malloy/server/http/connection/connection_t.hpp"
 
-#include "malloy/server/websocket/connection/connection_plain.hpp"
-#if MALLOY_FEATURE_TLS
-    #include "malloy/server/websocket/connection/connection_tls.hpp"
-#endif
+#include <boost/beast/http/detail/type_traits.hpp>
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
@@ -20,6 +17,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <concepts>
 #include <vector>
 
 namespace spdlog
@@ -29,7 +27,6 @@ namespace spdlog
 
 namespace malloy::server::http
 {
-
 
     /**
      * An HTTP server connection.
@@ -41,15 +38,66 @@ namespace malloy::server::http
     class connection
     {
     public:
+        class request_generator : public std::enable_shared_from_this<request_generator> {
+        public:
+            using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
+            using header_t = boost::beast::http::request_header<>;
+
+            auto header() -> header_t& {
+                return header_;
+            }
+
+            auto header() const -> const header_t& {
+                return header_;
+            }
+            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback,
+               typename SetupCb>
+            auto body(Callback&& done, SetupCb&& setup) {
+                using namespace boost::beast::http;
+                using body_t = std::decay_t<Body>;
+                auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
+                std::invoke(setup, parser->get().body());
+
+                boost::beast::http::async_read(
+                    parent_->derived().m_stream, buff_, *parser,
+                    [_ = parent_,
+                    done = std::forward<Callback>(done),
+                    p = parser, this_ = this->shared_from_this()](const auto& ec, auto size) {
+                    done(malloy::http::request<Body>{p->release()});
+                });
+            }
+
+            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
+            auto body(Callback&& done) {
+                return body<Body>(std::forward<Callback>(done), [](auto) {});
+            }
+
+
+        private:
+            request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent, boost::beast::flat_buffer buff)
+                : buff_{ std::move(buff) }, h_parser_ {
+                std::move(hparser)
+            }, header_{ std::move(header) }, parent_{ std::move(parent) } {
+                assert(parent_); // TODO: Should this be BOOST_ASSERT?
+            }
+
+            boost::beast::flat_buffer buff_;
+            h_parser_t h_parser_;
+            header_t header_;
+            std::shared_ptr<connection> parent_;
+
+            friend class connection;
+        };
+        
         class handler {
         public:
-            using request = malloy::http::request;
+            using request = malloy::http::request<>;
             using conn_t = const connection_t&;
             using path = std::filesystem::path;
+            using req_t = std::shared_ptr<request_generator>;
 
-            virtual void websocket(const path& root, request&& req, conn_t) = 0;
-            virtual void http(const path& root, request&& req, conn_t) = 0;
-            
+            virtual void websocket(const path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>&) = 0;
+            virtual void http(const path& root, const req_t& req, conn_t) = 0;
         
         };
         /**
@@ -124,7 +172,7 @@ namespace malloy::server::http
             m_logger->trace("do_read()");
 
             // Construct a new parser for each message
-            m_parser.emplace();
+            m_parser = std::make_unique<std::decay_t<decltype(*m_parser)>>();
 
             // Apply a reasonable limit to the allowed size
             // of the body in bytes to prevent abuse.
@@ -134,7 +182,7 @@ namespace malloy::server::http
             boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
 
             // Read a request using the parser-oriented interface
-            boost::beast::http::async_read(
+            boost::beast::http::async_read_header(
                 derived().m_stream,
                 m_buffer,
                 *m_parser,
@@ -149,15 +197,16 @@ namespace malloy::server::http
         boost::beast::flat_buffer m_buffer;
 
     private:
+        friend class request_generator;
+
         std::shared_ptr<spdlog::logger> m_logger;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<handler> m_router;
         std::shared_ptr<void> m_response;
 
-        // The parser is stored in an optional container so we can
-        // construct it from scratch it at the beginning of each new message.
-        boost::optional<boost::beast::http::request_parser<boost::beast::http::string_body>> m_parser;
-
+        // Pointer to allow handoff to generator since it cannot be copied or
+        // moved
+        typename request_generator::h_parser_t m_parser;
         /**
          * Cast to derived class type.
          *
@@ -183,39 +232,38 @@ namespace malloy::server::http
                 return;
             }
 
+            auto header = m_parser->get().base();
             // Parse the request into something more useful from hereon
-            malloy::http::request req = m_parser->release();
+            auto gen = std::shared_ptr<request_generator>{new request_generator{  std::move(m_parser), std::move(header), derived().shared_from_this(), std::move(m_buffer) }}; // Private ctor
+            malloy::http::uri req_uri{std::string{gen->header().target()}};
 
             // Check request URI for legality
-            if (!req.uri().is_legal()) {
-                m_logger->warn("illegal request URI: {}", req.uri().raw());
+            if (!req_uri.is_legal()) {
+                m_logger->warn("illegal request URI: {}", req_uri.raw());
                 auto resp = malloy::http::generator::bad_request("illegal URI");
                 do_write(std::move(resp));
                 return;
             }
 
             // Check if this is a WS request
-            if (boost::beast::websocket::is_upgrade(req)) {
+            if (boost::beast::websocket::is_upgrade(gen->header())) {
                 m_logger->info("upgrading HTTP connection to WS connection.");
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
-                auto ws_connection = server::websocket::make_websocket_connection(
+                auto raw_stream = derived().release_stream();
+                auto ws_connection = server::websocket::connection::make(
                     m_logger->clone("websocket_connection"),
-                    derived().release_stream()
+                    malloy::websocket::stream{ boost::beast::websocket::stream<std::decay_t<decltype(raw_stream)>>{std::move(raw_stream)} }
                 );
+                m_router->websocket(*m_doc_root, gen, ws_connection);
 
-                // Launch the connection
-                ws_connection->run(req);
-
-                // Hand over to router
-                m_router->websocket(*m_doc_root, std::move(req), ws_connection);
             }
 
             // This is an HTTP request
             else {
                 // Hand over to router
-                m_router->http(*m_doc_root, std::move(req), derived().shared_from_this());
+                m_router->http(*m_doc_root, std::move(gen), derived().shared_from_this());
             }
         }
 

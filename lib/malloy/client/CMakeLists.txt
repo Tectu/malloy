@@ -6,6 +6,7 @@ target_sources(
     PRIVATE
         controller.cpp
         controller.hpp
+        type_traits.hpp
 )
 
 target_include_directories(

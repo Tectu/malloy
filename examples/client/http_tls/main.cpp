@@ -34,9 +34,14 @@ int main()
         443,
         "/"
     );
-    auto resp = c.https_request(req);
-
-    std::cout << resp.get() << std::endl;
+    auto stop_token = c.https_request(req, [](auto&& resp) mutable {
+        std::cout << resp << std::endl;
+    });
+    const auto ec = stop_token.get();
+    if (ec) {
+        spdlog::error(ec.message());
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

@@ -30,9 +30,15 @@ int main()
         80,
         "/"
     );
-    auto resp = c.http_request(req);
+    auto stop_token = c.http_request(req, [](auto&& resp) mutable {
+        std::cout << resp << std::endl;
+    });
+    const auto ec = stop_token.get();
+    if (ec) {
+        spdlog::error(ec.message());
+        return EXIT_FAILURE;
+    }
 
-    std::cout << resp.get() << std::endl;
 
     return EXIT_SUCCESS;
 }

@@ -55,7 +55,8 @@ target_sources(
         controller.hpp
         malloy.hpp
         utils.hpp
-)
+        error.hpp
+ )
 
 target_link_libraries(
     ${TARGET_OBJS}

@@ -7,6 +7,7 @@
 #include "../../http/types.hpp"
 
 #include "malloy/server/http/connection/connection_t.hpp"
+#include "malloy/server/http/connection/request_generator_t.hpp"
 
 #include <optional>
 #include <functional>
@@ -21,9 +22,16 @@ namespace malloy::server
         endpoint
     {
         template<typename... Bodies>
-        using writer_t = std::function<void(const malloy::http::request&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
+        using response_t = std::variant<malloy::http::response<Bodies>...>;
+
+        template<typename... Bodies>
+        using writer_t = std::function<void(const boost::beast::http::request_header<>&, std::variant<malloy::http::response<Bodies>...>&&, const http::connection_t&)>;
 
         using handle_retr = std::optional<malloy::http::response<boost::beast::http::string_body>>;
+        using req_header_t = boost::beast::http::request_header<>;
+        using req_t = http::request_generator_t;
+        using url_t = malloy::http::uri;
+
 
         malloy::http::method method = malloy::http::method::unknown;
 
@@ -45,7 +53,7 @@ namespace malloy::server
          */
         [[nodiscard]]
         virtual
-        bool matches(const malloy::http::request& req) const
+        bool matches(const req_header_t& req, const url_t&) const
         {
             return method == req.method();
         }
@@ -58,7 +66,7 @@ namespace malloy::server
          */
         [[nodiscard]]
         virtual
-        handle_retr handle(const malloy::http::request& req, const http::connection_t& conn) const = 0;
+        handle_retr handle(const req_t& req, const http::connection_t& conn) const = 0;
     };
 
 }

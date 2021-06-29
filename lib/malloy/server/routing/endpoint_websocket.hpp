@@ -2,12 +2,14 @@
 
 #include "endpoint.hpp"
 #include "malloy/websocket/types.hpp"
+#include "malloy/server/websocket/connection/connection.hpp"
 
 namespace malloy::server
 {
-    struct endpoint_websocket
+    class endpoint_websocket
     {
+    public:
         std::string resource;
-        malloy::websocket::handler_t handler;
+        typename websocket::connection::handler_t handler;
     };
 }
