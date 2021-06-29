@@ -27,13 +27,20 @@ jobs:
         run:
             shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v2
       
       - uses: msys2/setup-msys2@v2
         with:
             msystem: MINGW64
-            update: true
-            install: git mingw-w64-x86_64-toolchain cmake ninja
+            update: false
+            install: >-
+              git 
+              base-devel
+              mingw-w64-x86_64-toolchain 
+              mingw-w64-x86_64-cmake 
+              mingw-w64-x86_64-spdlog
+              p7zip
+
+      - uses: actions/checkout@v2
       - name: cache boost
         uses: actions/cache@v2 
         id: cache-boost
@@ -48,10 +55,12 @@ jobs:
       - name: Install Boost
         if: steps.cache-boost.outputs.cache-hit != 'true'
         run: |
-          if [ "$OS" == "Windows_NT" ]; then
-            # fix up paths to be forward slashes consistently
-            BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
-          fi
+          # This sed magic does two things:
+          # 1. Replaces backslashes with forward slashes
+          # 2. Replaces windows drive paths (e.g. D:) with msys paths (e.g. /d)
+          BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g' | sed 's/\([A-Z]\):/\/\L\1/g')
+          echo "BOOST_ROOT=$BOOST_ROOT" >> $GITHUB_ENV
+          echo "BOOST ROOT: ${BOOST_ROOT}"
           mkdir -p $BOOST_ROOT
           curl --progress-bar --location --output $BOOST_ROOT/download.tar.bz2 $BOOST_URL
           7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar.bz2 -y -bd
@@ -60,7 +69,7 @@ jobs:
           rm -rf boost_*/* download.tar.bz2 download.tar
      
       - name: Configure 
-        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }}
+        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=OFF
 
       - name: Build 
         run: cmake --build build 
