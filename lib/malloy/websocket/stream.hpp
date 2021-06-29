@@ -33,8 +33,13 @@ namespace malloy::websocket {
 
 	}
 	/**
-	* @brief Websocket stream. May use TLS
 	* @class stream
+	* @brief Websocket stream. May use TLS
+    * @details Provides an interface for different types of websocket streams,
+    * allowing TLS and non-TLS streams to be used transparently. 
+    * @note Not all of the interface has explicit documentation. You can assume
+    * that anything without documentation simply calls the function of the same
+    * name on the underlying stream
 	*/
 	class stream {
 		using ws_t = detail::websocket_t;
@@ -88,15 +93,32 @@ namespace malloy::websocket {
 			}, underlying_conn_);
 		}
 
+        /** 
+         * @brief Access get_lowest_layer of wrapped stream type 
+         * @param visitor Visitor function over `boost::beast::get_lowest_layer(t) for t in detail::websocket_t`
+         * @example 
+         * void set_expires(stream& s) {
+         *      s.get_lowest_layer([](auto& st) { st.expires_never(); });
+         * }
+         */
 		template<typename Func>
 		void get_lowest_layer(Func&& visitor) {
 			std::visit([vistor = std::forward<Func>(visitor)](auto& s) mutable { vistor(boost::beast::get_lowest_layer(s)); }, underlying_conn_);
 		}
 
+        /**
+         * @brief Get executor of the underlying stream
+         * @return s.get_executor() where s is any of the types in
+         * detail::websocket_t
+         */
 		auto get_executor() {
 			return std::visit([](auto& s) { return s.get_executor(); }, underlying_conn_);
 		}
 
+        /** 
+         * @brief Whether the underlying stream is TLS or not 
+         * @note Always false if MALLOY_FEATURE_TLS == 0
+         */
 		constexpr auto is_tls() const -> bool { 
 #if MALLOY_FEATURE_TLS
 			return std::holds_alternative<detail::tls_stream>(underlying_conn_);  

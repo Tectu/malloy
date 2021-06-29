@@ -8,7 +8,6 @@
 #include <concepts>
 #include <variant>
 
-
 namespace malloy::concepts {
 
 template<typename B>
@@ -35,3 +34,26 @@ concept is_variant_of = requires(const V& v) {
 };
 
 }
+
+/** 
+ * @page general_concepts Core Concepts
+ * @section const_buffer_sequence 
+ * @par alias for boost::asio::is_const_buffer_sequence 
+ *
+ * @section dynamic_buffer 
+ * @par alias for boost::asio::is_dynamic_buffer
+ * 
+ * @section async_read_handler 
+ * @par Handler type that has malloy::error_code and std::size_t as its
+ * parameters
+ *
+ * @section accept_handler 
+ * @par Handler type that has malloy::error_code as its only parameter 
+ *
+ * @section is_variant 
+ * @par Requires that a type be a std::variant<...>
+ *
+ *
+ */
+
+

@@ -22,6 +22,14 @@
 
 namespace malloy::websocket {
 
+/**
+ * @class connection
+ * @tparam isClient: Whether it is the client end of a websocket connection
+ * @brief Represents a connection via the WebSocket protocol
+ * @details Provides basic management of a websocket connection. Will close the
+ * connection on destruction. The interface is entirely asynchronous and uses
+ * callback functions
+ */
 template<bool isClient> 
 class connection : public std::enable_shared_from_this<connection<isClient>> {
 public:
@@ -39,6 +47,12 @@ public:
      */
     static const std::string agent_string;
 
+    /** 
+     * @brief Construct a new connection object 
+     * @param logger Logger to use. Must not be `nullptr`
+     * @param ws Stream to use. May be unopened/connected but in that case
+     * `connect` must be called before this connection can be used
+     */
     static auto make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> {
         // We have to emulate make_shared here because the ctor is private
         connection* me = nullptr;
@@ -51,7 +65,14 @@ public:
             throw;
         }
     }
-    // Start the asynchronous operation
+    /** 
+     * @brief Connect to a remote (websocket) endpoint
+     * @note Only available if isClient == true
+     * @param target The list of resolved endpoints to connect to 
+     * @param resource A suburl to make the connection on (e.g. `/api/websocket`)
+     * @param done Callback invoked on accepting the handshake or an error
+     * occurring
+     */
     template<concepts::accept_handler Callback>
         requires (isClient)
     void
@@ -79,7 +100,17 @@ public:
                 });
         }
 
-    // Start the asynchronous operation
+    /** 
+     * @brief Accept an incoming connection 
+     * @note This is only available if isClient == false 
+     * @note Calling this function is only valid if `make` was passed a
+     * connected stream ready to be accepted (e.g. http stream that `req` was
+     * read from)
+     * @warning `done` is only invoked on successful connection
+     * @param req The request to accept. boost::beast::websocket::is_upgrade(req) must be true
+     * @param done Callback invoked on successful accepting of the request. NOT
+     * invoked on failure. Must be invocable without any parameters (i.e. `f()`)
+     */
     template<class Body, class Fields, std::invocable<> Callback>
     requires (!isClient)
         void accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
@@ -110,6 +141,12 @@ public:
     }
 
     // ToDo: Test this
+    /**
+     * @brief Stop/close the connection. 
+     * @note Attempting to send or receive after calling this will result in
+     * error(s)
+     *
+     */
     void stop()
     {
         m_state = state::closing;
@@ -117,6 +154,19 @@ public:
         ws_.close();
         on_close();
     }
+
+    /** 
+     * @brief Read a complete message into a buffer
+     * @warning The caller is responsible for keeping the memory used by `buff`
+     * alive until `done` is called
+     *
+     * @param buff Buffer to put the message into. Must satisfy dynamic_buffer @ref general_concepts
+     * @param done Callback invoked on the message being read 
+     * (successfully or otherwise). Must satisfy async_read_handler @ref
+     * general_concepts. Will NOT be invoked on the websocket being closed
+     * before the message could be fully or partially read
+     * 
+     */
     void read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done) {
         ws_.async_read(buff, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
             // This indicates that the connection was closed
@@ -130,9 +180,14 @@ public:
     }
 
     /**
-     * Send a payload to the client.
+     * @brief Send the contents of a buffer to the client.
+     * @warning The caller is responsible for keeping the memory of `payload`
+     * alive until `done` is invoked
      *
-     * @param payload The payload to send.
+     * @param payload The payload to send. Must satisfy const_buffer_sequence
+     *  @ref general_concepts
+     * @param done Callback invoked after the message is written (successfully
+     * or otherwise). Must satisfy async_read_handler @ref general_concepts
      */
     template<concepts::async_read_handler Callback>
     void send(const concepts::const_buffer_sequence auto& payload, Callback&& done)

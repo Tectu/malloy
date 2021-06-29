@@ -72,8 +72,16 @@ namespace malloy::client
          * Perform a plain (unencrypted) HTTP request.
          *
          * @param req The HTTP request.
+         * @param done Callback invoked on completion. Must be a visitor over
+         * `malloy::http::response<T>...` where T is the types contained in the
+         * return type of `Filter::body_for` (see response_filter @ref
+         * client_concepts). If you do not pass anything for filter, it just
+         * needs to take `malloy::http::response<>&&` as its only parameter 
+         * @param filter Filter to use when parsing the response. Must satisfy
+         * response_filter @ref client_concepts
          *
-         * @return The corresponding response.
+         * @return A future for reporting errors. Will be filled with a falsy
+         * error_code on success.
          */
          
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
@@ -100,14 +108,9 @@ namespace malloy::client
         }
 
         #if MALLOY_FEATURE_TLS
-            /**
-             * Perform a TLS encrypted HTTPS request.
-             *
-             * @param req The HTTPS request.
-             *
-             * @return The corresponding response.
-             */
-
+        /**
+         * Same as http_request but encrypted with TLS
+         */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
         [[nodiscard]]
         auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
@@ -136,13 +139,17 @@ namespace malloy::client
         /**
          * Create a websocket connection.
          *
-         * @tparam Connection The type of connection to use.
          * @param host The host.
          * @param port The port.
-         * @param endpoint The endpoint.
-         * @param handler Handler that gets called when data is received.
+         * @param resource The suburl to connect to (e.g. `/api/websocket`)
+         * @param handler Callback invoked when the connection is established
+         * (successfully or otherwise). Must satisfy `f(e, c)`, where:
+         * - `f` is the callback
+         * - `e` is `malloy::error_code` 
+         * - `c` is `std::shared_ptr<websocket::connection>`
+         * @warning If the error code passed to `handler` is truthy (an error) the
+         * connection will be `nullptr`
          *
-         * @return The connection.
          */
         void make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& resource,
                 std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)

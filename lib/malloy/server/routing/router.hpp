@@ -190,8 +190,10 @@ namespace malloy::server
         /**
          * Add an HTTP regex endpoint.
          *
-         * @tparam ExtraInfo a type that satisfies request_filter. Used to provide additional customisation of request handling 
-         * @tparam Func invoked on a request to the specified target with the specified method
+         * @tparam ExtraInfo a type that satisfies request_filter. Used to provide additional customisation of request handling. 
+         *  Must satisfy request_filter @ref route_concepts
+         * @tparam Func invoked on a request to the specified target with the specified method. 
+         *  Must satisfy route_handler @ref route_concepts
          * @param method The HTTP method.
          * @param target The resource path (regex).
          * @param handler The handler to generate the response.
