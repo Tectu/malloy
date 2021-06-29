@@ -84,12 +84,5 @@ TEST_SUITE("websockets") {
 
 		stop_token.wait();
 		CHECK(server_recieved);
-
-
-
-
-
 	}
-
-
 }

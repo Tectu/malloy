@@ -36,12 +36,12 @@ int main()
     if (router) { // TODO: Should the first two be done via optional capture groups?
         // Add a websocket endpoint
         router->add_websocket("/", [](const malloy::http::request<>& req, auto writer){
-            malloy::examples::ws::oneshot(req, writer, fmt::format("echo at /: {}", req.body()));
+            malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /: {}", req.body()));
         });
 
         // Add a websocket endpoint
         router->add_websocket("/echo", [](const malloy::http::request<>& req, auto writer){
-            malloy::examples::ws::oneshot(req, writer, fmt::format("echo at /echo: {}", req.body()));
+            malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /echo: {}", req.body()));
         });
 
         // Add a websocket endpoint

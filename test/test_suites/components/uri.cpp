@@ -2,8 +2,6 @@
 
 #include <malloy/http/uri.hpp>
 
-#include <iostream>
-
 using namespace malloy;
 using namespace malloy::http;
 

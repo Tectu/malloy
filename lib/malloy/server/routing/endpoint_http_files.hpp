@@ -8,6 +8,13 @@
 
 namespace malloy::server
 {
+    /**
+     * @brief Endpoint for file serving
+     * @details Serves files at a resource path. The url path after the resource
+     * base is appended to a base path on the filesystem. e.g. /content/img.svg
+     * with a resource path of / and a base path of /var/www/content would
+     * result in the file at /var/www/content/content/img.svg being served
+     */
     class endpoint_http_files :
         public endpoint_http
     {

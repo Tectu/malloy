@@ -27,7 +27,7 @@ TEST_SUITE("components - endpoints") {
 
         const auto input_url = std::string{"/content/"} + first_cap + "/" + second_cap;
         std::regex input_reg{R"(/content/(\w+)/(\d+))"};
-        endpoint_http_regex<response<>, malloy::server::detail::default_route_handler, true> endpt;
+        endpoint_http_regex<response<>, malloy::server::detail::default_route_filter, true> endpt;
 
         bool handler_called{false};
         endpt.handler = [&, called = &handler_called](const auto& req, const std::vector<std::string>& results) {
@@ -49,7 +49,7 @@ TEST_SUITE("components - endpoints") {
         constexpr auto input_url = "/content/word";
         const auto input_reg{R"(/content/(\w+))"};
 
-        endpoint_http_regex<response<>, malloy::server::detail::default_route_handler, false> endpt;
+        endpoint_http_regex<response<>, malloy::server::detail::default_route_filter, false> endpt;
         bool handler_called{false};
         endpt.handler = [called = &handler_called](const auto& req) {
             (*called) = true;

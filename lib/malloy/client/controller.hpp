@@ -36,6 +36,14 @@ namespace malloy::client
 
     namespace detail {
         
+        /** 
+         * @brief Default filter provided to ease use of interface
+         * @details Provides an implementation of response_filter @ref client_concepts for 
+         * use as the default value of Filter types so that users to not have to
+         * deal with them unnecessarily
+         *
+         *
+         */
         struct default_resp_filter {
             using response_type = malloy::http::response<>;
             using header_type = boost::beast::http::response_header<>;

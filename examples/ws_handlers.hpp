@@ -12,23 +12,38 @@
 #include <thread>
 
 namespace malloy::examples::ws {
-template<bool isClient>
-using ws_connection = std::shared_ptr<malloy::websocket::connection<isClient>>;
+namespace detail {
+    // Alias for easy referencing
+    template<bool isClient>
+    using ws_connection = std::shared_ptr<malloy::websocket::connection<isClient>>;
+}
 
-
+/**
+ * @brief Reads a single message from the connection
+ * @param on_read Callback invoked on a message being read or an error occurring. Must be invocable with malloy::error_code, std::string
+ */
 template<bool isClient>
-void oneshot_read(const ws_connection<isClient>& conn, std::invocable<malloy::error_code, std::string> auto&& on_read) {
+void oneshot_read(const detail::ws_connection<isClient>& conn, std::invocable<malloy::error_code, std::string> auto&& on_read) {
     auto buffer = std::make_shared<boost::beast::flat_buffer>();
     conn->read(*buffer, [buffer, on_read = std::forward<decltype(on_read)>(on_read)](auto ec, auto) {
         on_read(ec, malloy::buffers_to_string(malloy::buffer(buffer->cdata(), buffer->size())));
     });
 }
 
+
+/** 
+ * @brief Accepts a connection and sends a single message
+ * @note Copies `msg_data` into heap-allocated memory
+ * @param req Request to accept 
+ * @param conn Connection to use
+ * @param msg_data Message to send
+ */
 template<bool isClient>
-void oneshot(const auto& req, ws_connection<isClient> conn, const std::string& msg_data) {
+void accept_and_send(const auto& req, detail::ws_connection<isClient> conn, const std::string& msg_data) {
     auto msg = std::make_shared<std::string>(msg_data); // Keep message memory alive
     conn->accept(req, [msg, conn] { conn->send(malloy::buffer(*msg), [msg](auto, auto) {}); });
 }
+
 
 template<bool isClient>
 class ws_echo : public std::enable_shared_from_this<ws_echo<isClient>> {
@@ -73,11 +88,17 @@ private:
 using server_echo = ws_echo<false>;
 
 
-
+/**
+ * @brief Provides a timer over websocket 
+ * @details Will send i = n for n in range 0..9 inclusive at an interval of 1
+ * second and then close the connection (it counts from 0 to 9 with a second
+ * between each message)
+ * @class ws_timer
+ */
 template<bool isClient>
 class ws_timer: public std::enable_shared_from_this<ws_timer<isClient>> {
 public:
-    explicit ws_timer(ws_connection<isClient> conn) : conn_{ std::move(conn) } {}
+    explicit ws_timer(detail::ws_connection<isClient> conn) : conn_{ std::move(conn) } {}
     template<typename Req>
     void run(const Req& request) {
         conn_->accept(request, malloy::bind_front_handler(&ws_timer::do_write, this->shared_from_this()));
@@ -117,7 +138,7 @@ private:
     }
 
     boost::beast::flat_buffer buff_;
-    ws_connection<isClient> conn_;
+    detail::ws_connection<isClient> conn_;
     int wrote_secs_{ 0 };
     std::array<std::string, 10> msg_store_{}; // Keeps sent messages data alive
 };

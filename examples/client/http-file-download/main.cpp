@@ -37,7 +37,5 @@ int main() {
 		spdlog::error(ec.message());
 		return EXIT_FAILURE;
 	}
-		
-
 }
 

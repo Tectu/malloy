@@ -50,7 +50,13 @@ namespace malloy::server
         template<typename T, typename... Args>
         concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
 
-        struct default_route_handler {
+        /** 
+         * @brief Provides a default Filter to ease use of interface
+         * @details A default type for Filter in route::add which allows request
+         * filters to be opt-in rather than a required piece of boilerplate
+         * @class default_route_handler
+         */
+        struct default_route_filter {
             using request_type = malloy::http::request<boost::beast::http::string_body>;
             using header_type = boost::beast::http::request_header<>;
 
@@ -58,7 +64,7 @@ namespace malloy::server
             void setup_body(const header_type&, typename request_type::body_type::value_type&) const {}
 
         };
-        static_assert(concepts::request_filter<default_route_handler>, "Default handler must satisfy route filter");
+        static_assert(concepts::request_filter<default_route_filter>, "Default handler must satisfy route filter");
 
         /**
          * Send a response.
@@ -224,9 +230,9 @@ namespace malloy::server
             }
         }
 
-        template<concepts::route_handler<typename detail::default_route_handler::request_type> Func>
+        template<concepts::route_handler<typename detail::default_route_filter::request_type> Func>
         auto add(const method_type method, const std::string_view target, Func&& handler) {
-            return add(method, target, std::forward<Func>(handler), detail::default_route_handler{});
+            return add(method, target, std::forward<Func>(handler), detail::default_route_filter{});
         }
         /**
          * Add an HTTP file-serving location.
