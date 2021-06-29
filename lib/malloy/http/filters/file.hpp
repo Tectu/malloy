@@ -9,6 +9,9 @@
 
 /**
  * @namespace malloy::http::filters
+ * @brief Contains the filter types bundled with malloy
+ * @details See response_filter (@ref client_concepts) and request_filter (@ref route_concepts) for more info. 
+ * All types in this namespace satisfy both concepts.
  */
 namespace malloy::http::filters {
 
@@ -28,7 +31,15 @@ namespace malloy::http::filters {
 
         setup_handler_t setup;
 
+        /**
+         * @brief Default ctor 
+         * @details Calls to setup_body will do nothing until setup is set to a
+         * valid function
+         */
         basic_file() = default;
+        /**
+         * @brief Construct with a setup handler
+         */
         explicit basic_file(setup_handler_t setup_) : setup{ std::move(setup_) } {}
 
         basic_file(basic_file&&) noexcept = default;
