@@ -74,9 +74,8 @@ public:
      * occurring
      */
     template<concepts::accept_handler Callback>
+    void connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) 
         requires (isClient)
-    void
-            connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done)
         {
 
             // Save these for later
@@ -112,8 +111,8 @@ public:
      * invoked on failure. Must be invocable without any parameters (i.e. `f()`)
      */
     template<class Body, class Fields, std::invocable<> Callback>
-    requires (!isClient)
-        void accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
+    void accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
+        requires (!isClient)
     {
         // Update state
         m_state = state::handshaking;
