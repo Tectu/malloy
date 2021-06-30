@@ -524,6 +524,12 @@ namespace malloy::server
          */
         bool add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep);
 
+        /**
+         * Generates a preflight response for a specified request.
+         *
+         * @param req The request header.
+         * @return The corresponding response.
+         */
         response_type generate_preflight_response(const request_header& req) const;
 
         /**
