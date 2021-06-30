@@ -16,10 +16,7 @@
     #include <boost/beast/ssl.hpp>
 #endif
 
-
-
 #include <boost/asio/strand.hpp>
-
 #include <spdlog/logger.h>
 
 namespace boost::asio::ssl
@@ -34,7 +31,8 @@ namespace malloy::client
         class connection_plain;
     }
 
-    namespace detail {
+    namespace detail
+    {
         
         /** 
          * @brief Default filter provided to ease use of interface
@@ -56,6 +54,7 @@ namespace malloy::client
         };
         static_assert(malloy::client::concepts::response_filter<default_resp_filter>, "default_resp_filter must satisfy response_filter");
     }
+
     /**
      * High-level controller for client activities.
      */
@@ -91,7 +90,6 @@ namespace malloy::client
          * @return A future for reporting errors. Will be filled with a falsy
          * error_code on success.
          */
-         
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
         [[nodiscard]]
         auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
@@ -159,8 +157,12 @@ namespace malloy::client
          * connection will be `nullptr`
          *
          */
-        void make_websocket_connection(const std::string& host, std::uint16_t port, const std::string& resource,
-                std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
+        void make_websocket_connection(
+            const std::string& host,
+            std::uint16_t port,
+            const std::string& resource,
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+        )
         {
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));

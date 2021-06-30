@@ -12,19 +12,16 @@
 #include "malloy/server/http/connection/connection.hpp"
 #include "malloy/server/routing/type_traits.hpp"
 #include "malloy/type_traits.hpp"
-
-#include <type_traits>
-#include <concepts>
-
-
 #if MALLOY_FEATURE_TLS
     #include "malloy/server/http/connection/connection_tls.hpp"
 #endif
 
+#include <type_traits>
+#include <concepts>
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
-
 #include <spdlog/logger.h>
 
 #include <concepts>
@@ -406,7 +403,6 @@ namespace malloy::server
          * @param req The original HTTP request that was upgraded.
          * @param connection The WebSocket connection.
          */
-        
         template<typename Derived>
         void handle_ws_request(
             const req_generator<Derived>& gen,
