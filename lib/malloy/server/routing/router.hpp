@@ -44,8 +44,9 @@ namespace spdlog
 
 namespace malloy::server
 {
-    
-    namespace detail {
+
+    namespace detail
+    {
 
         template<typename T, typename... Args>
         concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
@@ -99,6 +100,7 @@ namespace malloy::server
     class router
     {
         using str_body = boost::beast::http::string_body;
+
     public:
         template<typename Derived>
         using req_generator = std::shared_ptr<typename http::connection<Derived>::request_generator>;
@@ -191,8 +193,6 @@ namespace malloy::server
          */
         bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
 
-
-        
         /**
          * Add an HTTP regex endpoint.
          *
@@ -205,7 +205,10 @@ namespace malloy::server
          * @param handler The handler to generate the response.
          * @return Whether adding the route was successful.
          */
-        template<concepts::request_filter ExtraInfo, concepts::route_handler<typename ExtraInfo::request_type> Func>
+        template<
+            concepts::request_filter ExtraInfo,
+            concepts::route_handler<typename ExtraInfo::request_type> Func
+        >
         bool add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             using func_t = std::decay_t<Func>;
@@ -234,6 +237,7 @@ namespace malloy::server
         auto add(const method_type method, const std::string_view target, Func&& handler) {
             return add(method, target, std::forward<Func>(handler), detail::default_route_filter{});
         }
+
         /**
          * Add an HTTP file-serving location.
          *
@@ -444,15 +448,17 @@ namespace malloy::server
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
         bool m_generate_preflights = false;
 
-
-        template<bool UsesCaptures, typename Body, concepts::request_filter ExtraInfo, typename Func>
-        auto add_regex_endpoint(method_type method, std::string_view target,
-                                Func&& handler, ExtraInfo&& extra) -> bool
+        template<
+            bool UsesCaptures,
+            typename Body,
+            concepts::request_filter ExtraInfo,
+            typename Func
+        >
+        auto add_regex_endpoint(method_type method, std::string_view target, Func&& handler, ExtraInfo&& extra) -> bool
         {
             // Log
             if (m_logger)
                 m_logger->debug("adding route: {}", target);
-
 
             // Build regex
             std::regex regex;
@@ -465,10 +471,10 @@ namespace malloy::server
                 return false;
             }
 
-
             constexpr bool wrapped = malloy::concepts::is_variant<Body>;
             using func_t = std::decay_t<Func>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
+
             // Build endpoint
             auto ep = std::make_shared<endpoint_http_regex<bodies_t, std::decay_t<ExtraInfo>, UsesCaptures>>();
             ep->resource_base = std::move(regex);
@@ -493,7 +499,6 @@ namespace malloy::server
             ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { 
                     std::visit([&, this](auto&& resp) { detail::send_response(req, std::move(resp), conn);  }, std::move(resp));
             };
-
 
             // Add route
             return add_http_endpoint(std::move(ep));
@@ -544,6 +549,6 @@ namespace malloy::server
                 throw exception;
             }
         }
-
     };
+
 }
