@@ -5,4 +5,5 @@ target_sources(
         websocket.hpp
         connection.cpp
         connection.hpp
+        stream.hpp
 )
