@@ -4,8 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "malloy/http/request.hpp"
-
+#include "../http/request.hpp"
 
 namespace malloy::html
 {
