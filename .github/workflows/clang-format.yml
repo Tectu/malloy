@@ -1,0 +1,27 @@
+name: clang-format check 
+
+on:
+  pull_request: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    steps:
+      - uses: actions/checkout@v2 
+        with:
+          fetch-depth: 0 
+      - name: Run clang-format 
+        run: |
+          find ./lib ./test -print0 -iname "*.cpp" -o -iname "*.hpp" | xargs -0 clang-format -i --style=file
+      - name: Commit changes
+        run: | 
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "clang-format [bot]"
+          git commit -am "ci: run formatter [skip ci]"
+      - name: Push changes 
+        run: |
+          git push HEAD:"${{ github.head_ref }}" "https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git"
+
+
+
+
