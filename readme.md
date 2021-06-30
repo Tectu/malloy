@@ -37,7 +37,7 @@ Building (and using) this library requires:
   
 ## Dependencies
 Required:
-- [Boost](https://www.boost.org/) 1.73.0 or newer
+- [Boost](https://www.boost.org/) 1.74.0 or newer
 - [spdlog](https://github.com/gabime/spdlog) 1.8.3 or newer
 
 Optional:
