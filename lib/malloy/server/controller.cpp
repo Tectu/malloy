@@ -5,9 +5,7 @@
     #include "malloy/tls/manager.hpp"
 #endif
 
-#include <boost/asio/io_context.hpp>
 #include <spdlog/logger.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <memory>
 

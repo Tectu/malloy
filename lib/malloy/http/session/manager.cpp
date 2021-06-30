@@ -1,9 +1,6 @@
 #include "manager.hpp"
 #include "session.hpp"
 #include "storage.hpp"
-#include "../cookie.hpp"
-#include "../request.hpp"
-#include "../response.hpp"
 
 #include <stdexcept>
 #include <random>

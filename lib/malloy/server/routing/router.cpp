@@ -1,9 +1,6 @@
 #include "router.hpp"
 #include "endpoint_http_files.hpp"
 #include "endpoint_http_redirect.hpp"
-#include "endpoint_http_regex.hpp"
-#include "endpoint_websocket.hpp"
-#include "malloy/server/http/connection/connection.hpp"
 
 #include <stdexcept>
 
