@@ -33,11 +33,9 @@ jobs:
             msystem: MINGW64
             update: false
             install: >-
-              git 
               base-devel
               mingw-w64-x86_64-toolchain 
               mingw-w64-x86_64-cmake 
-              mingw-w64-x86_64-spdlog
               p7zip
 
       - uses: actions/checkout@v2
@@ -69,7 +67,7 @@ jobs:
           rm -rf boost_*/* download.tar.bz2 download.tar
      
       - name: Configure 
-        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=OFF
+        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=ON
 
       - name: Build 
         run: cmake --build build 
