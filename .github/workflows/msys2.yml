@@ -1,0 +1,82 @@
+name: MSYS2 CI
+
+on: 
+  push:
+  pull_request: 
+    branches: [main]
+
+env: 
+  BUILD_TYPE: Release 
+  INSTALL_LOCATION: .local 
+
+jobs:
+  build:
+    strategy: 
+      fail-fast: false
+      matrix:
+        boost_version: [1.74.0, 1.76.0]
+        malloy_tls: [ON, OFF]
+        
+    runs-on: windows-latest
+    env:
+      BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
+
+    name: 'mingw: boost ${{ matrix.boost_version }} tls: ${{ matrix.malloy_tls }}'
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    defaults:
+        run:
+            shell: msys2 {0}
+    steps:
+      
+      - uses: msys2/setup-msys2@v2
+        with:
+            msystem: MINGW64
+            update: false
+            install: >-
+              base-devel
+              mingw-w64-x86_64-toolchain 
+              mingw-w64-x86_64-cmake 
+              p7zip
+
+      - uses: actions/checkout@v2
+      - name: cache boost
+        uses: actions/cache@v2 
+        id: cache-boost
+        with: 
+          path: ${{ env.BOOST_ROOT }}
+          key: boost-${{ matrix.boost_version }}
+      - name: Setup boost env
+        run: |
+          BOOST_URL="https://boostorg.jfrog.io/artifactory/main/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
+          echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
+
+      - name: Install Boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          # This sed magic does two things:
+          # 1. Replaces backslashes with forward slashes
+          # 2. Replaces windows drive paths (e.g. D:) with msys paths (e.g. /d)
+          BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g' | sed 's/\([A-Z]\):/\/\L\1/g')
+          echo "BOOST_ROOT=$BOOST_ROOT" >> $GITHUB_ENV
+          echo "BOOST ROOT: ${BOOST_ROOT}"
+          mkdir -p $BOOST_ROOT
+          curl --progress-bar --location --output $BOOST_ROOT/download.tar.bz2 $BOOST_URL
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar.bz2 -y -bd
+          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar -y -bd
+          cd $BOOST_ROOT && cp -r boost_*/* .
+          rm -rf boost_*/* download.tar.bz2 download.tar
+     
+      - name: Configure 
+        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=ON
+
+      - name: Build 
+        run: cmake --build build 
+
+      - name: Run tests 
+        run: ./build/test/malloy-tests
+
+
+    
+
+
+
