@@ -6,7 +6,7 @@
 /**
  * Creates a logger used by the various examples.
  *
- * @return
+ * @return The corresponding logger.
  */
 [[nodiscard]]
 static
