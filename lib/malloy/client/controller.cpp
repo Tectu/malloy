@@ -7,7 +7,6 @@
 
 using namespace malloy::client;
 
-
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls()
     {
@@ -19,4 +18,3 @@ using namespace malloy::client;
         return true;
     }
 #endif // MALLOY_FEATURE_TLS
-
