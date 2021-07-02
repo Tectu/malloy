@@ -1,24 +1,21 @@
-
 #pragma once
 
-#include <concepts>
-#include <memory>
-#include <functional>
-#include <memory>
-
-#include <spdlog/spdlog.h>
-#include <spdlog/fmt/fmt.h>
-
-#include <boost/beast/core/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
-
+#include <boost/beast/core/error.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
 
 #include "malloy/type_traits.hpp"
 #include "malloy/websocket/stream.hpp"
 #include "malloy/websocket/types.hpp"
 #include "malloy/http/request.hpp"
 #include "malloy/error.hpp"
+
+#include <concepts>
+#include <memory>
+#include <functional>
+#include <memory>
 
 namespace malloy::websocket
 {
@@ -56,7 +53,9 @@ namespace malloy::websocket
          * @param ws Stream to use. May be unopened/connected but in that case
          * `connect` must be called before this connection can be used
          */
-        static auto make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> {
+        static
+        auto
+        make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection> {
             // We have to emulate make_shared here because the ctor is private
             connection* me = nullptr;
             try {
@@ -77,7 +76,8 @@ namespace malloy::websocket
          * occurring
          */
         template<concepts::accept_handler Callback>
-        void connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done)
+        void
+        connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done)
             requires (isClient)
         {
             // Save these for later
@@ -98,7 +98,7 @@ namespace malloy::websocket
                     }
                 }
                 );
-                });
+            });
         }
 
         /**
@@ -113,7 +113,8 @@ namespace malloy::websocket
          * invoked on failure. Must be invocable without any parameters (i.e. `f()`)
          */
         template<class Body, class Fields, std::invocable<> Callback>
-        void accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
+        void
+        accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
             requires (!isClient)
         {
             // Update state
@@ -168,7 +169,9 @@ namespace malloy::websocket
          * before the message could be fully or partially read
          *
          */
-        void read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done) {
+        void
+        read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done)
+        {
             m_ws.async_read(buff, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
                 // This indicates that the connection was closed
                 if (ec == boost::beast::websocket::error::closed) {
@@ -191,7 +194,8 @@ namespace malloy::websocket
          * or otherwise). Must satisfy async_read_handler @ref general_concepts
          */
         template<concepts::async_read_handler Callback>
-        void send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
+        void
+        send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
         {
             m_logger->trace("send(). payload size: {}", payload.size());
 
@@ -242,7 +246,9 @@ namespace malloy::websocket
                 throw std::invalid_argument("no valid logger provided.");
         }
 
-        void setup_connection() {
+        void
+        setup_connection()
+        {
             // Set suggested timeout settings for the websocket
             m_ws.set_option(
                 boost::beast::websocket::stream_base::timeout::suggested(
@@ -262,7 +268,6 @@ namespace malloy::websocket
                 );
             }
             else {
-
                 // Set a decorator to change the Server of the handshake
                 m_ws.set_option(
                     boost::beast::websocket::stream_base::decorator(
@@ -276,12 +281,12 @@ namespace malloy::websocket
         }
 
         void
-            on_connect(
-                boost::beast::error_code ec,
-                boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
-                const std::string& resource,
-                concepts::accept_handler auto&& on_handshake
-            )
+        on_connect(
+            boost::beast::error_code ec,
+            boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
+            const std::string& resource,
+            concepts::accept_handler auto&& on_handshake
+        )
         {
             m_logger->trace("on_connect()");
 
@@ -294,8 +299,6 @@ namespace malloy::websocket
             // the websocket stream has its own timeout system.
             m_ws.get_lowest_layer([](auto& s) { s.expires_never(); });
             setup_connection();
-
-
 
             // Update the m_host string. This will provide the value of the
             // Host HTTP header during the WebSocket handshake.
@@ -310,26 +313,26 @@ namespace malloy::websocket
             );
         }
 
-        void on_write(auto ec, auto size) {
+        void
+        on_write(auto ec, auto size)
+        {
             if (ec) {
                 m_logger->error("on_write failed for websocket connection: '{}'", ec.message());
                 return;
             }
+
             m_logger->trace("on_write() wrote: '{}' bytes", size);
 
             assert(!msg_queue_.empty());
 
             msg_queue_.erase(msg_queue_.begin());
 
-            if (!msg_queue_.empty()) {
+            if (!msg_queue_.empty())
                 msg_queue_.front()();
-            }
-
-
         }
 
         void
-            on_close()
+        on_close()
         {
             m_logger->trace("on_close()");
 
