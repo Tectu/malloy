@@ -8,4 +8,5 @@ target_sources(
         endpoints.cpp
         request.cpp
         websockets.cpp
+        stream.cpp
 )
