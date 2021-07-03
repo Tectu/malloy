@@ -79,8 +79,7 @@ namespace malloy::server::http
         {
             if (ec) {
                 // ToDO
-                //return fail(ec, "handshake");
-                return;
+                return report_err(ec, "on_handshake()");
             }
 
             // Consume the portion of the buffer used by the handshake

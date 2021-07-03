@@ -165,34 +165,60 @@ namespace malloy::client
         )
         {
             // Create connection
+            make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
+        }
+        #if MALLOY_FEATURE_TLS
+        void wss_connect(
+            const std::string& host,
+            std::uint16_t port,
+            const std::string& resource,
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+        )
+        {
+            // Create connection
+            make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
+        }
+        #endif
+    private:
+        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+
+        template<bool isSecure>
+        void make_ws_connection(
+            const std::string& host,
+            std::uint16_t port,
+            const std::string& resource,
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+        )
+        {
+            // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
             resolver->async_resolve(
                 host,
                 std::to_string(port),
                 [this, resolver, done = std::forward<decltype(handler)>(handler), resource](auto ec, auto results) mutable {
+                    if (ec) {
+                        std::invoke(std::forward<decltype(done)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
+                    } else {
+                        auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
+#if MALLOY_FEATURE_TLS
+                                                                    if constexpr (isSecure) {
+                                                                        return malloy::websocket::stream{boost::beast::ssl_stream<boost::beast::tcp_stream>{
+                                                                            boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}, *m_tls_ctx}};
+                                                                    } else
+#endif
+                                                                        return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
+                                                                }());
 
-                if (ec) {
-                    std::invoke(std::forward<decltype(done)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
-                }
-                else {
-                    auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), malloy::websocket::stream{
-                        boost::beast::websocket::stream<boost::beast::tcp_stream>{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}}
+                        conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
+                            if (ec) {
+                                std::invoke(std::forward<decltype(handler)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
+                            } else {
+                                std::invoke(std::forward<decltype(handler)>(done), ec, conn);
+                            }
                         });
-                    conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
-                        if (ec) {
-                            std::invoke(std::forward<decltype(handler)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
-                        }
-                        else {
-                            std::invoke(std::forward<decltype(handler)>(done), ec, conn);
-                        }
-                    });
-                }
-            }
-            );
+                    }
+                });
         }
-
-    private:
-        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
     };
 
 }

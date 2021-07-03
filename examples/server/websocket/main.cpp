@@ -18,7 +18,7 @@ int main()
 
     // Create malloy controller config
     malloy::server::controller::config cfg;
-    cfg.interface   = "127.0.0.1";
+    cfg.interface   = "0.0.0.0";
     cfg.port        = 8080;
     cfg.doc_root    = doc_root;
     cfg.num_threads = 5;
@@ -30,6 +30,15 @@ int main()
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }
+#if MALLOY_FEATURE_TLS
+    // Setup TLS (SSL)
+    const auto& cert_path = doc_root / "malloy.cert";
+    const auto& key_path  = doc_root / "malloy.key";
+    if (!c.init_tls(cert_path, key_path)) {
+        std::cerr<< "could not initialize TLS context." << std::endl;
+        return EXIT_FAILURE;
+    }
+#endif
 
     // Add some routes
     auto router = c.router();

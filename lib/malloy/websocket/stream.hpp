@@ -47,9 +47,15 @@ namespace malloy::websocket {
 		explicit stream(detail::websocket_t&& ws) : underlying_conn_{ std::move(ws) } {}
 
 		explicit stream(boost::beast::websocket::stream<boost::beast::tcp_stream>&& s) : underlying_conn_{ std::move(s) } {}
+        explicit stream(boost::beast::tcp_stream&& from) :
+            stream{boost::beast::websocket::stream<boost::beast::tcp_stream>{std::move(from)}} {}
 
 #if MALLOY_FEATURE_TLS
 		explicit stream(detail::tls_stream&& ws) : underlying_conn_{std::move(ws)} {}
+        explicit stream(boost::beast::ssl_stream<boost::beast::tcp_stream>&& from) :
+            stream{malloy::websocket::detail::tls_stream{
+                boost::beast::websocket::stream<
+                    boost::beast::ssl_stream<boost::beast::tcp_stream>>{std::move(from)}}} {}
 #endif
 
 
