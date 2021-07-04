@@ -152,8 +152,8 @@ namespace malloy::client
          * @brief Load a root certificate for use with TLS validation 
          * @warning tls_init MUST be called before this
          */
-        void load_ca_file(const std::filesystem::path& file);
-        void load_cert(const std::string& contents);
+        void add_ca(const std::filesystem::path& file);
+        void add_ca(const std::string& contents);
 #endif
 
         /**

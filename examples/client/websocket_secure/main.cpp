@@ -28,7 +28,7 @@ int main()
         std::cerr << "initializing TLS context failed." << std::endl;
         return EXIT_FAILURE;
     }
-    c.load_ca_file("../../../../examples/server/static_content/malloy.cert");
+    c.add_ca("../../../../examples/server/static_content/malloy.cert");
 
     c.wss_connect(
         "127.0.0.1",

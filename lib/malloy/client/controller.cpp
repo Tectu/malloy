@@ -28,7 +28,7 @@ auto controller::run() -> bool
         return true;
     }
 
-    void controller::load_ca_file(const std::filesystem::path& file) {
+    void controller::add_ca(const std::filesystem::path& file) {
         if (!fs::exists(file)) {
             throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
         }
@@ -37,9 +37,9 @@ auto controller::run() -> bool
         m_tls_ctx->load_verify_file(file.string());
     }
 
-    void controller::load_cert(const std::string& contents) {
+    void controller::add_ca(const std::string& contents) {
         check_tls();
-        m_tls_ctx->use_certificate_chain(malloy::buffer(contents));
+        m_tls_ctx->add_certificate_authority(malloy::buffer(contents));
     }
 #endif // MALLOY_FEATURE_TLS
 

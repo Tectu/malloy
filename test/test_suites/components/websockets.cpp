@@ -19,7 +19,7 @@ namespace {
 
     void cli_ws_handler(malloy::error_code ec, std::shared_ptr<malloy::client::websocket::connection> conn)
     {
-        CHECK(!ec);
+        REQUIRE(!ec);
         CHECK(conn);
 
         auto buffer = std::make_shared<boost::beast::flat_buffer>();
@@ -32,7 +32,6 @@ namespace {
             conn->send(malloy::buffer(cli_msg, std::strlen(cli_msg)), [conn](auto ec, auto size) {
                 CHECK(!ec);
                 CHECK(size == std::strlen(cli_msg));
-                conn->stop();
             });
         });
     }
@@ -92,7 +91,8 @@ TEST_SUITE("websockets") {
         constexpr uint16_t port = 13313;
         ws_roundtrip(
             port, [](auto& c_ctrl) {
-                c_ctrl.load_cert(std::string{tls_cert});
+                CHECK(c_ctrl.init_tls());
+                c_ctrl.add_ca(std::string{tls_cert});
 
                 c_ctrl.wss_connect("127.0.0.1", port, "/", &cli_ws_handler); },
             [](auto& s_ctrl) {
