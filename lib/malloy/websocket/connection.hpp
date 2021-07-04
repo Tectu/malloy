@@ -309,8 +309,8 @@ namespace malloy::websocket
                     });
                     return;
                 }
-#endif
             }
+#endif
             on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
         }
         void on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake) {
