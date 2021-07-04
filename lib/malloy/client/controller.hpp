@@ -149,10 +149,15 @@ namespace malloy::client
         }
 
         /**
-         * @brief Load a root certificate for use with TLS validation 
+         * @brief Load a certificate authority for use with TLS validation
          * @warning tls_init MUST be called before this
+         * @param file The path to the certificate to be added to the keychain
          */
         void add_ca(const std::filesystem::path& file);
+        /**
+         * @brief Like add_ca(std::filesystem::path) but loads from an in-memory string
+         * @param contents The certificate to be added to the keychain
+         */
         void add_ca(const std::string& contents);
 #endif
 
