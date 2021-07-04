@@ -19,6 +19,8 @@
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>
 
+#include <filesystem>
+
 namespace boost::asio::ssl
 {
     class context;
@@ -137,6 +139,19 @@ namespace malloy::client
                 std::move(filter));
             return err_channel;
         }
+        void wss_connect(
+            const std::string& host,
+            std::uint16_t port,
+            const std::string& resource,
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+        )
+        {
+            check_tls();
+            // Create connection
+            make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
+        }
+
+        void add_ca_dir(const std::filesystem::path& dir);
         #endif
 
         /**
@@ -164,19 +179,6 @@ namespace malloy::client
             // Create connection
             make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
-        #if MALLOY_FEATURE_TLS
-        void wss_connect(
-            const std::string& host,
-            std::uint16_t port,
-            const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
-        )
-        {
-            check_tls();
-            // Create connection
-            make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
-        }
-        #endif
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
 

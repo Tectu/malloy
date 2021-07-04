@@ -18,5 +18,16 @@ using namespace malloy::client;
 
         return true;
     }
+
+    void controller::add_ca_dir(const std::filesystem::path& dir)
+    {
+        namespace fs = std::filesystem;
+        if (!fs::exists(dir) || !fs::is_directory(dir)) {
+            throw std::invalid_argument{fmt::format("add_ca_dir passed '{}' which is not a directory or does not exist", dir.string())};
+        }
+        check_tls();
+
+        m_tls_ctx->add_verify_path(dir.string());
+    }
 #endif // MALLOY_FEATURE_TLS
 

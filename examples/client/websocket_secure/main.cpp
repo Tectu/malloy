@@ -28,8 +28,9 @@ int main()
         std::cerr << "initializing TLS context failed." << std::endl;
         return EXIT_FAILURE;
     }
+    c.add_ca_dir("D:/projects/malloy/out/build/examples/server/static_content");
 
-    c.wss_connect(
+    /* c.wss_connect(
         "127.0.0.1",
         8080,
         "/echo",
@@ -47,7 +48,7 @@ int main()
                     std::cout << "id[0]: " << msg << '\n';
                     });
                 });
-        });
+        });*/
 
     c.wss_connect(
         "127.0.0.1",
