@@ -120,10 +120,7 @@ namespace malloy::client
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
         [[nodiscard]]
         auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
-            // Check whether TLS context was initialized
-            if (!m_tls_ctx)
-                throw std::logic_error("TLS context not initialized.");
-
+            check_tls();
 
             auto conn = std::make_shared<http::connection_tls<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
@@ -175,12 +172,19 @@ namespace malloy::client
             std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
         )
         {
+            check_tls();
             // Create connection
             make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
         #endif
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+
+        void check_tls() const {
+            // Check whether TLS context was initialized
+            if (!m_tls_ctx)
+                throw std::logic_error("TLS context not initialized.");
+        }
 
         template<bool isSecure>
         void make_ws_connection(
