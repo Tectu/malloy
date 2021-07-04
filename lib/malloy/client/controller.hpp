@@ -35,7 +35,7 @@ namespace malloy::client
 
     namespace detail
     {
-        
+
         /** 
          * @brief Default filter provided to ease use of interface
          * @details Provides an implementation of response_filter @ref client_concepts for 
@@ -49,13 +49,14 @@ namespace malloy::client
             using header_type = boost::beast::http::response_header<>;
             using value_type = std::string;
 
-            auto body_for(const header_type&) const -> std::variant<boost::beast::http::string_body> {
+            auto body_for(const header_type&) const -> std::variant<boost::beast::http::string_body>
+            {
                 return {};
             }
             void setup_body(const header_type&, std::string&) const {}
         };
         static_assert(malloy::client::concepts::response_filter<default_resp_filter>, "default_resp_filter must satisfy response_filter");
-    }
+    }    // namespace detail
 
     /**
      * High-level controller for client activities.
@@ -65,17 +66,15 @@ namespace malloy::client
     {
     public:
         struct config :
-            malloy::controller::config
-        {
+            malloy::controller::config {
         };
 
         controller() = default;
         ~controller() = default;
 
-        #if MALLOY_FEATURE_TLS
-            [[nodiscard("init might fail")]]
-            bool init_tls();
-        #endif
+#if MALLOY_FEATURE_TLS
+        [[nodiscard("init might fail")]] bool init_tls();
+#endif
 
         /**
          * Perform a plain (unencrypted) HTTP request.
@@ -93,42 +92,13 @@ namespace malloy::client
          * error_code on success.
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
-        [[nodiscard]]
-        auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
+        [[nodiscard]] auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
+        {
 
             // Create connection
             auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                io_ctx()
-                );
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-            conn->run(
-                std::to_string(req.port()).c_str(),
-                req,
-                std::move(prom),
-                std::move(done),
-                std::move(filter)
-            );
-            return err_channel;
-
-
-        }
-
-        #if MALLOY_FEATURE_TLS
-        /**
-         * Same as http_request but encrypted with TLS
-         */
-        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
-        [[nodiscard]]
-        auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code> {
-            check_tls();
-
-            auto conn = std::make_shared<http::connection_tls<ReqBody, Filter, std::decay_t<Callback>>>(
-                m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                io_ctx(),
-                *m_tls_ctx
-                );
+                io_ctx());
             std::promise<malloy::error_code> prom;
             auto err_channel = prom.get_future();
             conn->run(
@@ -139,21 +109,51 @@ namespace malloy::client
                 std::move(filter));
             return err_channel;
         }
+
+#if MALLOY_FEATURE_TLS
+        /**
+         * Same as http_request but encrypted with TLS
+         */
+        template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
+        [[nodiscard]] auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
+        {
+            check_tls();
+
+            auto conn = std::make_shared<http::connection_tls<ReqBody, Filter, std::decay_t<Callback>>>(
+                m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                io_ctx(),
+                *m_tls_ctx);
+            std::promise<malloy::error_code> prom;
+            auto err_channel = prom.get_future();
+            conn->run(
+                std::to_string(req.port()).c_str(),
+                req,
+                std::move(prom),
+                std::move(done),
+                std::move(filter));
+            return err_channel;
+        }
+        /**
+         * @brief Same as make_websocket_connection but uses TLS
+         * @warning tls_init MUST be called before this
+         */
         void wss_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
-        )
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
         {
             check_tls();
             // Create connection
             make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
-        void add_ca_dir(const std::filesystem::path& dir);
+        /**
+         * @brief Load a root certificate for use with TLS validation 
+         * @warning tls_init MUST be called before this
+         */
         void load_ca_file(const std::filesystem::path& file);
-        #endif
+#endif
 
         /**
          * Create a websocket connection.
@@ -174,18 +174,22 @@ namespace malloy::client
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
-        )
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
         {
             // Create connection
             make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
+        /**
+         * @brief Block until all queued async actions completed
+         */
         void run();
+
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
 
-        void check_tls() const {
+        void check_tls() const
+        {
             // Check whether TLS context was initialized
             if (!m_tls_ctx)
                 throw std::logic_error("TLS context not initialized.");
@@ -196,8 +200,7 @@ namespace malloy::client
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
-        )
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
         {
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
@@ -210,13 +213,13 @@ namespace malloy::client
                     } else {
                         auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
-                                                                    if constexpr (isSecure) {
-                                                                        return malloy::websocket::stream{boost::beast::ssl_stream<boost::beast::tcp_stream>{
-                                                                            boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}, *m_tls_ctx}};
-                                                                    } else
+                            if constexpr (isSecure) {
+                                return malloy::websocket::stream{boost::beast::ssl_stream<boost::beast::tcp_stream>{
+                                    boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}, *m_tls_ctx}};
+                            } else
 #endif
-                                                                        return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
-                                                                }());
+                                return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
+                        }());
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
                             if (ec) {
@@ -230,4 +233,4 @@ namespace malloy::client
         }
     };
 
-}
+}    // namespace malloy::client
