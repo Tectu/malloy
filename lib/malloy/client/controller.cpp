@@ -42,4 +42,3 @@ auto controller::run() -> bool
         m_tls_ctx->add_certificate_authority(malloy::buffer(contents));
     }
 #endif // MALLOY_FEATURE_TLS
-
