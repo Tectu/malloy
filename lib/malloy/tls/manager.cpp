@@ -27,7 +27,13 @@ std::shared_ptr<boost::asio::ssl::context> manager::make_context(
     if (key.empty())
         return { };
 
-    // Create the context
+    return make_context(cert, key);
+
+}
+auto manager::make_context(
+    const std::string& cert,
+    const std::string& key) -> std::shared_ptr<boost::asio::ssl::context>
+{
     auto ctx = std::make_shared<boost::asio::ssl::context>( boost::asio::ssl::context::tls_server );
 
     // Options

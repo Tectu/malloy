@@ -48,6 +48,12 @@ bool controller::init(config cfg)
 
         return true;
     }
+
+    bool controller::init_tls(const std::string& cert, const std::string& key)
+    {
+        m_tls_ctx = tls::manager::make_context(cert, key);
+        return m_tls_ctx != nullptr;
+    }
 #endif
 
 bool controller::start()

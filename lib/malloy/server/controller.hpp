@@ -88,6 +88,8 @@ namespace malloy::server
              * @return Whether the initialization was successful.
              */
             bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
+
+            bool init_tls(const std::string& cert, const std::string& key);
         #endif
 
         /**

@@ -8,10 +8,13 @@
 using namespace malloy::client;
 
 namespace fs = std::filesystem;
-void controller::run()
+auto controller::run() -> bool
 {
-    start();
+    if (!start()) {
+        return false;
+    }
     io_ctx().run();
+    return true;
 }
 
 #if MALLOY_FEATURE_TLS
@@ -32,6 +35,11 @@ void controller::run()
         check_tls();
         
         m_tls_ctx->load_verify_file(file.string());
+    }
+
+    void controller::load_cert(const std::string& contents) {
+        check_tls();
+        m_tls_ctx->use_certificate_chain(malloy::buffer(contents));
     }
 #endif // MALLOY_FEATURE_TLS
 

@@ -153,6 +153,7 @@ namespace malloy::client
          * @warning tls_init MUST be called before this
          */
         void load_ca_file(const std::filesystem::path& file);
+        void load_cert(const std::string& contents);
 #endif
 
         /**
@@ -182,8 +183,9 @@ namespace malloy::client
 
         /**
          * @brief Block until all queued async actions completed
+         * @return whether starting was successful
          */
-        void run();
+        auto run() -> bool;
 
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
