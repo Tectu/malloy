@@ -18,7 +18,7 @@ int main()
 
     // Create malloy controller config
     malloy::server::controller::config cfg;
-    cfg.interface   = "0.0.0.0";
+    cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
     cfg.doc_root    = doc_root;
     cfg.num_threads = 5;
