@@ -152,6 +152,7 @@ namespace malloy::client
         }
 
         void add_ca_dir(const std::filesystem::path& dir);
+        void load_ca_file(const std::filesystem::path& file);
         #endif
 
         /**

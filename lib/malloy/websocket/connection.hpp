@@ -276,12 +276,11 @@ namespace malloy::websocket
         }
 
         void
-            on_connect(
-                boost::beast::error_code ec,
-                boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
-                const std::string& resource,
-                concepts::accept_handler auto&& on_handshake
-            )
+        on_connect(
+            boost::beast::error_code ec,
+            boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
+            const std::string& resource,
+            concepts::accept_handler auto&& on_handshake)
         {
             m_logger->trace("on_connect()");
 
@@ -290,17 +289,36 @@ namespace malloy::websocket
                 return;
             }
 
+            // Update the m_host string. This will provide the value of the
+            // Host HTTP header during the WebSocket handshake.
+            // See https://tools.ietf.org/html/rfc7230#section-5.4
+            const std::string host = fmt::format("{}:{}", ep.address().to_string(), ep.port());
+
+
+#if MALLOY_FEATURE_TLS
+            if constexpr (isClient) {
+                if (m_ws.is_tls()) {
+                    // TODO: Should this be a seperate method?
+                    m_ws.async_handshake_tls(boost::asio::ssl::stream_base::handshake_type::client, [on_handshake = std::forward<decltype(on_handshake)>(on_handshake),
+                                                                                                     resource, host, me = this->shared_from_this()](auto ec) mutable {
+                        if (ec) {
+                            on_handshake(ec);
+                        }
+
+                        me->on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
+                    });
+                    return;
+                }
+#endif
+            }
+            on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
+        }
+        void on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake) {
             // Turn off the timeout on the tcp_stream, because
             // the websocket stream has its own timeout system.
             m_ws.get_lowest_layer([](auto& s) { s.expires_never(); });
             setup_connection();
 
-
-
-            // Update the m_host string. This will provide the value of the
-            // Host HTTP header during the WebSocket handshake.
-            // See https://tools.ietf.org/html/rfc7230#section-5.4
-            const std::string host = fmt::format("{}:{}", ep.address().to_string(), ep.port());
 
             // Perform the websocket handshake
             m_ws.async_handshake(

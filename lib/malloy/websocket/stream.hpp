@@ -133,8 +133,23 @@ namespace malloy::websocket {
 #else 
 			return false;
 #endif
-		
 		}
+#if MALLOY_FEATURE_TLS
+		template<concepts::accept_handler Callback>
+        void async_handshake_tls(boost::asio::ssl::stream_base::handshake_type type, Callback&& done) 
+        {
+			if (!is_tls()) {
+                throw std::logic_error{"async_handshake_tls called on non-tls stream"};
+			}
+            std::visit([done = std::forward<Callback>(done), type](auto& s) mutable {
+                if constexpr (std::same_as<std::decay_t<decltype(s)>, detail::tls_stream>) {
+                    s.next_layer().async_handshake(type, std::forward<Callback>(done));
+                }
+            },
+                       underlying_conn_);
+        }
+		#endif
+		
 		
 	private:
 		ws_t underlying_conn_;

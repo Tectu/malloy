@@ -7,6 +7,7 @@
 
 using namespace malloy::client;
 
+namespace fs = std::filesystem;
 
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls()
@@ -19,9 +20,16 @@ using namespace malloy::client;
         return true;
     }
 
+    void controller::load_ca_file(const std::filesystem::path& file) {
+        if (!fs::exists(file)) {
+            throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
+        }
+        check_tls();
+        
+        m_tls_ctx->load_verify_file(file.string());
+    }
     void controller::add_ca_dir(const std::filesystem::path& dir)
     {
-        namespace fs = std::filesystem;
         if (!fs::exists(dir) || !fs::is_directory(dir)) {
             throw std::invalid_argument{fmt::format("add_ca_dir passed '{}' which is not a directory or does not exist", dir.string())};
         }
