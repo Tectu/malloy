@@ -28,7 +28,7 @@ auto controller::run() -> bool
         return true;
     }
 
-    void controller::add_ca(const std::filesystem::path& file) {
+    void controller::add_ca_file(const std::filesystem::path& file) {
         if (!fs::exists(file)) {
             throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
         }

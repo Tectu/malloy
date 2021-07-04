@@ -153,9 +153,9 @@ namespace malloy::client
          * @warning tls_init MUST be called before this
          * @param file The path to the certificate to be added to the keychain
          */
-        void add_ca(const std::filesystem::path& file);
+        void add_ca_file(const std::filesystem::path& file);
         /**
-         * @brief Like add_ca(std::filesystem::path) but loads from an in-memory string
+         * @brief Like add_ca_file(std::filesystem::path) but loads from an in-memory string
          * @param contents The certificate to be added to the keychain
          */
         void add_ca(const std::string& contents);
