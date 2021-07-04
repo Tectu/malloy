@@ -28,9 +28,9 @@ int main()
         std::cerr << "initializing TLS context failed." << std::endl;
         return EXIT_FAILURE;
     }
-    c.add_ca_dir("D:/projects/malloy/out/build/examples/server/static_content");
+    c.load_ca_file("../../../../examples/server/static_content/malloy.cert");
 
-    /* c.wss_connect(
+    c.wss_connect(
         "127.0.0.1",
         8080,
         "/echo",
@@ -48,7 +48,7 @@ int main()
                     std::cout << "id[0]: " << msg << '\n';
                     });
                 });
-        });*/
+        });
 
     c.wss_connect(
         "127.0.0.1",
@@ -67,11 +67,8 @@ int main()
         }
     );
 
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(15s);
-
-    // Stop
-    c.stop().wait();
+    c.run();
+    c.stop();
 
     return EXIT_SUCCESS;
 }

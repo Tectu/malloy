@@ -8,6 +8,10 @@
 using namespace malloy::client;
 
 namespace fs = std::filesystem;
+void controller::run() {
+    start();
+    io_ctx().run();
+}
 
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls()

@@ -180,6 +180,8 @@ namespace malloy::client
             // Create connection
             make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
+
+        void run();
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
 
