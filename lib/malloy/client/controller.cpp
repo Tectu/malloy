@@ -13,6 +13,7 @@ auto controller::run() -> bool
     if (!start()) {
         return false;
     }
+    remove_workguard(); 
     io_ctx().run();
     return true;
 }

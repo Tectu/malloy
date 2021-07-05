@@ -73,6 +73,8 @@ namespace malloy
             return *m_io_ctx;
         }
 
+        void remove_workguard() const;
+
     private:
         using workguard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
 

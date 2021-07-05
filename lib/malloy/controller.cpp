@@ -72,6 +72,9 @@ bool controller::start()
 
     return true;
 }
+void controller::remove_workguard() const {
+    m_workguard->reset();
+}
 
 std::future<void> controller::stop()
 {
