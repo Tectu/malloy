@@ -98,7 +98,10 @@ namespace malloy::client
             // Create connection
             auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                io_ctx());
+                io_ctx()
+            );
+
+            // Run
             std::promise<malloy::error_code> prom;
             auto err_channel = prom.get_future();
             conn->run(
@@ -106,7 +109,9 @@ namespace malloy::client
                 req,
                 std::move(prom),
                 std::move(done),
-                std::move(filter));
+                std::move(filter)
+            );
+
             return err_channel;
         }
 
@@ -119,10 +124,14 @@ namespace malloy::client
         {
             check_tls();
 
+            // Create connection
             auto conn = std::make_shared<http::connection_tls<ReqBody, Filter, std::decay_t<Callback>>>(
                 m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                 io_ctx(),
-                *m_tls_ctx);
+                *m_tls_ctx
+            );
+
+            // Run
             std::promise<malloy::error_code> prom;
             auto err_channel = prom.get_future();
             conn->run(
@@ -130,7 +139,9 @@ namespace malloy::client
                 req,
                 std::move(prom),
                 std::move(done),
-                std::move(filter));
+                std::move(filter)
+            );
+
             return err_channel;
         }
         /**
@@ -144,6 +155,7 @@ namespace malloy::client
             std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
         {
             check_tls();
+
             // Create connection
             make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
@@ -207,7 +219,8 @@ namespace malloy::client
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+        )
         {
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
@@ -236,7 +249,8 @@ namespace malloy::client
                             }
                         });
                     }
-                });
+                }
+            );
         }
     };
 
