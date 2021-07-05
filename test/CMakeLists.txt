@@ -20,6 +20,7 @@ target_sources(
         test_main.cpp
         test.hpp
         mocks.hpp
+        tls_data.hpp
 )
 
 target_link_libraries(

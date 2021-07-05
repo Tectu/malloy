@@ -1,5 +1,6 @@
 
 #include "../../test.hpp"
+#include "../../tls_data.hpp"
 
 
 #include <malloy/client/controller.hpp>
@@ -9,21 +10,51 @@
 
 namespace mc = malloy::client;
 namespace ms = malloy::server;
+using malloy::tests::embedded::tls_cert;
+using malloy::tests::embedded::tls_key;
 
 namespace {
 	constexpr auto server_msg = "Hello from server";
 	constexpr auto cli_msg = "Hello from client";
-}
 
+    void cli_ws_handler(malloy::error_code ec, std::shared_ptr<malloy::client::websocket::connection> conn)
+    {
+        REQUIRE(!ec);
+        CHECK(conn);
 
+        auto buffer = std::make_shared<boost::beast::flat_buffer>();
+        conn->read(*buffer, [&, conn, buffer](auto ec, auto size) {
+            CHECK(!ec);
+            CHECK(size == std::strlen(server_msg));
 
-TEST_SUITE("websockets") {
+            CHECK(malloy::buffers_to_string(buffer->cdata()) == server_msg);
 
-	TEST_CASE("roundtrip") {
-		mc::controller c_ctrl;
+            conn->send(malloy::buffer(cli_msg, std::strlen(cli_msg)), [conn](auto ec, auto size) {
+                CHECK(!ec);
+                CHECK(size == std::strlen(cli_msg));
+            });
+        });
+    }
+    void server_ws_handler(const malloy::http::request<>& req, std::shared_ptr<malloy::server::websocket::connection> conn)
+    {
+        conn->accept(req, [conn]() mutable {
+            conn->send(malloy::buffer(server_msg, std::strlen(server_msg)), [conn](auto ec, auto size) mutable {
+                CHECK(!ec);
+                CHECK(size == std::strlen(server_msg));
+                auto buffer = std::make_shared<boost::beast::flat_buffer>();
+                conn->read(*buffer, [buffer](auto ec, auto size) mutable {
+                    CHECK(!ec);
+                    CHECK(size == std::strlen(cli_msg));
+
+                    CHECK(malloy::buffers_to_string(buffer->cdata()) == cli_msg);
+                });
+            });
+        });
+    }
+    void ws_roundtrip(uint16_t port, std::function<void(malloy::client::controller&)> setup_cli, std::function<void(malloy::server::controller&)> setup_serve) {
+        mc::controller c_ctrl;
 		ms::controller s_ctrl;
 
-		constexpr auto port = 501231;
 		malloy::controller::config general_cfg;
 		general_cfg.num_threads = 2;
 		general_cfg.logger = spdlog::default_logger();
@@ -35,54 +66,41 @@ TEST_SUITE("websockets") {
 		CHECK(s_ctrl.init(server_cfg));
 		CHECK(c_ctrl.init(general_cfg));
 
-		bool server_recieved = false;
-		std::promise<void> pstop;
-		auto stop_token = pstop.get_future();
+        setup_serve(s_ctrl);
+        setup_cli(c_ctrl);
 
-		s_ctrl.router()->add_websocket("/", [&server_recieved, pstop = &pstop](const auto& req, auto conn) mutable {
-			server_recieved = true;
-			conn->accept(req, [conn, pstop]() mutable {
-				conn->send(malloy::buffer(server_msg, std::strlen(server_msg)), [conn, pstop](auto ec, auto size) mutable {
-					CHECK(!ec);
-					CHECK(size == std::strlen(server_msg));
-					auto buffer = std::make_shared<boost::beast::flat_buffer>();
-					conn->read(*buffer, [buffer, pstop](auto ec, auto size) mutable {
-						CHECK(!ec);
-						CHECK(size == std::strlen(cli_msg));
-						
-						CHECK(malloy::buffers_to_string(buffer->cdata()) == cli_msg);
+		CHECK(s_ctrl.start());
+        CHECK(c_ctrl.run());
+        c_ctrl.stop();
 
-						assert(pstop != nullptr);
-						pstop->set_value();
-						});
-					});
-				});
-			
-			});
-		
-		c_ctrl.make_websocket_connection("127.0.0.1", port, "/", [&](auto ec, auto conn) {
-			CHECK(!ec);
-			CHECK(conn);
 
-			auto buffer = std::make_shared<boost::beast::flat_buffer>();
-			conn->read(*buffer, [&, conn, buffer](auto ec, auto size) {
-				CHECK(!ec);
-				CHECK(size == std::strlen(server_msg));
+    }
+}    // namespace
 
-				CHECK(malloy::buffers_to_string(buffer->cdata()) == server_msg);
+TEST_SUITE("websockets") {
 
-				conn->send(malloy::buffer(cli_msg, std::strlen(cli_msg)), [&](auto ec, auto size) {
-					CHECK(!ec);
-					CHECK(size == std::strlen(cli_msg));
-					});
-				}
-			);
-			});
+	TEST_CASE("roundtrip") {
+        constexpr uint16_t port = 13312;
+        ws_roundtrip(port, [](auto& c_ctrl) {
+            c_ctrl.ws_connect("127.0.0.1", port, "/", &cli_ws_handler);
+        }, [](auto& s_ctrl) { s_ctrl.router()->add_websocket("/", &server_ws_handler); });
+    }
+#if MALLOY_FEATURE_TLS 
+    TEST_CASE("roundtrip - tls")
+    {
+        constexpr uint16_t port = 13313;
+        ws_roundtrip(
+            port, [](auto& c_ctrl) {
+                CHECK(c_ctrl.init_tls());
+                c_ctrl.add_ca(std::string{tls_cert});
 
-		s_ctrl.start();
-		c_ctrl.start();
+                c_ctrl.wss_connect("127.0.0.1", port, "/", &cli_ws_handler); },
+            [](auto& s_ctrl) {
+                CHECK(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
 
-		stop_token.wait();
-		CHECK(server_recieved);
-	}
+                s_ctrl.router()->add_websocket("/", &server_ws_handler);
+            });
+    }
+
+#endif
 }

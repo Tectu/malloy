@@ -30,6 +30,15 @@ int main()
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }
+#if MALLOY_FEATURE_TLS
+    // Setup TLS (SSL)
+    const auto& cert_path = doc_root / "malloy.cert";
+    const auto& key_path  = doc_root / "malloy.key";
+    if (!c.init_tls(cert_path, key_path)) {
+        std::cerr<< "could not initialize TLS context." << std::endl;
+        return EXIT_FAILURE;
+    }
+#endif
 
     // Add some routes
     auto router = c.router();

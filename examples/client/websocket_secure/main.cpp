@@ -24,12 +24,21 @@ int main()
         std::cerr << "starting controller failed." << std::endl;
         return EXIT_FAILURE;
     }
+    if (!c.init_tls()) {
+        std::cerr << "initializing TLS context failed." << std::endl;
+        return EXIT_FAILURE;
+    }
+    c.add_ca_file("../../../../examples/server/static_content/malloy.cert");
 
-    c.ws_connect(
+    c.wss_connect(
         "127.0.0.1",
         8080,
         "/echo",
         [](malloy::error_code ec, auto conn) {
+            if (ec) {
+                std::cerr << "Couldn't connect: " << ec.message() << '\n';
+                return;
+            }
             conn->send(malloy::buffer("Hello from Malloy!"), [conn](auto ec, auto) {
                 if (ec) {
                     std::cerr << "Uh oh, we couldn't send something: " << ec.message();
@@ -41,7 +50,7 @@ int main()
                 });
         });
 
-    c.ws_connect(
+    c.wss_connect(
         "127.0.0.1",
         8080,
         "/timer",
@@ -58,11 +67,8 @@ int main()
         }
     );
 
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(15s);
-
-    // Stop
-    c.stop().wait();
+    c.run();
+    c.stop();
 
     return EXIT_SUCCESS;
 }
