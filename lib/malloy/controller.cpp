@@ -38,7 +38,10 @@ bool controller::init(config cfg)
     // Create the I/O context
     m_io_ctx = std::make_shared<boost::asio::io_context>();
 
-    
+    // Create a worker thread to run the boost::asio::io_context.
+    // The work guard is used to prevent the io_context::run() from returning if there's no work scheduled.
+    m_workguard = std::make_unique<workguard_t>(boost::asio::make_work_guard(*m_io_ctx));
+
     return true;
 }
 
@@ -88,6 +91,8 @@ std::future<void> controller::stop()
             // `io_context` and all of the sockets in it.
             m_io_ctx->stop();
 
+            // Tell the workguard that we no longer need it's service
+            m_workguard->reset();
 
             m_cfg.logger->debug("waiting for I/O threads to stop...");
 

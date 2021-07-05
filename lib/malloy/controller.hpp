@@ -74,8 +74,10 @@ namespace malloy
         }
 
     private:
+        using workguard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
 
         bool m_init_done = false;
+        std::unique_ptr<workguard_t> m_workguard;
         std::shared_ptr<boost::asio::io_context> m_io_ctx;
         std::vector<std::thread> m_io_threads;
         std::atomic<enum state> m_state = state::stopped;

@@ -55,12 +55,6 @@ bool controller::init(config cfg)
         return m_tls_ctx != nullptr;
     }
 #endif
-    auto controller::stop() -> std::future<void>
-    {
-        // Tell the workguard that we no longer need it's service
-        m_workguard->reset();
-        return malloy::controller::stop();
-    }
 
 bool controller::start()
 {
@@ -79,15 +73,10 @@ bool controller::start()
 
     // Run the listener
     m_listener->run();
-   
+
     // Base class
     if (!malloy::controller::start())
         return false;
-
-
-    // Create a worker thread to run the boost::asio::io_context.
-    // The work guard is used to prevent the io_context::run() from returning if there's no work scheduled.
-    m_workguard = std::make_unique<workguard_t>(boost::asio::make_work_guard(io_ctx()));
 
     return true;
 }

@@ -103,16 +103,11 @@ namespace malloy::server
             return m_router;
         }
 
-        auto stop() -> std::future<void> override;
-
     private:
-        using workguard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
-
         config m_cfg;
         std::shared_ptr<listener> m_listener;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         std::shared_ptr<malloy::server::router> m_router;
-        std::unique_ptr<workguard_t> m_workguard;
     };
 
 }
