@@ -134,7 +134,7 @@ namespace malloy::client
             return err_channel;
         }
         /**
-         * @brief Same as make_websocket_connection but uses TLS
+         * @brief Same as ws_connect but uses TLS
          * @warning tls_init MUST be called before this
          */
         void wss_connect(
@@ -176,7 +176,7 @@ namespace malloy::client
          * connection will be `nullptr`
          *
          */
-        void make_websocket_connection(
+        void ws_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,

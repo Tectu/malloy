@@ -82,7 +82,7 @@ TEST_SUITE("websockets") {
 	TEST_CASE("roundtrip") {
         constexpr uint16_t port = 13312;
         ws_roundtrip(port, [](auto& c_ctrl) {
-            c_ctrl.make_websocket_connection("127.0.0.1", port, "/", &cli_ws_handler);
+            c_ctrl.ws_connect("127.0.0.1", port, "/", &cli_ws_handler);
         }, [](auto& s_ctrl) { s_ctrl.router()->add_websocket("/", &server_ws_handler); });
     }
 #if MALLOY_FEATURE_TLS 

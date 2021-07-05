@@ -25,7 +25,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    c.make_websocket_connection(
+    c.ws_connect(
         "127.0.0.1",
         8080,
         "/echo",
@@ -41,7 +41,7 @@ int main()
                 });
         });
 
-    c.make_websocket_connection(
+    c.ws_connect(
         "127.0.0.1",
         8080,
         "/timer",
