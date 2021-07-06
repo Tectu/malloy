@@ -7,6 +7,24 @@
 #include "malloy/type_traits.hpp"
 
 namespace malloy::client::concepts {
+    namespace detail
+    {
+        template<typename Callback>
+        struct http_cb_helper {
+            Callback cb;
+
+            template<typename V>
+            void operator()(V&& v)
+            {
+                using body_t = std::decay_t<V>;
+                malloy::http::response<body_t> res;
+
+                cb(std::move(res));
+            }
+        
+        };
+    
+    }
 
     template<typename F>
     concept response_filter = std::move_constructible<F> && requires(const F& f, const typename F::header_type& h) {
@@ -20,6 +38,11 @@ namespace malloy::client::concepts {
                 }, f.body_for(h)) 
         };
     }; 
+
+    template<typename F, typename Filter>
+    concept http_callback = response_filter<Filter>&& std::move_constructible<F>&& requires(F cb, const Filter& f, const typename Filter::header_type& h){
+        std::visit(detail::http_cb_helper<F>{std::move(cb)}, f.body_for(h));
+    };
 
 }
 

@@ -99,6 +99,7 @@ namespace malloy::client
          * @sa https_request()
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
+        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]] auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
 
@@ -129,6 +130,7 @@ namespace malloy::client
          * @sa http_request()
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
+        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]] auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
             check_tls();
