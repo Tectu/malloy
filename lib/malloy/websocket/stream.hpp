@@ -142,7 +142,7 @@ namespace malloy::websocket
 		template<typename Func>
 		void get_lowest_layer(Func&& visitor)
 		{
-			std::visit([vistor = std::forward<Func>(visitor)](auto& s) mutable { vistor(boost::beast::get_lowest_layer(s)); }, m_underlying_conn);
+			std::visit([visitor = std::forward<Func>(visitor)](auto& s) mutable { visitor(boost::beast::get_lowest_layer(s)); }, m_underlying_conn);
 		}
 
         /**
