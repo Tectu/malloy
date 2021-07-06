@@ -3,17 +3,17 @@
 #include "endpoint_http.hpp"
 #include "endpoint_http_regex.hpp"
 #include "endpoint_websocket.hpp"
+#include "malloy/http/generator.hpp"
+#include "malloy/http/http.hpp"
 #include "malloy/http/request.hpp"
 #include "malloy/http/response.hpp"
-#include "malloy/http/http.hpp"
-#include "malloy/http/generator.hpp"
-#include "malloy/server/http/connection/connection_t.hpp"
-#include "malloy/server/http/connection/connection_plain.hpp"
 #include "malloy/server/http/connection/connection.hpp"
+#include "malloy/server/http/connection/connection_plain.hpp"
+#include "malloy/server/http/connection/connection_t.hpp"
 #include "malloy/server/routing/type_traits.hpp"
 #include "malloy/type_traits.hpp"
 #if MALLOY_FEATURE_TLS
-    #include "malloy/server/http/connection/connection_tls.hpp"
+#include "malloy/server/http/connection/connection_tls.hpp"
 #endif
 
 #include <boost/beast/core.hpp>
@@ -25,10 +25,10 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
-#include <vector>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <vector>
 
 namespace spdlog
 {
@@ -42,7 +42,10 @@ namespace malloy::server
     {
 
         template<typename T, typename... Args>
-        concept has_write = requires(T t, Args... args) { t.do_write(std::forward<Args>(args)...); };
+        concept has_write = requires(T t, Args... args)
+        {
+            t.do_write(std::forward<Args>(args)...);
+        };
 
         /** 
          * @brief Provides a default Filter to ease use of interface
@@ -56,7 +59,6 @@ namespace malloy::server
 
 
             void setup_body(const header_type&, typename request_type::body_type::value_type&) const {}
-
         };
         static_assert(concepts::request_filter<default_route_filter>, "Default handler must satisfy route filter");
 
@@ -72,16 +74,17 @@ namespace malloy::server
         void send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection)
         {
             // Add more information to the response
-            //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works 
+            //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works
             resp.version(req.version());
             resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
             resp.prepare_payload();
 
             std::visit([resp = std::move(resp)](auto& c) mutable {
                 c->do_write(std::move(resp));
-            }, connection);
+            },
+                       connection);
         }
-    }
+    }    // namespace detail
     // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
     //       there to each session. Investigate and fix this!
 
@@ -103,12 +106,12 @@ namespace malloy::server
         /**
          * The method type to use.
          */
-        using method_type   = malloy::http::method;
+        using method_type = malloy::http::method;
 
         /**
          * The request type to use.
          */
-        using request_type  = malloy::http::request<>;
+        using request_type = malloy::http::request<>;
 
         /**
          * The response type to use.
@@ -200,8 +203,7 @@ namespace malloy::server
          */
         template<
             concepts::request_filter ExtraInfo,
-            concepts::route_handler<typename ExtraInfo::request_type> Func
-        >
+            concepts::route_handler<typename ExtraInfo::request_type> Func>
         bool add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             using func_t = std::decay_t<Func>;
@@ -216,18 +218,17 @@ namespace malloy::server
                     std::invoke_result_t<func_t, const request_type&,
                                          const std::vector<std::string>&>>(
                     method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra));
-            }
-            else {
+            } else {
                 return add_regex_endpoint<
                     uses_captures,
-                    std::invoke_result_t<func_t, const request_type&>
-                    >(
+                    std::invoke_result_t<func_t, const request_type&>>(
                     method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra));
             }
         }
 
         template<concepts::route_handler<typename detail::default_route_filter::request_type> Func>
-        auto add(const method_type method, const std::string_view target, Func&& handler) {
+        auto add(const method_type method, const std::string_view target, Func&& handler)
+        {
             return add(method, target, std::forward<Func>(handler), detail::default_route_filter{});
         }
 
@@ -257,7 +258,8 @@ namespace malloy::server
          * @param handler The handler for incoming websocket requests.
          * @return Whether adding the endpoint was successful.
          */
-        auto add_websocket(const std::string& resource, typename websocket::connection::handler_t&& handler) {
+        auto add_websocket(const std::string& resource, typename websocket::connection::handler_t&& handler)
+        {
             // Log
             if (m_logger)
                 m_logger->debug("adding websocket endpoint at {}", resource);
@@ -295,14 +297,12 @@ namespace malloy::server
         template<
             bool isWebsocket = false,
             typename Derived,
-            typename Connection
-        >
+            typename Connection>
         void handle_request(
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
             Connection&& connection,
-            malloy::http::uri location
-        )
+            malloy::http::uri location)
         {
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
@@ -344,8 +344,7 @@ namespace malloy::server
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
             const http::connection_t& connection,
-            const malloy::http::uri& location
-        )
+            const malloy::http::uri& location)
         {
             // Log
             if (m_logger) {
@@ -367,11 +366,11 @@ namespace malloy::server
                     if (m_logger) {
                         m_logger->debug("automatically constructing preflight response.");
                     }
-					// Generate
-					auto resp = generate_preflight_response(header);
+                    // Generate
+                    auto resp = generate_preflight_response(header);
 
-					// Send the response
-					detail::send_response(header, std::move(resp), connection);
+                    // Send the response
+                    detail::send_response(header, std::move(resp), connection);
                     // We're done handling this request
                     return;
                 }
@@ -403,13 +402,11 @@ namespace malloy::server
         void handle_ws_request(
             const req_generator<Derived>& gen,
             std::shared_ptr<websocket::connection> connection,
-            const malloy::http::uri& location
-        )
+            const malloy::http::uri& location)
         {
             m_logger->debug("handling WS request: {} {}",
-                gen->header().method_string(),
-                location.resource_string()
-            );
+                            gen->header().method_string(),
+                            location.resource_string());
 
             // Check routes
             for (const auto& ep : m_endpoints_websocket) {
@@ -426,7 +423,7 @@ namespace malloy::server
                 malloy::http::request req;
                 req.base() = gen->header();
                 ep->handler(std::move(req), connection);
-              
+
 
                 // We're done handling this request. The route handler will handle everything from hereon.
                 return;
@@ -444,8 +441,7 @@ namespace malloy::server
             bool UsesCaptures,
             typename Body,
             concepts::request_filter ExtraInfo,
-            typename Func
-        >
+            typename Func>
         auto add_regex_endpoint(method_type method, std::string_view target, Func&& handler, ExtraInfo&& extra) -> bool
         {
             // Log
@@ -455,9 +451,8 @@ namespace malloy::server
             // Build regex
             std::regex regex;
             try {
-                regex = std::move(std::regex{ target.cbegin(), target.cend() });
-            }
-            catch (const std::regex_error& e) {
+                regex = std::move(std::regex{target.cbegin(), target.cend()});
+            } catch (const std::regex_error& e) {
                 if (m_logger)
                     m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
                 return false;
@@ -475,9 +470,9 @@ namespace malloy::server
             if constexpr (wrapped) {
                 ep->handler = std::move(handler);
             } else {
-                ep->handler = 
-                    [w = std::forward<Func>(handler)](auto&&... args) { 
-                        return std::variant<Body>{w(std::forward<decltype(args)>(args)...)}; 
+                ep->handler =
+                    [w = std::forward<Func>(handler)](auto&&... args) {
+                        return std::variant<Body>{w(std::forward<decltype(args)>(args)...)};
                     };
             }
 
@@ -487,9 +482,9 @@ namespace malloy::server
                     m_logger->warn("route has invalid handler. ignoring.");
                 return false;
             }
-                
-            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) { 
-                    std::visit([&, this](auto&& resp) { detail::send_response(req, std::move(resp), conn);  }, std::move(resp));
+
+            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) {
+                std::visit([&, this](auto&& resp) { detail::send_response(req, std::move(resp), conn); }, std::move(resp));
             };
 
             // Add route
@@ -536,7 +531,7 @@ namespace malloy::server
          * @return
          */
         template<typename FormatString, typename... Args>
-        bool log_or_throw(const std::exception& exception, const spdlog::level::level_enum level, const FormatString& fmt, Args&&...args)
+        bool log_or_throw(const std::exception& exception, const spdlog::level::level_enum level, const FormatString& fmt, Args&&... args)
         {
             if (m_logger) {
                 m_logger->log(level, fmt, std::forward<Args>(args)...);
@@ -549,4 +544,4 @@ namespace malloy::server
         }
     };
 
-}
+}    // namespace malloy::server
