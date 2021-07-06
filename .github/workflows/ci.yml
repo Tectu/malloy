@@ -18,6 +18,7 @@ jobs:
         toolchain:
           [
             {
+              name: "Ubuntu GCC TLS"
               cxx: "g++-11",
               cc: "gcc-11",
               packages: "libssl-dev gcc-11 g++-11",
@@ -25,6 +26,7 @@ jobs:
               os: ubuntu-latest,
             },
             {
+              name: "Ubuntu GCC"
               cxx: "g++-11",
               cc: "gcc-11",
               packages: "gcc-11 g++-11",
@@ -32,6 +34,7 @@ jobs:
               os: ubuntu-latest,
             },
             {
+              name: "Windows LLVM"
               cxx: "clang",
               cc: "clang++",
               packages: "llvm",
@@ -39,13 +42,15 @@ jobs:
               os: windows-latest,
             },
             {
+              name: "Windows LLVM TLS"
               cxx: "clang",
               cc: "clang++",
-              packages: "openssl-devel llvm",
+              packages: "openssl llvm",
               tls: ON,
               os: windows-latest,
             },
             {
+              name: "VS2019"
               cxx: "msvc",
               cc: "msvc",
               tls: OFF,
@@ -53,10 +58,11 @@ jobs:
               os: window-latest,
             },
             {
+              name: "VS2019 TLS"
               cxx: "msvc",
               cc: "msvc",
               tls: ON,
-              packages: "openssl-devel",
+              packages: "openssl",
               os: windows-latest,
             },
           ]
@@ -66,7 +72,7 @@ jobs:
     env:
       BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
 
-    name: "${{ matrix.toolchain.os }}: boost ${{ matrix.boost_version }} tls: ${{ matrix.toolchain.tls }} compiler: ${{ matrix.toolchain.cxx }}"
+    name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
@@ -85,8 +91,8 @@ jobs:
           echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
         shell: bash
       - name: Install packages (via choco)
-        if: runner.os == 'Windows'
-        run: choco install ${{ matrix.toolchain.packages }}
+        if: runner.os == 'Windows' && ${{ matrix.toolchain.packages != '' }}
+        run: choco upgrade ${{ matrix.toolchain.packages }}
 
       - name: Install packages (via apt)
         if: runner.os == 'Linux'
