@@ -17,8 +17,12 @@
 
 #include "malloy/type_traits.hpp"
 
-namespace malloy::websocket {
-	namespace detail {
+namespace malloy::websocket
+{
+
+    namespace detail
+    {
+
 #if MALLOY_FEATURE_TLS
 		using tls_stream = boost::beast::websocket::stream<
 			boost::beast::ssl_stream<boost::beast::tcp_stream>
@@ -32,6 +36,7 @@ namespace malloy::websocket {
 		>;
 
 	}
+
 	/**
 	* @class stream
 	* @brief Websocket stream. May use TLS
@@ -44,59 +49,84 @@ namespace malloy::websocket {
 	class stream {
 		using ws_t = detail::websocket_t;
 	public:
-		explicit stream(detail::websocket_t&& ws) : underlying_conn_{ std::move(ws) } {}
+		explicit stream(detail::websocket_t&& ws) : m_underlying_conn{ std::move(ws) }
+		{
+		}
 
-		explicit stream(boost::beast::websocket::stream<boost::beast::tcp_stream>&& s) : underlying_conn_{ std::move(s) } {}
+		explicit stream(boost::beast::websocket::stream<boost::beast::tcp_stream>&& s) : m_underlying_conn{ std::move(s) }
+        {
+        }
+
         explicit stream(boost::beast::tcp_stream&& from) :
-            stream{boost::beast::websocket::stream<boost::beast::tcp_stream>{std::move(from)}} {}
+            stream{boost::beast::websocket::stream<boost::beast::tcp_stream>{std::move(from)}}
+        {
+        }
 
 #if MALLOY_FEATURE_TLS
-		explicit stream(detail::tls_stream&& ws) : underlying_conn_{std::move(ws)} {}
+		explicit stream(detail::tls_stream&& ws) : m_underlying_conn{std::move(ws)}
+		{
+		}
+
         explicit stream(boost::beast::ssl_stream<boost::beast::tcp_stream>&& from) :
             stream{malloy::websocket::detail::tls_stream{
                 boost::beast::websocket::stream<
-                    boost::beast::ssl_stream<boost::beast::tcp_stream>>{std::move(from)}}} {}
+                    boost::beast::ssl_stream<boost::beast::tcp_stream>>{std::move(from)}}}
+        {
+        }
 #endif
 
-
 		template<concepts::const_buffer_sequence Buff, concepts::async_read_handler Callback>
-		void async_write(const Buff& buffers, Callback&& done)  {
-			std::visit([&buffers, done = std::forward<Callback>(done)](auto& stream) mutable { return stream.async_write(buffers, std::forward<Callback>(done)); }, underlying_conn_);
+		void async_write(const Buff& buffers, Callback&& done)
+		{
+			std::visit([&buffers, done = std::forward<Callback>(done)](auto& stream) mutable { return stream.async_write(buffers, std::forward<Callback>(done)); }, m_underlying_conn);
 		}
+
 		template<concepts::const_buffer_sequence Buff>
-		auto write(const Buff& buffers) -> std::size_t {
-			return std::visit([&buffers](auto& stream) mutable { return stream.write(buffers); }, underlying_conn_);
+		auto write(const Buff& buffers) -> std::size_t
+		{
+			return std::visit([&buffers](auto& stream) mutable { return stream.write(buffers); }, m_underlying_conn);
 		}
 
 		template<concepts::dynamic_buffer Buff, concepts::async_read_handler Callback>
-		void async_read(Buff& buff, Callback&& done)   {
-			std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { s.async_read(buff, std::forward<Callback>(done)); }, underlying_conn_);
+		void async_read(Buff& buff, Callback&& done)
+		{
+			std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { s.async_read(buff, std::forward<Callback>(done)); }, m_underlying_conn);
 		};
+
 		template<concepts::dynamic_buffer Buff>
-		auto read(Buff& buff, boost::beast::error_code& ec) -> std::size_t {
-			return std::visit([&buff, &ec](auto& s) mutable { return s.read(buff, ec); }, underlying_conn_);
+		auto read(Buff& buff, boost::beast::error_code& ec) -> std::size_t
+		{
+			return std::visit([&buff, &ec](auto& s) mutable { return s.read(buff, ec); }, m_underlying_conn);
 		};
 
-		auto close() -> boost::beast::websocket::close_reason {
-			return std::visit([](auto& s) { boost::beast::websocket::close_reason ec; s.close(ec); return ec; }, underlying_conn_);
+		auto close() -> boost::beast::websocket::close_reason
+		{
+			return std::visit([](auto& s) { boost::beast::websocket::close_reason ec; s.close(ec); return ec; }, m_underlying_conn);
 		}
 
-		void set_option(auto&& opt) {
-			std::visit([opt = std::forward<decltype(opt)>(opt)](auto& s) mutable { s.set_option(std::forward<decltype(opt)>(opt));  }, underlying_conn_);
+		void set_option(auto&& opt)
+		{
+			std::visit([opt = std::forward<decltype(opt)>(opt)](auto& s) mutable { s.set_option(std::forward<decltype(opt)>(opt));  }, m_underlying_conn);
 		}
+
 		template<typename Body, typename Fields>
-		auto async_accept(const boost::beast::http::request<Body, Fields>& req, concepts::accept_handler auto&& done) {
-			std::visit([req, done = std::forward<decltype(done)>(done)](auto& s) mutable { return s.async_accept(req, std::forward<decltype(done)>(done)); }, underlying_conn_);
+		auto async_accept(const boost::beast::http::request<Body, Fields>& req, concepts::accept_handler auto&& done)
+		{
+			std::visit([req, done = std::forward<decltype(done)>(done)](auto& s) mutable { return s.async_accept(req, std::forward<decltype(done)>(done)); }, m_underlying_conn);
 		}
+
 		template<typename Body, typename Fields>
-		auto accept(const boost::beast::http::request<Body, Fields>& req) -> boost::beast::error_code {
-			return std::visit([req](auto& s) { return s.accept(req); }, underlying_conn_);
+		auto accept(const boost::beast::http::request<Body, Fields>& req) -> boost::beast::error_code
+		{
+			return std::visit([req](auto& s) { return s.accept(req); }, m_underlying_conn);
 		}
+
 		template<concepts::accept_handler Callback>
-		void async_handshake(std::string host, std::string target, Callback&& done)  {
+		void async_handshake(std::string host, std::string target, Callback&& done)
+		{
 			std::visit([host = std::move(host), target = std::move(target), done = std::forward<Callback>(done)](auto& s) mutable {
 				s.async_handshake(host, target, std::forward<Callback>(done)); 
-			}, underlying_conn_);
+			}, m_underlying_conn);
 		}
 
         /** 
@@ -110,8 +140,9 @@ namespace malloy::websocket {
          * @endcode
          */
 		template<typename Func>
-		void get_lowest_layer(Func&& visitor) {
-			std::visit([vistor = std::forward<Func>(visitor)](auto& s) mutable { vistor(boost::beast::get_lowest_layer(s)); }, underlying_conn_);
+		void get_lowest_layer(Func&& visitor)
+		{
+			std::visit([vistor = std::forward<Func>(visitor)](auto& s) mutable { vistor(boost::beast::get_lowest_layer(s)); }, m_underlying_conn);
 		}
 
         /**
@@ -119,42 +150,43 @@ namespace malloy::websocket {
          * @return s.get_executor() where s is any of the types in
          * detail::websocket_t
          */
-		auto get_executor() {
-			return std::visit([](auto& s) { return s.get_executor(); }, underlying_conn_);
+		auto get_executor()
+		{
+			return std::visit([](auto& s) { return s.get_executor(); }, m_underlying_conn);
 		}
 
         /** 
          * @brief Whether the underlying stream is TLS or not 
          * @note Always false if MALLOY_FEATURE_TLS == 0
          */
-		constexpr auto is_tls() const -> bool { 
+		constexpr auto is_tls() const -> bool
+		{
 #if MALLOY_FEATURE_TLS
-			return std::holds_alternative<detail::tls_stream>(underlying_conn_);  
+			return std::holds_alternative<detail::tls_stream>(m_underlying_conn);
 #else 
 			return false;
 #endif
 		}
+
 #if MALLOY_FEATURE_TLS
 		template<concepts::accept_handler Callback>
         void async_handshake_tls(boost::asio::ssl::stream_base::handshake_type type, Callback&& done) 
         {
-			if (!is_tls()) {
+			if (!is_tls())
                 throw std::logic_error{"async_handshake_tls called on non-tls stream"};
-			}
-            std::visit([done = std::forward<Callback>(done), type](auto& s) mutable {
-                if constexpr (std::same_as<std::decay_t<decltype(s)>, detail::tls_stream>) {
-                    s.next_layer().async_handshake(type, std::forward<Callback>(done));
-                }
-            },
-                       underlying_conn_);
+
+            std::visit(
+                [done = std::forward<Callback>(done), type](auto& s) mutable {
+                    if constexpr (std::same_as<std::decay_t<decltype(s)>, detail::tls_stream>)
+                        s.next_layer().async_handshake(type, std::forward<Callback>(done));
+                },
+                m_underlying_conn
+            );
         }
 		#endif
-		
-		
-	private:
-		ws_t underlying_conn_;
-				
 
+	private:
+		ws_t m_underlying_conn;
 	};
 
 }
