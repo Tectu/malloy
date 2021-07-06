@@ -18,7 +18,7 @@ jobs:
         toolchain:
           [
             {
-              name: "Ubuntu GCC TLS"
+              name: "Ubuntu GCC TLS",
               cxx: "g++-11",
               cc: "gcc-11",
               packages: "libssl-dev gcc-11 g++-11",
@@ -26,7 +26,7 @@ jobs:
               os: ubuntu-latest,
             },
             {
-              name: "Ubuntu GCC"
+              name: "Ubuntu GCC",
               cxx: "g++-11",
               cc: "gcc-11",
               packages: "gcc-11 g++-11",
@@ -34,7 +34,7 @@ jobs:
               os: ubuntu-latest,
             },
             {
-              name: "Windows LLVM"
+              name: "Windows LLVM",
               cxx: "clang",
               cc: "clang++",
               packages: "llvm",
@@ -42,7 +42,7 @@ jobs:
               os: windows-latest,
             },
             {
-              name: "Windows LLVM TLS"
+              name: "Windows LLVM TLS",
               cxx: "clang",
               cc: "clang++",
               packages: "openssl llvm",
@@ -50,17 +50,17 @@ jobs:
               os: windows-latest,
             },
             {
-              name: "VS2019"
-              cxx: "msvc",
-              cc: "msvc",
+              name: "VS2019",
+              cxx: "cl.exe",
+              cc: "cl.exe",
               tls: OFF,
               packages: "",
               os: window-latest,
             },
             {
-              name: "VS2019 TLS"
-              cxx: "msvc",
-              cc: "msvc",
+              name: "VS2019 TLS",
+              cxx: "cl.exe",
+              cc: "cl.exe",
               tls: ON,
               packages: "openssl",
               os: windows-latest,
@@ -71,6 +71,8 @@ jobs:
     runs-on: ${{ matrix.toolchain.os }}
     env:
       BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
+      CC: ${{ matrix.toolchain.cc }}
+      CXX: ${{ matrix.toolchain.cxx }}
 
     name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
@@ -91,8 +93,10 @@ jobs:
           echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
         shell: bash
       - name: Install packages (via choco)
-        if: runner.os == 'Windows' && ${{ matrix.toolchain.packages != '' }}
-        run: choco upgrade ${{ matrix.toolchain.packages }}
+        if: runner.os == 'Windows'
+        run: | 
+          choco upgrade ${{ matrix.toolchain.packages }} 
+          refreshenv
 
       - name: Install packages (via apt)
         if: runner.os == 'Linux'
@@ -118,14 +122,8 @@ jobs:
         shell: bash
 
       - name: Install msvc
-        if: ${{ matrix.toolchain.cxx == 'msvc' }} # This is a bit of a hack
+        if: ${{ matrix.toolchain.cxx == 'cl.exe' }} # This is a bit of a hack
         uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Setup env
-        if: ${{ matrix.toolchain.cxx != 'msvc' }}
-        run: |
-          echo "CC=${{ matrix.toolchain.cc }}" >> $GITHUB_ENV 
-          echo "CXX=${{ matrix.toolchain.cxx }}" >> $GITHUB_ENV
 
       - name: Configure
         run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }}
