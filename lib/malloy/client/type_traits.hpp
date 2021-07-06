@@ -58,6 +58,13 @@ namespace malloy::client::concepts {
  * - `f.body_for(h) -> std::variant<Ts...>`
  * - `std::visit([](auto& v){ decltype(v)::value_type r; f.setup_body(h, r); }, f.body_for(h))` 
  *   (setup_body must be a visitor over the value_types of the response bodies returned by `f.body_for(h)`)
+ * 
+ * @section http_callback
+ * @par Callback type used to provide responses to http(s) requests. Takes another type that satisfies response_filter, referred to as Filter from now on.
+ * 
+ * @par Requires:
+ * - `std::move_constructible` 
+ * - `(malloy::http::response<Ts>&&) -> void` where `Filter::body_for(..) -> std::variant<Ts...>`.
  *
  *
  */

@@ -85,11 +85,7 @@ namespace malloy::client
          * Perform a plain (unencrypted) HTTP request.
          *
          * @param req The HTTP request.
-         * @param done Callback invoked on completion. Must be a visitor over
-         * `malloy::http::response<T>...` where T is the types contained in the
-         * return type of `Filter::body_for` (see response_filter @ref
-         * client_concepts). If you do not pass anything for filter, it just
-         * needs to take `malloy::http::response<>&&` as its only parameter 
+         * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter
          * @param filter Filter to use when parsing the response. Must satisfy
          * response_filter @ref client_concepts
          *
