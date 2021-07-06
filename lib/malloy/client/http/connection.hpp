@@ -178,7 +178,7 @@ namespace malloy::client::http
                         return;
                     }
                     // Notify via callback
-                    (*m_cb)(parser->release());
+                    (*m_cb)(malloy::http::response<body_t>{parser->release()});
                     on_read();
                 }
                 );

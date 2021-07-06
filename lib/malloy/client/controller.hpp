@@ -85,11 +85,7 @@ namespace malloy::client
          * Perform a plain (unencrypted) HTTP request.
          *
          * @param req The HTTP request.
-         * @param done Callback invoked on completion. Must be a visitor over
-         * `malloy::http::response<T>...` where T is the types contained in the
-         * return type of `Filter::body_for` (see response_filter @ref
-         * client_concepts). If you do not pass anything for filter, it just
-         * needs to take `malloy::http::response<>&&` as its only parameter 
+         * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter
          * @param filter Filter to use when parsing the response. Must satisfy
          * response_filter @ref client_concepts
          *
@@ -99,6 +95,7 @@ namespace malloy::client
          * @sa https_request()
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
+        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]] auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
 
@@ -129,6 +126,7 @@ namespace malloy::client
          * @sa http_request()
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
+        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]] auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
             check_tls();
