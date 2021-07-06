@@ -9,6 +9,14 @@
 namespace malloy::client::concepts {
     namespace detail
     {
+        /**
+         * @class http_cb_helper
+         * @brief Helper for http_callback concept
+         * @note This is effectively [cb = std::move(cb)]<typename V>(V&& v) mutable { ... }
+         * @tparam Callback carries the functor type being checked by the
+         * concept
+         *
+         */
         template<typename Callback>
         struct http_cb_helper {
             Callback cb;
