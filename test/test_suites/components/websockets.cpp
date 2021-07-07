@@ -70,13 +70,13 @@ namespace
 		server_cfg.interface = "127.0.0.1";
 		server_cfg.port = port;
 
-		CHECK(s_ctrl.init(server_cfg));
-		CHECK(c_ctrl.init(general_cfg));
+		REQUIRE(s_ctrl.init(server_cfg));
+		REQUIRE(c_ctrl.init(general_cfg));
 
         setup_server(s_ctrl);
         setup_client(c_ctrl);
 
-		CHECK(s_ctrl.start());
+		REQUIRE(s_ctrl.start());
         CHECK(c_ctrl.run());
         c_ctrl.stop().get();
     }
@@ -109,13 +109,13 @@ TEST_SUITE("websockets")
         ws_roundtrip(
             port,
             [](auto& c_ctrl) {
-                CHECK(c_ctrl.init_tls());
+                REQUIRE(c_ctrl.init_tls());
                 c_ctrl.add_ca(std::string{tls_cert});
 
                 c_ctrl.wss_connect("127.0.0.1", port, "/", &client_ws_handler);
             },
             [](auto& s_ctrl) {
-                CHECK(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
+                REQUIRE(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
 
                 s_ctrl.router()->add_websocket("/", &server_ws_handler);
             }
