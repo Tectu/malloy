@@ -54,8 +54,8 @@ jobs:
               cxx: "cl.exe",
               cc: "cl.exe",
               tls: OFF,
-              packages: "",
-              os: window-latest,
+              packages: "openssl", # We have to install something
+              os: windows-latest,
             },
             {
               name: "VS2019 TLS",
