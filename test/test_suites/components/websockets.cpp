@@ -89,26 +89,37 @@ TEST_SUITE("websockets")
 	TEST_CASE("roundtrip")
 	{
         constexpr uint16_t port = 13312;
-        ws_roundtrip(port, [](auto& c_ctrl) {
-            c_ctrl.ws_connect("127.0.0.1", port, "/", &client_ws_handler);
-        }, [](auto& s_ctrl) { s_ctrl.router()->add_websocket("/", &server_ws_handler); });
+
+        ws_roundtrip(
+            port,
+            [](auto& c_ctrl) {
+                c_ctrl.ws_connect("127.0.0.1", port, "/", &client_ws_handler);
+            },
+            [](auto& s_ctrl) {
+                s_ctrl.router()->add_websocket("/", &server_ws_handler);
+            }
+        );
     }
 
 #if MALLOY_FEATURE_TLS 
     TEST_CASE("roundtrip - tls")
     {
         constexpr uint16_t port = 13313;
+
         ws_roundtrip(
-            port, [](auto& c_ctrl) {
+            port,
+            [](auto& c_ctrl) {
                 CHECK(c_ctrl.init_tls());
                 c_ctrl.add_ca(std::string{tls_cert});
 
-                c_ctrl.wss_connect("127.0.0.1", port, "/", &client_ws_handler); },
+                c_ctrl.wss_connect("127.0.0.1", port, "/", &client_ws_handler);
+            },
             [](auto& s_ctrl) {
                 CHECK(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
 
                 s_ctrl.router()->add_websocket("/", &server_ws_handler);
-            });
+            }
+        );
     }
 #endif
 
