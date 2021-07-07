@@ -34,6 +34,22 @@ jobs:
               os: ubuntu-latest,
             },
             {
+              name: "Ubuntu LLVM TLS",
+              cxx: "clang++",
+              cc: "clang",
+              packages: "libssl-dev",
+              tls: ON,
+              os: ubuntu-latest,
+            },
+            {
+              name: "Ubuntu LLVM",
+              cxx: "clang++",
+              cc: "clang",
+              packages: "",
+              tls: OFF,
+              os: ubuntu-latest,
+            },
+            {
               name: "VS2019",
               cxx: "cl.exe",
               cc: "cl.exe",
@@ -78,7 +94,7 @@ jobs:
         shell: bash
       - name: Install packages (via choco)
         if: runner.os == 'Windows'
-        run: choco upgrade ${{ matrix.toolchain.packages }} 
+        run: choco upgrade ${{ matrix.toolchain.packages }}
 
       - name: Install packages (via apt)
         if: runner.os == 'Linux'
