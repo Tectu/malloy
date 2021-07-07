@@ -1,7 +1,5 @@
-
 #include "../../test.hpp"
 #include "../../tls_data.hpp"
-
 
 #include <malloy/client/controller.hpp>
 #include <malloy/server/controller.hpp>
@@ -13,11 +11,13 @@ namespace ms = malloy::server;
 using malloy::tests::embedded::tls_cert;
 using malloy::tests::embedded::tls_key;
 
-namespace {
+namespace
+{
+
 	constexpr auto server_msg = "Hello from server";
 	constexpr auto cli_msg = "Hello from client";
 
-    void cli_ws_handler(malloy::error_code ec, std::shared_ptr<malloy::client::websocket::connection> conn)
+    void client_ws_handler(malloy::error_code ec, std::shared_ptr<malloy::client::websocket::connection> conn)
     {
         REQUIRE(!ec);
         CHECK(conn);
@@ -35,6 +35,7 @@ namespace {
             });
         });
     }
+
     void server_ws_handler(const malloy::http::request<>& req, std::shared_ptr<malloy::server::websocket::connection> conn)
     {
         conn->accept(req, [conn]() mutable {
@@ -51,7 +52,13 @@ namespace {
             });
         });
     }
-    void ws_roundtrip(uint16_t port, std::function<void(malloy::client::controller&)> setup_cli, std::function<void(malloy::server::controller&)> setup_serve) {
+
+    void ws_roundtrip(
+        uint16_t port,
+        std::function<void(malloy::client::controller&)> setup_client,
+        std::function<void(malloy::server::controller&)> setup_server
+    )
+    {
         mc::controller c_ctrl;
 		ms::controller s_ctrl;
 
@@ -66,25 +73,27 @@ namespace {
 		CHECK(s_ctrl.init(server_cfg));
 		CHECK(c_ctrl.init(general_cfg));
 
-        setup_serve(s_ctrl);
-        setup_cli(c_ctrl);
+        setup_server(s_ctrl);
+        setup_client(c_ctrl);
 
 		CHECK(s_ctrl.start());
         CHECK(c_ctrl.run());
-        c_ctrl.stop();
-
-
+        c_ctrl.stop().get();
     }
+
 }    // namespace
 
-TEST_SUITE("websockets") {
+TEST_SUITE("websockets")
+{
 
-	TEST_CASE("roundtrip") {
+	TEST_CASE("roundtrip")
+	{
         constexpr uint16_t port = 13312;
         ws_roundtrip(port, [](auto& c_ctrl) {
-            c_ctrl.ws_connect("127.0.0.1", port, "/", &cli_ws_handler);
+            c_ctrl.ws_connect("127.0.0.1", port, "/", &client_ws_handler);
         }, [](auto& s_ctrl) { s_ctrl.router()->add_websocket("/", &server_ws_handler); });
     }
+
 #if MALLOY_FEATURE_TLS 
     TEST_CASE("roundtrip - tls")
     {
@@ -94,13 +103,13 @@ TEST_SUITE("websockets") {
                 CHECK(c_ctrl.init_tls());
                 c_ctrl.add_ca(std::string{tls_cert});
 
-                c_ctrl.wss_connect("127.0.0.1", port, "/", &cli_ws_handler); },
+                c_ctrl.wss_connect("127.0.0.1", port, "/", &client_ws_handler); },
             [](auto& s_ctrl) {
                 CHECK(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
 
                 s_ctrl.router()->add_websocket("/", &server_ws_handler);
             });
     }
-
 #endif
+
 }
