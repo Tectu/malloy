@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../websocket/types.hpp"
 #include "malloy/websocket/connection.hpp"
 
 #include <boost/beast/core.hpp>

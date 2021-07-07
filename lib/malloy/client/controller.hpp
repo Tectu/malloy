@@ -4,7 +4,6 @@
 #include "../http/request.hpp"
 #include "../http/response.hpp"
 #include "malloy/http/type_traits.hpp"
-#include "../websocket/types.hpp"
 #include "malloy/error.hpp"
 #include "malloy/client/type_traits.hpp"
 #include "malloy/client/websocket/connection.hpp"

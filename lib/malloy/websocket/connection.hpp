@@ -8,7 +8,6 @@
 
 #include "malloy/type_traits.hpp"
 #include "malloy/websocket/stream.hpp"
-#include "malloy/websocket/types.hpp"
 #include "malloy/http/request.hpp"
 #include "malloy/error.hpp"
 
