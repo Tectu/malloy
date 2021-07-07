@@ -48,6 +48,17 @@ namespace malloy::websocket
         static const std::string agent_string;
 
         /**
+         * See stream::set_binary(bool)
+         */
+        void set_binary(const bool enabled) { m_ws.set_binary(enabled); }
+
+        /**
+         * See stream::binary()
+         */
+        [[nodiscard]]
+        bool binary() { return m_ws.binary(); }
+
+        /**
          * @brief Construct a new connection object
          * @param logger Logger to use. Must not be `nullptr`
          * @param ws Stream to use. May be unopened/connected but in that case

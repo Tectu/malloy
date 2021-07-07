@@ -129,6 +129,38 @@ namespace malloy::websocket
 			}, m_underlying_conn);
 		}
 
+        /**
+         * @brief Controls whether outgoing message will be indicated text or binary.
+         *
+         * @param enabled Whether to enable binary mode.
+         *
+         * @sa binary()
+         */
+        void set_binary(const bool enabled)
+        {
+            std::visit([enabled](auto& s) mutable {
+                    s.binary(enabled);
+                },
+                m_underlying_conn
+            );
+        }
+
+        /**
+         * @brief Checks whether outgoing messages will be indicated as text or binary.
+         * @return Whether messages are indicated as binary.
+         *
+         * @sa set_binary(bool)
+         */
+        [[nodiscard]]
+        bool binary() const
+        {
+		    return std::visit([](auto& s) {
+		            return s.binary();
+		        },
+                m_underlying_conn
+            );
+        }
+
         /** 
          * @brief Access get_lowest_layer of wrapped stream type 
          * @param visitor Visitor function over `boost::beast::get_lowest_layer(t) for t in detail::websocket_t`
