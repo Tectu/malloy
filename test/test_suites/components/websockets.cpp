@@ -17,10 +17,16 @@ namespace
 	constexpr auto server_msg = "Hello from server";
 	constexpr auto cli_msg = "Hello from client";
 
-    void client_ws_handler(malloy::error_code ec, std::shared_ptr<malloy::client::websocket::connection> conn)
+	template<bool BinaryMode>
+    void client_ws_handler(
+        malloy::error_code ec,
+        std::shared_ptr<malloy::client::websocket::connection> conn
+    )
     {
-        REQUIRE(!ec);
-        CHECK(conn);
+        CHECK(!ec);
+        REQUIRE(conn);
+
+        conn->set_binary(BinaryMode);
 
         auto buffer = std::make_shared<boost::beast::flat_buffer>();
         conn->read(*buffer, [&, conn, buffer](auto ec, auto size) {
@@ -36,8 +42,14 @@ namespace
         });
     }
 
-    void server_ws_handler(const malloy::http::request<>& req, std::shared_ptr<malloy::server::websocket::connection> conn)
+    template<bool BinaryMode>
+    void server_ws_handler(
+        const malloy::http::request<>& req,
+        std::shared_ptr<malloy::server::websocket::connection> conn
+    )
     {
+        conn->set_binary(BinaryMode);
+
         conn->accept(req, [conn]() mutable {
             conn->send(malloy::buffer(server_msg, std::strlen(server_msg)), [conn](auto ec, auto size) mutable {
                 CHECK(!ec);
@@ -53,8 +65,15 @@ namespace
         });
     }
 
+    /**
+     * Performs a roundtrip using server & client components.
+     *
+     * @param port The port to perform the test on.
+     * @param setup_client The client setup routine.
+     * @param setup_server The server setup routine.
+     */
     void ws_roundtrip(
-        uint16_t port,
+        const uint16_t port,
         std::function<void(malloy::client::controller&)> setup_client,
         std::function<void(malloy::server::controller&)> setup_server
     )
@@ -81,46 +100,77 @@ namespace
         c_ctrl.stop().get();
     }
 
+    /**
+     * Performs a roundtrip.
+     *
+     * @tparam Secure Whether to use ws:// or wss://
+     * @tparam BinaryMode Whether to configure connections to use binary mode.
+     * @param port The port to run the test on.
+     */
+	template<
+        bool Secure,
+        bool BinaryMode
+    >
+    void ws_roundtrip(const uint16_t port)
+    {
+        // Plain
+        if constexpr (!Secure)
+            ws_roundtrip(
+                port,
+                [port](auto& c_ctrl) {
+                    c_ctrl.ws_connect("127.0.0.1", port, "/", &client_ws_handler<BinaryMode>);
+                },
+                [](auto& s_ctrl) {
+                    s_ctrl.router()->add_websocket("/", &server_ws_handler<BinaryMode>);
+                }
+            );
+
+        // Secure
+        else
+            ws_roundtrip(
+                port,
+                [port](auto& c_ctrl) {
+                    REQUIRE(c_ctrl.init_tls());
+                    c_ctrl.add_ca(std::string{tls_cert});
+
+                    c_ctrl.wss_connect("127.0.0.1", port, "/", &client_ws_handler<BinaryMode>);
+                },
+                [](auto& s_ctrl) {
+                    REQUIRE(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
+
+                    s_ctrl.router()->add_websocket("/", &server_ws_handler<BinaryMode>);
+                }
+            );
+    }
+
 }    // namespace
 
 TEST_SUITE("websockets")
 {
+    constexpr uint16_t port = 13312;
 
-	TEST_CASE("roundtrip")
+    TEST_CASE("roundtrips")
 	{
-        constexpr uint16_t port = 13312;
+	    SUBCASE("plain, text_mode")
+	    {
+	        ws_roundtrip<false, false>(port);
+        }
 
-        ws_roundtrip(
-            port,
-            [](auto& c_ctrl) {
-                c_ctrl.ws_connect("127.0.0.1", port, "/", &client_ws_handler);
-            },
-            [](auto& s_ctrl) {
-                s_ctrl.router()->add_websocket("/", &server_ws_handler);
-            }
-        );
-    }
+        SUBCASE("plain, binary_mode")
+        {
+            ws_roundtrip<false, true>(port);
+        }
 
-#if MALLOY_FEATURE_TLS 
-    TEST_CASE("roundtrip - tls")
-    {
-        constexpr uint16_t port = 13313;
+#if MALLOY_FEATURE_TLS
+        SUBCASE("tls, text_mode")
+        {
+            ws_roundtrip<true, false>(port);
+        }
 
-        ws_roundtrip(
-            port,
-            [](auto& c_ctrl) {
-                REQUIRE(c_ctrl.init_tls());
-                c_ctrl.add_ca(std::string{tls_cert});
-
-                c_ctrl.wss_connect("127.0.0.1", port, "/", &client_ws_handler);
-            },
-            [](auto& s_ctrl) {
-                REQUIRE(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
-
-                s_ctrl.router()->add_websocket("/", &server_ws_handler);
-            }
-        );
-    }
+        SUBCASE("tls, binary_mode")
+        {
+            ws_roundtrip<true, true>(port);
+        }
 #endif
-
+    }
 }
