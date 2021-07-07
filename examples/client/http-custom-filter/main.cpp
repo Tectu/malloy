@@ -1,6 +1,7 @@
-
 #include <malloy/client/controller.hpp>
 #include <malloy/http/response.hpp>
+
+#include <iostream>
 
 namespace mc = malloy::client;
 
