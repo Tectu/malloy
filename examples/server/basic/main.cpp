@@ -1,14 +1,12 @@
 #include "../../example_logger.hpp"
 #include "../../ws_handlers.hpp"
 
+#include <malloy/core/http/generator.hpp>
 #include <malloy/server/controller.hpp>
-#include <malloy/http/generator.hpp>
 #include <malloy/server/routing/router.hpp>
-#include <malloy/error.hpp>
 
 #include <iostream>
 #include <memory>
-
 
 int main()
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "endpoint.hpp"
-#include "malloy/server/websocket/connection/connection.hpp"
+#include "../websocket/connection.hpp"
 
 namespace malloy::server
 {

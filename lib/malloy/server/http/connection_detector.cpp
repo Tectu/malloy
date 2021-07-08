@@ -1,6 +1,6 @@
 #include "connection_detector.hpp"
 #include "connection_plain.hpp"
-#include "malloy/server/routing/router.hpp"
+#include "../routing/router.hpp"
 
 #if MALLOY_FEATURE_TLS
     #include "connection_tls.hpp"

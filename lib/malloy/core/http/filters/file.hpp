@@ -1,8 +1,9 @@
 
 #pragma once
 
-#include "malloy/http/response.hpp"
-#include "malloy/http/request.hpp"
+#include "../response.hpp"
+#include "../request.hpp"
+#include "../../error.hpp"
 
 #include <filesystem>
 #include <variant>

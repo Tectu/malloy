@@ -1,7 +1,6 @@
 #include "../../test.hpp"
 
-#include <malloy/http/generator.hpp>
-#include <malloy/http/response.hpp>
+#include <malloy/core/http/generator.hpp>
 
 using namespace malloy::http;
 

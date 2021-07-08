@@ -1,12 +1,11 @@
 #include "../../example_logger.hpp"
 
+#include <malloy/core/html/form.hpp>
+#include <malloy/core/http/generator.hpp>
 #include <malloy/server/controller.hpp>
-#include <malloy/http/generator.hpp>
 #include <malloy/server/routing/router.hpp>
-#include <malloy/html/form.hpp>
 
 #include <iostream>
-#include <memory>
 
 int main()
 {

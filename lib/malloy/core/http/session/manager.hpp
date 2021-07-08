@@ -1,15 +1,13 @@
 #pragma once
 
 #include "types.hpp"
+#include "../response.hpp"
+#include "../request.hpp"
 
 #include <chrono>
 #include <memory>
 #include <mutex>
 #include <string>
-
-#include "malloy/http/response.hpp"
-#include "malloy/http/request.hpp"
-
 
 namespace malloy::http::sessions
 {

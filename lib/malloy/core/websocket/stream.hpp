@@ -1,7 +1,6 @@
+#pragma once
 
-#pragma once 
-
-#include <variant>
+#include "../type_traits.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/asio/connect.hpp>
@@ -9,13 +8,12 @@
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/websocket/error.hpp>
 
-
 #if MALLOY_FEATURE_TLS
 	#include <boost/beast/ssl.hpp>
 	#include <boost/asio/ssl/stream.hpp>
 #endif
 
-#include "malloy/type_traits.hpp"
+#include <variant>
 
 namespace malloy::websocket
 {

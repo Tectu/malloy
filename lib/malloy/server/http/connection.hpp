@@ -1,15 +1,14 @@
 #pragma once
 
-#include "malloy/http/request.hpp"
-#include "malloy/http/generator.hpp"
-#include "malloy/server/http/connection/connection_t.hpp"
-#include "malloy/server/websocket/connection/connection.hpp"
-
-#include <boost/beast/http/detail/type_traits.hpp>
+#include "connection_t.hpp"
+#include "../websocket/connection.hpp"
+#include "../../core/http/request.hpp"
+#include "../../core/http/generator.hpp"
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
+#include <boost/beast/http/detail/type_traits.hpp>
 #include <spdlog/logger.h>
 
 #include <algorithm>

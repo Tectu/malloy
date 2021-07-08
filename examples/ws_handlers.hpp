@@ -1,9 +1,9 @@
 #pragma once
 
-#include <malloy/utils.hpp>
-#include <malloy/http/request.hpp>
-#include <malloy/error.hpp>
-#include <malloy/websocket/connection.hpp>
+#include <malloy/core/utils.hpp>
+#include <malloy/core/http/request.hpp>
+#include <malloy/core/error.hpp>
+#include <malloy/core/websocket/connection.hpp>
 #include <spdlog/fmt/fmt.h>
 
 #include <thread>

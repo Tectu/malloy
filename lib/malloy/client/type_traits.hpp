@@ -1,13 +1,15 @@
-
 #pragma once
+
+#include "../core/http/response.hpp"
+#include "../core/http/type_traits.hpp"
+#include "../core/type_traits.hpp"
 
 #include <concepts>
 #include <variant>
 
-#include "malloy/http/type_traits.hpp"
-#include "malloy/type_traits.hpp"
+namespace malloy::client::concepts
+{
 
-namespace malloy::client::concepts {
     namespace detail
     {
         template<typename F>
@@ -15,7 +17,7 @@ namespace malloy::client::concepts {
             template<malloy::http::concepts::body T>
             void operator()(T&& v)
             {
-F f2;
+                F f2;
                 typename F::header_type h2;
                 typename std::decay_t<T>::value_type r;
                 f2.setup_body(h2, r);

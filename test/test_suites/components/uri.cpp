@@ -1,6 +1,6 @@
 #include "../../test.hpp"
 
-#include <malloy/http/uri.hpp>
+#include <malloy/core/http/uri.hpp>
 
 using namespace malloy;
 using namespace malloy::http;

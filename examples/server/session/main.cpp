@@ -1,11 +1,11 @@
 #include "../../example_logger.hpp"
 
-#include <malloy/server/controller.hpp>
-#include <malloy/http/generator.hpp>
-#include <malloy/http/session/manager.hpp>
-#include <malloy/http/session/session.hpp>
-#include <malloy/http/session/storage_memory.hpp>
+#include <malloy/core/http/generator.hpp>
+#include <malloy/core/http/session/manager.hpp>
+#include <malloy/core/http/session/session.hpp>
+#include <malloy/core/http/session/storage_memory.hpp>
 #include <malloy/server/routing/router.hpp>
+#include <malloy/server/controller.hpp>
 
 #include <iostream>
 

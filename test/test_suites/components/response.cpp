@@ -1,6 +1,6 @@
 #include "../../test.hpp"
 
-#include <malloy/http/response.hpp>
+#include <malloy/core/http/response.hpp>
 
 using namespace malloy::http;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../controller.hpp"
+#include "../core/controller.hpp"
 
 #include <memory>
 #include <filesystem>

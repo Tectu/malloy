@@ -1,14 +1,10 @@
 #include "../../example_logger.hpp"
 #include "../../ws_handlers.hpp"
 
-#include <malloy/websocket/connection.hpp>
 #include <malloy/server/controller.hpp>
 #include <malloy/server/routing/router.hpp>
-#include <spdlog/fmt/fmt.h>
 
 #include <iostream>
-#include <memory>
-#include <thread>
 
 int main()
 {

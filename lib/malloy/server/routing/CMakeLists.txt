@@ -1,5 +1,5 @@
 target_sources(
-    ${TARGET_OBJS}
+    ${TARGET}
     PRIVATE
         endpoint.hpp
         endpoint_http.hpp

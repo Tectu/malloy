@@ -1,11 +1,7 @@
-
-#include <malloy/server/controller.hpp>
-#include <malloy/http/request.hpp>
-#include <malloy/server/routing/router.hpp>
-
-#include <spdlog/spdlog.h>
-
 #include <boost/beast/http/file_body.hpp>
+#include <malloy/core/http/request.hpp>
+#include <malloy/server/controller.hpp>
+#include <malloy/server/routing/router.hpp>
 
 namespace ms = malloy::server;
 namespace fs = std::filesystem;

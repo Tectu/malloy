@@ -1,5 +1,5 @@
 target_sources(
-    ${TARGET_OBJS}
+    ${TARGET}
     PRIVATE
         connection.hpp
         connection_plain.hpp

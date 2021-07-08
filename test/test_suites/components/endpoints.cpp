@@ -1,9 +1,9 @@
 #include "../../test.hpp"
 #include "../../mocks.hpp" 
 
+#include <malloy/core/http/request.hpp>
 #include <malloy/server/routing/endpoint_http_regex.hpp>
 #include <malloy/server/routing/router.hpp>
-#include <malloy/http/request.hpp>
 
 using namespace malloy::http;
 using namespace malloy::server;

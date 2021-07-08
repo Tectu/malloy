@@ -1,11 +1,9 @@
 #include "../../../example_logger.hpp"
 
 #include <malloy/server/controller.hpp>
-#include <malloy/http/generator.hpp>
 #include <malloy/server/routing/router.hpp>
 
 #include <iostream>
-#include <memory>
 
 int main()
 {

@@ -1,13 +1,12 @@
-
 #pragma once
 
-#include <malloy/http/request.hpp>
+#include <malloy/core/http/request.hpp>
 
 #define MALLOY_INTERNAL_TESTING    // Enable testing overloads
 
-
 namespace malloy::mock::http
 {
+
     class connection
     {
     public:
@@ -40,4 +39,5 @@ namespace malloy::mock::http
             }
         };
     };
+
 }    // namespace malloy::mock::http

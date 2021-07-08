@@ -1,6 +1,7 @@
 target_sources(
-    ${TARGET_OBJS}
+    ${TARGET}
+    PUBLIC
+        manager.hpp
     PRIVATE
         manager.cpp
-        manager.hpp
 )

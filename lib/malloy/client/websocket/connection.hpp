@@ -1,6 +1,6 @@
 #pragma once
 
-#include "malloy/websocket/connection.hpp"
+#include "../../core/websocket/connection.hpp"
 
 namespace malloy::client::websocket
 {

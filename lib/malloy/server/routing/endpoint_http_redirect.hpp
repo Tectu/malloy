@@ -1,8 +1,7 @@
 #pragma once
 
 #include "endpoint_http.hpp"
-
-#include "malloy/http/uri.hpp"
+#include "../../core/http/uri.hpp"
 
 namespace malloy::server
 {

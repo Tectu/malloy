@@ -1,1 +1,11 @@
-add_subdirectory(connection)
+target_sources(
+    ${TARGET}
+    PRIVATE
+		connection.hpp
+		connection_detector.cpp
+		connection_detector.hpp
+		connection_plain.hpp
+		connection_t.hpp
+		connection_tls.hpp
+		request_generator_t.hpp
+)

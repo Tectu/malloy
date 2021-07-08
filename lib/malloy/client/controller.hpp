@@ -1,16 +1,16 @@
 #pragma once
 
-#include "../controller.hpp"
-#include "../http/request.hpp"
-#include "../http/response.hpp"
-#include "malloy/http/type_traits.hpp"
-#include "malloy/error.hpp"
-#include "malloy/client/type_traits.hpp"
-#include "malloy/client/websocket/connection.hpp"
-#include "malloy/client/http/connection_plain.hpp"
+#include "http/connection_plain.hpp"
+#include "type_traits.hpp"
+#include "websocket/connection.hpp"
+#include "../core/controller.hpp"
+#include "../core/http/request.hpp"
+#include "../core/http/response.hpp"
+#include "../core/http/type_traits.hpp"
+#include "../core/error.hpp"
 
 #if MALLOY_FEATURE_TLS
-    #include "malloy/client/http/connection_tls.hpp"
+    #include "http/connection_tls.hpp"
 
     #include <boost/beast/ssl.hpp>
 #endif
@@ -69,7 +69,7 @@ namespace malloy::client
         };
 
         controller() = default;
-        ~controller() = default;
+        ~controller() override = default;
 
 #if MALLOY_FEATURE_TLS
         /**

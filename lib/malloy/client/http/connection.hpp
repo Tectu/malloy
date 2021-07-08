@@ -1,16 +1,17 @@
 #pragma once
 
-#include "../../http/request.hpp"
-#include "../../http/response.hpp"
-#include "malloy/http/type_traits.hpp"
-#include "malloy/client/type_traits.hpp"
-#include "malloy/type_traits.hpp"
-
-#include <optional>
+#include "../type_traits.hpp"
+#include "../../core/type_traits.hpp"
+#include "../../core/http/request.hpp"
+#include "../../core/http/response.hpp"
+#include "../../core/http/type_traits.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <spdlog/logger.h>
+
+#include <future>
+#include <optional>
 
 namespace malloy::client::http
 {

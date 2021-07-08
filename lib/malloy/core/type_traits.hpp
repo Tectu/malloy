@@ -1,9 +1,9 @@
 #pragma once
 
+#include "error.hpp"
+
 #include <boost/asio/buffer.hpp>
 #include <boost/beast/core/buffer_traits.hpp>
-
-#include "malloy/error.hpp"
 
 #include <concepts>
 #include <variant>

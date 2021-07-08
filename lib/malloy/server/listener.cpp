@@ -1,6 +1,5 @@
 #include "listener.hpp"
-
-#include "http/connection/connection_detector.hpp"
+#include "http/connection_detector.hpp"
 
 #include <boost/asio/strand.hpp>
 #include <spdlog/logger.h>

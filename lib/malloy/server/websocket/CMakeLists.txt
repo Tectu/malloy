@@ -1,1 +1,5 @@
-add_subdirectory(connection)
+target_sources(
+    ${TARGET}
+    PRIVATE
+        connection.hpp
+)

@@ -1,9 +1,9 @@
 #include "../../test.hpp"
 #include "../../tls_data.hpp"
 
+#include <malloy/core/utils.hpp>
 #include <malloy/client/controller.hpp>
 #include <malloy/server/controller.hpp>
-#include <malloy/utils.hpp>
 #include <malloy/server/routing/router.hpp>
 
 namespace mc = malloy::client;

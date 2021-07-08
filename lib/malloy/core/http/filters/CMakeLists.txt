@@ -1,5 +1,5 @@
 target_sources( 
-	${TARGET_OBJS}
+	${TARGET}
 	PRIVATE 
 		file.hpp
 )

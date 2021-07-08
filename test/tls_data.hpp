@@ -1,10 +1,10 @@
-
 #pragma once
 
 #include <string_view>
 
 namespace malloy::tests::embedded
 {
+
     constexpr std::string_view tls_key = R"(
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCzJMXcrqOzO0X+
@@ -35,6 +35,7 @@ MkNYnmsWLNe0itgE2Lm9DQi3kMUMpkChgwlykqUFo/SdSYznRSPhroSkMlqV+gvE
 Oh91aleKYzD08TH9OjvXtwg=
 -----END PRIVATE KEY-----
 )";
+
     constexpr std::string_view tls_cert = R"(
 -----BEGIN CERTIFICATE-----
 MIIDrzCCApegAwIBAgIUeN4fbT+4Oos9zMOKYPlodKOqI0YwDQYJKoZIhvcNAQEN
@@ -59,8 +60,5 @@ BH5DTaFpbfz7JO2OXSQjQvV34bNvxqQ+/0q7fFGCL2mQvSJGJb1jXIXrzj6aTEjP
 zSwSfga7moPxvg3jtF4MKBa5/8NaQNN1/WZoRBu7fIRs8cc=
 -----END CERTIFICATE-----
 )";
-    
 
 }
-
-

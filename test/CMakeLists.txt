@@ -4,9 +4,6 @@ add_executable(${TARGET})
 
 add_subdirectory(test_suites)
 
-
-malloy_setup_defines(${TARGET})
-
 target_include_directories(
     ${TARGET}
     PRIVATE
@@ -26,7 +23,8 @@ target_sources(
 target_link_libraries(
     ${TARGET}
     PRIVATE
-        malloy-objs
+        malloy-client
+        malloy-server
 )
 
 ###

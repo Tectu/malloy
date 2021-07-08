@@ -1,8 +1,8 @@
 #include "controller.hpp"
-#include "malloy/server/listener.hpp"
-#include "malloy/server/routing/router.hpp"
+#include "listener.hpp"
+#include "routing/router.hpp"
 #if MALLOY_FEATURE_TLS
-    #include "malloy/tls/manager.hpp"
+    #include "../core/tls/manager.hpp"
 #endif
 
 #include <spdlog/logger.h>

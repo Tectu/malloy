@@ -1,16 +1,15 @@
 #pragma once
 
 #include "endpoint.hpp"
-#include "../../http/generator.hpp"
-#include "../../http/request.hpp"
-#include "../../http/response.hpp"
-#include "../../http/types.hpp"
+#include "../http/connection_t.hpp"
+#include "../http/request_generator_t.hpp"
+#include "../../core/http/generator.hpp"
+#include "../../core/http/request.hpp"
+#include "../../core/http/response.hpp"
+#include "../../core/http/types.hpp"
 
-#include "malloy/server/http/connection/connection_t.hpp"
-#include "malloy/server/http/connection/request_generator_t.hpp"
-
-#include <optional>
 #include <functional>
+#include <optional>
 
 namespace malloy::server
 {

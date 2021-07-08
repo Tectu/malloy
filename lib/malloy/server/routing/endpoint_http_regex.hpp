@@ -2,9 +2,9 @@
 
 #include "endpoint_http.hpp"
 
-#include "malloy/http/response.hpp"
-#include "malloy/type_traits.hpp"
-#include "malloy/server/routing/type_traits.hpp"
+#include "type_traits.hpp"
+#include "../../core/http/response.hpp"
+#include "../../core/type_traits.hpp"
 
 #include <functional>
 #include <regex>

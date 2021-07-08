@@ -3,17 +3,17 @@
 #include "endpoint_http.hpp"
 #include "endpoint_http_regex.hpp"
 #include "endpoint_websocket.hpp"
-#include "malloy/http/generator.hpp"
-#include "malloy/http/http.hpp"
-#include "malloy/http/request.hpp"
-#include "malloy/http/response.hpp"
-#include "malloy/server/http/connection/connection.hpp"
-#include "malloy/server/http/connection/connection_plain.hpp"
-#include "malloy/server/http/connection/connection_t.hpp"
-#include "malloy/server/routing/type_traits.hpp"
-#include "malloy/type_traits.hpp"
+#include "type_traits.hpp"
+#include "../http/connection.hpp"
+#include "../http/connection_plain.hpp"
+#include "../http/connection_t.hpp"
+#include "../../core/type_traits.hpp"
+#include "../../core/http/generator.hpp"
+#include "../../core/http/http.hpp"
+#include "../../core/http/request.hpp"
+#include "../../core/http/response.hpp"
 #if MALLOY_FEATURE_TLS
-#include "malloy/server/http/connection/connection_tls.hpp"
+    #include "../http/connection_tls.hpp"
 #endif
 
 #include <boost/beast/core.hpp>
