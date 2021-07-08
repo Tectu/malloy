@@ -102,7 +102,7 @@ namespace malloy::websocket
 		void async_close(boost::beast::websocket::close_reason why, Callback&& done) {
             std::visit([why, done = std::forward<Callback>(done)](auto& s) mutable { 
                     s.async_close(why, std::forward<Callback>(done));
-            }, underlying_conn_);
+            }, m_underlying_conn);
 		}
 
 		void set_option(auto&& opt)
