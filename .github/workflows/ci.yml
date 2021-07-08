@@ -34,7 +34,7 @@ jobs:
               os: ubuntu-latest,
             },
             {
-              name: "Ubuntu LLVM TLS",
+              name: "Ubuntu Clang TLS",
               cxx: "clang++",
               cc: "clang",
               packages: "libssl-dev",
@@ -42,7 +42,7 @@ jobs:
               os: ubuntu-latest,
             },
             {
-              name: "Ubuntu LLVM",
+              name: "Ubuntu Clang",
               cxx: "clang++",
               cc: "clang",
               packages: "",
