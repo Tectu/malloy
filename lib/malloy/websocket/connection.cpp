@@ -1,7 +1,4 @@
-
-
 #include "connection.hpp"
-
 
 namespace malloy::websocket
 {

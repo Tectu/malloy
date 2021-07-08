@@ -4,11 +4,10 @@
 #include <string_view>
 #include <variant>
 
-#include "types.hpp"
 #include "response.hpp"
 #include "request.hpp"
-#include "malloy/http/type_traits.hpp"
-
+#include "type_traits.hpp"
+#include "types.hpp"
 
 namespace malloy::http
 {

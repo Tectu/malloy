@@ -3,6 +3,7 @@
 #include "malloy/http/request.hpp"
 #include "malloy/http/generator.hpp"
 #include "malloy/server/http/connection/connection_t.hpp"
+#include "malloy/server/websocket/connection/connection.hpp"
 
 #include <boost/beast/http/detail/type_traits.hpp>
 
@@ -196,6 +197,10 @@ namespace malloy::server::http
     protected:
         boost::beast::flat_buffer m_buffer;
 
+        void report_err(malloy::error_code ec, std::string_view context) {
+            m_logger->error("{}: {} (code: {})", context, ec.message(), ec.value());
+        }
+
     private:
         friend class request_generator;
 
@@ -251,12 +256,11 @@ namespace malloy::server::http
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
-                auto raw_stream = derived().release_stream();
                 auto ws_connection = server::websocket::connection::make(
                     m_logger->clone("websocket_connection"),
-                    malloy::websocket::stream{ boost::beast::websocket::stream<std::decay_t<decltype(raw_stream)>>{std::move(raw_stream)} }
-                );
+                    malloy::websocket::stream{derived().release_stream()});
                 m_router->websocket(*m_doc_root, gen, ws_connection);
+
 
             }
 

@@ -19,6 +19,7 @@ namespace malloy::http
         public boost::beast::http::request<Body>
     {
         using msg_t = boost::beast::http::request<Body>;
+
     public:
         request() = default;
 
@@ -30,14 +31,13 @@ namespace malloy::http
          * @param port The port at which the host serves requests.
          * @param target_ The target.
          */
-        request(http::method method_, std::string_view host,
-            const std::uint16_t port, std::string_view target_)
-            : m_port(port) {
+        request(http::method method_, std::string_view host, const std::uint16_t port, std::string_view target_)
+            : m_port(port)
+        {
             msg_t::version(11);
             msg_t::method(method_);
             msg_t::target(target_);
             msg_t::set(http::field::host, host);
-
 
             // URI
             class uri u { std::string{ target_.data(), target_.size() } };
@@ -49,35 +49,34 @@ namespace malloy::http
          *
          * @param raw The underlying raw HTTP message
          */
-        request(msg_t&& raw) {
-          using namespace boost::beast::http;
+        request(msg_t&& raw)
+        {
+            using namespace boost::beast::http;
 
-          using base_type = msg_t;
+            // Underlying
+            msg_t::operator=(std::move(raw));
 
-          // Underlying
-          base_type::operator=(std::move(raw));
-
-          // URI
-          class uri u {
+            // URI
+            class uri u {
             std::string { msg_t::target().data(), msg_t::target().size() }
-          };
-          m_uri = std::move(u);
+            };
+            m_uri = std::move(u);
 
-          // Cookies
-          {
-            const auto &[begin, end] = msg_t::base().equal_range(field::cookie);
-            for (auto it = begin; it != end; it++) {
-              const auto &str = it->value();
+            // Cookies
+            {
+                const auto &[begin, end] = msg_t::base().equal_range(field::cookie);
+                for (auto it = begin; it != end; it++) {
+                    const auto &str = it->value();
 
-              const auto &sep_pos = it->value().find('=');
-              if (sep_pos == std::string::npos)
-                continue;
+                    const auto &sep_pos = it->value().find('=');
+                    if (sep_pos == std::string::npos)
+                        continue;
 
-              std::string key{str.substr(0, sep_pos)};
-              std::string value{str.substr(sep_pos + 1)};
-              m_cookies.insert_or_assign(std::move(key), std::move(value));
+                    std::string key{str.substr(0, sep_pos)};
+                    std::string value{str.substr(sep_pos + 1)};
+                    m_cookies.insert_or_assign(std::move(key), std::move(value));
+                }
             }
-          }
         }
 
         /**
@@ -162,13 +161,14 @@ namespace malloy::http
          * Gets the value of a cookie.
          */
         [[nodiscard]] std::string_view
-        cookie(const std::string_view &name) const {
+        cookie(const std::string_view &name) const
+        {
           const auto &it = std::find_if(
               std::cbegin(m_cookies), std::cend(m_cookies),
               [&name](const auto &pair) { return pair.first == name; });
 
           if (it == std::cend(m_cookies))
-            return {};
+            return { };
 
           return it->second;
         }

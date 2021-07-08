@@ -7,6 +7,17 @@
 
 using namespace malloy::client;
 
+namespace fs = std::filesystem;
+auto controller::run() -> bool
+{
+    if (!start()) {
+        return false;
+    }
+    remove_workguard(); 
+    io_ctx().run();
+    return true;
+}
+
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls()
     {
@@ -16,5 +27,21 @@ using namespace malloy::client;
         boost::certify::enable_native_https_server_verification(*m_tls_ctx);
 
         return true;
+    }
+
+    void controller::add_ca_file(const std::filesystem::path& file)
+    {
+        if (!fs::exists(file))
+            throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
+
+        check_tls();
+        
+        m_tls_ctx->load_verify_file(file.string());
+    }
+
+    void controller::add_ca(const std::string& contents)
+    {
+        check_tls();
+        m_tls_ctx->add_certificate_authority(malloy::buffer(contents));
     }
 #endif // MALLOY_FEATURE_TLS

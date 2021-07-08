@@ -9,4 +9,5 @@ target_sources(
         endpoint_websocket.hpp
         router.cpp
         router.hpp
+        type_traits.hpp
 )
