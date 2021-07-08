@@ -164,14 +164,20 @@ namespace malloy::websocket
          * @brief Stop/close the connection.
          * @note Attempting to send or receive after calling this will result in
          * error(s)
+         * @param why Reason why the connection is being closed
          *
          */
-        void stop()
+        void stop(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
             m_state = state::closing;
 
-            m_ws.close();
-            on_close();
+            m_ws.async_close(why, [me = this->shared_from_this()](auto ec){
+                if (ec) {
+                    me->m_logger->error("couldn't close websocket: '{}'", ec.message()); // TODO: See #40
+                    return;
+                }
+                me->on_close();
+            });
         }
 
         /**
