@@ -1,11 +1,9 @@
 #include "../../example_logger.hpp"
 #include "../../ws_handlers.hpp"
 
-            
 #include <malloy/websocket/connection.hpp>
 #include <malloy/server/controller.hpp>
 #include <malloy/server/routing/router.hpp>
-
 #include <spdlog/fmt/fmt.h>
 
 #include <iostream>
@@ -30,6 +28,7 @@ int main()
         std::cerr << "could not start controller." << std::endl;
         return EXIT_FAILURE;
     }
+
 #if MALLOY_FEATURE_TLS
     // Setup TLS (SSL)
     const auto& cert_path = doc_root / "malloy.cert";
@@ -56,7 +55,6 @@ int main()
         // Add a websocket endpoint
         router->add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
             std::make_shared<malloy::examples::ws::server_timer>(writer)->run(req);
-
         });
     }
 

@@ -28,6 +28,11 @@ namespace malloy::http
          */
         response() = default;
 
+        response(msg_t&& msg)
+        {
+            msg_t::operator=(std::move(msg));
+        }
+
         /**
          * Constructor.
          *

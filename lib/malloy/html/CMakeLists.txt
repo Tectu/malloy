@@ -3,4 +3,5 @@ target_sources(
     PRIVATE
         form.cpp
         form.hpp
+        html.hpp
 )

@@ -37,7 +37,6 @@ namespace malloy::concepts
     };
 
 }    // namespace malloy::concepts
-
 /** 
  * @page general_concepts Core Concepts
  * @section const_buffer_sequence 

@@ -12,6 +12,7 @@
 #include "malloy/utils.hpp"
 #include "malloy/websocket/stream.hpp"
 #include "malloy/websocket/types.hpp"
+#include "malloy/error.hpp"
 
 #include <concepts>
 #include <functional>
@@ -59,6 +60,17 @@ namespace malloy::websocket
          * The agent string.
          */
         constexpr static std::string_view agent_string = detail::ws_agent_string<isClient>();
+
+        /**
+         * See stream::set_binary(bool)
+         */
+        void set_binary(const bool enabled) { m_ws.set_binary(enabled); }
+
+        /**
+         * See stream::binary()
+         */
+        [[nodiscard]]
+        bool binary() { return m_ws.binary(); }
 
         /**
          * @brief Construct a new connection object

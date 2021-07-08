@@ -55,6 +55,7 @@ target_sources(
         controller.hpp
         malloy.hpp
         utils.hpp
+        type_traits.hpp
         error.hpp
  )
 

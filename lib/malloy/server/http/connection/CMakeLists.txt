@@ -6,4 +6,5 @@ target_sources(
 		connection_detector.hpp
 		connection_plain.hpp
 		connection_tls.hpp
+		request_generator_t.hpp
 )
