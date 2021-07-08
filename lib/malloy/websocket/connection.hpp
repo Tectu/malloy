@@ -11,8 +11,6 @@
 #include "malloy/type_traits.hpp"
 #include "malloy/utils.hpp"
 #include "malloy/websocket/stream.hpp"
-#include "malloy/websocket/types.hpp"
-#include "malloy/error.hpp"
 
 #include <concepts>
 #include <functional>
@@ -69,8 +67,7 @@ namespace malloy::websocket
         /**
          * See stream::binary()
          */
-        [[nodiscard]]
-        bool binary() { return m_ws.binary(); }
+        [[nodiscard]] bool binary() { return m_ws.binary(); }
 
         /**
          * @brief Construct a new connection object
