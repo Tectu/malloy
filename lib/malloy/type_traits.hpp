@@ -1,7 +1,7 @@
 #pragma once
 
-#include <boost/beast/core/buffer_traits.hpp>
 #include <boost/asio/buffer.hpp>
+#include <boost/beast/core/buffer_traits.hpp>
 
 #include "malloy/error.hpp"
 
@@ -10,6 +10,13 @@
 
 namespace malloy::concepts
 {
+    namespace detail
+    {
+        struct is_variant_helper {
+            template<typename... Ts>
+            void operator()(const std::variant<Ts...>&) const {};
+        };
+    }    // namespace detail
 
     template<typename B>
     concept const_buffer_sequence = boost::asio::is_const_buffer_sequence<B>::value;
@@ -26,17 +33,10 @@ namespace malloy::concepts
     template<typename V>
     concept is_variant = requires(V v)
     {
-        []<typename... Args>(const std::variant<Args...>& vs){}(v); // https://stackoverflow.com/q/68115853/12448530
+        detail::is_variant_helper{}(v);
     };
 
-    template<typename V, template<typename> typename T>
-    concept is_variant_of = requires(const V& v)
-    {
-        []<typename... Args>(const std::variant<T<Args>...>&) {}(v);
-    };
-
-}
-
+}    // namespace malloy::concepts
 /** 
  * @page general_concepts Core Concepts
  * @section const_buffer_sequence 
@@ -57,5 +57,3 @@ namespace malloy::concepts
  *
  *
  */
-
-

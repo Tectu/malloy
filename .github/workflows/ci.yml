@@ -1,71 +1,108 @@
 name: CI
 
-on: 
+on:
   push:
-  pull_request: 
+  pull_request:
     branches: [main]
 
-env: 
-  BUILD_TYPE: Release 
-  INSTALL_LOCATION: .local 
+env:
+  BUILD_TYPE: Release
+  INSTALL_LOCATION: .local
 
 jobs:
   build:
-    strategy: 
+    strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        experimental: [false]
         boost_version: [1.74.0, 1.75.0, 1.76.0]
-        malloy_tls: [ON, OFF]
-        msvc: [false, true]
-        exclude:
-          - os: ubuntu-latest 
-            msvc: false
-          - os: windows-latest  
-            msvc: false # choco package for mingw 10.2.0 does not support threads, see: #21
+        toolchain:
+          [
+            {
+              name: "Ubuntu GCC TLS",
+              cxx: "g++-11",
+              cc: "gcc-11",
+              packages: "libssl-dev gcc-11 g++-11",
+              tls: ON,
+              os: ubuntu-latest,
+            },
+            {
+              name: "Ubuntu GCC",
+              cxx: "g++-11",
+              cc: "gcc-11",
+              packages: "gcc-11 g++-11",
+              tls: OFF,
+              os: ubuntu-latest,
+            },
+            {
+              name: "Ubuntu Clang TLS",
+              cxx: "clang++",
+              cc: "clang",
+              packages: "libssl-dev",
+              tls: ON,
+              os: ubuntu-latest,
+            },
+            {
+              name: "Ubuntu Clang",
+              cxx: "clang++",
+              cc: "clang",
+              packages: "",
+              tls: OFF,
+              os: ubuntu-latest,
+            },
+            {
+              name: "VS2019",
+              cxx: "cl.exe",
+              cc: "cl.exe",
+              tls: OFF,
+              packages: "openssl", # We have to install something
+              os: windows-latest,
+            },
+            {
+              name: "VS2019 TLS",
+              cxx: "cl.exe",
+              cc: "cl.exe",
+              tls: ON,
+              packages: "openssl",
+              os: windows-latest,
+            },
+          ]
 
-    continue-on-error: ${{ matrix.experimental }}
-    runs-on: ${{ matrix.os }}
+    continue-on-error: false
+    runs-on: ${{ matrix.toolchain.os }}
     env:
       BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
+      CC: ${{ matrix.toolchain.cc }}
+      CXX: ${{ matrix.toolchain.cxx }}
 
-    name: '${{ matrix.os }}: boost ${{ matrix.boost_version }} tls: ${{ matrix.malloy_tls }}'
+    name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: cache boost
-        uses: actions/cache@v2 
+        uses: actions/cache@v2
         id: cache-boost
-        with: 
+        with:
           path: ${{ env.BOOST_ROOT }}
           key: boost-${{ matrix.boost_version }}
-      - name: Install Ninja 
+      - name: Install Ninja
         uses: seanmiddleditch/gha-setup-ninja@master
       - name: Setup boost env
         run: |
           BOOST_URL="https://boostorg.jfrog.io/artifactory/main/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
           echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
         shell: bash
-      - name: install gcc11
-        if: runner.os == 'Linux'
-        run: | 
-          sudo apt install gcc-11 g++-11 -y
-          echo "CC=gcc-11" >> $GITHUB_ENV 
-          echo "CXX=g++-11" >> $GITHUB_ENV 
-
-      - name: Install openssl (via choco)
+      - name: Install packages (via choco)
         if: runner.os == 'Windows'
-        run: choco install openssl 
+        run: choco upgrade ${{ matrix.toolchain.packages }}
 
-      - name: Install openssl (via apt) 
+      - name: Install packages (via apt)
         if: runner.os == 'Linux'
-        run: sudo apt install libssl-dev -y 
+        run: sudo apt install ${{ matrix.toolchain.packages }} -y
 
-      - name: Install openssl (via homebrew)
+      - name: Install packages (via homebrew)
         if: runner.os == 'macOS'
-        run: brew install openssl
+        run: brew install ${{ matrix.toolchain.packages }}
 
       - name: Install Boost
         if: steps.cache-boost.outputs.cache-hit != 'true'
@@ -81,22 +118,16 @@ jobs:
           cd $BOOST_ROOT && cp -r boost_*/* .
           rm -rf boost_*/* download.tar.bz2 download.tar
         shell: bash
-      - name: Install latest mingw
-        if: runner.os == 'Windows' && !matrix.msvc
-        run: choco upgrade mingw 
-      - name: Install latest MSVC 
-        if: runner.os == 'Windows' && matrix.msvc
+
+      - name: Install msvc
+        if: ${{ matrix.toolchain.cxx == 'cl.exe' }} # This is a bit of a hack
         uses: ilammy/msvc-dev-cmd@v1
-      
-      - name: Configure 
-        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }}
 
-      - name: Build 
-        run: cmake --build build 
+      - name: Configure
+        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }}
 
-      - name: Run tests 
+      - name: Build
+        run: cmake --build build
+
+      - name: Run tests
         run: ./build/test/malloy-tests
-
-
-    
-

@@ -4,11 +4,25 @@
 #include <concepts>
 #include <variant>
 
+#include "malloy/http/type_traits.hpp"
 #include "malloy/type_traits.hpp"
 
 namespace malloy::client::concepts {
     namespace detail
     {
+        template<typename F>
+        struct response_filter_body_helper {
+            template<malloy::http::concepts::body T>
+            void operator()(T&& v)
+            {
+F f2;
+                typename F::header_type h2;
+                typename std::decay_t<T>::value_type r;
+                f2.setup_body(h2, r);
+            }
+        };
+
+
         /**
          * @class http_cb_helper
          * @brief Helper for http_callback concept
@@ -35,17 +49,14 @@ namespace malloy::client::concepts {
     }
 
     template<typename F>
-    concept response_filter = std::move_constructible<F> && requires(const F& f, const typename F::header_type& h) {
-        { f.body_for(h) } -> malloy::concepts::is_variant;
+    concept response_filter = std::move_constructible<F> && requires(const F& f, const typename F::header_type& h)
+    {
         {
-            std::visit([](auto&& v) {
-                F f2;
-                typename F::header_type h2;
-                typename std::decay_t<decltype(v)>::value_type r;
-                f2.setup_body(h2, r);
-                }, f.body_for(h)) 
-        };
-    }; 
+            f.body_for(h)
+            } -> malloy::concepts::is_variant;
+        {
+            std::visit(detail::response_filter_body_helper<F>{}, f.body_for(h))};
+    };
 
     template<typename F, typename Filter>
     concept http_callback = response_filter<Filter>&& std::move_constructible<F>&& requires(F cb, const Filter& f, const typename Filter::header_type& h){

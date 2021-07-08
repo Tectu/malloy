@@ -20,11 +20,9 @@ bool router::add_http_endpoint(std::shared_ptr<endpoint_http>&& ep)
 {
     try {
         m_endpoints_http.emplace_back(std::move(ep));
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add HTTP endpoint: {}", e.what());
-    }
-    catch (...) {
+    } catch (...) {
         return log_or_throw(std::runtime_error("unknown exception"), spdlog::level::critical, "could not add HTTP endpoint. unknown exception.");
     }
 
@@ -35,11 +33,9 @@ bool router::add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep)
 {
     try {
         m_endpoints_websocket.emplace_back(std::move(ep));
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add WebSocket endpoint: {}", e.what());
-    }
-    catch (...) {
+    } catch (...) {
         return log_or_throw(std::runtime_error("unknown exception"), spdlog::level::critical, "could not add WebSocket endpoint. unknown exception.");
     }
 
@@ -73,14 +69,12 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
     // Add router
     try {
         m_sub_routers.try_emplace(std::move(resource), std::move(sub_router));
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         return log_or_throw(e, spdlog::level::critical, "could not add router: {}", e.what());
     }
 
     return true;
 }
-
 
 
 bool router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
@@ -94,8 +88,8 @@ bool router::add_file_serving(std::string resource, std::filesystem::path storag
 
     ep->resource_base = resource;
     ep->base_path = std::move(storage_base_path);
-    ep->writer = [](const auto& req, auto&& resp, const auto& conn) { 
-        std::visit([&](auto&& resp) { detail::send_response(req, std::move(resp), conn);  }, std::move(resp));
+    ep->writer = [](const auto& req, auto&& resp, const auto& conn) {
+        std::visit([&](auto&& resp) { detail::send_response(req, std::move(resp), conn); }, std::move(resp));
     };
 
     // Add
@@ -154,14 +148,14 @@ router::response_type router::generate_preflight_response(const request_header& 
 
     // Create a string representing all supported methods
     std::string methods_string;
-    for (const auto &str : method_strings) {
+    for (const auto& str : method_strings) {
         methods_string += str;
         if (&str not_eq
             &method_strings.back())
             methods_string += ", ";
     }
 
-    malloy::http::response<> resp{ malloy::http::status::ok };
+    malloy::http::response<> resp{malloy::http::status::ok};
     resp.set(boost::beast::http::field::content_type, "text/html");
     resp.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
     resp.base().set("Access-Control-Allow-Methods", methods_string);
@@ -170,4 +164,3 @@ router::response_type router::generate_preflight_response(const request_header& 
 
     return resp;
 }
-
