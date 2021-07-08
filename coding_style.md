@@ -9,3 +9,4 @@ Unless noted otherwise, adhere to STL coding style.
 - The opening curly braces of function bodies and class/enum/structs/namespaces are on a separate line.
 - `if`/`else` statement bodies with just one instruction shall omit the curly braces.
 - Setters are prefixed with `set_`.
+- Class/struct member fields are prefixed with `m_` and use `snake_case`.
