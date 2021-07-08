@@ -173,7 +173,7 @@ namespace malloy::websocket
 
             m_ws.async_close(why, [me = this->shared_from_this()](auto ec){
                 if (ec) {
-                    me->m_logger->error("couldn't close websocket: '{}'", ec.message()); // TODO: See #40
+                    me->m_logger->error("could not close websocket: '{}'", ec.message()); // TODO: See #40
                     return;
                 }
                 me->on_close();
