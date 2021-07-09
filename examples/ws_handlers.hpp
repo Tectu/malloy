@@ -135,7 +135,7 @@ namespace malloy::examples::ws
             if (ec)
                 spdlog::error("Uh oh, I couldn't write: '{}'", ec.message());
             if (m_wrote_secs == 9)
-                m_conn->stop(); // Kill the connection, we've finished our job
+                m_conn->disconnect(); // Kill the connection, we've finished our job
         }
 
         void do_write()

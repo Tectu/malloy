@@ -159,15 +159,12 @@ namespace malloy::websocket
             });
         }
 
-        // ToDo: Test this
         /**
-         * @brief Stop/close the connection.
-         * @note Attempting to send or receive after calling this will result in
-         * error(s)
-         * @param why Reason why the connection is being closed
-         *
+         * @brief Disconnect/stop/close the connection.
+         * @note Attempting to send or receive after calling this will result in error(s).
+         * @param why Reason why the connection is being closed.
          */
-        void stop(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
+        void disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
             // Check state
             if (m_state == state::closed)
