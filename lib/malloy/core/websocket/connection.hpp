@@ -169,8 +169,14 @@ namespace malloy::websocket
          */
         void stop(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
+            // Check state
+            if (m_state == state::closed)
+                return;
+
+            // Update state
             m_state = state::closing;
 
+            // Issue async close
             m_ws.async_close(why, [me = this->shared_from_this()](auto ec){
                 if (ec) {
                     me->m_logger->error("could not close websocket: '{}'", ec.message()); // TODO: See #40
@@ -199,7 +205,7 @@ namespace malloy::websocket
                 // This indicates that the connection was closed
                 if (ec == boost::beast::websocket::error::closed) {
                     m_logger->info("on_read(): connection was closed.");
-                    stop();
+                    m_state = state::closed;
                     return;
                 }
                 std::invoke(std::forward<decltype(done)>(done), ec, size);
