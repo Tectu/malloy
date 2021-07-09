@@ -18,7 +18,7 @@ bool form::parse(const malloy::http::request<>& req)
         pair.reserve(2);
         boost::split(pair, pair_str, boost::is_any_of("="));
 
-        if (pair.size() not_eq 2)
+        if (pair.size() != 2)
             continue;
 
         m_values.try_emplace(std::move(pair[0]), std::move(pair[1]));

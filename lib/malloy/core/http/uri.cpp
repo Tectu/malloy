@@ -15,11 +15,11 @@ bool uri::is_legal() const
             return false;
 
         // Must start with '/'
-        if (m_resource_string[0] not_eq '/')
+        if (m_resource_string[0] != '/')
             return false;
 
         // Must not contain ".."
-        if (m_resource_string.find("..") not_eq std::string_view::npos)
+        if (m_resource_string.find("..") != std::string_view::npos)
             return false;
     }
 

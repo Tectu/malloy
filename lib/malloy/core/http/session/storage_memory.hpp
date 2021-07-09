@@ -94,7 +94,7 @@ namespace malloy::http::sessions
             // ToDo: This can be upgraded to use std::erase_if() once C++20 support is good enough.
 
             std::size_t count = 0;
-            for (auto it = std::begin(m_sessions); it not_eq std::end(m_sessions);) {
+            for (auto it = std::begin(m_sessions); it != std::end(m_sessions);) {
                 if (it->second->access_time_older_than(max_lifetime)) {
                     it = m_sessions.erase(it);
                     ++count;

@@ -171,7 +171,7 @@ router::response_type router::generate_preflight_response(const request_header& 
     std::string methods_string;
     for (const auto& str : method_strings) {
         methods_string += str;
-        if (&str not_eq
+        if (&str !=
             &method_strings.back())
             methods_string += ", ";
     }
