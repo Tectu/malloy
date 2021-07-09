@@ -31,7 +31,6 @@ namespace malloy::server
         using req_t = http::request_generator_t;
         using url_t = malloy::http::uri;
 
-
         malloy::http::method method = malloy::http::method::unknown;
 
         endpoint_http() = default;
@@ -48,11 +47,12 @@ namespace malloy::server
          * The default implementation only checks for the matching method.
          *
          * @param req The request to check.
+         * @param location The location to check for matching.
          * @return Whether this endpoint matches the request.
          */
         [[nodiscard]]
         virtual
-        bool matches(const req_header_t& req, const url_t&) const
+        bool matches(const req_header_t& req, [[maybe_unused]] const url_t& location) const
         {
             return method == req.method();
         }

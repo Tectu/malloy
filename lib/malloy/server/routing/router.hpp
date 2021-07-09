@@ -7,6 +7,7 @@
 #include "../http/connection.hpp"
 #include "../http/connection_plain.hpp"
 #include "../http/connection_t.hpp"
+#include "../http/preflight_config.hpp"
 #include "../../core/type_traits.hpp"
 #include "../../core/http/generator.hpp"
 #include "../../core/http/http.hpp"
@@ -166,18 +167,6 @@ namespace malloy::server
         void set_logger(std::shared_ptr<spdlog::logger> logger);
 
         /**
-         * Controls whether the router should automatically generate preflight responses.
-         *
-         * @note Currently only preflights for routes are generated.
-         *
-         * @param enabled Whether to enable automatic preflight response generation.
-         */
-        void set_generate_preflights(const bool enabled) noexcept
-        {
-            m_generate_preflights = enabled;
-        }
-
-        /**
          * Add a sub-router for a specific resource.
          *
          * @param resource The resource base path for the sub-router.
@@ -228,6 +217,8 @@ namespace malloy::server
         {
             return add(method, target, std::forward<Func>(handler), detail::default_route_filter{});
         }
+
+        bool add_preflight(std::string_view target, http::preflight_config cfg);
 
         /**
          * Add an HTTP file-serving location.
@@ -337,25 +328,9 @@ namespace malloy::server
                 if (!ep->matches(header, location))
                     continue;
 
-                // Generate preflight response (if supposed to)
-                if (m_generate_preflights && (header.method() == malloy::http::method::options)) {
-                    // Log
-                    if (m_logger) {
-                        m_logger->debug("automatically constructing preflight response.");
-                    }
-                    // Generate
-                    auto resp = generate_preflight_response(header);
-
-                    // Send the response
-                    detail::send_response(header, std::move(resp), connection);
-                    // We're done handling this request
-                    return;
-                }
-
                 // Generate the response for the request
                 auto resp = ep->handle(req, connection);
                 if (resp) {
-
                     // Send the response
                     detail::send_response(req->header(), std::move(*resp), connection);
                 }
@@ -412,7 +387,6 @@ namespace malloy::server
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
         std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
-        bool m_generate_preflights = false;
 
         template<
             bool UsesCaptures,
@@ -487,14 +461,6 @@ namespace malloy::server
          * @return Whether adding the endpoint was successful.
          */
         bool add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep);
-
-        /**
-         * Generates a preflight response for a specified request.
-         *
-         * @param req The request header.
-         * @return The corresponding response.
-         */
-        response_type generate_preflight_response(const request_header& req) const;
 
         /**
          * Adds a message to the log or throws an exception if no logger is available.

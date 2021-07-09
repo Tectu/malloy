@@ -2,6 +2,7 @@
 #include "endpoint_http_files.hpp"
 #include "endpoint_http_redirect.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 using namespace malloy::server;
@@ -76,6 +77,48 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
     return true;
 }
 
+bool router::add_preflight(const std::string_view target, http::preflight_config cfg)
+{
+    return add(
+        malloy::http::method::options,
+        target,
+        [cfg = std::move(cfg), this](const auto& req) {
+            // Look for matching endpoints
+            std::vector<std::shared_ptr<const endpoint_http>> endpoints;
+            std::copy_if(
+                std::cbegin(m_endpoints_http),
+                std::cend(m_endpoints_http),
+                std::back_inserter(endpoints),
+                [req](const auto& ep){
+                    // Only support this for endpoint_http_regex (for now?)
+                    const auto& matcher = std::dynamic_pointer_cast<resource_matcher>(ep);
+                    if (!matcher)
+                        return false;
+
+                    return matcher->matches_resource(req);
+                }
+            );
+
+            // Assemble list of methods
+            std::vector<malloy::http::method> methods;
+            methods.resize(endpoints.size());
+            std::transform(
+                std::cbegin(endpoints),
+                std::cend(endpoints),
+                std::begin(methods),
+                [](const auto& ep) {
+                    return ep->method;
+                }
+            );
+
+            // Generate response
+            malloy::http::response resp{ malloy::http::status::ok };
+            cfg.setup_response(resp, methods);
+
+            return resp;
+        }
+    );
+}
 
 bool router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
 {
@@ -147,41 +190,4 @@ bool router::add_websocket(std::string&& resource, typename websocket::connectio
 
     // Add
     return add_websocket_endpoint(std::move(ep));
-}
-
-router::response_type router::generate_preflight_response(const request_header& req) const
-{
-    // Create list of methods
-    std::vector<std::string> method_strings;
-    for (const auto& route : m_endpoints_http) {
-        // Only support this for regex routes (for now?)
-        const auto& basic_route = std::dynamic_pointer_cast<resource_matcher>(route);
-        if (!basic_route)
-            continue;
-
-        // Check match
-        if (!basic_route->matches_resource(req))
-            continue;
-
-        // Add method string
-        method_strings.emplace_back(boost::beast::http::to_string(route->method));
-    }
-
-    // Create a string representing all supported methods
-    std::string methods_string;
-    for (const auto& str : method_strings) {
-        methods_string += str;
-        if (&str !=
-            &method_strings.back())
-            methods_string += ", ";
-    }
-
-    malloy::http::response<> resp{malloy::http::status::ok};
-    resp.set(boost::beast::http::field::content_type, "text/html");
-    resp.base().set("Access-Control-Allow-Origin", "http://127.0.0.1:8080");
-    resp.base().set("Access-Control-Allow-Methods", methods_string);
-    resp.base().set("Access-Control-Allow-Headers", "Content-Type");
-    resp.base().set("Access-Control-Max-Age", "60");
-
-    return resp;
 }

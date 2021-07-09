@@ -7,5 +7,7 @@ target_sources(
 		connection_plain.hpp
 		connection_t.hpp
 		connection_tls.hpp
+		preflight_config.cpp
+		preflight_config.hpp
 		request_generator_t.hpp
 )
