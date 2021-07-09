@@ -94,8 +94,6 @@ namespace malloy::server
      */
     class router
     {
-        using str_body = boost::beast::http::string_body;
-
     public:
         template<typename Derived>
         using req_generator = std::shared_ptr<typename http::connection<Derived>::request_generator>;
