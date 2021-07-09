@@ -85,8 +85,6 @@ namespace malloy::server
                        connection);
         }
     }    // namespace detail
-    // TODO: This might not be thread-safe the way we pass an instance to the listener and then from
-    //       there to each session. Investigate and fix this!
 
     /**
      * An HTTP request router.
