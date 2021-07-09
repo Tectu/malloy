@@ -275,7 +275,7 @@ namespace malloy::server
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
-                if (location.resource_starts_with(resource_base))
+                if (!location.resource_starts_with(resource_base))
                     continue;
 
                 // Log
