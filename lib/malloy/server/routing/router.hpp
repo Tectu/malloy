@@ -285,6 +285,7 @@ namespace malloy::server
 
                 // Chop request resource path
                 location.chop_resource(resource_base);
+                req->header().target(location.raw());
 
                 // Let the sub-router handle things from here...
                 router->template handle_request<isWebsocket, Derived>(doc_root, std::move(req), connection, location);
