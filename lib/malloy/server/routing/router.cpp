@@ -127,7 +127,7 @@ bool router::add_redirect(const malloy::http::status status, std::string&& resou
     return add_http_endpoint(std::move(ep));
 }
 
-bool router::add_websocket(const std::string& resource, typename websocket::connection::handler_t&& handler)
+bool router::add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler)
 {
     // Log
     if (m_logger)

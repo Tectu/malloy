@@ -255,7 +255,7 @@ namespace malloy::server
          * @param handler The handler for incoming websocket requests.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_websocket(const std::string& resource, typename websocket::connection::handler_t&& handler);
+        bool add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
 
         /**
          * Handle a request.
@@ -378,7 +378,7 @@ namespace malloy::server
         template<typename Derived>
         void handle_ws_request(
             const req_generator<Derived>& gen,
-            std::shared_ptr<websocket::connection> connection,
+            const std::shared_ptr<websocket::connection>& connection,
             const malloy::http::uri& location)
         {
             m_logger->debug("handling WS request: {} {}",
