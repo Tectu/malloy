@@ -53,10 +53,10 @@ namespace malloy::server
          * filters to be opt-in rather than a required piece of boilerplate
          * @class default_route_handler
          */
-        struct default_route_filter {
+        struct default_route_filter
+        {
             using request_type = malloy::http::request<boost::beast::http::string_body>;
             using header_type = boost::beast::http::request_header<>;
-
 
             void setup_body(const header_type&, typename request_type::body_type::value_type&) const {}
         };
@@ -81,8 +81,9 @@ namespace malloy::server
 
             std::visit([resp = std::move(resp)](auto& c) mutable {
                 c->do_write(std::move(resp));
-            },
-                       connection);
+                },
+                connection
+            );
         }
     }    // namespace detail
 
