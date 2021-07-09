@@ -174,7 +174,7 @@ namespace malloy::server
          *
          * @param enabled Whether to enable automatic preflight response generation.
          */
-        void set_generate_preflights(const bool enabled)
+        void set_generate_preflights(const bool enabled) noexcept
         {
             m_generate_preflights = enabled;
         }
