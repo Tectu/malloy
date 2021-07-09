@@ -257,27 +257,7 @@ namespace malloy::server
          * @param handler The handler for incoming websocket requests.
          * @return Whether adding the endpoint was successful.
          */
-        auto add_websocket(const std::string& resource, typename websocket::connection::handler_t&& handler)
-        {
-            // Log
-            if (m_logger)
-                m_logger->debug("adding websocket endpoint at {}", resource);
-
-            // Check handler
-            if (!handler) {
-                if (m_logger)
-                    m_logger->warn("route has invalid handler. ignoring.");
-                return false;
-            }
-
-            // Create endpoint
-            auto ep = std::make_shared<endpoint_websocket>();
-            ep->resource = std::move(resource);
-            ep->handler = std::move(handler);
-
-            // Add
-            return add_websocket_endpoint(std::move(ep));
-        }
+        bool add_websocket(const std::string& resource, typename websocket::connection::handler_t&& handler);
 
         /**
          * Handle a request.
