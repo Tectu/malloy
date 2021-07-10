@@ -53,14 +53,27 @@ int main()
             return resp;
         });
 
-        // A regex route with capturing
+        // A regex route with one capturing group
         router->add(method::get, "^/regex/(\\w+)$", [](const auto& req, const std::vector<std::string>& captures) {
             std::string body;
             body += "^/regex/(\\w)$\n";
             body += "\n";
             body += "  captures:\n";
             for (std::size_t i = 0; i < captures.size(); i++)
-                body += std::to_string(i) + ": " + captures[i] + "\n";
+                body += "    " + std::to_string(i) + ": " + captures[i] + "\n";
+
+            response resp{ status::ok };
+            resp.body() = body;
+
+            return resp;
+        });
+
+        // A regex route with two capturing groups
+        router->add(method::get, R"(^/regex\?one=(\w+)&two=(\w+)$)", [](const auto& req, const std::vector<std::string>& captures) {
+            std::string body;
+            body += "captures:\n";
+            for (std::size_t i = 0; i < captures.size(); i++)
+                body += "  " + std::to_string(i) + ": " + captures[i] + "\n";
 
             response resp{ status::ok };
             resp.body() = body;

@@ -280,11 +280,6 @@ namespace malloy::server
                 if (!res_str.starts_with(resource_base))
                     continue;
 
-                // Log
-                if (m_logger) {
-                    m_logger->debug("invoking sub-router on {}", resource_base);
-                }
-
                 // Chop request resource path
                 malloy::http::chop_resource(req->header(), resource_base);
 
