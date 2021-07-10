@@ -8,6 +8,7 @@
 #include "request.hpp"
 #include "type_traits.hpp"
 #include "types.hpp"
+#include "malloy/core/http/utils.hpp"
 
 namespace malloy::http
 {
@@ -98,7 +99,7 @@ namespace malloy::http
         template<malloy::http::concepts::body Body>
         [[nodiscard]]
         static auto file(const request<Body>& req, const std::filesystem::path& storage_base_path) -> file_response {
-	        return file(storage_base_path, req.uri().resource_string());
+	        return file(storage_base_path, malloy::http::resource_string(req));
         }
 
         /**

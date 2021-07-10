@@ -2,6 +2,7 @@
 
 #include "endpoint_http.hpp"
 #include "endpoint_http_regex.hpp"
+#include "malloy/core/http/utils.hpp"
 #include "endpoint_websocket.hpp"
 #include "type_traits.hpp"
 #include "../http/connection.hpp"
@@ -275,7 +276,7 @@ namespace malloy::server
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
-                const auto res_str = malloy::http::resource_string(req->header().target());
+                const auto res_str = malloy::http::resource_string(req->header());
                 if (!res_str.starts_with(resource_base))
                     continue;
 
@@ -285,10 +286,10 @@ namespace malloy::server
                 }
 
                 // Chop request resource path
-                req->header().target(req->header().substr(resource_base.size()));
+                malloy::http::chop_resource(req->header(), resource_base);
 
                 // Let the sub-router handle things from here...
-                router->template handle_request<isWebsocket, Derived>(doc_root, std::move(req), connection, location);
+                router->template handle_request<isWebsocket, Derived>(doc_root, std::move(req), connection);
 
                 // We're done handling this request
                 return;
@@ -357,14 +358,15 @@ namespace malloy::server
             const std::shared_ptr<websocket::connection>& connection
            )
         {
+            const auto res_string = malloy::http::resource_string(gen->header());
             m_logger->debug("handling WS request: {} {}",
                             gen->header().method_string(),
-                            location.resource_string());
+                            res_string);
 
             // Check routes
             for (const auto& ep : m_endpoints_websocket) {
                 // Check match
-                if (ep->resource != location.resource_string())
+                if (ep->resource != res_string)
                     continue;
 
                 // Validate route handler
