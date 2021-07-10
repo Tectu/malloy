@@ -56,6 +56,7 @@ namespace malloy::server::http
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
                 auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
+                parser->get().base() = header_;
                 std::invoke(setup, parser->get().body());
 
                 boost::beast::http::async_read(
@@ -239,15 +240,6 @@ namespace malloy::server::http
             auto header = m_parser->get().base();
             // Parse the request into something more useful from hereon
             auto gen = std::shared_ptr<request_generator>{new request_generator{  std::move(m_parser), std::move(header), derived().shared_from_this(), std::move(m_buffer) }}; // Private ctor
-            malloy::http::uri req_uri{std::string{gen->header().target()}};
-
-            // Check request URI for legality
-            if (!req_uri.is_legal()) {
-                m_logger->warn("illegal request URI: {}", req_uri.raw());
-                auto resp = malloy::http::generator::bad_request("illegal URI");
-                do_write(std::move(resp));
-                return;
-            }
 
             // Check if this is a WS request
             if (boost::beast::websocket::is_upgrade(gen->header())) {

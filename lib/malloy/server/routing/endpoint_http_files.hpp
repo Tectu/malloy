@@ -2,7 +2,7 @@
 
 #include "endpoint_http.hpp"
 #include "../../core/http/request.hpp"
-#include "../../core/http/uri.hpp"
+#include "malloy/core/http/utils.hpp"
 
 #include <filesystem>
 
@@ -27,9 +27,9 @@ namespace malloy::server
         write_func writer;
 
         [[nodiscard]]
-        bool matches(const req_header_t&, const url_t& url) const override
+        bool matches(const req_header_t& head) const override
         {
-            return url.resource_starts_with(resource_base);
+            return malloy::http::resource_string(head).starts_with(resource_base);
         }
 
         [[nodiscard]]
@@ -38,7 +38,7 @@ namespace malloy::server
             std::visit([this, conn](auto& gen) {
                 gen->template body<boost::beast::http::string_body>([this, conn](auto&& req) {
                     malloy::http::request<> req_clone{ req };
-                    req_clone.uri().chop_resource(resource_base);
+                    malloy::http::chop_resource(req_clone, resource_base);
 
                     // Create response
                     writer(req, malloy::http::generator::file(req_clone, base_path), conn);

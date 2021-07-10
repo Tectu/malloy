@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cookie.hpp"
-#include "uri.hpp"
 #include "types.hpp"
 
 #include <boost/beast/http/message.hpp>
@@ -39,9 +38,6 @@ namespace malloy::http
             msg_t::target(target_);
             msg_t::set(http::field::host, host);
 
-            // URI
-            class uri u { std::string{ target_.data(), target_.size() } };
-            m_uri = std::move(u);
         }
 
         /**
@@ -55,12 +51,6 @@ namespace malloy::http
 
             // Underlying
             msg_t::operator=(std::move(raw));
-
-            // URI
-            class uri u {
-            std::string { msg_t::target().data(), msg_t::target().size() }
-            };
-            m_uri = std::move(u);
 
             // Cookies
             {
@@ -123,22 +113,6 @@ namespace malloy::http
         std::uint16_t port() const noexcept { return m_port; }
 
         /**
-         * Returns the URI portion of the request.
-         *
-         * @return A copy of the URI.
-         */
-        [[nodiscard]]
-        class uri uri() const noexcept { return m_uri; }
-
-        /**
-         * Returns the URI portion of the request.
-         *
-         * @return A reference to the URI.
-         */
-        [[nodiscard]]
-        class uri& uri() noexcept { return m_uri; }
-
-        /**
          * Returns the request's cookies.
          *
          * @return The cookies.
@@ -175,7 +149,6 @@ namespace malloy::http
 
     private:
         std::uint16_t m_port = 0;
-        class uri m_uri;
         std::unordered_map<std::string, std::string> m_cookies;
     };
 }
