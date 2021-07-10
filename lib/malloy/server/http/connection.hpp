@@ -56,6 +56,7 @@ namespace malloy::server::http
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
                 auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
+                parser->get().base() = header_;
                 std::invoke(setup, parser->get().body());
 
                 boost::beast::http::async_read(

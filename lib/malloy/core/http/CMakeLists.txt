@@ -10,6 +10,7 @@ target_sources(
         request.hpp
         response.hpp
 		types.hpp
+        utils.hpp
 	PRIVATE
 		cookie.cpp
 		generator.cpp
