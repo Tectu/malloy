@@ -278,11 +278,6 @@ namespace malloy::server
                 if (!location.resource_starts_with(resource_base))
                     continue;
 
-                // Log
-                if (m_logger) {
-                    m_logger->debug("invoking sub-router on {}", resource_base);
-                }
-
                 // Chop request resource path
                 location.chop_resource(resource_base);
                 req->header().target(location.raw());
