@@ -13,9 +13,8 @@ struct request_filter {
 	using header_type = malloy::http::request_header<>;
 
 	void setup_body(const header_type& header, typename request_type::body_type::value_type& file) const {
-		malloy::http::uri url{ std::string{ header.target()} };
 		auto path = std::filesystem::path{ download_path };
-		path += url.resource_string();
+		path += malloy::http::resource_string(header);
 		if (!fs::exists(path)) {
 			fs::create_directories(path.parent_path());
 		}
