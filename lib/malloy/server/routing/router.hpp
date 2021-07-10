@@ -269,13 +269,14 @@ namespace malloy::server
         void handle_request(
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
-            Connection&& connection,
-            malloy::http::uri location)
+            Connection&& connection
+            )
         {
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
-                if (!location.resource_starts_with(resource_base))
+                const auto res_str = malloy::http::resource_string(req->header().target());
+                if (!res_str.starts_with(resource_base))
                     continue;
 
                 // Log
@@ -284,8 +285,7 @@ namespace malloy::server
                 }
 
                 // Chop request resource path
-                location.chop_resource(resource_base);
-                req->header().target(location.raw());
+                req->header().target(req->header().substr(resource_base.size()));
 
                 // Let the sub-router handle things from here...
                 router->template handle_request<isWebsocket, Derived>(doc_root, std::move(req), connection, location);
@@ -295,9 +295,9 @@ namespace malloy::server
             }
 
             if constexpr (isWebsocket)
-                handle_ws_request<Derived>(std::move(req), connection, location);
+                handle_ws_request<Derived>(std::move(req), connection);
             else
-                handle_http_request<Derived>(doc_root, std::move(req), connection, location);
+                handle_http_request<Derived>(doc_root, std::move(req), connection);
         }
 
         /**
@@ -312,8 +312,8 @@ namespace malloy::server
         void handle_http_request(
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
-            const http::connection_t& connection,
-            const malloy::http::uri& location)
+            const http::connection_t& connection
+            )
         {
             // Log
             if (m_logger) {
@@ -326,7 +326,7 @@ namespace malloy::server
             // Check routes
             for (const auto& ep : m_endpoints_http) {
                 // Check match
-                if (!ep->matches(header, location))
+                if (!ep->matches(header))
                     continue;
 
                 // Generate the response for the request
@@ -354,8 +354,8 @@ namespace malloy::server
         template<typename Derived>
         void handle_ws_request(
             const req_generator<Derived>& gen,
-            const std::shared_ptr<websocket::connection>& connection,
-            const malloy::http::uri& location)
+            const std::shared_ptr<websocket::connection>& connection
+           )
         {
             m_logger->debug("handling WS request: {} {}",
                             gen->header().method_string(),

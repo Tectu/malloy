@@ -4,7 +4,6 @@ target_sources(
         http_generator.cpp
         response.cpp
         router.cpp
-        uri.cpp
         endpoints.cpp
         request.cpp
         websockets.cpp

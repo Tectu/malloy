@@ -2,7 +2,6 @@
 
 #include "endpoint_http.hpp"
 #include "../../core/http/request.hpp"
-#include "../../core/http/uri.hpp"
 
 #include <filesystem>
 

@@ -10,4 +10,5 @@ target_sources(
 		preflight_config.cpp
 		preflight_config.hpp
 		request_generator_t.hpp
+		utils.hpp
 )

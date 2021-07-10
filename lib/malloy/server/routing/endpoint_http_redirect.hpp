@@ -1,7 +1,7 @@
 #pragma once
 
 #include "endpoint_http.hpp"
-#include "../../core/http/uri.hpp"
+#include "malloy/http/utils.hpp"
 
 namespace malloy::server
 {
@@ -16,9 +16,9 @@ namespace malloy::server
 
 
         [[nodiscard]]
-        bool matches(const req_header_t&, const url_t& url) const override
+        bool matches(const req_header_t& head) const override
         {
-            return url.resource_string() == resource_old;
+            return malloy::http::resource_string(head.target()) == resource_old;
         }
 
         [[nodiscard]]

@@ -61,7 +61,7 @@ public:
 private:
     template<bool isWs>
     void send_msg(const std::filesystem::path& root, const req_t& req, auto conn) {
-        router_->handle_request<isWs, Derived>(root, req, conn, malloy::http::uri{std::string{req->header().target()}}); 
+        router_->handle_request<isWs, Derived>(root, req, conn); 
     }
 
     router_t router_;

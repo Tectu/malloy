@@ -19,7 +19,6 @@ TEST_SUITE("components - request")
             request mreq{std::move(req)};
 
             CHECK(mreq.target() == target);
-            CHECK(mreq.uri().raw() == target);
         }
 
         SUBCASE("Constructing a request with a target string results in a uri matching the target")
@@ -27,7 +26,6 @@ TEST_SUITE("components - request")
             request req{method::get, "", 0, target};
             
             CHECK(req.target() == target);
-            CHECK(req.uri().raw() == target);
         }
     }
 
