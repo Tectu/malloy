@@ -87,10 +87,28 @@ namespace malloy::http::sessions
          */
         std::size_t destroy_expired(const std::chrono::seconds& max_lifetime);
 
+        /**
+         * Checks whether the session is valid.
+         *
+         * @param req The request.
+         * @return Whether the session is valid.
+         */
+        [[nodiscard]]
+        bool is_valid(const request<>& req);
+
     private:
         std::shared_ptr<storage> m_storage;
         std::mutex m_lock; // protects sessions
         std::string m_cookie_name = "sessionId";      // The name of the session cookie
+
+        /**
+         * Gets the session ID from a request (if any).
+         *
+         * @param req The request.
+         * @return The session ID (if any).
+         */
+        [[nodiscard]]
+        std::optional<id_type> get_id(const request<>& req) const;
 
         /**
          * Generates a new, unique session ID

@@ -63,6 +63,15 @@ int main()
             return res;
         });
 
+        // Check validity
+        router->add(method::get, "/check", [session_manager](const auto& req)
+        {
+            response resp{ status::ok };
+            resp.body() = "valid session: " + std::string{(session_manager->is_valid(req) ? "true" : "false")};
+
+            return resp;
+        });
+
         // Logout
         router->add(method::get, "/logout", [session_manager](const auto& req)
         {

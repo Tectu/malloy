@@ -27,9 +27,9 @@ std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
     std::shared_ptr<session> session;
 
     // Get existing session (if any)
-    if (req.has_cookie(m_cookie_name)) {
-        const id_type id { req.cookie(m_cookie_name) };
-        session = m_storage->get(id);
+    const auto& ses_id = get_id(req);
+    if (ses_id.has_value()) {
+        session = m_storage->get(ses_id.value());
     }
 
     // Otherwise create a new one
@@ -56,19 +56,16 @@ void manager::destroy(const request<>& req, response<>& resp)
     if (!m_storage)
         return;
 
-    if (!req.has_cookie(m_cookie_name))
+    // Get session ID
+    const auto& ses_id = get_id(req);
+    if (!ses_id.has_value())
         return;
 
     // Acquire mutex
     std::lock_guard lock(m_lock);
 
-    // Get session ID
-    const auto& ses_id = req.cookie(m_cookie_name);
-    if (ses_id.empty())
-        return;
-
     // Destroy session in storage
-    m_storage->destroy(std::string{ ses_id });
+    m_storage->destroy(std::string{ ses_id.value() });
 
     // ToDo: Send back an expired session cookie to the client.
 }
@@ -87,6 +84,36 @@ std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
     std::lock_guard lock(m_lock);
 
     return m_storage->destroy_expired(max_lifetime);
+}
+
+bool manager::is_valid(const request<>& req)
+{
+    if (!m_storage)
+        return false;
+
+    // Get session ID
+    const auto& ses_id = get_id(req);
+    if (!ses_id.has_value())
+        return false;
+
+    // Acquire mutex
+    std::lock_guard lock(m_lock);
+
+    // Check if storage has a session for this ID
+    return m_storage->get(ses_id.value()) != nullptr;
+}
+
+std::optional<id_type> manager::get_id(const request<>& req) const
+{
+    if (!req.has_cookie(m_cookie_name))
+        return std::nullopt;
+
+    // Get session ID
+    const auto& ses_id = req.cookie(m_cookie_name);
+    if (ses_id.empty())
+        return std::nullopt;
+
+    return static_cast<id_type>(ses_id);
 }
 
 id_type manager::generate_id()
