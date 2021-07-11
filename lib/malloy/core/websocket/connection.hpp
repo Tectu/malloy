@@ -18,20 +18,6 @@
 
 namespace malloy::websocket
 {
-    namespace detail
-    {
-        constexpr std::string_view beast_version = BOOST_BEAST_VERSION_STRING;
-        template<bool isClient>
-        constexpr auto ws_agent_string() -> std::string_view
-        {
-            if (isClient) {
-                return {BOOST_BEAST_VERSION_STRING " websocket-client-async"};
-            } else {
-                return {BOOST_BEAST_VERSION_STRING " malloy"};
-            }
-        }
-    }    // namespace detail
-
     /**
      * @class connection
      * @tparam isClient: Whether it is the client end of a websocket connection

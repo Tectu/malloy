@@ -50,6 +50,11 @@ namespace malloy::server
              * to the working directory.
              */
             std::filesystem::path doc_root = ".";
+
+            /**
+             * @brief Agent string used for websocket connections
+             */
+            std::string ws_agent_string{BOOST_BEAST_VERSION_STRING " malloy-server"};
         };
 
         controller() = default;
@@ -68,6 +73,7 @@ namespace malloy::server
          * @param cfg The configuration to use.
          * @return Whether the initialization was successful.
          */
+         [[nodiscard("init may fail")]]
         bool init(config cfg);
 
         /**
@@ -102,8 +108,6 @@ namespace malloy::server
         {
             return m_router;
         }
-    protected:
-        void after_init(config&& cfg);
 
     private:
         config m_cfg;

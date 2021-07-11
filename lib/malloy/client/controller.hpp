@@ -66,10 +66,17 @@ namespace malloy::client
     public:
         struct config :
             malloy::controller::config {
+            /**
+             * @brief Agent string used for websocket connections
+             */
+            std::string ws_agent_string{BOOST_BEAST_VERSION_STRING " malloy-client"};
         };
 
         controller() = default;
         ~controller() override = default;
+
+        [[nodiscard("init may fail")]]
+        auto init(config cfg) -> bool;
 
 #if MALLOY_FEATURE_TLS
         /**

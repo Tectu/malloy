@@ -18,8 +18,12 @@ auto controller::run() -> bool
     return true;
 }
 
-void controller::after_init(config&& cfg) {
+auto controller::init(config cfg) -> bool {
+    if (!malloy::controller::init(cfg)) {
+        return false;
+    }
     m_cfg = std::move(cfg);
+    return true;
 }
 
 #if MALLOY_FEATURE_TLS

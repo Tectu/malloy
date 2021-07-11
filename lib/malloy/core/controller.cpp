@@ -11,7 +11,7 @@ controller::~controller()
     stop().wait();
 }
 
-bool controller::init(config cfg)
+bool controller::init(const config& cfg)
 {
     // Don't initialize if not stopped
     if (m_state != state::stopped)
@@ -39,9 +39,6 @@ bool controller::init(config cfg)
     // Create a worker thread to run the boost::asio::io_context.
     // The work guard is used to prevent the io_context::run() from returning if there's no work scheduled.
     m_workguard = std::make_unique<workguard_t>(boost::asio::make_work_guard(*m_io_ctx));
-
-    // Grab the config
-    after_init(std::move(cfg));
 
     return true;
 }
