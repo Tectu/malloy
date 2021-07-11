@@ -9,6 +9,7 @@
 #include "../core/http/type_traits.hpp"
 #include "../core/error.hpp"
 
+
 #if MALLOY_FEATURE_TLS
     #include "http/connection_tls.hpp"
 
@@ -16,6 +17,7 @@
 #endif
 
 #include <boost/asio/strand.hpp>
+#include <boost/beast/version.hpp>
 #include <spdlog/logger.h>
 
 #include <filesystem>
@@ -66,6 +68,7 @@ namespace malloy::client
     public:
         struct config :
             malloy::controller::config {
+
             /**
              * @brief Agent string used for websocket connections
              */
@@ -226,8 +229,9 @@ namespace malloy::client
          */
         auto run() -> bool;
 
+        auto start() -> bool;
+
     protected:
-        void after_init(config&& cfg) override;
 
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;

@@ -73,7 +73,7 @@ bool controller::start()
     m_listener->run();
 
     // Base class
-    if (!malloy::controller::start())
+    if (!root_start(m_cfg))
         return false;
 
     return true;

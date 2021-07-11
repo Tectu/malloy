@@ -25,6 +25,9 @@ auto controller::init(config cfg) -> bool {
     m_cfg = std::move(cfg);
     return true;
 }
+auto controller::start() -> bool {
+    return root_start(m_cfg);
+}
 
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls()

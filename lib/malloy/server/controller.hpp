@@ -2,6 +2,8 @@
 
 #include "../core/controller.hpp"
 
+#include <boost/beast/version.hpp>
+
 #include <memory>
 #include <filesystem>
 #include <string>
@@ -81,7 +83,7 @@ namespace malloy::server
          *
          * @return Whether starting the server was successful.
          */
-        bool start() override;
+        bool start();
 
         #if MALLOY_FEATURE_TLS
             /**

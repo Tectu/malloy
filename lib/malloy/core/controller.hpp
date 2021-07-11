@@ -42,14 +42,6 @@ namespace malloy
         virtual ~controller();
 
 
-        /**
-         * Start the server. This function will not return until the server is stopped.
-         *
-         * @return Whether starting the server was successful.
-         */
-        [[nodiscard("start may fail")]]
-        virtual
-        bool start();
 
         /**
          * Stop the server.
@@ -70,6 +62,9 @@ namespace malloy
         {
             return *m_io_ctx;
         }
+        [[nodiscard("start may fail")]]
+        auto root_start(const config& cfg) -> bool;
+
 
         void remove_workguard() const;
 
