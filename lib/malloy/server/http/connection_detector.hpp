@@ -44,7 +44,8 @@ namespace malloy::server::http
             boost::asio::ip::tcp::socket&& socket,
             std::shared_ptr<boost::asio::ssl::context> ctx,
             std::shared_ptr<const std::filesystem::path> doc_root,
-            std::shared_ptr<malloy::server::router> router
+            std::shared_ptr<malloy::server::router> router,
+            std::string agent_string
         );
 
         /**
@@ -59,6 +60,7 @@ namespace malloy::server::http
         boost::beast::flat_buffer m_buffer;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<malloy::server::router> m_router;
+        std::string m_agent_string;
 
         void on_detect(boost::beast::error_code ec, bool result);
     };

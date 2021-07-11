@@ -107,6 +107,7 @@ namespace malloy::server::http
         struct config
         {
             std::uint64_t request_body_limit = 10 * 10e6;   ///< The maximum allowed body request size in bytes.
+            std::string agent_string; ///< Agent string to use, set by the controller
         };
 
         /**
@@ -249,7 +250,7 @@ namespace malloy::server::http
                 // of both the socket and the HTTP request.
                 auto ws_connection = server::websocket::connection::make(
                     m_logger->clone("websocket_connection"),
-                    malloy::websocket::stream{derived().release_stream()});
+                    malloy::websocket::stream{derived().release_stream()}, cfg.agent_string);
                 m_router->websocket(*m_doc_root, gen, ws_connection);
 
 

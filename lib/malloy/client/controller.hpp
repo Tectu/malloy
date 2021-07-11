@@ -269,7 +269,7 @@ namespace malloy::client
                             } else
 #endif
                                 return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
-                        }());
+                        }(), m_cfg.ws_agent_string);
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
                             if (ec) {
