@@ -67,6 +67,8 @@ bool controller::root_start(const config& cfg)
 
     // Update state
     m_state = state::running;
+
+    return true;
 }
 void controller::remove_workguard() const {
     m_workguard->reset();
