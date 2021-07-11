@@ -11,19 +11,12 @@
 
 using namespace malloy::server;
 
-bool controller::init(config cfg)
-{
-    // Base class
-    if (!malloy::controller::init(cfg))
-        return false;
-
+void controller::after_init(config&& cfg) {
     // Grab the config
     m_cfg = std::move(cfg);
 
     // Create the top-level router
     m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"));
-
-    return true;
 }
 
 #if MALLOY_FEATURE_TLS

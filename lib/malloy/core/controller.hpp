@@ -42,7 +42,6 @@ namespace malloy
         virtual ~controller();
 
         [[nodiscard("init may fail")]]
-        virtual
         bool init(config cfg);
 
         /**
@@ -64,7 +63,7 @@ namespace malloy
         std::future<void> stop();
 
     protected:
-        config m_cfg;
+        virtual void after_init(config&& cfg) = 0;
 
         [[nodiscard]]
         boost::asio::io_context&

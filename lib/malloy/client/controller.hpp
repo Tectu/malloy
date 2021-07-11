@@ -219,8 +219,12 @@ namespace malloy::client
          */
         auto run() -> bool;
 
+    protected:
+        void after_init(config&& cfg) override;
+
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+        config m_cfg;
 
         /**
          * Checks whether the TLS context was initialized.

@@ -32,8 +32,6 @@ bool controller::init(config cfg)
         return false;
     }
 
-    // Grab the config
-    m_cfg = std::move(cfg);
 
     // Create the I/O context
     m_io_ctx = std::make_shared<boost::asio::io_context>();
@@ -41,6 +39,9 @@ bool controller::init(config cfg)
     // Create a worker thread to run the boost::asio::io_context.
     // The work guard is used to prevent the io_context::run() from returning if there's no work scheduled.
     m_workguard = std::make_unique<workguard_t>(boost::asio::make_work_guard(*m_io_ctx));
+
+    // Grab the config
+    after_init(std::move(cfg));
 
     return true;
 }

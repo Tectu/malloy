@@ -102,6 +102,8 @@ namespace malloy::server
         {
             return m_router;
         }
+    protected:
+        void after_init(config&& cfg);
 
     private:
         config m_cfg;
