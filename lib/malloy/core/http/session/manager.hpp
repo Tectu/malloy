@@ -7,6 +7,7 @@
 #include <chrono>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 
 namespace malloy::http::sessions
