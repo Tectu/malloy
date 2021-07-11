@@ -79,9 +79,6 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
 
     #if MALLOY_FEATURE_TLS
         if (result && m_ctx) {
-            // Log
-            m_logger->debug("launching TLS connection.");
-
             // Launch TLS connection
             std::make_shared<connection_tls>(
                 m_logger,
@@ -97,7 +94,6 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
     #endif
 
     // Launch plain connection
-    m_logger->debug("launching plain connection.");
     std::make_shared<connection_plain>(
         m_logger,
         m_stream.release_socket(),
