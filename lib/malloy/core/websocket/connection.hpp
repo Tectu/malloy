@@ -55,11 +55,6 @@ namespace malloy::websocket
         };
 
         /**
-         * The agent string.
-         */
-        constexpr static std::string_view agent_string = detail::ws_agent_string<isClient>();
-
-        /**
          * See stream::set_binary(bool)
          */
         void set_binary(const bool enabled) { m_ws.set_binary(enabled); }
@@ -76,12 +71,12 @@ namespace malloy::websocket
          * `connect` must be called before this connection can be used
          */
         static auto
-        make(const std::shared_ptr<spdlog::logger> logger, stream&& ws) -> std::shared_ptr<connection>
+        make(const std::shared_ptr<spdlog::logger> logger, stream&& ws, const std::string& agent_string) -> std::shared_ptr<connection>
         {
             // We have to emulate make_shared here because the ctor is private
             connection* me = nullptr;
             try {
-                me = new connection{logger, std::move(ws)};
+                me = new connection{logger, std::move(ws), agent_string};
                 return std::shared_ptr<connection>{me};
             } catch (...) {
                 delete me;
@@ -254,13 +249,15 @@ namespace malloy::websocket
         std::vector<std::function<void()>> msg_queue_;
         std::shared_ptr<spdlog::logger> m_logger;
         stream m_ws;
+        std::string m_agent_string;
 
         enum state m_state = state::closed;
 
         connection(
-            std::shared_ptr<spdlog::logger> logger, stream&& ws) :
+            std::shared_ptr<spdlog::logger> logger, stream&& ws, std::string agent_str) :
             m_logger(std::move(logger)),
-            m_ws{std::move(ws)}
+            m_ws{std::move(ws)},
+            m_agent_string{std::move(agent_str)}
         {
             // Sanity check logger
             if (!m_logger)
@@ -275,21 +272,12 @@ namespace malloy::websocket
                 boost::beast::websocket::stream_base::timeout::suggested(
                     isClient ? boost::beast::role_type::client : boost::beast::role_type::server));
 
-            if constexpr (isClient) {
-                // Set a decorator to change the User-Agent of the handshake
-                m_ws.set_option(
-                    boost::beast::websocket::stream_base::decorator(
-                        [](boost::beast::websocket::request_type& req) {
-                            req.set(boost::beast::http::field::user_agent, agent_string);
-                        }));
-            } else {
-                // Set a decorator to change the Server of the handshake
-                m_ws.set_option(
-                    boost::beast::websocket::stream_base::decorator(
-                        [](boost::beast::websocket::response_type& res) {
-                            res.set(boost::beast::http::field::server, agent_string);
-                        }));
-            }
+            const auto agent_field = isClient ? malloy::http::field::user_agent : malloy::http::field::server;
+            m_ws.set_option(
+                boost::beast::websocket::stream_base::decorator(
+                    [this, agent_field](boost::beast::websocket::request_type& req) {
+                        req.set(agent_field, m_agent_string);
+                    }));
         }
 
         void
