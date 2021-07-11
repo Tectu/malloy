@@ -47,7 +47,7 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
 {
     // Log
     if (m_logger)
-        m_logger->debug("adding router: {}", resource);
+        m_logger->trace("adding router: {}", resource);
 
     // Sanity check target
     if (resource.empty()) {
@@ -124,7 +124,7 @@ bool router::add_file_serving(std::string resource, std::filesystem::path storag
 {
     // Log
     if (m_logger)
-        m_logger->debug("adding file serving location: {} -> {}", resource, storage_base_path.string());
+        m_logger->trace("adding file serving location: {} -> {}", resource, storage_base_path.string());
 
     // Create endpoint
     auto ep = std::make_shared<endpoint_http_files>();
@@ -143,7 +143,7 @@ bool router::add_redirect(const malloy::http::status status, std::string&& resou
 {
     // Log
     if (m_logger)
-        m_logger->debug("adding redirection: {}: {} -> {}", static_cast<int>(status), resource_old, resource_new);
+        m_logger->trace("adding redirection: {}: {} -> {}", static_cast<int>(status), resource_old, resource_new);
 
     // Sanity check status
     if (static_cast<int>(status) < 300 || static_cast<int>(status) >= 400) {
@@ -174,7 +174,7 @@ bool router::add_websocket(std::string&& resource, typename websocket::connectio
 {
     // Log
     if (m_logger)
-        m_logger->debug("adding websocket endpoint at {}", resource);
+        m_logger->trace("adding websocket endpoint at {}", resource);
 
     // Check handler
     if (!handler) {

@@ -313,7 +313,7 @@ namespace malloy::server
         {
             // Log
             if (m_logger) {
-                m_logger->debug("handling HTTP request: {} {}",
+                m_logger->trace("handling HTTP request: {} {}",
                                 req->header().method_string(),
                                 req->header().target());
             }
@@ -354,7 +354,7 @@ namespace malloy::server
            )
         {
             const auto res_string = malloy::http::resource_string(gen->header());
-            m_logger->debug("handling WS request: {} {}",
+            m_logger->trace("handling WS request: {} {}",
                             gen->header().method_string(),
                             res_string);
 
@@ -395,7 +395,7 @@ namespace malloy::server
         {
             // Log
             if (m_logger)
-                m_logger->debug("adding route: {}", target);
+                m_logger->trace("adding route: {}", target);
 
             // Build regex
             std::regex regex;
