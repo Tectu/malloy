@@ -78,7 +78,9 @@ namespace malloy::server
             // Add more information to the response
             //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works
             resp.version(req.version());
-            resp.set(boost::beast::http::field::server, server_str);
+            if (!malloy::http::has_field(resp, malloy::http::field::server)) {
+                resp.set(boost::beast::http::field::server, server_str);
+            }
             resp.prepare_payload();
 
             std::visit([resp = std::move(resp)](auto& c) mutable {
