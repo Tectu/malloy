@@ -2,7 +2,6 @@
 
 #include "../core/controller.hpp"
 
-#include <boost/beast/version.hpp>
 
 #include <memory>
 #include <filesystem>
@@ -54,7 +53,8 @@ namespace malloy::server
             std::filesystem::path doc_root = ".";
 
             /**
-             * @brief Agent string used for websocket connections
+             * @brief Agent string used for connections
+             * @details Set as the Server field in http headers
              */
             std::string agent_string{"malloy-server"};
         };

@@ -18,7 +18,6 @@
 #endif
 
 #include <boost/asio/strand.hpp>
-#include <boost/beast/version.hpp>
 #include <spdlog/logger.h>
 
 #include <filesystem>
@@ -71,7 +70,8 @@ namespace malloy::client
             malloy::controller::config {
 
             /**
-             * @brief Agent string used for websocket connections
+             * @brief Agent string used for connections
+             * @details Set as the User-Agent in http headers
              */
             std::string user_agent{"malloy-client"};
         };
