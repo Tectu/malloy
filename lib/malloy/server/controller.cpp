@@ -19,7 +19,7 @@ auto controller::init(config cfg) -> bool {
     m_cfg = std::move(cfg);
 
     // Create the top-level router
-    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"));
+    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"), m_cfg.ws_agent_string);
     return true;
 }
 
