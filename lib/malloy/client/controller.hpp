@@ -231,7 +231,7 @@ namespace malloy::client
             }();
 
             if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
-                req[malloy::http::field::user_agent] = m_cfg.ws_agent_string;
+                req.set(malloy::http::field::user_agent, m_cfg.ws_agent_string);
             }
 
             // Run
