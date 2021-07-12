@@ -56,7 +56,7 @@ namespace malloy::server
             /**
              * @brief Agent string used for websocket connections
              */
-            std::string ws_agent_string{BOOST_BEAST_VERSION_STRING " malloy-server"};
+            std::string agent_string{BOOST_BEAST_VERSION_STRING " malloy-server"};
         };
 
         controller() = default;

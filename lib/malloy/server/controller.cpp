@@ -19,7 +19,7 @@ auto controller::init(config cfg) -> bool {
     m_cfg = std::move(cfg);
 
     // Create the top-level router
-    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"), m_cfg.ws_agent_string);
+    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"), m_cfg.agent_string);
     return true;
 }
 
@@ -66,8 +66,7 @@ bool controller::start()
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
         m_router,
         std::make_shared<std::filesystem::path>(m_cfg.doc_root),
-        m_cfg.ws_agent_string
-    );
+        m_cfg.agent_string);
 
     // Run the listener
     m_listener->run();

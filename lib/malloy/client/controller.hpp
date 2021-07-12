@@ -73,7 +73,7 @@ namespace malloy::client
             /**
              * @brief Agent string used for websocket connections
              */
-            std::string ws_agent_string{BOOST_BEAST_VERSION_STRING " malloy-client"};
+            std::string user_agent{BOOST_BEAST_VERSION_STRING " malloy-client"};
         };
 
         controller() = default;
@@ -231,7 +231,7 @@ namespace malloy::client
             }();
 
             if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
-                req.set(malloy::http::field::user_agent, m_cfg.ws_agent_string);
+                req.set(malloy::http::field::user_agent, m_cfg.user_agent);
             }
 
             // Run
@@ -274,7 +274,7 @@ namespace malloy::client
                             } else
 #endif
                                 return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
-                        }(), m_cfg.ws_agent_string);
+                        }(), m_cfg.user_agent);
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
                             if (ec) {

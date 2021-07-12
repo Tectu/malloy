@@ -8,7 +8,7 @@ namespace mc = malloy::client;
 namespace ms = malloy::server;
 
 TEST_SUITE("controller - roundtrips") {
-    TEST_CASE("Server and client set agent strings based on ws_agent_string") {
+    TEST_CASE("Server and client set agent strings based on user_agent") {
         constexpr auto cli_agent_str = "test-cli";
         constexpr auto serve_agent_str = "test-serve";
         constexpr auto addr = "127.0.0.1";
@@ -21,8 +21,8 @@ TEST_SUITE("controller - roundtrips") {
         mc::controller::config cli_cfg{general_cfg};
         ms::controller::config serve_cfg{general_cfg};
 
-        cli_cfg.ws_agent_string = cli_agent_str;
-        serve_cfg.ws_agent_string = serve_agent_str;
+        cli_cfg.user_agent = cli_agent_str;
+        serve_cfg.agent_string = serve_agent_str;
         serve_cfg.interface = addr;
         serve_cfg.port = port;
 
