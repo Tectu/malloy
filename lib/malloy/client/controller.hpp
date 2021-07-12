@@ -215,35 +215,35 @@ namespace malloy::client
         auto make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter) -> std::future<malloy::error_code>
         {
 
-            auto conn = [this] {
+            std::promise<malloy::error_code> prom;
+            auto err_channel = prom.get_future();
+            [this](auto&& cb) {
 #if MALLOY_FEATURE_TLS
                 if constexpr (isHttps) {
                     init_tls();
-                    return std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
+                    cb(std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                         io_ctx(),
-                        *m_tls_ctx);
+                        *m_tls_ctx));
+                    return;
                 }
 #endif
-                return std::make_shared<http::connection_plain<Body, Filter, std::decay_t<Callback>>>(
+                cb(std::make_shared<http::connection_plain<Body, Filter, std::decay_t<Callback>>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                    io_ctx());
-            }();
+                    io_ctx()));
+            }([this, prom = std::move(prom), req = std::move(req), filter = std::forward<Filter>(filter), cb = std::forward<Callback>(cb)](auto&& conn) mutable {
+                if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
+                    req.set(malloy::http::field::user_agent, m_cfg.user_agent);
+                }
 
-            if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
-                req.set(malloy::http::field::user_agent, m_cfg.user_agent);
-            }
-
-            // Run
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-            conn->run(
-                std::to_string(req.port()).c_str(),
-                req,
-                std::move(prom),
-                std::forward<Callback>(cb),
-                std::forward<Filter>(filter)
-            );
+                // Run
+                conn->run(
+                    std::to_string(req.port()).c_str(),
+                    req,
+                    std::move(prom),
+                    std::forward<Callback>(cb),
+                    std::forward<Filter>(filter));
+            });
 
             return err_channel;
 
