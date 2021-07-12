@@ -306,7 +306,7 @@ namespace malloy::server
          */
         template<typename Derived>
         void handle_http_request(
-            const std::filesystem::path& doc_root,
+            const std::filesystem::path&,
             const req_generator<Derived>& req,
             const http::connection_t& connection
             )
@@ -408,7 +408,6 @@ namespace malloy::server
             }
 
             constexpr bool wrapped = malloy::concepts::is_variant<Body>;
-            using func_t = std::decay_t<Func>;
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
 
             // Build endpoint

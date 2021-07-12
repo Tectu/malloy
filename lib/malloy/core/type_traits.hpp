@@ -14,7 +14,7 @@ namespace malloy::concepts
     {
         struct is_variant_helper {
             template<typename... Ts>
-            void operator()(const std::variant<Ts...>&) const {};
+            void operator()(const std::variant<Ts...>&) const {}
         };
     }    // namespace detail
 

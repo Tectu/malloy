@@ -62,10 +62,14 @@ namespace malloy::server::http
                 boost::beast::http::async_read(
                     parent_->derived().m_stream, buff_, *parser,
                     [_ = parent_,
-                    done = std::forward<Callback>(done),
-                    p = parser, this_ = this->shared_from_this()](const auto& ec, auto size) {
-                    done(malloy::http::request<Body>{p->release()});
-                });
+                     done = std::forward<Callback>(done),
+                     p = parser, this_ = this->shared_from_this(), this](const auto& ec, auto) {
+                        if (ec && parent_->m_logger) {    // TODO: see #40
+                            parent_->m_logger->error("failed to read http request body: '{}'", ec.message());
+                            return;
+                        }
+                        done(malloy::http::request<Body>{p->release()});
+                    });
             }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
@@ -128,10 +132,10 @@ namespace malloy::server::http
             std::shared_ptr<handler> router,
             std::shared_ptr<const std::filesystem::path> http_doc_root
         ) :
-            m_logger(std::move(logger)),
             m_buffer(std::move(buffer)),
-            m_router(std::move(router)),
-            m_doc_root(std::move(http_doc_root))
+            m_logger(std::move(logger)),
+            m_doc_root(std::move(http_doc_root)),
+            m_router(std::move(router))
         {
             // Sanity check logger
             if (!m_logger)
