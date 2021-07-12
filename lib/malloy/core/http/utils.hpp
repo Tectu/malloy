@@ -24,7 +24,7 @@ namespace malloy::http
     }
 
     template<bool isReq, typename Fields>
-    auto has_field(const boost::beast::http::header<isReq, Fields>& head, malloy::http::field check) -> bool
+    auto has_field(const boost::beast::http::header<isReq, Fields>& head, const malloy::http::field check) -> bool
     {
         return head.find(check) != head.end();
     }
