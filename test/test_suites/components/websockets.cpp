@@ -89,8 +89,10 @@ namespace
 		server_cfg.interface = "127.0.0.1";
 		server_cfg.port = port;
 
+        mc::controller::config cli_cfg{general_cfg};
+
 		REQUIRE(s_ctrl.init(server_cfg));
-		REQUIRE(c_ctrl.init(general_cfg));
+		REQUIRE(c_ctrl.init(cli_cfg));
 
         setup_server(s_ctrl);
         setup_client(c_ctrl);

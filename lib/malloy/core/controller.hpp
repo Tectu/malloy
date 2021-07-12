@@ -41,18 +41,7 @@ namespace malloy
         controller() = default;
         virtual ~controller();
 
-        [[nodiscard("init may fail")]]
-        virtual
-        bool init(config cfg);
 
-        /**
-         * Start the server. This function will not return until the server is stopped.
-         *
-         * @return Whether starting the server was successful.
-         */
-        [[nodiscard("start may fail")]]
-        virtual
-        bool start();
 
         /**
          * Stop the server.
@@ -64,7 +53,8 @@ namespace malloy
         std::future<void> stop();
 
     protected:
-        config m_cfg;
+        [[nodiscard("init may fail")]]
+        bool init(const config& cfg);
 
         [[nodiscard]]
         boost::asio::io_context&
@@ -72,6 +62,9 @@ namespace malloy
         {
             return *m_io_ctx;
         }
+        [[nodiscard("start may fail")]]
+        auto root_start(const config& cfg) -> bool;
+
 
         void remove_workguard() const;
 

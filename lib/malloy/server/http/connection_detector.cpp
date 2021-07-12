@@ -13,13 +13,15 @@ connection_detector::connection_detector(
     boost::asio::ip::tcp::socket&& socket,
     std::shared_ptr<boost::asio::ssl::context> ctx,
     std::shared_ptr<const std::filesystem::path> doc_root,
-    std::shared_ptr<malloy::server::router> router
+    std::shared_ptr<malloy::server::router> router,
+    std::string agent_string
 ) :
     m_logger(std::move(logger)),
     m_stream(std::move(socket)),
     m_ctx(std::move(ctx)),
     m_doc_root(std::move(doc_root)),
-    m_router(std::move(router))
+    m_router(std::move(router)),
+    m_agent_string{std::move(agent_string)}
 {
     // Sanity check logger
     if (!m_logger)
@@ -77,28 +79,28 @@ void connection_detector::on_detect(boost::beast::error_code ec, bool result)
     // ToDo: Check whether it's okay to fall back to a plain session if a handshake was detected
     //       Currently we'd do this if no TLS context was provided.
 
-    #if MALLOY_FEATURE_TLS
+    [&, this](auto&& cb) {
+#if MALLOY_FEATURE_TLS
         if (result && m_ctx) {
             // Launch TLS connection
-            std::make_shared<connection_tls>(
+            cb(std::make_shared<connection_tls>(
                 m_logger,
                 m_stream.release_socket(),
                 m_ctx,
                 std::move(m_buffer),
                 m_doc_root,
-                std::make_shared<router_adaptor<connection_tls>>(m_router)
-            )->run();
-
-            return;
+                std::make_shared<router_adaptor<connection_tls>>(m_router)));
         }
-    #endif
+#endif
 
-    // Launch plain connection
-    std::make_shared<connection_plain>(
-        m_logger,
-        m_stream.release_socket(),
-        std::move(m_buffer),
-        m_doc_root,
-        std::make_shared<router_adaptor<connection_plain>>(m_router)
-    )->run();
+        cb(std::make_shared<connection_plain>(
+            m_logger,
+            m_stream.release_socket(),
+            std::move(m_buffer),
+            m_doc_root,
+            std::make_shared<router_adaptor<connection_plain>>(m_router)));
+    }([this](auto&& conn) {
+        conn->cfg.agent_string = m_agent_string;
+        conn->run();
+    });
 }

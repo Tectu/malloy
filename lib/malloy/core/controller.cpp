@@ -11,7 +11,7 @@ controller::~controller()
     stop().wait();
 }
 
-bool controller::init(config cfg)
+bool controller::init(const config& cfg)
 {
     // Don't initialize if not stopped
     if (m_state != state::stopped)
@@ -32,8 +32,6 @@ bool controller::init(config cfg)
         return false;
     }
 
-    // Grab the config
-    m_cfg = std::move(cfg);
 
     // Create the I/O context
     m_io_ctx = std::make_shared<boost::asio::io_context>();
@@ -45,17 +43,17 @@ bool controller::init(config cfg)
     return true;
 }
 
-bool controller::start()
+bool controller::root_start(const config& cfg)
 {
     // Sanity check
     if (!m_io_ctx) {
-        m_cfg.logger->critical("no I/O context present. Make sure that init() was called and succeeded.");
+        cfg.logger->critical("no I/O context present. Make sure that init() was called and succeeded.");
         return false;
     }
 
     // Create the I/O context threads
-    m_io_threads.reserve(m_cfg.num_threads - 1);
-    for (std::size_t i = 0; i < m_cfg.num_threads; i++) {
+    m_io_threads.reserve(cfg.num_threads - 1);
+    for (std::size_t i = 0; i < cfg.num_threads; i++) {
         m_io_threads.emplace_back(
             [this]
             {
@@ -65,7 +63,7 @@ bool controller::start()
     }
 
     // Log
-    m_cfg.logger->debug("starting i/o context.");
+    cfg.logger->debug("starting i/o context.");
 
     // Update state
     m_state = state::running;
@@ -97,14 +95,12 @@ std::future<void> controller::stop()
             // Tell the workguard that we no longer need it's service
             m_workguard->reset();
 
-            m_cfg.logger->debug("waiting for I/O threads to stop...");
 
             for (auto& thread : m_io_threads)
                 thread.join();
 
             m_state = state::stopped;
 
-            m_cfg.logger->debug("all I/O threads stopped.");
         }
     );
 }

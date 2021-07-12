@@ -49,7 +49,8 @@ namespace malloy::server
             std::shared_ptr<boost::asio::ssl::context> tls_ctx,
             const boost::asio::ip::tcp::endpoint& endpoint,
             std::shared_ptr<malloy::server::router> router,
-            std::shared_ptr<const std::filesystem::path> http_doc_root
+            std::shared_ptr<const std::filesystem::path> http_doc_root,
+            std::string agent_string
         );
 
         /**
@@ -106,6 +107,7 @@ namespace malloy::server
         boost::asio::ip::tcp::acceptor m_acceptor;
         std::shared_ptr<malloy::server::router> m_router;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
+        std::string m_agent_string;
 
         /**
          * Start accepting incoming requests.
