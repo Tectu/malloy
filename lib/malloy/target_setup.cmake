@@ -12,6 +12,25 @@ function(malloy_target_common_setup TARGET)
             $<$<BOOL:${MINGW}>:-O3>
             $<$<BOOL:${MSVC}>:/bigobj>
     )
+    if (MSVC) 
+        target_compile_options(
+            ${TARGET} 
+            PRIVATE 
+                /Wall
+                /WX
+            )
+    elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "(AppleClang|Clang|GNU)")
+    target_compile_options( 
+        ${TARGET}
+        PRIVATE 
+            -Wall 
+            -Wextra 
+            -Wpedantic 
+            -Werror
+        )
+        
+    endif()
+
 
     target_compile_definitions(
         ${TARGET}
