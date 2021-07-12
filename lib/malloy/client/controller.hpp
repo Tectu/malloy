@@ -73,7 +73,7 @@ namespace malloy::client
             /**
              * @brief Agent string used for websocket connections
              */
-            std::string user_agent{BOOST_BEAST_VERSION_STRING " malloy-client"};
+            std::string user_agent{"malloy-client"};
         };
 
         controller() = default;
