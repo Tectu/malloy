@@ -93,7 +93,7 @@ namespace malloy::concepts
     }
 
     template<typename T, template<typename...> typename Contained, template<typename...> typename Container>
-    concept is_container_of = is_container_of_if<T, Container, typename detail::is_a<Contained>::type>;
+    concept is_container_of = is_container_of_if<T, Container, detail::is_a<Contained>::template type>;
 
     template<typename T>
     concept is_variant_of_bodies = is_container_of_if<T, std::variant, boost::beast::http::is_body>;
