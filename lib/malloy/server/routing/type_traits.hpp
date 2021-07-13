@@ -3,21 +3,22 @@
 #include <concepts> 
 #include <variant>
 
+#include "malloy/core/type_traits.hpp"
+
 namespace malloy::server::concepts
 {
     namespace detail
     {
-        struct any_callable
-        {
-            template<typename T>
-            void operator()(T&&) {}
+        template<typename Func, typename... Args>
+        concept route_handler_helper = std::invocable<Func, Args...> && requires(Func f, Args... args) {
+            { std::invoke(f, args...) } -> malloy::concepts::is<malloy::http::response>;
         };
     }
 
     template<typename F, typename Req>
     concept route_handler =
-        std::invocable<F, const Req&> ||
-        std::invocable<F, const Req&, const std::vector<std::string>>;
+        detail::route_handler_helper<F, const Req&> ||
+        detail::route_handler_helper<F, const Req&, const std::vector<std::string>>;
 
     template<typename Func>
     concept websocket_handler = std::invocable <Func, const malloy::http::request_header<>&, const std::shared_ptr<websocket::connection>&>;
