@@ -18,6 +18,8 @@ function(malloy_target_common_setup TARGET)
             PRIVATE 
                 /Wall
                 /WX
+                /external:anglebrackets # Disable warnings for dependencies
+                /external:W0
             )
     elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "(AppleClang|Clang|GNU)")
     target_compile_options( 
