@@ -221,7 +221,7 @@ namespace malloy::websocket
                         msg_queue_.back()();    // Execute this now
                     }
                 });
-        };
+        }
 
     private:
         enum class sending_state

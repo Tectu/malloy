@@ -61,7 +61,7 @@ namespace malloy::server
         {
             if (handler) {
                 std::visit([this, conn]<typename Generator>(Generator && gen) {
-                    visit_bodies(std::forward<Generator>(gen), conn);
+                    this->visit_bodies(std::forward<Generator>(gen), conn);
                 },
                     gens);
                 return std::nullopt;
@@ -102,7 +102,7 @@ namespace malloy::server
             using body_t = typename Handler::request_type::body_type;
             gen->template body<body_t>(
                 [this, conn](const auto& req) {
-                    handle_req(req, conn);
+                    this->handle_req(req, conn);
                 }, [&gen, this](auto& body) { filter.setup_body(gen->header(), body); });
         }
     };

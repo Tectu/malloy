@@ -67,8 +67,9 @@ int main()
         }
     );
 
-    c.run();
-    c.stop();
+    if (!c.run()) {
+        std::cerr << "Failed to start client\n";
+    }
 
     return EXIT_SUCCESS;
 }

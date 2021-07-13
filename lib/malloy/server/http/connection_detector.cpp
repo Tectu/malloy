@@ -69,7 +69,7 @@ private:
     router_t router_;
 };
 
-void connection_detector::on_detect(boost::beast::error_code ec, bool result)
+void connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] bool result)
 {
     if (ec) {
         m_logger->critical("connection type detection error: {}", ec.message());

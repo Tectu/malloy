@@ -51,7 +51,7 @@ std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
     return session;
 }
 
-void manager::destroy(const request<>& req, response<>& resp)
+void manager::destroy(const request<>& req, response<>&)
 {
     if (!m_storage)
         return;

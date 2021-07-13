@@ -89,13 +89,13 @@ namespace malloy::websocket
 		void async_read(Buff& buff, Callback&& done)
 		{
 			std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { s.async_read(buff, std::forward<Callback>(done)); }, m_underlying_conn);
-		};
+		}
 
 		template<concepts::dynamic_buffer Buff>
 		auto read(Buff& buff, boost::beast::error_code& ec) -> std::size_t
 		{
 			return std::visit([&buff, &ec](auto& s) mutable { return s.read(buff, ec); }, m_underlying_conn);
-		};
+		}
         template<concepts::accept_handler Callback>
 		void async_close(boost::beast::websocket::close_reason why, Callback&& done) {
             std::visit([why, done = std::forward<Callback>(done)](auto& s) mutable { 
