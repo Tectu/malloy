@@ -16,7 +16,7 @@ function(malloy_target_common_setup TARGET)
         target_compile_options(
             ${TARGET} 
             PRIVATE 
-                /Wall
+                /W4
                 /WX
                 /external:anglebrackets # Disable warnings for dependencies
                 /external:W0
