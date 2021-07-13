@@ -25,6 +25,8 @@ namespace malloy::concepts
             void operator()(const T<Ts...>&) const {}
         };
 
+
+
     }    // namespace detail
 
     template<typename T, template<typename...> typename A>
@@ -46,6 +48,20 @@ namespace malloy::concepts
 
     template<typename V>
     concept is_variant = is<V, std::variant>;
+
+    namespace detail {
+        template<template<typename...> typename V, template<typename...> typename A>
+        struct is_container_of_helper {
+            template<is<V>... Ts>
+            void operator()(const A<Ts...>&) const {}
+        };
+    }
+
+    template<typename T, template<typename...> typename V, template<typename...> typename Other>
+    concept is_container_of = requires(const T& v, const detail::is_container_of_helper<V, Other>& h) {
+        h(v);
+    };
+    static_assert(is_container_of<std::variant<std::tuple<std::string>, std::tuple<int>>, std::tuple, std::variant>, "is_container_of is defective");
 
 }    // namespace malloy::concepts
 /** 
