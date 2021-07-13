@@ -50,17 +50,33 @@ namespace malloy::concepts
     concept is_variant = is<V, std::variant>;
 
     namespace detail {
-        template<template<typename...> typename V, template<typename...> typename A>
+        template<typename T, template<typename> typename Pred>
+        concept sats_pred = static_cast<bool>(Pred<T>::value);
+
+        template<template<typename...> typename A, template<typename> typename Cond>
         struct is_container_of_helper {
-            template<is<V>... Ts>
+            template<sats_pred<Cond>... Ts>
             void operator()(const A<Ts...>&) const {}
+        };
+        template<template<typename...> typename A>
+        struct is_a {
+            template<typename T>
+            struct type {
+                static constexpr bool value = is<T, A>;
+            };
         };
     }
 
-    template<typename T, template<typename...> typename V, template<typename...> typename Other>
-    concept is_container_of = requires(const T& v, const detail::is_container_of_helper<V, Other>& h) {
+    template<typename T, template<typename...> typename Container, template<typename> typename Cond>
+    concept is_container_of_if = requires(const T& v, const detail::is_container_of_helper<Container, Cond>& h) {
         h(v);
     };
+    template<typename T, template<typename...> typename Contained, template<typename...> typename Container>
+    concept is_container_of = is_container_of_if<T, Container, typename detail::is_a<Contained>::type>;
+
+    template<typename T>
+    concept is_variant_of_bodies = is_container_of_if<T, std::variant, boost::beast::http::is_body>;
+
     static_assert(is_container_of<std::variant<std::tuple<std::string>, std::tuple<int>>, std::tuple, std::variant>, "is_container_of is defective");
 
 }    // namespace malloy::concepts
