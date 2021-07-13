@@ -228,8 +228,8 @@ namespace malloy::server::http
         {
             m_logger->trace("on_read(): bytes read: {}", bytes_transferred);
 
-            // This means they closed the connection
-            if (ec == boost::beast::http::error::end_of_stream)
+            // This means the connection was closed
+            if (ec == boost::beast::http::error::end_of_stream || ec == boost::beast::error::timeout)
                 return do_close();
 
             // Check for errors
