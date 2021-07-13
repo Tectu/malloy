@@ -12,27 +12,17 @@ namespace malloy::concepts
 {
     namespace detail
     {
-        /**
-         * @brief Helper for the is<...> concept.
-         * @details Essentially an expanded lambda []<typename... Ts>(const T<Ts..>&){}
-         * @note Needed for clang 12 support
-         * @tparam T The type to check against
-         */
-        template<template<typename...> typename T>
-        struct is_helper
-        {
-            template<typename... Ts>
-            void operator()(const T<Ts...>&) const {}
-        };
 
+        template<template<typename...> typename T>
+        struct is_helper {
+            template<typename... Ts>
+            void operator()(const T<Ts...>&) const
+            {}
+        };
 
 
     }    // namespace detail
 
-    template<typename T, template<typename...> typename A>
-    concept is = requires(const T& t, const detail::is_helper<A>& h) {
-        h(t);
-    };
 
     template<typename B>
     concept const_buffer_sequence = boost::asio::is_const_buffer_sequence<B>::value;
@@ -46,18 +36,53 @@ namespace malloy::concepts
     template<typename Func>
     concept async_read_handler = std::invocable<Func, boost::beast::error_code, std::size_t>;
 
-    template<typename V>
-    concept is_variant = is<V, std::variant>;
 
-    namespace detail {
+    namespace detail
+    {
+        /**
+         * @brief Helper concept to transform a predicate into a concept
+         * @tparam T Type to pass to the predicate
+         * @tparam Pred Predicate to use. Must have a compile-time accessible field `value` which can be cast to `bool`
+         */
         template<typename T, template<typename> typename Pred>
         concept sats_pred = static_cast<bool>(Pred<T>::value);
 
+        /**
+         * @brief Helper for the is_container_of_if<...> concept.
+         * @details Essentially an expanded lambda of []<sats_pred<Cond>... Ts>(const A<Ts...>&) {}
+         * @note Needed for clang 12 support
+         * @tparam Cond the condition to use. Must be usable as a predicate for sats_pred
+         */
         template<template<typename...> typename A, template<typename> typename Cond>
         struct is_container_of_helper {
             template<sats_pred<Cond>... Ts>
-            void operator()(const A<Ts...>&) const {}
+            void operator()(const A<Ts...>&) const
+            {}
         };
+        /**
+         * @brief Predicate which is always true no matter the type passed to it
+         * @tparam T
+         */
+        template<typename T>
+        struct always_true {
+            static constexpr bool value = true;
+        };
+
+    }
+    template<typename T, template<typename...> typename Container, template<typename> typename Cond>
+    concept is_container_of_if = requires(const T& v, const detail::is_container_of_helper<Container, Cond>& h)
+    {
+        h(v);
+    };
+
+    template<typename T, template<typename...> typename A>
+    concept is = is_container_of_if<T, A, detail::always_true>;
+
+    template<typename V>
+    concept is_variant = is<V, std::variant>;
+
+    namespace detail
+    {
         template<template<typename...> typename A>
         struct is_a {
             template<typename T>
@@ -67,10 +92,6 @@ namespace malloy::concepts
         };
     }
 
-    template<typename T, template<typename...> typename Container, template<typename> typename Cond>
-    concept is_container_of_if = requires(const T& v, const detail::is_container_of_helper<Container, Cond>& h) {
-        h(v);
-    };
     template<typename T, template<typename...> typename Contained, template<typename...> typename Container>
     concept is_container_of = is_container_of_if<T, Container, typename detail::is_a<Contained>::type>;
 
@@ -98,5 +119,14 @@ namespace malloy::concepts
  * @section is_variant 
  * @par Requires that a type be a std::variant<...>
  *
+ * @section is_container_of_if<T, Container<Ts...>, Cond<P>
+ * @par Satisfied if T is a of type Container with elements that all satisfied Cond where Cond is a predicate with
+ * compile time accessible `value` field that is static_cast'able to bool and `true` if satisfied.
+ *
+ * @section is<T, Container<...>>
+ * @par Satisfied if T is of type Container with any inner types
+ *
+ * @section is_container_of<T, Contained<...>, Container<...>>
+ * @par Satisfied if is<T, Container> and every element in T (Tn) satisfies is<Tn, Contained>
  *
  */
