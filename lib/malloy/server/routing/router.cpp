@@ -7,8 +7,8 @@
 
 using namespace malloy::server;
 
-router::router(std::shared_ptr<spdlog::logger> logger) :
-    m_logger(std::move(logger))
+router::router(std::shared_ptr<spdlog::logger> logger, std::string server_str) :
+    m_logger(std::move(logger)), m_server_str{std::move(server_str)}
 {
 }
 
@@ -131,9 +131,7 @@ bool router::add_file_serving(std::string resource, std::filesystem::path storag
 
     ep->resource_base = resource;
     ep->base_path = std::move(storage_base_path);
-    ep->writer = [](const auto& req, auto&& resp, const auto& conn) {
-        std::visit([&](auto&& resp) { detail::send_response(req, std::move(resp), conn); }, std::move(resp));
-    };
+    ep->writer = make_endpt_writer_callback();
 
     // Add
     return add_http_endpoint(std::move(ep));

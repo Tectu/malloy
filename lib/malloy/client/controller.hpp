@@ -8,6 +8,8 @@
 #include "../core/http/response.hpp"
 #include "../core/http/type_traits.hpp"
 #include "../core/error.hpp"
+#include "malloy/core/http/utils.hpp"
+
 
 #if MALLOY_FEATURE_TLS
     #include "http/connection_tls.hpp"
@@ -66,10 +68,19 @@ namespace malloy::client
     public:
         struct config :
             malloy::controller::config {
+
+            /**
+             * @brief Agent string used for connections
+             * @details Set as the User-Agent in http headers
+             */
+            std::string user_agent{"malloy-client"};
         };
 
         controller() = default;
         ~controller() override = default;
+
+        [[nodiscard("init may fail")]]
+        auto init(config cfg) -> bool;
 
 #if MALLOY_FEATURE_TLS
         /**
@@ -97,25 +108,7 @@ namespace malloy::client
         requires concepts::http_callback<Callback, Filter>
         [[nodiscard]] auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
-
-            // Create connection
-            auto conn = std::make_shared<http::connection_plain<ReqBody, Filter, std::decay_t<Callback>>>(
-                m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                io_ctx()
-            );
-
-            // Run
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-            conn->run(
-                std::to_string(req.port()).c_str(),
-                req,
-                std::move(prom),
-                std::move(done),
-                std::move(filter)
-            );
-
-            return err_channel;
+            return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
         }
 
 #if MALLOY_FEATURE_TLS
@@ -128,27 +121,7 @@ namespace malloy::client
         requires concepts::http_callback<Callback, Filter>
         [[nodiscard]] auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
-            check_tls();
-
-            // Create connection
-            auto conn = std::make_shared<http::connection_tls<ReqBody, Filter, std::decay_t<Callback>>>(
-                m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                io_ctx(),
-                *m_tls_ctx
-            );
-
-            // Run
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-            conn->run(
-                std::to_string(req.port()).c_str(),
-                req,
-                std::move(prom),
-                std::move(done),
-                std::move(filter)
-            );
-
-            return err_channel;
+            return make_http_connection<true>(std::move(req), std::forward<Callback>(done), std::move(filter));
         }
 
         /**
@@ -219,8 +192,13 @@ namespace malloy::client
          */
         auto run() -> bool;
 
+        auto start() -> bool;
+
+    protected:
+
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+        config m_cfg;
 
         /**
          * Checks whether the TLS context was initialized.
@@ -231,6 +209,44 @@ namespace malloy::client
             // Check whether TLS context was initialized
             if (!m_tls_ctx)
                 throw std::logic_error("TLS context not initialized.");
+        }
+
+        template<bool isHttps, malloy::http::concepts::body Body, typename Callback, typename Filter>
+        auto make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter) -> std::future<malloy::error_code>
+        {
+
+            std::promise<malloy::error_code> prom;
+            auto err_channel = prom.get_future();
+            [this](auto&& cb) {
+#if MALLOY_FEATURE_TLS
+                if constexpr (isHttps) {
+                    init_tls();
+                    cb(std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
+                        m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                        io_ctx(),
+                        *m_tls_ctx));
+                    return;
+                }
+#endif
+                cb(std::make_shared<http::connection_plain<Body, Filter, std::decay_t<Callback>>>(
+                    m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                    io_ctx()));
+            }([this, prom = std::move(prom), req = std::move(req), filter = std::forward<Filter>(filter), cb = std::forward<Callback>(cb)](auto&& conn) mutable {
+                if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
+                    req.set(malloy::http::field::user_agent, m_cfg.user_agent);
+                }
+
+                // Run
+                conn->run(
+                    std::to_string(req.port()).c_str(),
+                    req,
+                    std::move(prom),
+                    std::forward<Callback>(cb),
+                    std::forward<Filter>(filter));
+            });
+
+            return err_channel;
+
         }
 
         template<bool isSecure>
@@ -258,7 +274,7 @@ namespace malloy::client
                             } else
 #endif
                                 return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
-                        }());
+                        }(), m_cfg.user_agent);
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
                             if (ec) {

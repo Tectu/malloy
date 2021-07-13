@@ -2,6 +2,7 @@
 
 #include "../core/controller.hpp"
 
+
 #include <memory>
 #include <filesystem>
 #include <string>
@@ -50,6 +51,12 @@ namespace malloy::server
              * to the working directory.
              */
             std::filesystem::path doc_root = ".";
+
+            /**
+             * @brief Agent string used for connections
+             * @details Set as the Server field in http headers
+             */
+            std::string agent_string{"malloy-server"};
         };
 
         controller() = default;
@@ -68,6 +75,7 @@ namespace malloy::server
          * @param cfg The configuration to use.
          * @return Whether the initialization was successful.
          */
+         [[nodiscard("init may fail")]]
         bool init(config cfg);
 
         /**
@@ -75,7 +83,7 @@ namespace malloy::server
          *
          * @return Whether starting the server was successful.
          */
-        bool start() override;
+        bool start();
 
         #if MALLOY_FEATURE_TLS
             /**

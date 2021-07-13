@@ -15,7 +15,7 @@ namespace malloy::client::concepts
         template<typename F>
         struct response_filter_body_helper {
             template<malloy::http::concepts::body T>
-            void operator()(T&& v)
+            void operator()(T&&)
             {
                 F f2;
                 typename F::header_type h2;
@@ -38,7 +38,7 @@ namespace malloy::client::concepts
             Callback cb;
 
             template<typename V>
-            void operator()(V&& v)
+            void operator()(V&&)
             {
                 using body_t = std::decay_t<V>;
                 malloy::http::response<body_t> res;
@@ -55,7 +55,7 @@ namespace malloy::client::concepts
     {
         {
             f.body_for(h)
-            } -> malloy::concepts::is_variant;
+            } -> malloy::concepts::is_variant_of_bodies;
         {
             std::visit(detail::response_filter_body_helper<F>{}, f.body_for(h))};
     };

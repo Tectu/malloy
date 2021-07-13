@@ -73,12 +73,14 @@ namespace malloy::server
          * @param connection The connection.
          */
         template<typename Body>
-        void send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection)
+        void send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection, std::string_view server_str)
         {
             // Add more information to the response
             //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works
             resp.version(req.version());
-            resp.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+            if (!malloy::http::has_field(resp, malloy::http::field::server)) {
+                resp.set(boost::beast::http::field::server, server_str);
+            }
             resp.prepare_payload();
 
             std::visit([resp = std::move(resp)](auto& c) mutable {
@@ -127,7 +129,7 @@ namespace malloy::server
          *
          * @param logger The logger instance to use.
          */
-        explicit router(std::shared_ptr<spdlog::logger> logger);
+        router(std::shared_ptr<spdlog::logger> logger, std::string server_str);
 
         /**
          * Copy constructor.
@@ -329,7 +331,7 @@ namespace malloy::server
                 auto resp = ep->handle(req, connection);
                 if (resp) {
                     // Send the response
-                    detail::send_response(req->header(), std::move(*resp), connection);
+                    detail::send_response(req->header(), std::move(*resp), connection, m_server_str);
                 }
 
                 // We're done handling this request
@@ -337,7 +339,7 @@ namespace malloy::server
             }
 
             // If we end up where we have no meaningful way of handling this request
-            detail::send_response(req->header(), malloy::http::generator::bad_request("unknown request"), connection);
+            detail::send_response(req->header(), malloy::http::generator::bad_request("unknown request"), connection, m_server_str);
         }
 
         /**
@@ -385,6 +387,14 @@ namespace malloy::server
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
         std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
+        std::string m_server_str{BOOST_BEAST_VERSION_STRING};
+
+        /// Create the lambda wrapped callback for the writer
+        auto make_endpt_writer_callback() {
+            return [this]<typename R>(const auto& req, R&& resp, const auto& conn) {
+              std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, m_server_str); }, std::forward<R>(resp));
+            };
+        }
 
         template<
             bool UsesCaptures,
@@ -400,7 +410,7 @@ namespace malloy::server
             // Build regex
             std::regex regex;
             try {
-                regex = std::move(std::regex{target.cbegin(), target.cend()});
+                regex = std::regex{target.cbegin(), target.cend()};
             } catch (const std::regex_error& e) {
                 if (m_logger)
                     m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
@@ -431,9 +441,7 @@ namespace malloy::server
                 return false;
             }
 
-            ep->writer = [this](const auto& req, auto&& resp, const auto& conn) {
-                std::visit([&, this](auto&& resp) { detail::send_response(req, std::move(resp), conn); }, std::move(resp));
-            };
+            ep->writer = make_endpt_writer_callback();
 
             // Add route
             return add_http_endpoint(std::move(ep));
