@@ -55,7 +55,7 @@ namespace malloy::client::concepts
     {
         {
             f.body_for(h)
-            } -> malloy::concepts::is_variant;
+            } -> malloy::concepts::is_variant_of_bodies;
         {
             std::visit(detail::response_filter_body_helper<F>{}, f.body_for(h))};
     };
