@@ -20,6 +20,13 @@ option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog"
 
 set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
 
+
+if (MALLOY_BUILD_SHARED) 
+    set(MALLOY_LIBRARY_TYPE SHARED)
+else()
+    set(MALLOY_LIBRARY_TYPE STATIC)
+endif()
+
 # Set dependencies accordingly
 if (MALLOY_FEATURE_TLS)
     set(MALLOY_DEPENDENCY_OPENSSL ON)
@@ -43,13 +50,13 @@ message("")
 message("---------------------")
 message("Malloy configuration:")
 message("  Build:")
-message("    Examples : " ${MALLOY_BUILD_EXAMPLES})
-message("    Tests    : " ${MALLOY_BUILD_TESTS})
-message("    Shared   : " ${MALLOY_BUILD_SHARED})
+message("    Examples     : " ${MALLOY_BUILD_EXAMPLES})
+message("    Tests        : " ${MALLOY_BUILD_TESTS})
+message("    Library Type : " ${MALLOY_LIBRARY_TYPE})
 message("  Features:")
-message("    Client   : " ${MALLOY_FEATURE_CLIENT})
-message("    Server   : " ${MALLOY_FEATURE_SERVER})
-message("    HTML     : " ${MALLOY_FEATURE_HTML})
-message("    TLS      : " ${MALLOY_FEATURE_TLS})
+message("    Client       : " ${MALLOY_FEATURE_CLIENT})
+message("    Server       : " ${MALLOY_FEATURE_SERVER})
+message("    HTML         : " ${MALLOY_FEATURE_HTML})
+message("    TLS          : " ${MALLOY_FEATURE_TLS})
 message("---------------------")
 message("")
