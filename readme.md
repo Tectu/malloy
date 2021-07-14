@@ -179,6 +179,7 @@ if(NOT malloy_POPULATED)
     FetchContent_Populate(malloy)
     set(MALLOY_BUILD_EXAMPLES OFF CACHE INTERNAL "")
     set(MALLOY_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(MALLOY_BUILD_SHARED ON CACHE INTERNAL "")
     set(MALLOY_FEATURE_CLIENT OFF CACHE INTERNAL "")
     set(MALLOY_FEATURE_SERVER ON CACHE INTERNAL "")
     set(MALLOY_FEATURE_TLS ON CACHE INTERNAL "")
@@ -204,6 +205,7 @@ Various `cmake` options are available to control the build:
 | --- | --- | --- |
 | `MALLOY_BUILD_EXAMPLES` | `ON` | Whether to build examples. |
 | `MALLOY_BUILD_TESTS` | `ON` | Whether to build the test suite(s). |
+| `MALLOY_BUILD_SHARED` | `OFF` | Whether to build shared libraries. If set to `OFF`, static libraries will be built.  |
 | `MALLOY_FEATURE_CLIENT` | `ON` | Enable client features. |
 | `MALLOY_FEATURE_SERVER` | `ON` | Enable server features. |
 | `MALLOY_FEATURE_HTML` | `ON` | Whether to enable HTML support. |
