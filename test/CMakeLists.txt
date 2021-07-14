@@ -36,3 +36,6 @@ add_test(
     NAME doctest
     COMMAND ${TARGET}
 )
+
+set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR})
+

@@ -17,6 +17,9 @@ option(MALLOY_FEATURE_HTML   "Whether to enable HTML features" ON)
 option(MALLOY_FEATURE_TLS    "Whether to enable TLS features"  OFF)
 option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog" ON)
 
+
+set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
+
 # Set dependencies accordingly
 if (MALLOY_FEATURE_TLS)
     set(MALLOY_DEPENDENCY_OPENSSL ON)

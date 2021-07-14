@@ -72,4 +72,10 @@ function(malloy_target_common_setup TARGET)
             $<$<BOOL:${WIN32}>:wsock32>
             $<$<BOOL:${WIN32}>:ws2_32>
     )
+    set_target_properties(
+        ${TARGET} 
+        PROPERTIES 
+            RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR} 
+            LIBRARY_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR}
+    )
 endfunction()
