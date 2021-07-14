@@ -8,6 +8,7 @@ project(
 )
 
 # Options
+option(MALLOY_BUILD_SHARED "Whether to build as a shared library" OFF)
 option(MALLOY_BUILD_EXAMPLES "Whether to build examples"       ON)
 option(MALLOY_BUILD_TESTS    "Whether to build tests"          ON)
 option(MALLOY_FEATURE_CLIENT "Whether to build the client"     ON)
@@ -15,6 +16,16 @@ option(MALLOY_FEATURE_SERVER "Whether to build the server"     ON)
 option(MALLOY_FEATURE_HTML   "Whether to enable HTML features" ON)
 option(MALLOY_FEATURE_TLS    "Whether to enable TLS features"  OFF)
 option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog" ON)
+
+
+set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
+
+
+if (MALLOY_BUILD_SHARED) 
+    set(MALLOY_LIBRARY_TYPE SHARED)
+else()
+    set(MALLOY_LIBRARY_TYPE STATIC)
+endif()
 
 # Set dependencies accordingly
 if (MALLOY_FEATURE_TLS)
@@ -39,12 +50,13 @@ message("")
 message("---------------------")
 message("Malloy configuration:")
 message("  Build:")
-message("    Examples : " ${MALLOY_BUILD_EXAMPLES})
-message("    Tests    : " ${MALLOY_BUILD_TESTS})
+message("    Examples     : " ${MALLOY_BUILD_EXAMPLES})
+message("    Tests        : " ${MALLOY_BUILD_TESTS})
+message("    Library Type : " ${MALLOY_LIBRARY_TYPE})
 message("  Features:")
-message("    Client   : " ${MALLOY_FEATURE_CLIENT})
-message("    Server   : " ${MALLOY_FEATURE_SERVER})
-message("    HTML     : " ${MALLOY_FEATURE_HTML})
-message("    TLS      : " ${MALLOY_FEATURE_TLS})
+message("    Client       : " ${MALLOY_FEATURE_CLIENT})
+message("    Server       : " ${MALLOY_FEATURE_SERVER})
+message("    HTML         : " ${MALLOY_FEATURE_HTML})
+message("    TLS          : " ${MALLOY_FEATURE_TLS})
 message("---------------------")
 message("")

@@ -130,4 +130,4 @@ jobs:
         run: cmake --build build
 
       - name: Run tests
-        run: ./build/test/malloy-tests
+        run: ./build/bin/malloy-tests

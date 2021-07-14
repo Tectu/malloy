@@ -5,7 +5,8 @@ include(../target_setup.cmake)
 set(TARGET "malloy-server")
 
 # Create library
-add_library(${TARGET} STATIC)
+add_library(${TARGET} ${MALLOY_LIBRARY_TYPE})
+
 
 # Apply common setup
 malloy_target_common_setup(${TARGET})
