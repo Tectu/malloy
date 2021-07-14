@@ -10,25 +10,31 @@ The main use case for this library is a C++ project which needs to embedd an HTT
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
 - High-level controller to setup I/O context, SSL context, worker threads and more
-- Client
-  - HTTP (Plain or TLS/SSL connections)
-  - Websocket (Plain or TLS/SSL connections)
-- Server
-  - HTTP
-    - Plain or TLS (SSL) connections
-    - Sessions
-  - Websocket
-    - Plain or TLS (SSL) connections
-  - Request router
+- HTTP
+  - Plain or TLS (SSL) connections
+  - Cookies
+  - Sessions
+  - Upgrading connections to WebSocket
+  - Client
+  - Server
     - Simple handlers (useful for building REST APIs)
-    - Sub-routers (nested routers)
+      - Target matching via regex
+      - Capturing groups via regex
+    - Sub-routers (nested/chained routers)
     - Redirections
     - File serving locations
-    - Automatic preflight responses (optional)
-    - Websocket endpoints
-- Cookies
+    - Preflight responses
+    - Websocket endpoints (with auto-upgrade from HTTP)
+  - Client
+    - Upgrade connections to WebSocket
+  - Server
+    - Upgrade connections to WebSocket
+- WebSocket
+  - Client
+  - Server
+  - Connections upgradable from HTTP
 - HTML
-  - Parsing HTML forms
+  - Parsing form data
 
 # Licensing
 This library is MIT licensed. Dependencies ship with their own licensing models.
