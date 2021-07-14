@@ -16,19 +16,18 @@ The following list provides an overview of the currently implemented features. S
   - Sessions
   - Upgrading connections to WebSocket
   - Client
+    - Response filters
   - Server
-    - Simple handlers (useful for building REST APIs)
-      - Target matching via regex
-      - Capturing groups via regex
-    - Sub-routers (nested/chained routers)
-    - Redirections
-    - File serving locations
-    - Preflight responses
-    - Websocket endpoints (with auto-upgrade from HTTP)
-  - Client
-    - Upgrade connections to WebSocket
-  - Server
-    - Upgrade connections to WebSocket
+    - Routing
+      - Simple handlers (useful for building REST APIs)
+        - Target matching via regex
+        - Capturing groups via regex
+      - Sub-routers (nested/chained routers)
+      - Redirections
+      - File serving locations
+      - Preflight responses
+      - Websocket endpoints (with auto-upgrade from HTTP)
+    - Request filters
 - WebSocket
   - Client
   - Server
