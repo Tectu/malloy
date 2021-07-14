@@ -8,7 +8,7 @@ project(
 )
 
 # Options
-option(MALLOY_BUILD_SHARED "Whether to build as a shared library" OFF)
+option(MALLOY_BUILD_SHARED   "Whether to build as a shared library" OFF)
 option(MALLOY_BUILD_EXAMPLES "Whether to build examples"       ON)
 option(MALLOY_BUILD_TESTS    "Whether to build tests"          ON)
 option(MALLOY_FEATURE_CLIENT "Whether to build the client"     ON)
@@ -17,10 +17,9 @@ option(MALLOY_FEATURE_HTML   "Whether to enable HTML features" ON)
 option(MALLOY_FEATURE_TLS    "Whether to enable TLS features"  OFF)
 option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog" ON)
 
-
 set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
 
-
+# Set library type to build
 if (MALLOY_BUILD_SHARED) 
     set(MALLOY_LIBRARY_TYPE SHARED)
 else()
