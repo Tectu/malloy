@@ -5,7 +5,7 @@ include(../target_setup.cmake)
 set(TARGET "malloy-core")
 
 # Create library
-add_library(${TARGET} STATIC)
+malloy_add_library(${TARGET})
 
 # Apply common setup
 malloy_target_common_setup(${TARGET})

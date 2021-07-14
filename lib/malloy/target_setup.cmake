@@ -1,3 +1,12 @@
+function(malloy_add_library NAME) # We can't use generator expressions for SHARED or STATIC
+    if (MALLOY_BUILD_SHARED) 
+        add_library(${NAME} SHARED)
+    else()
+        add_library(${NAME} STATIC)
+    endif()
+
+endfunction()
+
 function(malloy_target_common_setup TARGET)
     target_compile_features(
         ${TARGET}

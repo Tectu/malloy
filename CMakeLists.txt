@@ -8,6 +8,7 @@ project(
 )
 
 # Options
+option(MALLOY_BUILD_SHARED "Whether to build as a shared library" OFF)
 option(MALLOY_BUILD_EXAMPLES "Whether to build examples"       ON)
 option(MALLOY_BUILD_TESTS    "Whether to build tests"          ON)
 option(MALLOY_FEATURE_CLIENT "Whether to build the client"     ON)
@@ -41,6 +42,7 @@ message("Malloy configuration:")
 message("  Build:")
 message("    Examples : " ${MALLOY_BUILD_EXAMPLES})
 message("    Tests    : " ${MALLOY_BUILD_TESTS})
+message("    Shared   : " ${MALLOY_BUILD_SHARED})
 message("  Features:")
 message("    Client   : " ${MALLOY_FEATURE_CLIENT})
 message("    Server   : " ${MALLOY_FEATURE_SERVER})
