@@ -42,6 +42,13 @@ function(malloy_target_common_setup TARGET)
             $<$<BOOL:${WIN32}>:WIN32_LEAN_AND_MEAN>
             $<$<BOOL:${WIN32}>:BOOST_DATE_TIME_NO_LIB>
     )
+    if (MALLOY_LIBRARY_TYPE STREQUAL "STATIC")
+        target_compile_definitions(
+            ${TARGET}
+            PUBLIC
+                MALLOY_EXPORT_STATIC_DEFINE
+        )
+    endif()
 
     target_include_directories(
         ${TARGET}
@@ -67,5 +74,18 @@ function(malloy_target_common_setup TARGET)
         PROPERTIES 
             RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR} 
             LIBRARY_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR}
+    )
+
+    include(GenerateExportHeader)
+    generate_export_header(
+        ${TARGET}
+        BASE_NAME "malloy"
+        EXPORT_FILE_NAME "malloy_export.hpp"
+        DEPRECATED_MACRO_NAME "MALLOY_DEPRECATED"
+        NO_DEPRECATED_MACRO_NAME "MALLOY_NO_DEPRECATED"
+        EXPORT_MACRO_NAME "MALLOY_EXPORT"
+        NO_EXPORT_MACRO_NAME "MALLOY_NO_EXPORT"
+        STATIC_DEFINE "MALLOY_EXPORT_STATIC_DEFINE"
+        DEFINE_NO_DEPRECATED
     )
 endfunction()
