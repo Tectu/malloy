@@ -25,6 +25,8 @@ namespace malloy::websocket
      * @details Provides basic management of a websocket connection. Will close the
      * connection on destruction. The interface is entirely asynchronous and uses
      * callback functions
+     * @note The functions: connect, accept, disconnect, send, and read are fully threadsafe. Calls to these functions will wait asynchronously until all other
+     * queued actions are completed.
      */
     template<bool isClient>
     class connection :
@@ -81,22 +83,23 @@ namespace malloy::websocket
         void
         connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
         {
-            // Save these for later
+            queue_action([me = this->shared_from_this(), this, target, resource, done = std::forward<Callback>(done)]() mutable {
+                // Set the timeout for the operation
+                m_ws.get_lowest_layer([&, me, this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
+                    sock.expires_after(std::chrono::seconds(30));
 
-            // Set the timeout for the operation
-            m_ws.get_lowest_layer([&, me = this->shared_from_this(), this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
-                sock.expires_after(std::chrono::seconds(30));
-
-                // Make the connection on the IP address we get from a lookup
-                sock.async_connect(
-                    target,
-                    [me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
-                        if (ec) {
-                            done(ec);
-                        } else {
-                            me->on_connect(ec, ep, resource, std::forward<decltype(done)>(done));
-                        }
-                    });
+                    // Make the connection on the IP address we get from a lookup
+                    sock.async_connect(
+                        target,
+                        [me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
+                            if (ec) {
+                                done(ec);
+                            } else {
+                                me->on_connect(ec, ep, resource, std::forward<decltype(done)>(done));
+                                me->exe_next_action();
+                            }
+                        });
+                });
             });
         }
 
@@ -115,28 +118,31 @@ namespace malloy::websocket
         void
         accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done) requires(!isClient)
         {
-            // Update state
-            m_state = state::handshaking;
+            queue_action([req, done = std::forward<Callback>(done), me = this->shared_from_this(), this]() mutable {
+                // Update state
+                m_state = state::handshaking;
 
 
-            m_logger->trace("do_accept()");
+                m_logger->trace("accept()");
 
-            setup_connection();
+                setup_connection();
 
-            // Accept the websocket handshake
-            m_ws.async_accept(req, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](malloy::error_code ec) mutable {
-                m_logger->trace("on_accept()");
+                // Accept the websocket handshake
+                m_ws.async_accept(req, [this, me, done = std::forward<decltype(done)>(done)](malloy::error_code ec) mutable {
+                    m_logger->trace("on_accept()");
 
-                // Check for errors
-                if (ec) {
-                    m_logger->error("on_accept(): {}", ec.message());
-                    return;
-                }
+                    // Check for errors
+                    if (ec) {
+                        m_logger->error("on_accept(): {}", ec.message());
+                        return;
+                    }
 
-                // We're good to go
-                m_state = state::active;
+                    // We're good to go
+                    m_state = state::active;
 
-                std::invoke(std::forward<decltype(done)>(done));
+                    std::invoke(std::forward<decltype(done)>(done));
+                    exe_next_action();
+                });
             });
         }
 
@@ -147,20 +153,23 @@ namespace malloy::websocket
          */
         void disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
-            // Check state
-            if (m_state == state::closed)
-                return;
-
-            // Update state
-            m_state = state::closing;
-
-            // Issue async close
-            m_ws.async_close(why, [me = this->shared_from_this()](auto ec){
-                if (ec) {
-                    me->m_logger->error("could not close websocket: '{}'", ec.message()); // TODO: See #40
+            queue_action([this, me = this->shared_from_this(), why]{
+                // Check state
+                if (m_state == state::closed)
                     return;
-                }
-                me->on_close();
+
+                // Update state
+                m_state = state::closing;
+
+                // Issue async close
+                m_ws.async_close(why, [me = this->shared_from_this()](auto ec) {
+                    if (ec) {
+                        me->m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
+                        return;
+                    }
+                    me->on_close();
+                    me->exe_next_action();
+                });
             });
         }
 
@@ -183,7 +192,7 @@ namespace malloy::websocket
             queue_action([me = this->shared_from_this(), buff = &buff /* Capturing reference by value copies the object */, done = std::forward<decltype(done)>(done)]() mutable {
                 assert(buff != nullptr);
                 me->do_read_queued(*buff, std::forward<decltype(done)>(done));
-                });
+            });
         }
 
         /**
@@ -249,7 +258,7 @@ namespace malloy::websocket
                     }
                 });
         }
-        void setup_next_queued_action() {
+        void exe_next_action() {
             assert(!msg_queue_.empty());
 
             msg_queue_.erase(msg_queue_.begin());
@@ -265,7 +274,7 @@ namespace malloy::websocket
                              [me = this->shared_from_this(), done = std::forward<Callback>(done)](auto ec, auto size) mutable {
                                  std::invoke(std::forward<Callback>(done), ec, size);
                                  me->on_write(ec, size);
-                                 me->setup_next_queued_action();
+                                 me->exe_next_action();
                              });
         }
 
@@ -284,7 +293,7 @@ namespace malloy::websocket
                 return;
             }
             std::invoke(std::forward<Done>(done), ec, size);
-            setup_next_queued_action();
+            exe_next_action();
         }
 
         void
