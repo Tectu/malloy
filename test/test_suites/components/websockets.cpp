@@ -158,10 +158,10 @@ TEST_SUITE("websockets")
             c_ctrl.ws_connect("127.0.0.1", local_port, "/", [](auto ec, auto conn){
                     REQUIRE(!ec);
                     auto read_buff = std::make_shared<boost::beast::flat_buffer>();
-                    conn->read(*read_buff, [conn](auto ec, auto){
+                    conn->read(*read_buff, [conn, read_buff](auto ec, auto){
                         REQUIRE(!ec);
                         auto msg = std::make_shared<std::string>(bounceback);
-                        conn->send(malloy::buffer(msg->data(), msg->size()), [](auto ec, auto){
+                        conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){
                             REQUIRE(!ec);
                         });
                     });
@@ -173,12 +173,10 @@ TEST_SUITE("websockets")
                         conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){
                             CHECK(!ec);
                         });
-                        conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){
-                            CHECK(!ec);
-                        });
+
                         auto read_buff = std::make_shared<boost::beast::flat_buffer>();
                         conn->read(*read_buff, [msg, read_buff](auto ec, auto){
-                            REQUIRE(!ec);
+                            CHECK(!ec);
                             const auto data = boost::beast::buffers_to_string(read_buff->data());
                             CHECK(data == *msg);
                         });

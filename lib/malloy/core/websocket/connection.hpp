@@ -180,8 +180,9 @@ namespace malloy::websocket
         read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done)
         {
             m_logger->trace("read()");
-            queue_action([me = this->shared_from_this(), buff, done = std::forward<decltype(done)>(done)]() mutable {
-                me->do_read_queued(buff, std::forward<decltype(done)>(done));
+            queue_action([me = this->shared_from_this(), buff = &buff /* Capturing reference by value copies the object */, done = std::forward<decltype(done)>(done)]() mutable {
+                assert(buff != nullptr);
+                me->do_read_queued(*buff, std::forward<decltype(done)>(done));
                 });
         }
 
