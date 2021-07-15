@@ -24,8 +24,8 @@ int main()
     }
 
     // Setup TLS (SSL)
-    const auto& cert_path = doc_root / "malloy.cert";
-    const auto& key_path  = doc_root / "malloy.key";
+    const auto& cert_path = examples_doc_root / "malloy.cert";
+    const auto& key_path  = examples_doc_root / "malloy.key";
     if (!c.init_tls(cert_path, key_path)) {
         std::cerr<< "could not initialize TLS context." << std::endl;
         return EXIT_FAILURE;
