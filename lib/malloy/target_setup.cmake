@@ -30,9 +30,7 @@ function(malloy_target_common_setup TARGET)
                 -Wpedantic 
                 -Werror
             )
-        
     endif()
-
 
     target_compile_definitions(
         ${TARGET}
@@ -63,6 +61,7 @@ function(malloy_target_common_setup TARGET)
             $<$<BOOL:${WIN32}>:wsock32>
             $<$<BOOL:${WIN32}>:ws2_32>
     )
+
     set_target_properties(
         ${TARGET} 
         PROPERTIES 
