@@ -1,4 +1,4 @@
-#include "../../example_logger.hpp"
+#include "../../example.hpp"
 
 #include <malloy/core/html/form.hpp>
 #include <malloy/core/http/generator.hpp>
@@ -9,13 +9,11 @@
 
 int main()
 {
-    const std::filesystem::path doc_root = "../../../../examples/server/static_content";
-
     // Create malloy controller config
     malloy::server::controller::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
-    cfg.doc_root    = doc_root;
+    cfg.doc_root    = examples_doc_root;
     cfg.num_threads = 1;
     cfg.logger      = create_example_logger();
 
@@ -33,8 +31,8 @@ int main()
         using namespace malloy::http;
 
         // Serve form
-        router->add(method::get, "/", [doc_root](const auto& req) {
-            return generator::file(doc_root, "form1.html");
+        router->add(method::get, "/", [](const auto& req) {
+            return generator::file(examples_doc_root, "form1.html");
         });
 
         // Handle form submits

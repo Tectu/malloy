@@ -1,4 +1,4 @@
-#include "../../example_logger.hpp"
+#include "../../example.hpp"
 #include "../../ws_handlers.hpp"
 
 #include <malloy/client/controller.hpp>
