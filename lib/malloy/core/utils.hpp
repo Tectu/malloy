@@ -13,7 +13,6 @@ namespace malloy
     using boost::beast::buffers_to_string;
     using boost::beast::bind_front_handler;
 
-    
     /**
      * Returns an std::string which represents the raw bytes of the file.
      *
@@ -43,6 +42,52 @@ namespace malloy
         file.close();
 
         return content;
+    }
+
+    /**
+     * Convert a hex value to a decimal value.
+     *
+     * @param c The hexadecimal input.
+     * @return The decimal output.
+     */
+    [[nodiscard]]
+    static inline uint8_t hex2dec(uint8_t c)
+    {
+        if (c >= '0' && c <= '9') {
+            c -= '0';
+        }
+        else if (c >= 'a' && c <= 'f') {
+            c -= 'a' - 10;
+        }
+        else if (c >= 'A' && c <= 'F') {
+            c -= 'A' - 10;
+        }
+        return c;
+    }
+
+    /**
+     * Decodes an URL.
+     *
+     * @details This function replaces %<hex> with the corresponding characters.
+     *          See https://en.wikipedia.org/wiki/Percent-encoding
+     *
+     * @note As the replaced characters are "shorter" than the original input we can perform the
+     *       replacement in-place as long as we're somewhat careful not to fuck up.
+     *
+     * @param str The string to decode.
+     */
+    static inline void url_decode(std::string& str)
+    {
+        size_t w = 0;
+        for (size_t r = 0 ; r < str.size() ; ++r) {
+            uint8_t v = str[r];
+            if (str[r] == '%') {
+                v = hex2dec(str[++r]) << 4;
+                v |= hex2dec(str[++r]);
+            }
+            str[w++] = v;
+        }
+        str.resize(w);
     }
 
     /**

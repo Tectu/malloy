@@ -25,10 +25,13 @@ namespace malloy::html
         /**
          * Parse a request into this form.
          *
+         * @note URL decoding (optional) is only applied to values, not keys.
+         *
          * @param req The request.
+         * @param url_decoding Whether URL decoding should be applied (see `malloy::url_decode()`).
          * @return Whether the parsing was successful.
          */
-        bool parse(const malloy::http::request<>& req);
+        bool parse(const malloy::http::request<>& req, bool url_decoding = true);
 
         /**
          * Checks whether a specific key-value pair is present.

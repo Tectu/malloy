@@ -1,4 +1,5 @@
 #include "form.hpp"
+#include "../utils.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -6,7 +7,7 @@
 
 using namespace malloy::html;
 
-bool form::parse(const malloy::http::request<>& req)
+bool form::parse(const malloy::http::request<>& req, const bool url_decoding)
 {
     // Split pairs
     std::vector<std::string> pairs;
@@ -21,7 +22,12 @@ bool form::parse(const malloy::http::request<>& req)
         if (pair.size() != 2)
             continue;
 
-        m_values.try_emplace(std::move(pair[0]), std::move(pair[1]));
+        // Perform URL decoding (if supposed to)
+        std::string value = std::move(pair[1]);
+        if (url_decoding)
+            url_decode(value);
+
+        m_values.try_emplace(std::move(pair[0]), std::move(value));
     }
 
     return true;

@@ -8,5 +8,6 @@ target_sources(
         request.cpp
         websockets.cpp
         stream.cpp
+        utils_core.cpp
         controller.cpp
 )
