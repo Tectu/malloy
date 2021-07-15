@@ -179,15 +179,10 @@ namespace malloy::websocket
         void
         read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done)
         {
-            m_ws.async_read(buff, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
-                // This indicates that the connection was closed
-                if (ec == boost::beast::websocket::error::closed) {
-                    m_logger->info("on_read(): connection was closed.");
-                    m_state = state::closed;
-                    return;
-                }
-                std::invoke(std::forward<decltype(done)>(done), ec, size);
-            });
+            m_logger->trace("read()");
+            queue_action([me = this->shared_from_this(), buff, done = std::forward<decltype(done)>(done)]() mutable {
+                me->do_read_queued(buff, std::forward<decltype(done)>(done));
+                });
         }
 
         /**
@@ -205,22 +200,10 @@ namespace malloy::websocket
         send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
         {
             m_logger->trace("send(). payload size: {}", payload.size());
+            queue_action([payload, me = this->shared_from_this(), done = std::forward<Callback>(done)]() mutable {
+               me->do_write_queued(payload, std::forward<Callback>(done));
+            });
 
-            boost::asio::post(
-                m_ws.get_executor(),
-                [this, payload, me = this->shared_from_this(), done = std::forward<Callback>(done)]() mutable {
-                    msg_queue_.push_back([this, me, payload, done = std::forward<Callback>(done)]() mutable { me->m_ws.async_write(payload,
-                                                                                                                                   [me, done = std::forward<Callback>(done)](auto ec, auto size) mutable {
-                                                                                                                                       std::invoke(std::forward<Callback>(done), ec, size);
-                                                                                                                                       me->on_write(ec, size);
-                                                                                                                                   }); });
-
-                    if (msg_queue_.size() > 1) {
-                        return;
-                    } else {
-                        msg_queue_.back()();    // Execute this now
-                    }
-                });
         }
 
     private:
@@ -248,6 +231,59 @@ namespace malloy::websocket
             // Sanity check logger
             if (!m_logger)
                 throw std::invalid_argument("no valid logger provided.");
+        }
+
+        template<std::invocable<> Act>
+        void queue_action(Act&& act)
+        {
+            boost::asio::post(
+                m_ws.get_executor(),
+                [this, me = this->shared_from_this(), act = std::forward<Act>(act)]() mutable {
+                    msg_queue_.emplace_back(std::forward<Act>(act));
+
+                    if (msg_queue_.size() > 1) {
+                        return;
+                    } else {
+                        msg_queue_.back()();    // Execute this now
+                    }
+                });
+        }
+        void setup_next_queued_action() {
+            assert(!msg_queue_.empty());
+
+            msg_queue_.erase(msg_queue_.begin());
+
+            if (!msg_queue_.empty())
+                msg_queue_.front()();
+        }
+
+        template<concepts::const_buffer_sequence Buff, concepts::async_read_handler Callback>
+        void do_write_queued(const Buff& buff, Callback&& done)
+        {
+            m_ws.async_write(buff,
+                             [me = this->shared_from_this(), done = std::forward<Callback>(done)](auto ec, auto size) mutable {
+                                 std::invoke(std::forward<Callback>(done), ec, size);
+                                 me->on_write(ec, size);
+                                 me->setup_next_queued_action();
+                             });
+        }
+
+        template<concepts::dynamic_buffer Buff, concepts::async_read_handler Done>
+        void do_read_queued(Buff& buff, Done&& cb) {
+            m_ws.async_read(buff, [me = this->shared_from_this(), cb = std::forward<Done>(cb)](auto&&... args) mutable {
+                me->on_read_done(std::forward<Done>(cb), std::forward<decltype(args)>(args)...);
+            });
+        }
+        template<concepts::async_read_handler Done>
+        void on_read_done(Done&& done, malloy::error_code ec, std::size_t size) {
+            // This indicates that the connection was closed
+            if (ec == boost::beast::websocket::error::closed) {
+                m_logger->info("on_read(): connection was closed.");
+                m_state = state::closed;
+                return;
+            }
+            std::invoke(std::forward<Done>(done), ec, size);
+            setup_next_queued_action();
         }
 
         void
@@ -329,12 +365,6 @@ namespace malloy::websocket
 
             m_logger->trace("on_write() wrote: '{}' bytes", size);
 
-            assert(!msg_queue_.empty());
-
-            msg_queue_.erase(msg_queue_.begin());
-
-            if (!msg_queue_.empty())
-                msg_queue_.front()();
         }
 
         void
