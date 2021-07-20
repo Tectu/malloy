@@ -5,6 +5,71 @@
 TEST_SUITE("components - utils - core")
 {
     using namespace malloy;
+    using namespace std::literals;
+
+    TEST_CASE("string splitting")
+    {
+        SUBCASE("empty string")
+        {
+            const auto& out = split(""sv, ","sv);
+            REQUIRE_EQ(out.size(), 0);
+        }
+
+        SUBCASE("empty delimiter")
+        {
+            const std::string_view in{ "hello,world,test!"sv };
+            const auto& out = split(in, ""sv);
+            REQUIRE_EQ(out.size(), 1);
+            CHECK_EQ(out[0], in);
+        }
+
+        SUBCASE("empty string and empty delimiter")
+        {
+            const auto& out = split(""sv, ""sv);
+            REQUIRE_EQ(out.size(), 0);
+        }
+
+        SUBCASE("one-char delimiter")
+        {
+            const std::string_view in{ "hello,world,test!"sv };
+            const auto& out = split(in, ",");
+            REQUIRE_EQ(out.size(), 3);
+            CHECK_EQ(out[0], "hello");
+            CHECK_EQ(out[1], "world");
+            CHECK_EQ(out[2], "test!");
+        }
+
+        SUBCASE("multi-char delimiter")
+        {
+            const std::string_view in{ "hello,;,world,;,test!"sv };
+            const auto& out = split(in, ",;,");
+            REQUIRE_EQ(out.size(), 3);
+            CHECK_EQ(out[0], "hello");
+            CHECK_EQ(out[1], "world");
+            CHECK_EQ(out[2], "test!");
+
+        }
+
+        SUBCASE("leading delimiter")
+        {
+            const std::string_view in{ ",hello,world,test!"sv };
+            const auto& out = split(in, ","sv);
+            REQUIRE_EQ(out.size(), 3);
+            CHECK_EQ(out[0], "hello");
+            CHECK_EQ(out[1], "world");
+            CHECK_EQ(out[2], "test!");
+        }
+
+        SUBCASE("trailing delimiter")
+        {
+            const std::string_view in{ "hello,world,test!,"sv };
+            const auto& out = split(in, ","sv);
+            REQUIRE_EQ(out.size(), 3);
+            CHECK_EQ(out[0], "hello");
+            CHECK_EQ(out[1], "world");
+            CHECK_EQ(out[2], "test!");
+        }
+    }
 
     TEST_CASE("URL decoding")
     {

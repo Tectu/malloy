@@ -33,7 +33,13 @@ The following list provides an overview of the currently implemented features. S
   - Server
   - Connections upgradable from HTTP
 - HTML
-  - Parsing form data
+  - Forms
+    - Supported encoding types
+      - `application/x-www-form-urlencoded`
+      - `multipart/form-data`
+      - `text/plain`
+    - Parsing
+    - Rendering
 
 # Licensing
 This library is MIT licensed. Dependencies ship with their own licensing models.
