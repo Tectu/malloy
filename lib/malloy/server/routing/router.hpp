@@ -37,6 +37,11 @@ namespace spdlog
     class logger;
 }
 
+namespace malloy::html
+{
+    class page;
+}
+
 namespace malloy::server
 {
 
@@ -250,6 +255,17 @@ namespace malloy::server
          * @return Whether adding the endpoint was successful.
          */
         bool add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
+
+        #if MALLOY_FEATURE_HTML
+            /**
+             * Adds an endpoint for an HTML page.
+             *
+             * @param target The target path.
+             * @param page The HTML page.
+             * @return Whether adding the endpoint was successful.
+             */
+            bool add_page(std::string&& target, std::shared_ptr<html::page> page);
+        #endif
 
         /**
          * Handle a request.
