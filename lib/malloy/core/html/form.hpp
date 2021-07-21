@@ -228,6 +228,12 @@ namespace malloy::html
         populate_values_from_parsed_data();
 
         /**
+         * Clears the pre-population values of all fields.
+         */
+        void
+        clear_values();
+
+        /**
          * Dumps the key-value pairs as a readable string.
          *
          * @return Key-value pairs represented as a string
