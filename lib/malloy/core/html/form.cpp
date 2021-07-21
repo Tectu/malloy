@@ -175,6 +175,13 @@ form::populate_values_from_parsed_data()
         field.populate_value_from_parsed_data();
 }
 
+void
+form::clear_values()
+{
+    for (auto& field : m_fields)
+        field.value = { };
+}
+
 std::string
 form::dump() const
 {

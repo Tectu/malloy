@@ -34,6 +34,7 @@ namespace malloy::html
          * Populate the `value` member from the parsed data `content` member.
          *
          * @note This will ignore/skip if the `type` is "password".
+         * @note This will ignore/skip if the `type` is "file".
          */
         void
         populate_value_from_parsed_data()
@@ -41,7 +42,9 @@ namespace malloy::html
             if (!data)
                 return;
 
-            if (type == "password")
+            if (type == "password" ||
+                type == "file"
+            )
                 return;
 
             value = data->content;
@@ -219,9 +222,16 @@ namespace malloy::html
          * parsing to pre-populate form fields so the user doesn't have to re-enter everything.
          *
          * @note This will skip/ignore any fields of HTML type 'password'.
+         * @note This will skip/ignore any fields of HTML type 'file'.
          */
         void
         populate_values_from_parsed_data();
+
+        /**
+         * Clears the pre-population values of all fields.
+         */
+        void
+        clear_values();
 
         /**
          * Dumps the key-value pairs as a readable string.

@@ -69,7 +69,7 @@ std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
     return session;
 }
 
-void manager::destroy(const request<>& req, response<>&)
+void manager::destroy(const request<>& req, response<>& resp)
 {
     if (!m_storage)
         return;
@@ -85,7 +85,9 @@ void manager::destroy(const request<>& req, response<>&)
     // Destroy session in storage
     m_storage->destroy(std::string{ ses_id.value() });
 
-    // ToDo: Send back an expired session cookie to the client.
+    // Send back an invalid/expired cookie
+    cookie_clear c(m_cookie_name);
+    resp.add_cookie(c);
 }
 
 std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
