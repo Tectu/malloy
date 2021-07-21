@@ -149,6 +149,7 @@ namespace malloy::http::sessions
                 .name = std::move(cookie_name),
                 .value = m_id,
                 .max_age = { },
+                .expires = "",
                 .domain = "",
                 .path = "",
                 .secure = true,
