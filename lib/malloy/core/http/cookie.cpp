@@ -10,6 +10,9 @@ std::string cookie::to_string() const
 
     ss << name << "=" << value << ";";
 
+    if (!expires.empty())
+        ss << "Expires=" << expires << ";";
+
     if (max_age != std::chrono::seconds::zero())
         ss << "Max-Age=" << max_age.count() << ";";
 
