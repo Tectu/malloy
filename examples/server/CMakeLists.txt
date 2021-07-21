@@ -1,3 +1,4 @@
+add_subdirectory(applications)
 add_subdirectory(basic)
 add_subdirectory(routing)
 add_subdirectory(session)

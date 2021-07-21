@@ -18,7 +18,7 @@ form_renderer_basic::render(const form& f) const
 
         else {
             if (!field.label.empty())
-                ss << "  <label for=\"" << field.html_id() << "\">" << field.label << ":</label>\n";
+                ss << "  <label for=\"" << field.html_id() << "\">" << field.label << "</label>\n";
             ss << "  <input id=\"" << field.html_id() << "\" type=\"" << field.type << "\" name=\"" + field.name + "\" placeholder=\"" << field.placeholder << "\" value=\"" << field.value << "\"/>\n";
         }
     }

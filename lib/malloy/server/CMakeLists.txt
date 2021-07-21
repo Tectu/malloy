@@ -19,7 +19,10 @@ add_subdirectory(websocket)
 # Add sources
 target_sources(
     ${TARGET}
+    PUBLIC
+        application.hpp
     PRIVATE
+        application.cpp
         controller.cpp
         controller.hpp
         listener.cpp
