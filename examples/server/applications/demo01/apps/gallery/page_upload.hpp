@@ -36,7 +36,7 @@ namespace apps::gallery::pages
                 m_form->add_field({
                     .name = "image",
                     .type = "file",
-                    .label = "File:",
+                    .label = "Image:",
                     .required = true,
                 });
 

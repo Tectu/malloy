@@ -1,5 +1,6 @@
-#include "../../../example.hpp"
+#include "database.hpp"
 #include "apps/gallery/app.hpp"
+#include "../../../example.hpp"
 
 #include <malloy/core/html/page.hpp>
 #include <malloy/server/controller.hpp>
@@ -26,9 +27,17 @@ int main()
         return EXIT_FAILURE;
     }
 
+    // Setup the database
+    auto db = std::make_shared<database>(cfg.logger->clone("database"));
+    if (!db->init()) {
+        cfg.logger->critical("could not initialize database.");
+        return EXIT_FAILURE;
+    }
+
     // Create top-level applications
     auto app_gallery = std::make_shared<apps::gallery::app>(
-        cfg.logger->clone("apps | gallery")
+        cfg.logger->clone("apps | gallery"),
+        db
     );
 
     // Initialize router
