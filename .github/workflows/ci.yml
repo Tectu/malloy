@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         boost_version: [1.74.0, 1.75.0, 1.76.0]
-        shared: [ON, OFF]
+        #shared: [ON, OFF]
         toolchain:
           [
             {

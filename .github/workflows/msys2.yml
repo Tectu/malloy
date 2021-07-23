@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         boost_version: [1.76.0]
-        shared: [ON, OFF]
+        #shared: [ON, OFF]
         malloy_tls: [ON, OFF]
 
     runs-on: windows-latest
