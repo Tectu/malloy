@@ -13,9 +13,19 @@ if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
     FetchContent_Declare( 
         fmt 
         GIT_REPOSITORY https://github.com/fmtlib/fmt
-        GIT_TAG v7.1.3 # Highest supported by spdlog 1.8.3 
+        GIT_TAG 7.1.3 # Highest supported by spdlog 1.8.3 
     )
-    FetchContent_MakeAvailable(fmt)
+    FetchContent_GetProperties(fmt)
+    if (NOT fmt_POPULATED) 
+        FetchContent_Populate(fmt)
+        set(MALLOY_TMP_VAR1 ${BUILD_SHARED_LIBS})
+        set(BUILD_SHARED_LIBS ${MALLOY_BUILD_SHARED}) # fmt has no specific shared option
+
+        add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR})
+
+        set(BUILD_SHARED_LIBS ${MALLOY_TMP_VAR1})
+
+    endif()
 
 else() 
     find_package(fmt REQUIRED)

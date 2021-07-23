@@ -37,6 +37,7 @@ function(malloy_target_common_setup TARGET)
         PUBLIC
             BOOST_BEAST_USE_STD_STRING_VIEW
             SPDLOG_FMT_EXTERNAL
+            $<$<BOOL:${MALLOY_BUILD_SHARED}>:FMT_SHARED>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:MALLOY_FEATURE_TLS>
             $<$<BOOL:${WIN32}>:UNICODE>
             $<$<BOOL:${WIN32}>:_UNICODE>
