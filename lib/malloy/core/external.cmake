@@ -13,7 +13,6 @@ find_package(
 # spdlog
 ########################################################################################################################
 if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
-
     FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog

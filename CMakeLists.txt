@@ -19,7 +19,6 @@ option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog"
 
 set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
 
-
 # Set library type to build
 if (MALLOY_BUILD_SHARED) 
     set(MALLOY_LIBRARY_TYPE SHARED)
