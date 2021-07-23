@@ -13,6 +13,7 @@ find_package(
 # spdlog
 ########################################################################################################################
 if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
+
     FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog
@@ -21,7 +22,7 @@ if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
     FetchContent_GetProperties(spdlog)
     if (NOT spdlog_POPULATED) 
         FetchContent_Populate(spdlog)
-        set(SPDLOG_BUILD_SHARED ${MALLOY_BUILD_SHARED})
+        set(SPDLOG_BUILD_SHARED ${MALLOY_BUILD_SHARED} CACHE INTERNAL "")
 
         add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
     endif()
