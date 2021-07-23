@@ -18,7 +18,13 @@ if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
         GIT_REPOSITORY https://github.com/gabime/spdlog
         GIT_TAG        v1.8.3
     )
-    FetchContent_MakeAvailable(spdlog)
+    FetchContent_GetProperties(spdlog)
+    if (NOT spdlog_POPULATED) 
+        FetchContent_Populate(spdlog)
+        set(SPDLOG_BUILD_SHARED ${MALLOY_BUILD_SHARED} CACHE INTERNAL "")
+
+        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
+    endif()
 else()
     find_package(spdlog REQUIRED)
 endif()
