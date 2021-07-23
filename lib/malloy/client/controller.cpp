@@ -5,6 +5,8 @@
     #include <boost/certify/https_verification.hpp>
 #endif
 
+#include <fmt/format.h>
+
 using namespace malloy::client;
 
 namespace fs = std::filesystem;
