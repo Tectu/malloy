@@ -4,7 +4,8 @@
 #include <malloy/core/http/request.hpp>
 #include <malloy/core/error.hpp>
 #include <malloy/core/websocket/connection.hpp>
-#include <spdlog/fmt/fmt.h>
+
+#include <fmt/format.h>
 
 #include <thread>
 
