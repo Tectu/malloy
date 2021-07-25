@@ -1,4 +1,4 @@
-#include <malloy/core/html/page.hpp>
+#include <malloy/server/app_fw/page.hpp>
 
 #include <sstream>
 
@@ -6,7 +6,7 @@ namespace apps::gallery::pages
 {
 
     class overview :
-        public malloy::html::page
+        public malloy::server::app_fw::page
     {
     public:
         [[nodiscard]]

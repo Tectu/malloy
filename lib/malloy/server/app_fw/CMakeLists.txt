@@ -1,0 +1,11 @@
+target_sources(
+    ${TARGET}
+    PUBLIC
+        app.hpp
+        page.hpp
+        renderer.hpp
+    PRIVATE
+        app.cpp
+        page.cpp
+        renderer.cpp
+)

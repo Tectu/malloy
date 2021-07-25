@@ -57,6 +57,8 @@ Required:
 
 Optional:
 - OpenSSL
+- [nlohmann/json](https://github.com/nlohmann/json)
+- [pantor/inja](https://github.com/pantor/inja)
 
 # Examples
 A variety of examples can be found in the `/examples` directory.
@@ -224,3 +226,5 @@ Various `cmake` options are available to control the build:
 | `MALLOY_FEATURE_TLS` | `OFF` | Whether to enable TLS support. |
 | `MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD` | `ON` | Whether to use `FetchContent()` to pull in `spdlog`. If set to `OFF`, `find_package()` is used instead. |
 | `MALLOY_DEPENDENCY_FMT_DOWNLOAD` | `ON` | Same as above but for `fmt` |
+| `MALLOY_DEPENDENCY_JSON_DOWNLOAD` | `ON` | Same as above but for `[nlohmann/json](https://github.com/nlohmann/json)` |
+| `MALLOY_DEPENDENCY_INJA_DOWNLOAD` | `ON` | Same as above but for `[pantor/inja](https://github.com/pantor/inja)` |

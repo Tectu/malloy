@@ -9,7 +9,11 @@ find_package(
     REQUIRED
 )
 
-if (MALLOY_DEPENDENCY_FMT_DOWNLOAD) 
+
+########################################################################################################################
+# fmt
+########################################################################################################################
+if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
     FetchContent_Declare( 
         fmt 
         GIT_REPOSITORY https://github.com/fmtlib/fmt
@@ -30,6 +34,7 @@ if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
 else() 
     find_package(fmt REQUIRED)
 endif()
+
 
 ########################################################################################################################
 # spdlog
@@ -61,4 +66,41 @@ if (MALLOY_DEPENDENCY_OPENSSL)
         OpenSSL
         REQUIRED
     )
+endif()
+
+
+########################################################################################################################
+# nlohmann/json: https://github.com/nlohmann/json
+########################################################################################################################
+if (MALLOY_DEPENDENCY_JSON_DOWNLOAD)
+    FetchContent_Declare(
+        json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.9.1
+    )
+    FetchContent_MakeAvailable(json)
+endif()
+
+
+########################################################################################################################
+# pantor/inja: https://github.com/pantor/inja
+########################################################################################################################
+if (MALLOY_DEPENDENCY_INJA)
+    FetchContent_Declare(
+        inja
+        GIT_REPOSITORY https://github.com/pantor/inja.git
+        GIT_TAG        4d5a7d1c33ab7b05947010e0d16b33d18f04ce4d
+    )
+    FetchContent_GetProperties(inja)
+    if(NOT inja_POPULATED)
+        FetchContent_Populate(inja)
+        set(INJA_USE_EMBEDDED_JSON OFF  CACHE INTERNAL "")
+        set(INJA_INSTALL           OFF CACHE INTERNAL "")
+        set(INJA_EXPORT            ON  CACHE INTERNAL "")
+        set(INJA_BUILD_TESTS       OFF CACHE INTERNAL "")
+        set(BUILD_TESTING          OFF CACHE INTERNAL "")
+        set(BUILD_BENCHMARK        OFF CACHE INTERNAL "")
+        set(COVERALLS              OFF CACHE INTERNAL "")
+        add_subdirectory(${inja_SOURCE_DIR} ${inja_BINARY_DIR})
+    endif()
 endif()

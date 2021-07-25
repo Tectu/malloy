@@ -5,10 +5,8 @@ target_sources(
         form_renderer.hpp
         html.hpp
         multipart_parser.hpp
-        page.hpp
     PRIVATE
         form.cpp
         form_renderer.cpp
         multipart_parser.cpp
-        page.cpp
 )

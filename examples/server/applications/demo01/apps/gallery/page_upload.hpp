@@ -1,6 +1,6 @@
 #include <malloy/core/html/form.hpp>
 #include <malloy/core/html/form_renderer.hpp>
-#include <malloy/core/html/page.hpp>
+#include <malloy/server/app_fw/page.hpp>
 
 #include <sstream>
 
@@ -8,7 +8,7 @@ namespace apps::gallery::pages
 {
 
     class upload:
-        public malloy::html::page
+        public malloy::server::app_fw::page
     {
     public:
         std::shared_ptr<malloy::html::form> m_form;

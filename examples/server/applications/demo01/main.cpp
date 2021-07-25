@@ -2,7 +2,6 @@
 #include "apps/gallery/app.hpp"
 #include "../../../example.hpp"
 
-#include <malloy/core/html/page.hpp>
 #include <malloy/server/controller.hpp>
 #include <malloy/server/routing/router.hpp>
 
@@ -34,9 +33,20 @@ int main()
         return EXIT_FAILURE;
     }
 
+    // Setup application environment
+    server::app_fw::app::environment env {
+        .site {
+            .base_url = "http://127.0.0.1:8080",
+        },
+        .app {
+            .base_url = "http://127.0.0.1:8080",
+        }
+    };
+
     // Create top-level applications
     auto app_gallery = std::make_shared<apps::gallery::app>(
         cfg.logger->clone("apps | gallery"),
+        env,
         db
     );
 

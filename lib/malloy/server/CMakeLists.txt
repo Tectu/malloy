@@ -7,7 +7,6 @@ set(TARGET "malloy-server")
 # Create library
 add_library(${TARGET} ${MALLOY_LIBRARY_TYPE})
 
-
 # Apply common setup
 malloy_target_common_setup(${TARGET})
 
@@ -15,18 +14,19 @@ malloy_target_common_setup(${TARGET})
 add_subdirectory(http)
 add_subdirectory(routing)
 add_subdirectory(websocket)
+if (MALLOY_FEATURE_APPFW)
+    add_subdirectory(app_fw)
+endif()
 
 # Add sources
 target_sources(
     ${TARGET}
     PUBLIC
-        application.hpp
-    PRIVATE
-        application.cpp
-        controller.cpp
         controller.hpp
-        listener.cpp
         listener.hpp
+    PRIVATE
+        controller.cpp
+        listener.cpp
 )
 
 # Link libraries
@@ -34,4 +34,6 @@ target_link_libraries(
     ${TARGET}
     PUBLIC
         malloy-core
+        $<$<BOOL:${MALLOY_FEATURE_APPFW}>:pantor::inja>
+        $<$<BOOL:${MALLOY_FEATURE_APPFW}>:nlohmann_json::nlohmann_json>
 )

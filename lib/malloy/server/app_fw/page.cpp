@@ -1,7 +1,7 @@
 #include "page.hpp"
-#include "../http/generator.hpp"
+#include "../../core/http/generator.hpp"
 
-using namespace malloy::html;
+using namespace malloy::server::app_fw;
 
 malloy::http::response<>
 page::response() const

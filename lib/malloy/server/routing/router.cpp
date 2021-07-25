@@ -1,9 +1,6 @@
 #include "router.hpp"
 #include "endpoint_http_files.hpp"
 #include "endpoint_http_redirect.hpp"
-#if MALLOY_FEATURE_HTML
-    #include "../../core/html/page.hpp"
-#endif
 
 #include <algorithm>
 #include <stdexcept>
@@ -192,21 +189,3 @@ bool router::add_websocket(std::string&& resource, typename websocket::connectio
     // Add
     return add_websocket_endpoint(std::move(ep));
 }
-
-#if MALLOY_FEATURE_HTML
-    bool router::add_page(std::string&& target, std::shared_ptr<html::page> page)
-    {
-        // Sanity check
-        if (!page)
-            return false;
-
-        // Add endpoint
-        return add(
-            malloy::http::method::get,
-            std::move(target),
-            [page = std::move(page)]([[maybe_unused]] const auto& req) {
-                return page->response();
-            }
-        );
-    }
-#endif

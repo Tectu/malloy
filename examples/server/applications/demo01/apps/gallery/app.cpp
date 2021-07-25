@@ -9,9 +9,10 @@ using namespace apps::gallery;
 
 app::app(
     std::shared_ptr<spdlog::logger> logger,
+    malloy::server::app_fw::app::environment env,
     std::shared_ptr<database> db
 ) :
-    malloy::server::application(std::move(logger), "gallery"),
+    malloy::server::app_fw::app(std::move(logger), "gallery", std::move(env)),
     m_db(std::move(db))
 {
     using namespace malloy::http;
@@ -29,10 +30,10 @@ app::app(
     // Setup router
     {
         // Root page
-        m_router->add_page("", m_page_overview);
+        add_page("", m_page_overview);
 
         // Upload page
-        m_router->add_page("/upload", m_page_upload);
+        add_page("/upload", m_page_upload);
 
         // Upload POST endpoint
         m_router->add(method::post, "/upload", [this](const auto& req){

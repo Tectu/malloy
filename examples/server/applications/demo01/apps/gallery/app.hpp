@@ -1,6 +1,6 @@
 #pragma once
 
-#include <malloy/server/application.hpp>
+#include <malloy/server/app_fw/app.hpp>
 
 class database;
 
@@ -13,11 +13,12 @@ namespace apps::gallery
     }
 
     class app :
-        public malloy::server::application
+        public malloy::server::app_fw::app
     {
     public:
         app(
             std::shared_ptr<spdlog::logger> logger,
+            malloy::server::app_fw::app::environment env,
             std::shared_ptr<database> db
         );
 

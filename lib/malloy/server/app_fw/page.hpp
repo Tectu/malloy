@@ -1,8 +1,10 @@
 #pragma once
 
-#include "../http/response.hpp"
+#include "../../core/http/response.hpp"
 
-namespace malloy::html
+#include <string>
+
+namespace malloy::server::app_fw
 {
 
     /**
