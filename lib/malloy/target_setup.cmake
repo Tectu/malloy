@@ -36,7 +36,8 @@ function(malloy_target_common_setup TARGET)
         ${TARGET}
         PUBLIC
             BOOST_BEAST_USE_STD_STRING_VIEW
-            $<$<BOOL:${MALLOY_FEATURE_HTML}>:MALLOY_FEATURE_HTML>
+            SPDLOG_FMT_EXTERNAL
+            $<$<BOOL:${MALLOY_BUILD_SHARED}>:FMT_SHARED>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:MALLOY_FEATURE_TLS>
             $<$<BOOL:${WIN32}>:UNICODE>
             $<$<BOOL:${WIN32}>:_UNICODE>
@@ -62,12 +63,13 @@ function(malloy_target_common_setup TARGET)
         PUBLIC
             spdlog::spdlog
             Boost::headers
+            fmt::fmt
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::Crypto>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::SSL>
             $<$<AND:$<BOOL:${MALLOY_FEATURE_TLS}>,$<BOOL:${WIN32}>>:crypt32>        # ToDo: This is only needed when MALLOY_FEATURE_CLIENT is ON
+            $<$<BOOL:${WIN32}>:ws2_32>
         PRIVATE
             $<$<BOOL:${WIN32}>:wsock32>
-            $<$<BOOL:${WIN32}>:ws2_32>
     )
 
     set_target_properties(

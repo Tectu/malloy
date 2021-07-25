@@ -9,7 +9,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/beast/core/error.hpp>
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include <concepts>
