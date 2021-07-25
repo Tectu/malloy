@@ -1,33 +1,29 @@
-#include <malloy/server/app_fw/page.hpp>
-
-#include <sstream>
+#include <malloy/server/app_fw/page_content.hpp>
 
 namespace apps::gallery::pages
 {
 
     class overview :
-        public malloy::server::app_fw::page
+        public malloy::server::app_fw::page_content
     {
     public:
-        [[nodiscard]]
-        std::string
-        render() const override
+        explicit
+        overview(
+            std::shared_ptr<malloy::server::app_fw::page_master> master_page
+        ) :
+            malloy::server::app_fw::page_content(
+                "assets/templates/overview.html",
+                std::move(master_page)
+            )
         {
-            std::ostringstream ss;
+        }
 
-            ss << "<html>\n";
-            ss << "  <head>\n";
-            ss << "    <link rel=\"stylesheet\" href=\"./assets/style.css\"\n";
-            ss << "  </head>\n";
-            ss << "  <body>\n";
-            ss << "    <h1>Gallery - Overview</h1>\n";
-            ss << "    <div>\n";
-            ss << "      <a href=\"http://127.0.0.1:8080/gallery/upload\">Upload</a>\n";
-            ss << "    </div>\n";
-            ss << "  </body>\n";
-            ss << "</html>\n";
-
-            return ss.str();
+    protected:
+        [[nodiscard]]
+        nlohmann::json
+        data() const override
+        {
+            return { };
         }
     };
 

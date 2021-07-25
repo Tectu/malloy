@@ -23,12 +23,8 @@ namespace malloy::server::app_fw
 
         [[nodiscard]]
         virtual
-        std::string
-        render() const = 0;
-
-        [[nodiscard]]
         malloy::http::response<>
-        response() const;
+        render() const = 0;
     };
 
 }

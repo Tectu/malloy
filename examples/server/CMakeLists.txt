@@ -6,7 +6,6 @@ add_subdirectory(custom-request-filter)
 
 if (MALLOY_FEATURE_HTML)
     add_subdirectory(html_form)
-    add_subdirectory(html_pages)
 endif()
 if (MALLOY_FEATURE_TLS)
     add_subdirectory(ssl)

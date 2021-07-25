@@ -3,9 +3,12 @@ target_sources(
     PUBLIC
         app.hpp
         page.hpp
+        page_content.hpp
+        page_master.hpp
         renderer.hpp
     PRIVATE
         app.cpp
-        page.cpp
+        page_content.cpp
+        page_master.cpp
         renderer.cpp
 )

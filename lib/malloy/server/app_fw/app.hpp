@@ -84,7 +84,6 @@ namespace malloy::server::app_fw
          * @param page The HTML page.
          * @return Whether adding the endpoint was successful.
          */
-        [[nodiscard]]
         bool
         add_page(std::string&& resource, std::shared_ptr<page>);
 
@@ -94,7 +93,6 @@ namespace malloy::server::app_fw
          * @param app The sub-application.
          * @return Whether adding the sub-application was successful.
          */
-        [[nodiscard]]
         bool
         add_subapp(std::shared_ptr<app> app);
 

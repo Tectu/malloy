@@ -10,7 +10,8 @@ using namespace apps::gallery;
 app::app(
     std::shared_ptr<spdlog::logger> logger,
     malloy::server::app_fw::app::environment env,
-    std::shared_ptr<database> db
+    std::shared_ptr<database> db,
+    std::shared_ptr<malloy::server::app_fw::page_master> master_page
 ) :
     malloy::server::app_fw::app(std::move(logger), "gallery", std::move(env)),
     m_db(std::move(db))
@@ -23,8 +24,8 @@ app::app(
 
     // Setup pages
     {
-        m_page_overview = std::make_shared<pages::overview>();
-        m_page_upload = std::make_shared<pages::upload>();
+        m_page_overview = std::make_shared<pages::overview>(master_page);
+        m_page_upload = std::make_shared<pages::upload>(master_page);
     }
 
     // Setup router

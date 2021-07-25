@@ -42,7 +42,7 @@ app::add_page(std::string&& target, std::shared_ptr<page> page)
         malloy::http::method::get,
         std::move(target),
         [page = std::move(page)]([[maybe_unused]] const auto& req) {
-            return page->response();
+            return page->render();
         }
     );
 }

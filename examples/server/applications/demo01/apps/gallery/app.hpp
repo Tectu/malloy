@@ -4,6 +4,11 @@
 
 class database;
 
+namespace malloy::server::app_fw
+{
+    class page_master;
+}
+
 namespace apps::gallery
 {
     namespace pages
@@ -19,7 +24,8 @@ namespace apps::gallery
         app(
             std::shared_ptr<spdlog::logger> logger,
             malloy::server::app_fw::app::environment env,
-            std::shared_ptr<database> db
+            std::shared_ptr<database> db,
+            std::shared_ptr<malloy::server::app_fw::page_master> master_page
         );
 
         ~app() noexcept override = default;

@@ -1,5 +1,5 @@
+#include "app.hpp"
 #include "database.hpp"
-#include "apps/gallery/app.hpp"
 #include "../../../example.hpp"
 
 #include <malloy/server/controller.hpp>
@@ -43,9 +43,9 @@ int main()
         }
     };
 
-    // Create top-level applications
-    auto app_gallery = std::make_shared<apps::gallery::app>(
-        cfg.logger->clone("apps | gallery"),
+    // Create top-level application
+    auto toplevel_app = std::make_shared<app>(
+        cfg.logger->clone("app"),
         env,
         db
     );
@@ -54,8 +54,8 @@ int main()
     {
         auto router = c.router();
 
-        // Add top-level apps
-        router->add_subrouter("/gallery", app_gallery->router());
+        // Add top-level app
+        router->add_subrouter("/apps", toplevel_app->router());
     }
 
     // Start

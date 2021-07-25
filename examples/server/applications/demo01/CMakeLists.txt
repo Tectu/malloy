@@ -21,8 +21,11 @@ target_sources(
     ${TARGET}
     PRIVATE
         main.cpp
+        app.cpp
+        app.hpp
         database.cpp
         database.hpp
+        page_master.hpp
 )
 
 target_link_libraries(
