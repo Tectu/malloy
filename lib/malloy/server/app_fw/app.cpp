@@ -1,8 +1,5 @@
 #include "app.hpp"
 #include "page.hpp"
-#include "../routing/router.hpp"
-
-#include <spdlog/logger.h>
 
 #include <stdexcept>
 
@@ -45,33 +42,4 @@ app::add_page(std::string&& target, std::shared_ptr<page> page)
             return page->render();
         }
     );
-}
-
-bool
-app::add_subapp(std::shared_ptr<app> app)
-{
-    // Sanity check
-    if (!app)
-        return false;
-
-    // Sanity check
-    if (app->name().empty()) {
-        m_logger->warn("cannot create sub-app. name must not be empty.");
-        return false;
-    }
-
-    // Add the sub-router
-    const std::string target_base = "/" + std::string{ app->name() };
-    if (!m_router->add_subrouter(target_base, app->router())) {
-        m_logger->error("could not add router of sub-app");
-        return false;
-    }
-
-    // Log
-    m_logger->debug("added sub-application \"{}\"", app->name());
-
-    // House keeping
-    m_subapps.emplace_back(std::move(app));
-
-    return true;
 }

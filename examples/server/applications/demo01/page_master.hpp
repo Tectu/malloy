@@ -5,7 +5,7 @@ class page_master :
 {
 public:
     page_master() :
-        malloy::server::app_fw::page_master("assets/templates/master.html")
+        malloy::server::app_fw::page_master("../../examples/server/applications/demo01/assets/templates/master.html")
     {
     }
 
@@ -14,6 +14,10 @@ private:
     nlohmann::json
     data() const override
     {
-        return { };
+        nlohmann::json j;
+
+        j["system"]["assets_base_url"] = "http://127.0.0.1:8080";
+
+        return j;
     }
 };

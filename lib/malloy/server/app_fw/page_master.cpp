@@ -17,7 +17,7 @@ page_master::render_impl(const nlohmann::json& data, const page_content* content
     using namespace malloy::http;
 
     // Sanity check
-    if (std::filesystem::is_regular_file(m_tmpl_path))
+    if (!std::filesystem::is_regular_file(m_tmpl_path))
         return generator::server_error("could not locate master template file.");
 
     // Render

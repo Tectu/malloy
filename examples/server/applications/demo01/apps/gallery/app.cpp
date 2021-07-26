@@ -8,24 +8,26 @@
 using namespace apps::gallery;
 
 app::app(
-    std::shared_ptr<spdlog::logger> logger,
-    malloy::server::app_fw::app::environment env,
     std::shared_ptr<database> db,
     std::shared_ptr<malloy::server::app_fw::page_master> master_page
 ) :
-    malloy::server::app_fw::app(std::move(logger), "gallery", std::move(env)),
-    m_db(std::move(db))
+    m_db(std::move(db)),
+    m_master_page(std::move(master_page))
 {
-    using namespace malloy::http;
-
     // Sanity check database
     if (!m_db)
         throw std::invalid_argument("no valid database provided.");
+}
+
+bool
+app::init()
+{
+    using namespace malloy::http;
 
     // Setup pages
     {
-        m_page_overview = std::make_shared<pages::overview>(master_page);
-        m_page_upload = std::make_shared<pages::upload>(master_page);
+        m_page_overview = std::make_shared<pages::overview>(m_master_page);
+        m_page_upload = std::make_shared<pages::upload>(m_master_page);
     }
 
     // Setup router
@@ -69,4 +71,6 @@ app::app(
             return generator::redirect(status::see_other, "");
         });
     }
+
+    return true;
 }

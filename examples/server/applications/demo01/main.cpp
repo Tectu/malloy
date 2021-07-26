@@ -36,10 +36,11 @@ int main()
     // Setup application environment
     server::app_fw::app::environment env {
         .site {
-            .base_url = "http://127.0.0.1:8080",
+            .base_url       = "http://127.0.0.1:8080",
         },
         .app {
-            .base_url = "http://127.0.0.1:8080",
+            .base_url       = "http://127.0.0.1:8080",
+            .assets_fs_path = "../../examples/server/applications/demo01/assets",
         }
     };
 
@@ -49,6 +50,10 @@ int main()
         env,
         db
     );
+    if (!toplevel_app->init()) {
+        cfg.logger->critical("initializing top-level app failed.");
+        return EXIT_FAILURE;
+    }
 
     // Initialize router
     {

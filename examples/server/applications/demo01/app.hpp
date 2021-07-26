@@ -20,6 +20,9 @@ public:
 
     ~app() override = default;
 
+    [[nodiscard]]
+    bool init() override;
+
 private:
     std::shared_ptr<database> m_db;
     std::shared_ptr<page_master> m_master_page;
