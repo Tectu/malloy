@@ -30,8 +30,7 @@ if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
         set(BUILD_SHARED_LIBS ${MALLOY_TMP_VAR1})
 
     endif()
-
-else() 
+else()
     find_package(fmt REQUIRED)
 endif()
 
