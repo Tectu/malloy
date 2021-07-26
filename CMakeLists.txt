@@ -26,7 +26,6 @@ else()
     set(MALLOY_EXPORT_SYMBOLS OFF)
 endif()
 
-
 if (MALLOY_EXPORT_SYMBOLS)
     set(MALLOY_TMP_WINEXPORT_ALL ${CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS})
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # See: https://cmake.org/cmake/help/latest/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html
