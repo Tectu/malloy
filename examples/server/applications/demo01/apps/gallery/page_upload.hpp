@@ -1,8 +1,8 @@
+#include "../../form_renderer.hpp"
+
 #include <malloy/core/html/form.hpp>
 #include <malloy/core/html/form_renderer.hpp>
 #include <malloy/server/app_fw/page_content.hpp>
-
-#include <sstream>
 
 namespace apps::gallery::pages
 {
@@ -27,7 +27,7 @@ namespace apps::gallery::pages
                 // Create form
                 m_form = std::make_shared<malloy::html::form>(
                     malloy::http::method::post,
-                    "http://127.0.0.1:8080/gallery/upload",
+                    "http://127.0.0.1:8080/apps/gallery/upload",
                     malloy::html::form::encoding::multipart
                 );
 
@@ -60,14 +60,15 @@ namespace apps::gallery::pages
         nlohmann::json
         data() const override
         {
-            malloy::html::form_renderer_basic fr;
             nlohmann::json j;
 
-            j["form"] = fr.render(*m_form);
+            j["form"] = m_form_renderer.render(*m_form);
 
             return j;
         }
 
+    private:
+        form_renderer m_form_renderer;
     };
 
 }
