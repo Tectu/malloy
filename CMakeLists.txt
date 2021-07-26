@@ -23,6 +23,17 @@ option(MALLOY_DEPENDENCY_INJA_DOWNLOAD "Whether to automatically fetch pantor/in
 
 set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
 
+if (MSVC AND MALLOY_BUILD_SHARED)
+    set(MALLOY_EXPORT_SYMBOLS ON)
+else()
+    set(MALLOY_EXPORT_SYMBOLS OFF)
+endif()
+
+if (MALLOY_EXPORT_SYMBOLS)
+    set(MALLOY_TMP_WINEXPORT_ALL ${CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS})
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # See: https://cmake.org/cmake/help/latest/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html
+endif()
+
 # Set library type to build
 if (MALLOY_BUILD_SHARED) 
     set(MALLOY_LIBRARY_TYPE SHARED)
@@ -80,3 +91,7 @@ message("    JSON          : " ${MALLOY_DEPENDENCY_JSON})
 message("    inja          : " ${MALLOY_DEPENDENCY_INJA})
 message("-------------------------------")
 message("")
+
+if (MALLOY_EXPORT_SYMBOLS)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ${MALLOY_TMP_WINEXPORT_ALL}) # Reset global var
+endif()

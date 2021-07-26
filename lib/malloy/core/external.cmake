@@ -1,5 +1,9 @@
 include(FetchContent)
 
+set(MALLOY_TMP_BINDIR ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR})
+
+
 ########################################################################################################################
 # Boost
 ########################################################################################################################
@@ -14,7 +18,7 @@ find_package(
 # fmt
 ########################################################################################################################
 if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
-    FetchContent_Declare( 
+    FetchContent_Declare(
         fmt 
         GIT_REPOSITORY https://github.com/fmtlib/fmt
         GIT_TAG 8.0.1 # Supported by spdlog 1.9.0
@@ -103,3 +107,5 @@ if (MALLOY_DEPENDENCY_INJA)
         add_subdirectory(${inja_SOURCE_DIR} ${inja_BINARY_DIR})
     endif()
 endif()
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MALLOY_TMP_BINDIR})    # Reset global var
