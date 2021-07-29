@@ -151,14 +151,15 @@ TEST_SUITE("websockets")
 {
     constexpr uint16_t port = 13312;
 
-    TEST_CASE("interleaved send/reads") {
+    TEST_CASE("queued send/reads") {
         constexpr uint16_t local_port = 13313;
         constexpr auto bounceback = "Hello";
-        ws_roundtrip(local_port, [](auto& c_ctrl){
-            c_ctrl.ws_connect("127.0.0.1", local_port, "/", [](auto ec, auto conn){
+        
+        ws_roundtrip(local_port, [&](auto& c_ctrl){
+            c_ctrl.ws_connect("127.0.0.1", local_port, "/", [&](auto ec, auto conn){
                     REQUIRE(!ec);
                     auto read_buff = std::make_shared<boost::beast::flat_buffer>();
-                    conn->read(*read_buff, [conn, read_buff](auto ec, auto){
+                    conn->read(*read_buff, [&, conn, read_buff](auto ec, auto){
                         REQUIRE(!ec);
                         auto msg = std::make_shared<std::string>(bounceback);
                         conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){
@@ -166,9 +167,9 @@ TEST_SUITE("websockets")
                         });
                     });
             });
-        }, [](auto& s_ctrl){
-                s_ctrl.router()->add_websocket("/", [](const auto& req, auto conn){
-                    conn->accept(req, [conn]{
+        }, [&](auto& s_ctrl){
+                s_ctrl.router()->add_websocket("/", [&](const auto& req, auto conn){
+                    conn->accept(req, [&, conn]{
                         auto msg = std::make_shared<std::string>(bounceback);
                         conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){
                             CHECK(!ec);

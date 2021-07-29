@@ -192,10 +192,17 @@ namespace malloy::websocket
         read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done)
         {
             m_logger->trace("read()");
-            queue_action([me = this->shared_from_this(), buff = &buff /* Capturing reference by value copies the object */, done = std::forward<decltype(done)>(done)]() mutable {
+            m_read_queue.push([this, me = this->shared_from_this(), buff = &buff /* Capturing reference by value copies the object */, done = std::forward<decltype(done)>(done)]() mutable -> boost::asio::awaitable<void> {
                 assert(buff != nullptr);
-                me->do_read_queued(*buff, std::forward<decltype(done)>(done));
-            });
+                std::size_t size{0};
+                boost::system::error_code ec;
+                try {
+                    size = co_await m_ws.async_read(*buff, boost::asio::use_awaitable);
+                } catch (const boost::system::system_error& e) {
+                    ec = e.code();
+                }
+                std::invoke(std::forward<decltype(done)>(done), ec, size);
+            }());
         }
 
         /**
@@ -265,10 +272,7 @@ namespace malloy::websocket
 
         template<concepts::dynamic_buffer Buff, concepts::async_read_handler Done>
         void do_read_queued(Buff& buff, Done&& cb) {
-            m_ws.async_read(buff, [me = this->shared_from_this(), cb = std::forward<Done>(cb)](auto&&... args) mutable {
-                me->on_read_done(std::forward<Done>(cb), std::forward<decltype(args)>(args)...);
-            });
-        }
+                    }
         template<concepts::async_read_handler Done>
         void on_read_done(Done&& done, malloy::error_code ec, std::size_t size) {
             // This indicates that the connection was closed
