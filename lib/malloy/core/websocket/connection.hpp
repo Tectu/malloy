@@ -42,7 +42,8 @@ namespace malloy::websocket
             handshaking,
             active,
             closing,
-            closed
+            closed,
+            inactive, // Initial state
         };
 
         /**
@@ -86,24 +87,28 @@ namespace malloy::websocket
         void
         connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
         {
-            queue_action([me = this->shared_from_this(), this, target, resource, done = std::forward<Callback>(done)]() mutable {
+
+            if (m_state != state::inactive) {
+                throw std::logic_error{"connect() called on already active websocket connection"};
+            }
                 // Set the timeout for the operation
-                m_ws.get_lowest_layer([&, me, this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
+                m_ws.get_lowest_layer([&, me = this->shared_from_this(), this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
                     sock.expires_after(std::chrono::seconds(30));
 
                     // Make the connection on the IP address we get from a lookup
                     sock.async_connect(
                         target,
-                        [me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
+                        [this, me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
                             if (ec) {
                                 done(ec);
                             } else {
-                                me->on_connect(ec, ep, resource, std::forward<decltype(done)>(done));
-                                me->exe_next_action();
+                            me->on_connect(ec, ep, resource, [this, done = std::forward<Callback>(done)](auto ec) mutable { 
+                                go_active();
+                                std::invoke(std::forward<decltype(done)>(done), ec);
+                                    });
                             }
                         });
                 });
-            });
         }
 
         /**
@@ -121,31 +126,32 @@ namespace malloy::websocket
         void
         accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done) requires(!isClient)
         {
-            queue_action([req, done = std::forward<Callback>(done), me = this->shared_from_this(), this]() mutable {
-                // Update state
-                m_state = state::handshaking;
+            if (m_state != state::inactive) {
+                throw std::logic_error{"accept() called on already active websocket connection"};
+            }
+
+            // Update state
+            m_state = state::handshaking;
 
 
-                m_logger->trace("accept()");
+            m_logger->trace("accept()");
 
-                setup_connection();
+            setup_connection();
 
-                // Accept the websocket handshake
-                m_ws.async_accept(req, [this, me, done = std::forward<decltype(done)>(done)](malloy::error_code ec) mutable {
-                    m_logger->trace("on_accept()");
+            // Accept the websocket handshake
+            m_ws.async_accept(req, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](malloy::error_code ec) mutable {
+                m_logger->trace("on_accept()");
 
-                    // Check for errors
-                    if (ec) {
-                        m_logger->error("on_accept(): {}", ec.message());
-                        return;
-                    }
+                // Check for errors
+                if (ec) {
+                    m_logger->error("on_accept(): {}", ec.message());
+                    return;
+                }
 
-                    // We're good to go
-                    m_state = state::active;
+                // We're good to go
+                go_active();
 
-                    std::invoke(std::forward<decltype(done)>(done));
-                    exe_next_action();
-                });
+                std::invoke(std::forward<decltype(done)>(done));
             });
         }
 
@@ -156,24 +162,30 @@ namespace malloy::websocket
          */
         void disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
-            queue_action([this, me = this->shared_from_this(), why]{
-                // Check state
-                if (m_state == state::closed)
-                    return;
+            if (m_state == state::closed || m_state == state::closing) {
+                throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
+            }
+            auto build_act = [this, why]() mutable -> boost::asio::awaitable<void> {
+                // Check we haven't been beaten
+                if (m_state == state::closed || m_state == state::closing)
+                    return boost::asio::awaitable<void>{};
 
                 // Update state
                 m_state = state::closing;
 
                 // Issue async close
-                m_ws.async_close(why, [me = this->shared_from_this()](auto ec) {
-                    if (ec) {
-                        me->m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
-                        return;
-                    }
-                    me->on_close();
-                    me->exe_next_action();
-                });
-            });
+                const auto ec = co_await m_ws.async_close(why, boost::asio::use_awaitable); 
+
+                if (ec) {
+                    m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
+                } else {
+                    on_close();
+                }
+            };
+
+            // We queue in both read and write, and whichever gets there first wins 
+            m_write_queue.push(build_act());
+            m_read_queue.push(build_act());
         }
 
         /**
@@ -247,8 +259,7 @@ namespace malloy::websocket
         act_queue_t m_write_queue;
         act_queue_t m_read_queue;
 
-
-        enum state m_state = state::closed;
+        std::atomic<state> m_state{state::inactive};
 
         connection(
             std::shared_ptr<spdlog::logger> logger, stream&& ws, std::string agent_str) :
@@ -263,27 +274,13 @@ namespace malloy::websocket
                 throw std::invalid_argument("no valid logger provided.");
         }
 
-        template<std::invocable<> Act>
-        void queue_action(Act&& act)
-        {
-        }
-        void exe_next_action() {
+        
+        void go_active() {
+            m_state = state::active;
+            m_read_queue.run();
+            m_write_queue.run();
         }
 
-        template<concepts::dynamic_buffer Buff, concepts::async_read_handler Done>
-        void do_read_queued(Buff& buff, Done&& cb) {
-                    }
-        template<concepts::async_read_handler Done>
-        void on_read_done(Done&& done, malloy::error_code ec, std::size_t size) {
-            // This indicates that the connection was closed
-            if (ec == boost::beast::websocket::error::closed) {
-                m_logger->info("on_read(): connection was closed.");
-                m_state = state::closed;
-                return;
-            }
-            std::invoke(std::forward<Done>(done), ec, size);
-            exe_next_action();
-        }
 
         void
         setup_connection()

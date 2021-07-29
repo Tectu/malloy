@@ -23,10 +23,17 @@ public:
     void push(act_t act) {
         boost::asio::post(ioc_, [this, act = std::move(act)]() mutable -> void { 
             acts_.push(std::move(act));
-            if (acts_.size() == 1) {
-                boost::asio::co_spawn(ioc_, exe_next(), boost::asio::use_future);
+            if (acts_.size() == 1 && running_) {
+                run();
             }
         });
+    }
+    /**
+     * @brief Starts the queue running, if it isn't already
+     */
+    void run() {
+        running_ = true;
+        boost::asio::co_spawn(ioc_, exe_next(), boost::asio::use_future);
     }
 
 
@@ -45,6 +52,7 @@ private:
 
     ioc_t ioc_;
     acts_t acts_;
+    std::atomic_bool running_{false};
 
 
 };
