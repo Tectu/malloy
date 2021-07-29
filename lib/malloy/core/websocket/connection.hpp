@@ -6,6 +6,7 @@
 #include "../utils.hpp"
 #include "../websocket/stream.hpp"
 #include "malloy/core/detail/action_queue.hpp"
+#include "malloy/core/detail/task.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
@@ -169,23 +170,19 @@ namespace malloy::websocket
                 // Check we haven't been beaten
                 if (m_state == state::closed || m_state == state::closing)
                     return boost::asio::awaitable<void>{};
+                return do_disconnect(why);
 
-                // Update state
-                m_state = state::closing;
-
-                // Issue async close
-                const auto ec = co_await m_ws.async_close(why, boost::asio::use_awaitable); 
-
-                if (ec) {
-                    m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
-                } else {
-                    on_close();
-                }
             };
 
             // We queue in both read and write, and whichever gets there first wins 
             m_write_queue.push(build_act);
             m_read_queue.push(build_act);
+        }
+        auto force_disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal) -> malloy::detail::async_task {
+            if (m_state == state::closed || m_state == state::closing) {
+                throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
+            }
+            co_await do_disconnect(why);
         }
 
         /**
@@ -296,6 +293,19 @@ namespace malloy::websocket
                     [this, agent_field](boost::beast::websocket::request_type& req) {
                         req.set(agent_field, m_agent_string);
                     }));
+        }
+        auto do_disconnect(boost::beast::websocket::close_reason why) -> boost::asio::awaitable<void> {
+            // Update state
+            m_state = state::closing;
+
+            const auto ec = co_await m_ws.async_close(why, boost::asio::use_awaitable); 
+
+            if (ec) {
+                m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
+            } else {
+                on_close();
+            }
+
         }
 
         void
