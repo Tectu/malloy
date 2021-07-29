@@ -73,10 +73,10 @@ namespace malloy::websocket
         }
 #endif
 
-		template<concepts::const_buffer_sequence Buff, concepts::async_read_handler Callback>
-		void async_write(const Buff& buffers, Callback&& done)
+		template<concepts::const_buffer_sequence Buff, typename Callback>
+		auto async_write(const Buff& buffers, Callback&& done)
 		{
-			std::visit([&buffers, done = std::forward<Callback>(done)](auto& stream) mutable { return stream.async_write(buffers, std::forward<Callback>(done)); }, m_underlying_conn);
+			return std::visit([&buffers, done = std::forward<Callback>(done)](auto& stream) mutable { return stream.async_write(buffers, std::forward<Callback>(done)); }, m_underlying_conn);
 		}
 
 		template<concepts::const_buffer_sequence Buff>
@@ -85,10 +85,10 @@ namespace malloy::websocket
 			return std::visit([&buffers](auto& stream) mutable { return stream.write(buffers); }, m_underlying_conn);
 		}
 
-		template<concepts::dynamic_buffer Buff, concepts::async_read_handler Callback>
-		void async_read(Buff& buff, Callback&& done)
+		template<concepts::dynamic_buffer Buff, typename Callback>
+		auto async_read(Buff& buff, Callback&& done)
 		{
-			std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { s.async_read(buff, std::forward<Callback>(done)); }, m_underlying_conn);
+			return std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { return s.async_read(buff, std::forward<Callback>(done)); }, m_underlying_conn);
 		}
 
 		template<concepts::dynamic_buffer Buff>

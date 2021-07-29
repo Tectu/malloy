@@ -5,6 +5,7 @@
 #include "../type_traits.hpp"
 #include "../utils.hpp"
 #include "../websocket/stream.hpp"
+#include "malloy/core/detail/action_queue.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
@@ -32,6 +33,8 @@ namespace malloy::websocket
     class connection :
         public std::enable_shared_from_this<connection<isClient>>
     {
+        using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
+        using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
     public:
         using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
         enum class state
@@ -210,10 +213,17 @@ namespace malloy::websocket
         send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
         {
             m_logger->trace("send(). payload size: {}", payload.size());
-            queue_action([payload, me = this->shared_from_this(), done = std::forward<Callback>(done)]() mutable {
-               me->do_write_queued(payload, std::forward<Callback>(done));
-            });
-
+            m_write_queue.push([buff = payload, done = std::forward<Callback>(done), this, me = this->shared_from_this()]() mutable -> boost::asio::awaitable<void> {
+                boost::system::error_code ec;
+                std::size_t size{0};
+                try {
+                    size = co_await m_ws.async_write(buff, boost::asio::use_awaitable);
+                } catch (const boost::system::system_error& e) {
+                    ec = e.code();
+                }
+                std::invoke(std::forward<Callback>(done), ec, size);
+                me->on_write(ec, size);
+            }());
         }
 
     private:
@@ -224,11 +234,12 @@ namespace malloy::websocket
         };
 
         enum sending_state m_sending_state = sending_state::idling;
-
-        std::vector<std::function<void()>> msg_queue_;
         std::shared_ptr<spdlog::logger> m_logger;
         stream m_ws;
         std::string m_agent_string;
+        act_queue_t m_write_queue;
+        act_queue_t m_read_queue;
+
 
         enum state m_state = state::closed;
 
@@ -236,7 +247,9 @@ namespace malloy::websocket
             std::shared_ptr<spdlog::logger> logger, stream&& ws, std::string agent_str) :
             m_logger(std::move(logger)),
             m_ws{std::move(ws)},
-            m_agent_string{std::move(agent_str)}
+            m_agent_string{std::move(agent_str)},
+            m_write_queue{boost::asio::make_strand(m_ws.get_executor())},
+            m_read_queue{boost::asio::make_strand(m_ws.get_executor())}
         {
             // Sanity check logger
             if (!m_logger)
@@ -246,36 +259,8 @@ namespace malloy::websocket
         template<std::invocable<> Act>
         void queue_action(Act&& act)
         {
-            boost::asio::post(
-                m_ws.get_executor(),
-                [this, me = this->shared_from_this(), act = std::forward<Act>(act)]() mutable {
-                    msg_queue_.emplace_back(std::forward<Act>(act));
-
-                    if (msg_queue_.size() > 1) {
-                        return;
-                    } else {
-                        msg_queue_.back()();    // Execute this now
-                    }
-                });
         }
         void exe_next_action() {
-            assert(!msg_queue_.empty());
-
-            msg_queue_.erase(msg_queue_.begin());
-
-            if (!msg_queue_.empty())
-                msg_queue_.front()();
-        }
-
-        template<concepts::const_buffer_sequence Buff, concepts::async_read_handler Callback>
-        void do_write_queued(const Buff& buff, Callback&& done)
-        {
-            m_ws.async_write(buff,
-                             [me = this->shared_from_this(), done = std::forward<Callback>(done)](auto ec, auto size) mutable {
-                                 std::invoke(std::forward<Callback>(done), ec, size);
-                                 me->on_write(ec, size);
-                                 me->exe_next_action();
-                             });
         }
 
         template<concepts::dynamic_buffer Buff, concepts::async_read_handler Done>

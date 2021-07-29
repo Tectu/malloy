@@ -5,17 +5,20 @@
 #include <boost/asio/use_future.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 
 #include <queue>
 #include <coroutine>
 
 namespace malloy::detail {
 
+template<typename Executor>
 class action_queue {
     using act_t = boost::asio::awaitable<void>;
     using acts_t = std::queue<act_t>;
+    using ioc_t = boost::asio::strand<Executor>;
 public:
-    explicit action_queue(boost::asio::io_context& ioc) : ioc_{ioc} {}
+    explicit action_queue(ioc_t ioc) : ioc_{std::move(ioc)} {}
 
     void push(act_t act) {
         boost::asio::post(ioc_, [this, act = std::move(act)]() mutable -> void { 
@@ -40,7 +43,7 @@ private:
         
     }
 
-    boost::asio::io_context& ioc_;
+    ioc_t ioc_;
     acts_t acts_;
 
 
