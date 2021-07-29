@@ -184,8 +184,8 @@ namespace malloy::websocket
             };
 
             // We queue in both read and write, and whichever gets there first wins 
-            m_write_queue.push(build_act());
-            m_read_queue.push(build_act());
+            m_write_queue.push(build_act);
+            m_read_queue.push(build_act);
         }
 
         /**
@@ -214,7 +214,7 @@ namespace malloy::websocket
                     ec = e.code();
                 }
                 std::invoke(std::forward<decltype(done)>(done), ec, size);
-            }());
+            });
         }
 
         /**
@@ -242,7 +242,7 @@ namespace malloy::websocket
                 }
                 std::invoke(std::forward<Callback>(done), ec, size);
                 me->on_write(ec, size);
-            }());
+            });
         }
 
     private:

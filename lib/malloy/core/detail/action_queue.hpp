@@ -14,7 +14,7 @@ namespace malloy::detail {
 
 template<typename Executor>
 class action_queue {
-    using act_t = boost::asio::awaitable<void>;
+    using act_t = std::function<boost::asio::awaitable<void>()>;
     using acts_t = std::queue<act_t>;
     using ioc_t = boost::asio::strand<Executor>;
 public:
@@ -38,11 +38,11 @@ public:
 
 
 private:
-    auto exe_next() -> act_t {
+    auto exe_next() -> boost::asio::awaitable<void> {
         if (!acts_.empty()) {
             co_await boost::asio::post(ioc_, boost::asio::use_awaitable);
             auto act = std::move(acts_.front());
-            co_await std::move(act);
+            co_await std::invoke(std::move(act));
             assert(!acts_.empty());
             acts_.pop();
             co_await exe_next();
