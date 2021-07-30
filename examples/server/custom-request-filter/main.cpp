@@ -8,21 +8,22 @@ namespace fs = std::filesystem;
 
 constexpr auto download_path = "./downloads";
 
-struct request_filter {
+struct request_filter
+{
 	using request_type = malloy::http::request<boost::beast::http::file_body>;
 	using header_type = malloy::http::request_header<>;
 
-	void setup_body(const header_type& header, typename request_type::body_type::value_type& file) const {
+	void setup_body(const header_type& header, typename request_type::body_type::value_type& file) const
+	{
 		auto path = std::filesystem::path{ download_path };
 		path += malloy::http::resource_string(header);
-		if (!fs::exists(path)) {
+		if (!fs::exists(path))
 			fs::create_directories(path.parent_path());
-		}
+
 		malloy::error_code ec;
 		file.open(path.string().c_str(), boost::beast::file_mode::write, ec);
-		if (ec) {
+		if (ec)
 			spdlog::error("Failed to open download path: '{}'", ec.message());
-		}
 	}
 
 };
@@ -38,7 +39,6 @@ int main() {
 	cfg.doc_root = "/";
 
 	spdlog::set_level(spdlog::level::debug);
-
 
 	if (!ctrl.init(cfg)) {
 		spdlog::critical("Failed to init server controller");

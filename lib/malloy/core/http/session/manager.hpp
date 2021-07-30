@@ -63,11 +63,25 @@ namespace malloy::http::sessions
         manager& operator=(manager&& rhs) noexcept = delete;
 
         /**
+         * Get an existing session (if any).
+         *
+         * @param req The HTTP request.
+         * @return The session (if any).
+         *
+         * @sa start()
+         */
+        [[nodiscard]]
+        std::shared_ptr<session> get(const request<>& req);
+
+        /**
          * Get an existing session (if any) or create a new one.
          *
          * @param req The request.
          * @param resp The response.
          * @return The session.
+         *
+         * @sa get()
+         * @sa delete()
          */
         [[nodiscard]]
         std::shared_ptr<session> start(const request<>& req, response<>& resp);
@@ -77,6 +91,8 @@ namespace malloy::http::sessions
          *
          * @param req The request.
          * @param resp The response.
+         *
+         * @sa start()
          */
         void destroy(const request<>& req, response<>& resp);
 

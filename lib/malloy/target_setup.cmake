@@ -30,20 +30,27 @@ function(malloy_target_common_setup TARGET)
                 -Wpedantic 
                 -Werror
             )
-        
     endif()
-
 
     target_compile_definitions(
         ${TARGET}
         PUBLIC
             BOOST_BEAST_USE_STD_STRING_VIEW
+            SPDLOG_FMT_EXTERNAL
+            $<$<BOOL:${MALLOY_BUILD_SHARED}>:FMT_SHARED>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:MALLOY_FEATURE_TLS>
             $<$<BOOL:${WIN32}>:UNICODE>
             $<$<BOOL:${WIN32}>:_UNICODE>
             $<$<BOOL:${WIN32}>:WIN32_LEAN_AND_MEAN>
             $<$<BOOL:${WIN32}>:BOOST_DATE_TIME_NO_LIB>
     )
+    if (MALLOY_LIBRARY_TYPE STREQUAL "STATIC")
+        target_compile_definitions(
+            ${TARGET}
+            PUBLIC
+                MALLOY_EXPORT_STATIC_DEFINE
+        )
+    endif()
 
     target_include_directories(
         ${TARGET}
@@ -56,17 +63,32 @@ function(malloy_target_common_setup TARGET)
         PUBLIC
             spdlog::spdlog
             Boost::headers
+            fmt::fmt
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::Crypto>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::SSL>
             $<$<AND:$<BOOL:${MALLOY_FEATURE_TLS}>,$<BOOL:${WIN32}>>:crypt32>        # ToDo: This is only needed when MALLOY_FEATURE_CLIENT is ON
+            $<$<BOOL:${WIN32}>:ws2_32>
         PRIVATE
             $<$<BOOL:${WIN32}>:wsock32>
-            $<$<BOOL:${WIN32}>:ws2_32>
     )
+
     set_target_properties(
         ${TARGET} 
         PROPERTIES 
             RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR} 
             LIBRARY_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR}
+    )
+
+    include(GenerateExportHeader)
+    generate_export_header(
+        ${TARGET}
+        BASE_NAME "malloy"
+        EXPORT_FILE_NAME "malloy_export.hpp"
+        DEPRECATED_MACRO_NAME "MALLOY_DEPRECATED"
+        NO_DEPRECATED_MACRO_NAME "MALLOY_NO_DEPRECATED"
+        EXPORT_MACRO_NAME "MALLOY_EXPORT"
+        NO_EXPORT_MACRO_NAME "MALLOY_NO_EXPORT"
+        STATIC_DEFINE "MALLOY_EXPORT_STATIC_DEFINE"
+        DEFINE_NO_DEPRECATED
     )
 endfunction()

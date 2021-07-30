@@ -11,7 +11,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/beast/core/error.hpp>
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include <concepts>
@@ -324,6 +324,8 @@ namespace malloy::websocket
                 m_logger->error("on_connect(): {}", ec.message());
                 return;
             }
+            m_ws.get_lowest_layer([](auto& s) { s.expires_never(); }); // websocket has its own timeout system that conflicts
+
 
             // Update the m_host string. This will provide the value of the
             // Host HTTP header during the WebSocket handshake.

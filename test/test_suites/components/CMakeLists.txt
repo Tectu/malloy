@@ -5,9 +5,11 @@ target_sources(
         response.cpp
         router.cpp
         endpoints.cpp
+        html_multipart_parser.cpp
         request.cpp
         websockets.cpp
         stream.cpp
         utils_core.cpp
+        utils_core_http.cpp
         controller.cpp
 )

@@ -2,7 +2,11 @@ target_sources(
     ${TARGET}
     PUBLIC
         form.hpp
+        form_renderer.hpp
         html.hpp
+        multipart_parser.hpp
     PRIVATE
         form.cpp
+        form_renderer.cpp
+        multipart_parser.cpp
 )

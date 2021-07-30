@@ -15,6 +15,24 @@ manager::manager(std::shared_ptr<storage> storage) :
         throw std::invalid_argument("no valid storage provided.");
 }
 
+std::shared_ptr<session> manager::get(const request<>& req)
+{
+    // Sanity check
+    if (!m_storage)
+        return { };
+
+    // Get session ID
+    const auto& ses_id = get_id(req);
+    if (!ses_id.has_value())
+        return { };
+
+    // Acquire mutex
+    std::lock_guard lock(m_lock);
+
+    // Check if storage has a session for this ID
+    return m_storage->get(ses_id.value());
+}
+
 std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
 {
     // Nothing to do if no storage was provided
@@ -51,7 +69,7 @@ std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
     return session;
 }
 
-void manager::destroy(const request<>& req, response<>&)
+void manager::destroy(const request<>& req, response<>& resp)
 {
     if (!m_storage)
         return;
@@ -67,7 +85,9 @@ void manager::destroy(const request<>& req, response<>&)
     // Destroy session in storage
     m_storage->destroy(std::string{ ses_id.value() });
 
-    // ToDo: Send back an expired session cookie to the client.
+    // Send back an invalid/expired cookie
+    cookie_clear c(m_cookie_name);
+    resp.add_cookie(c);
 }
 
 std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
@@ -88,19 +108,7 @@ std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
 
 bool manager::is_valid(const request<>& req)
 {
-    if (!m_storage)
-        return false;
-
-    // Get session ID
-    const auto& ses_id = get_id(req);
-    if (!ses_id.has_value())
-        return false;
-
-    // Acquire mutex
-    std::lock_guard lock(m_lock);
-
-    // Check if storage has a session for this ID
-    return m_storage->get(ses_id.value()) != nullptr;
+    return get(req) != nullptr;
 }
 
 std::optional<id_type> manager::get_id(const request<>& req) const

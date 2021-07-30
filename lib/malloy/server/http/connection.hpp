@@ -254,6 +254,8 @@ namespace malloy::server::http
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
+                boost::beast::get_lowest_layer(derived().stream()).expires_never();
+
                 auto ws_connection = server::websocket::connection::make(
                     m_logger->clone("websocket_connection"),
                     malloy::websocket::stream{derived().release_stream()}, cfg.agent_string);

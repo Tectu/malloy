@@ -1,5 +1,8 @@
 #pragma once
 
+#include "types.hpp"
+#include "../utils.hpp"
+
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/http/message.hpp>
 
@@ -28,6 +31,32 @@ namespace malloy::http
     {
         return head.find(check) != head.end();
     }
+
+    /**
+     * Split a header value into its individual parts.
+     *
+     * Example:
+     *   input:  "multipart/form-data; boundary=----WebKitFormBoundarynBjZTMv9eqwyCWhj"
+     *   output:
+     *     - "multipart/form-data"
+     *     - "boundary=----WebKitFormBoundarynBjZTMv9eqwyCWhj"
+     *
+     * @param field_value The value to split.
+     * @return The split values
+     *
+     * @sa malloy::split(std::string_view, std::string_view)
+     */
+    [[nodiscard]]
+    inline
+    std::vector<std::string_view>
+    split_header_value(std::string_view field_value)
+    {
+        using namespace std::literals;
+
+        return malloy::split(field_value, "; "sv);
+    }
+
+
 }
 
 

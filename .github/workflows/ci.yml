@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         boost_version: [1.74.0, 1.75.0, 1.76.0]
+        shared: [ON, OFF]
         toolchain:
           [
             {
@@ -74,7 +75,7 @@ jobs:
       CC: ${{ matrix.toolchain.cc }}
       CXX: ${{ matrix.toolchain.cxx }}
 
-    name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }})"
+    name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }}) (shared: ${{ matrix.shared }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v2
@@ -124,7 +125,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }}
+        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }}
 
       - name: Build
         run: cmake --build build

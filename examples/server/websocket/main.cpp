@@ -1,4 +1,4 @@
-#include "../../example_logger.hpp"
+#include "../../example.hpp"
 #include "../../ws_handlers.hpp"
 
 #include <malloy/server/controller.hpp>
@@ -8,13 +8,11 @@
 
 int main()
 {
-    const std::filesystem::path doc_root = "../../../../examples/server/static_content";
-
     // Create malloy controller config
     malloy::server::controller::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
-    cfg.doc_root    = doc_root;
+    cfg.doc_root    = examples_doc_root;
     cfg.num_threads = 5;
     cfg.logger      = create_example_logger();
 
@@ -27,8 +25,8 @@ int main()
 
 #if MALLOY_FEATURE_TLS
     // Setup TLS (SSL)
-    const auto& cert_path = doc_root / "malloy.cert";
-    const auto& key_path  = doc_root / "malloy.key";
+    const auto& cert_path = examples_doc_root / "malloy.cert";
+    const auto& key_path  = examples_doc_root / "malloy.key";
     if (!c.init_tls(cert_path, key_path)) {
         std::cerr<< "could not initialize TLS context." << std::endl;
         return EXIT_FAILURE;

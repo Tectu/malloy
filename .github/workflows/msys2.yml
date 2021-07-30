@@ -15,13 +15,14 @@ jobs:
       fail-fast: false
       matrix:
         boost_version: [1.76.0]
+        shared: [ON, OFF]
         malloy_tls: [ON, OFF]
 
     runs-on: windows-latest
     env:
       BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
 
-    name: "msys2/clang (boost v${{ matrix.boost_version }}) (tls: ${{ matrix.malloy_tls }})"
+    name: "msys2/clang (boost v${{ matrix.boost_version }}) (tls: ${{ matrix.malloy_tls }}) (shared: ${{ matrix.shared }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     defaults:
       run:
@@ -66,7 +67,7 @@ jobs:
           rm -rf boost_*/* download.tar.bz2 download.tar
 
       - name: Configure
-        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=ON
+        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=ON -DMALLOY_BUILD_SHARED=${{ matrix.shared }}
 
       - name: Build
         run: cmake --build build

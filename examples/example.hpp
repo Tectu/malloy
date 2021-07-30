@@ -3,6 +3,13 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <filesystem>
+
+/**
+ * HTTP document root path
+ */
+const std::filesystem::path examples_doc_root = "../../examples/server/static_content";
+
 /**
  * Creates a logger used by the various examples.
  *

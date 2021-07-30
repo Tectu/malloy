@@ -1,4 +1,4 @@
-#include "../../example_logger.hpp"
+#include "../../example.hpp"
 #include "../../ws_handlers.hpp"
 
 #include <malloy/core/http/generator.hpp>
@@ -10,13 +10,11 @@
 
 int main()
 {
-    const std::filesystem::path doc_root = "../../../../examples/server/static_content";
-
     // Create malloy controller config
     malloy::server::controller::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
-    cfg.doc_root    = doc_root;
+    cfg.doc_root    = examples_doc_root;
     cfg.num_threads = 5;
     cfg.logger      = create_example_logger();
 
@@ -40,13 +38,13 @@ int main()
         });
 
         // Add a route to an existing file
-        router->add(method::get, "/file", [doc_root](const auto& req) {
-            return generator::file(doc_root, "index.html");
+        router->add(method::get, "/file", [](const auto& req) {
+            return generator::file(examples_doc_root, "index.html");
         });
 
         // Add a route to a non-existing file
-        router->add(method::get, "/file_nonexist", [doc_root](const auto& req) {
-            return generator::file(doc_root, "/some_nonexisting_file.xzy");
+        router->add(method::get, "/file_nonexist", [](const auto& req) {
+            return generator::file(examples_doc_root, "/some_nonexisting_file.xzy");
         });
 
         // Add some redirections
@@ -54,7 +52,7 @@ int main()
         router->add_redirect(status::temporary_redirect, "/redirect2", "/");
 
         // Add some file serving
-        router->add_file_serving("/files", doc_root);
+        router->add_file_serving("/files", examples_doc_root);
 
         // Add a websocket echo endpoint
         router->add_websocket("/echo", [](const auto& req, auto writer) {
