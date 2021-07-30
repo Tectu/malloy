@@ -31,6 +31,13 @@ function(malloy_target_common_setup TARGET)
                 -Werror
             )
     endif()
+    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "11")
+        target_compile_options(
+                ${TARGET}
+                PUBLIC
+                -fcoroutines
+        )
+    endif()
 
     target_compile_definitions(
         ${TARGET}
