@@ -6,6 +6,7 @@
 #include <malloy/server/controller.hpp>
 #include <malloy/server/routing/router.hpp>
 
+
 namespace mc = malloy::client;
 namespace ms = malloy::server;
 using malloy::tests::embedded::tls_cert;
@@ -150,6 +151,33 @@ namespace
 TEST_SUITE("websockets")
 {
     constexpr uint16_t port = 13312;
+    constexpr auto loopback = "127.0.0.1";
+
+    TEST_CASE("force_disconnect bypasses all queues") {
+        constexpr uint16_t lport = 13311;
+        ws_roundtrip(lport, [&](auto& c_ctrl){
+                c_ctrl.ws_connect(loopback, lport, "/", [](auto ec, auto conn){
+                        REQUIRE(!ec);
+                        auto buff = std::make_shared<boost::beast::flat_buffer>();
+                        conn->read(*buff, [buff](auto ec, auto){
+                                REQUIRE(ec.value() == 1); // Cancelled operation
+                            });
+                        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                        conn->force_disconnect();
+                        });
+                }, [](auto& s_ctrl){
+                s_ctrl.router()->add_websocket("/", [&](const auto& req, auto conn){
+                        conn->accept(req, [conn]{
+                                auto buff = std::make_shared<boost::beast::flat_buffer>();
+                                conn->read(*buff, [buff](auto ec, auto){
+                                        REQUIRE(ec.value() == 125); // Connection closed
+                                    });
+
+                                });
+
+                        });
+                });
+    }
 
     TEST_CASE("queued send/reads") {
         constexpr uint16_t local_port = 13313;

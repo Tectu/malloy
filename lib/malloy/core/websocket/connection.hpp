@@ -178,11 +178,14 @@ namespace malloy::websocket
             m_write_queue.push(build_act);
             m_read_queue.push(build_act);
         }
-        auto force_disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal) -> malloy::detail::async_task {
-            if (m_state == state::closed || m_state == state::closing) {
-                throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
+        void force_disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal) {
+            if (m_state == state::inactive) {
+                throw std::logic_error{"force_disconnect() called on inactive websocket connection"};
             }
-            co_await do_disconnect(why);
+            else if (m_state == state::closed || m_state == state::closing) {
+                return; // Already disconnecting
+            }
+            boost::asio::co_spawn(m_ws.get_executor(), do_disconnect(why), boost::asio::use_future);
         }
 
         /**
@@ -255,6 +258,7 @@ namespace malloy::websocket
         std::string m_agent_string;
         act_queue_t m_write_queue;
         act_queue_t m_read_queue;
+        ws_executor_t m_exe_ctx;
 
         std::atomic<state> m_state{state::inactive};
 
@@ -298,12 +302,11 @@ namespace malloy::websocket
             // Update state
             m_state = state::closing;
 
-            const auto ec = co_await m_ws.async_close(why, boost::asio::use_awaitable); 
-
-            if (ec) {
-                m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
-            } else {
+            try {
+                co_await m_ws.async_close(why, boost::asio::use_awaitable); 
                 on_close();
+            } catch(const boost::system::system_error& e) {
+                m_logger->error("could not close websocket: '{}'", e.what());    // TODO: See #40
             }
 
         }
