@@ -6,7 +6,6 @@
 #include "../utils.hpp"
 #include "../websocket/stream.hpp"
 #include "malloy/core/detail/action_queue.hpp"
-#include "malloy/core/detail/task.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
@@ -178,6 +177,9 @@ namespace malloy::websocket
             m_write_queue.push(build_act);
             m_read_queue.push(build_act);
         }
+        /**
+         * @brief Same as disconnect, but bypasses all queues and runs immediately
+         */
         void force_disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal) {
             if (m_state == state::inactive) {
                 throw std::logic_error{"force_disconnect() called on inactive websocket connection"};
@@ -258,7 +260,6 @@ namespace malloy::websocket
         std::string m_agent_string;
         act_queue_t m_write_queue;
         act_queue_t m_read_queue;
-        ws_executor_t m_exe_ctx;
 
         std::atomic<state> m_state{state::inactive};
 
