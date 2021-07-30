@@ -35,22 +35,6 @@ jobs:
               os: ubuntu-latest,
             },
             {
-              name: "Ubuntu Clang TLS",
-              cxx: "clang++",
-              cc: "clang",
-              packages: "libssl-dev",
-              tls: ON,
-              os: ubuntu-latest,
-            },
-            {
-              name: "Ubuntu Clang",
-              cxx: "clang++",
-              cc: "clang",
-              packages: "",
-              tls: OFF,
-              os: ubuntu-latest,
-            },
-            {
               name: "VS2019",
               cxx: "cl.exe",
               cc: "cl.exe",
