@@ -160,8 +160,8 @@ TEST_SUITE("websockets")
                         REQUIRE(!ec);
                         auto buff = std::make_shared<boost::beast::flat_buffer>();
                         conn->read(*buff, [buff](auto ec, auto){
-                                REQUIRE(ec.value() == 1); // Cancelled operation
-                            });
+                                REQUIRE(ec.value() == 125); // Cancelled operation
+                                });
                         std::this_thread::sleep_for(std::chrono::milliseconds(20));
                         conn->force_disconnect();
                         });
@@ -170,7 +170,7 @@ TEST_SUITE("websockets")
                         conn->accept(req, [conn]{
                                 auto buff = std::make_shared<boost::beast::flat_buffer>();
                                 conn->read(*buff, [buff](auto ec, auto){
-                                        REQUIRE(ec.value() == 125); // Connection closed
+                                        REQUIRE(ec.value() == 1); // Connection closed
                                     });
 
                                 });
