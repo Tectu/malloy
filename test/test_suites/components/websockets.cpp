@@ -148,6 +148,15 @@ namespace
 
 }    // namespace
 
+namespace boost::system {
+
+    auto operator<<(std::ostream& is, const error_condition& cond) -> std::ostream& {
+        is << cond.value();
+        return is;
+    }
+
+}
+
 TEST_SUITE("websockets")
 {
     constexpr uint16_t port = 13312;
@@ -159,8 +168,8 @@ TEST_SUITE("websockets")
                 c_ctrl.ws_connect(loopback, lport, "/", [](auto ec, auto conn){
                         REQUIRE(!ec);
                         auto buff = std::make_shared<boost::beast::flat_buffer>();
-                        conn->read(*buff, [buff](auto ec, auto){
-                                REQUIRE(ec.value() == 125); // Cancelled operation
+                        conn->read(*buff, [buff](malloy::error_code ec, auto){
+                                REQUIRE(ec.default_error_condition() == boost::asio::error::operation_aborted);
                                 });
                         std::this_thread::sleep_for(std::chrono::milliseconds(20));
                         conn->force_disconnect();
@@ -170,7 +179,7 @@ TEST_SUITE("websockets")
                         conn->accept(req, [conn]{
                                 auto buff = std::make_shared<boost::beast::flat_buffer>();
                                 conn->read(*buff, [buff](auto ec, auto){
-                                        REQUIRE(ec.value() == 1); // Connection closed
+                                        REQUIRE(ec.value() == 1); // Connection closed gracefully
                                     });
 
                                 });
