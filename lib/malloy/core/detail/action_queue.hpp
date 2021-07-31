@@ -14,6 +14,7 @@ namespace malloy::detail {
  * @note All methods in this class are threadsafe
  * @note This class will be upgraded to coroutines once they become sufficently supported, see https://github.com/Tectu/malloy/issues/70 for more details
  * @warning The callback passed must be called for the queue to continue running
+ * @warning Objects of this class do no explicit lifetime management for themselves. It is up to the owner of the object to ensure it is still alive when the callback is invoked
  * @tparam Executor The executor to use
  */
 template<typename Executor>
@@ -31,7 +32,8 @@ public:
      * @brief Construct the action queue. It will not execute anything until run() is called
      * @param ioc The strand to use for synchronisation
      */
-    explicit action_queue(ioc_t ioc) : ioc_{std::move(ioc)} {}
+    explicit action_queue(ioc_t ioc) :
+        m_ioc{std::move(ioc)} {}
 
     /**
      * @brief Add an action to the queue
@@ -39,9 +41,9 @@ public:
      * @param act
      */
     void push(act_t act) {
-        boost::asio::post(ioc_, [this, act = std::move(act)]() mutable -> void { 
-            acts_.push(std::move(act));
-            if (acts_.size() == 1 && running_) {
+        boost::asio::post(m_ioc, [this, act = std::move(act)]() mutable -> void {
+            m_acts.push(std::move(act));
+            if (m_acts.size() == 1 && m_running) {
                 run();
             }
         });
@@ -51,7 +53,7 @@ public:
      * @note Only needs to be called once
      */
     void run() {
-        running_ = true;
+        m_running = true;
         exe_next();
     }
 
@@ -59,20 +61,20 @@ public:
 private:
     void exe_next()
     {
-        boost::asio::post(ioc_, [this] {
-            if (!acts_.empty()) {
-                auto act = std::move(acts_.front());
-                acts_.pop();
+        boost::asio::post(m_ioc, [this] {
+            if (!m_acts.empty()) {
+                auto act = std::move(m_acts.front());
+                m_acts.pop();
                 std::invoke(std::move(act), [this] {
-                    if (!acts_.empty()) { exe_next(); }
+                    if (!m_acts.empty()) { exe_next(); }
                 });
             }
         });
     }
 
-    acts_t acts_;
-    ioc_t ioc_;
-    std::atomic_bool running_{false};
+    acts_t m_acts;
+    ioc_t m_ioc;
+    std::atomic_bool m_running{false};
 
 };
 

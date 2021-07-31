@@ -162,33 +162,33 @@ TEST_SUITE("websockets")
     constexpr uint16_t port = 13312;
     constexpr auto loopback = "127.0.0.1";
 
-    TEST_CASE("force_disconnect bypasses all queues") {
+    TEST_CASE("force_disconnect bypasses all queues")
+    {
         constexpr uint16_t lport = 13311;
         std::promise<std::shared_ptr<malloy::client::websocket::connection>> cli_conn_prom;
         auto cli_conn = cli_conn_prom.get_future();
-        ws_roundtrip(lport, [&](auto& c_ctrl) mutable {
-                c_ctrl.ws_connect(loopback, lport, "/", [&](auto ec, auto conn) mutable {
-                        REQUIRE(!ec);
-                          auto buff = std::make_shared<boost::beast::flat_buffer>();
-                        conn->read(*buff, [buff](malloy::error_code ec, auto){
-                                REQUIRE(ec.default_error_condition() == boost::asio::error::operation_aborted);
-                                });
-                        cli_conn_prom.set_value(conn);
-
-                });
-          }
-                , [&cli_conn](auto& s_ctrl) mutable {
-                s_ctrl.router()->add_websocket("/", [&](const auto& req, auto conn) mutable {
-                        conn->accept(req, [conn, &cli_conn]() mutable {
-                                auto buff = std::make_shared<boost::beast::flat_buffer>();
-                                conn->read(*buff, [buff](auto ec, auto){
-                                        REQUIRE(ec.value() == 1); // Connection closed gracefully
-                                    });
-                                cli_conn.get()->force_disconnect();
-                                });
-
-                        });
-                });
+        ws_roundtrip(
+            lport, [&](auto& c_ctrl) mutable { c_ctrl.ws_connect(loopback, lport, "/",
+                                                                 [&](auto ec, auto conn) mutable {
+                                                                     REQUIRE(!ec);
+                                                                     auto buff = std::make_shared<boost::beast::flat_buffer>();
+                                                                     conn->read(*buff, [buff](malloy::error_code ec, auto) {
+                                                                         REQUIRE(ec.default_error_condition() == boost::asio::error::operation_aborted);
+                                                                     });
+                                                                     cli_conn_prom.set_value(conn);
+                                                                 }); },
+            [&cli_conn](auto& s_ctrl) mutable {
+                s_ctrl.router()->add_websocket("/",
+                                               [&](const auto& req, auto conn) mutable {
+                                                   conn->accept(req, [conn, &cli_conn]() mutable {
+                                                       auto buff = std::make_shared<boost::beast::flat_buffer>();
+                                                       conn->read(*buff, [buff](auto ec, auto) {
+                                                           REQUIRE(ec.value() == 1);    // Connection closed gracefully
+                                                       });
+                                                       cli_conn.get()->force_disconnect();
+                                                   });
+                                               });
+            });
     }
 
     TEST_CASE("queued send/reads") {
