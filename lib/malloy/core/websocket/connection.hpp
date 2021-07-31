@@ -165,12 +165,13 @@ namespace malloy::websocket
             if (m_state == state::closed || m_state == state::closing) {
                 throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
             }
-            auto build_act = [this, why]() mutable -> boost::asio::awaitable<void> {
+            auto build_act = [this, why, me = this->shared_from_this()](const auto& on_done) mutable {
                 // Check we haven't been beaten
-                if (m_state == state::closed || m_state == state::closing)
-                    return boost::asio::awaitable<void>{};
-                return do_disconnect(why);
-
+                if (m_state == state::closed || m_state == state::closing) {
+                    on_done();
+                    return;
+                }
+                do_disconnect(why, on_done);
             };
 
             // We queue in both read and write, and whichever gets there first wins 
@@ -187,7 +188,7 @@ namespace malloy::websocket
             else if (m_state == state::closed || m_state == state::closing) {
                 return; // Already disconnecting
             }
-            boost::asio::co_spawn(m_ws.get_executor(), do_disconnect(why), boost::asio::use_future);
+            do_disconnect(why, []{});
         }
 
         /**
@@ -206,17 +207,16 @@ namespace malloy::websocket
         read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done)
         {
             m_logger->trace("read()");
-            m_read_queue.push([this, me = this->shared_from_this(), buff = &buff /* Capturing reference by value copies the object */, done = std::forward<decltype(done)>(done)]() mutable -> boost::asio::awaitable<void> {
-                assert(buff != nullptr);
-                std::size_t size{0};
-                boost::system::error_code ec;
-                try {
-                    size = co_await m_ws.async_read(*buff, boost::asio::use_awaitable);
-                } catch (const boost::system::system_error& e) {
-                    ec = e.code();
-                }
-                std::invoke(std::forward<decltype(done)>(done), ec, size);
-            });
+            m_read_queue.push(
+                [this, me = this->shared_from_this(),
+                 buff = &buff /* Capturing reference by value copies the object */,
+                 done = std::forward<decltype(done)>(done)](const auto& on_done) mutable {
+                    assert(buff != nullptr);
+                    m_ws.async_read(*buff, [me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
+                        std::invoke(std::forward<decltype(done)>(done), ec, size);
+                        on_done();
+                    });
+                });
         }
 
         /**
@@ -233,18 +233,14 @@ namespace malloy::websocket
         void
         send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
         {
-            m_logger->trace("send(). payload size: {}", payload.size());
-            m_write_queue.push([buff = payload, done = std::forward<Callback>(done), this, me = this->shared_from_this()]() mutable -> boost::asio::awaitable<void> {
-                boost::system::error_code ec;
-                std::size_t size{0};
-                try {
-                    size = co_await m_ws.async_write(buff, boost::asio::use_awaitable);
-                } catch (const boost::system::system_error& e) {
-                    ec = e.code();
-                }
-                std::invoke(std::forward<Callback>(done), ec, size);
-                me->on_write(ec, size);
-            });
+                m_logger->trace("send(). payload size: {}", payload.size());
+                m_write_queue.push([buff = payload, done = std::forward<Callback>(done), this, me = this->shared_from_this()](const auto& on_done) mutable {
+                    m_ws.async_write(buff, [this, me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
+                        on_write(ec, size);
+                        std::invoke(std::forward<Callback>(done), ec, size);
+                        on_done();
+                    });
+                });
         }
 
     private:
@@ -299,17 +295,18 @@ namespace malloy::websocket
                         req.set(agent_field, m_agent_string);
                     }));
         }
-        auto do_disconnect(boost::beast::websocket::close_reason why) -> boost::asio::awaitable<void> {
+        void do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done) {
             // Update state
             m_state = state::closing;
 
-            try {
-                co_await m_ws.async_close(why, boost::asio::use_awaitable); 
-                on_close();
-            } catch(const boost::system::system_error& e) {
-                m_logger->error("could not close websocket: '{}'", e.what());    // TODO: See #40
-            }
-
+            m_ws.async_close(why, [me = this->shared_from_this(), this, on_done](auto ec){
+                if (ec) {
+                    m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
+                } else {
+                    on_close();
+                }
+                on_done();
+            });
         }
 
         void

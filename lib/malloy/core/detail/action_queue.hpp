@@ -1,29 +1,27 @@
 #pragma once 
 
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/use_awaitable.hpp>
-#include <boost/asio/use_future.hpp>
-#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 
 #include <queue>
-#include <coroutine>
 
 namespace malloy::detail {
 
 /**
  * @class action_queue
- * @brief Stores and executes coroutine producing functions
- * @details The next queued function is not executed until the coroutine of the last function finishes
+ * @brief Stores and executes functions
+ * @details The next queued function is not executed until the callback passed to the last executed function is called
  * @note All methods in this class are threadsafe
+ * @note This class will be upgraded to coroutines once they become sufficently supported, see https://github.com/Tectu/malloy/issues/70 for more details
+ * @warning The callback passed must be called for the queue to continue running
  * @tparam Executor The executor to use
  */
 template<typename Executor>
 class action_queue {
-    using act_t = std::function<boost::asio::awaitable<void>()>;
+    using act_t = std::function<void(const std::function<void()>&)>;
     using acts_t = std::queue<act_t>;
     using ioc_t = boost::asio::strand<Executor>;
+
 public:
     /**
      * @brief Construct the action queue. It will not execute anything until run() is called
@@ -50,25 +48,27 @@ public:
      */
     void run() {
         running_ = true;
-        boost::asio::co_spawn(ioc_, exe_next(), boost::asio::use_future);
+        exe_next();
     }
 
+    ~action_queue() {
+
+    }
 
 private:
-    auto exe_next() -> boost::asio::awaitable<void> {
-        if (!acts_.empty()) {
-            co_await boost::asio::post(ioc_, boost::asio::use_awaitable);
-            auto act = std::move(acts_.front());
-            co_await std::invoke(std::move(act));
-            assert(!acts_.empty());
-            acts_.pop();
-            co_await exe_next();
-        }
-        
+    void exe_next()
+    {
+        boost::asio::post(ioc_, [this] {
+            if (!acts_.empty()) {
+                auto act = std::move(acts_.front());
+                acts_.pop();
+                std::invoke(std::move(act), [this] { exe_next(); });
+            }
+        });
     }
 
-    ioc_t ioc_;
     acts_t acts_;
+    ioc_t ioc_;
     std::atomic_bool running_{false};
 
 };
