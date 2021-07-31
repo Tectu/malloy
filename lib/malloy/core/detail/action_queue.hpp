@@ -22,6 +22,10 @@ class action_queue {
     using acts_t = std::queue<act_t>;
     using ioc_t = boost::asio::strand<Executor>;
 
+    struct inner_data : public std::enable_shared_from_this<inner_data> {
+
+
+    };
 public:
     /**
      * @brief Construct the action queue. It will not execute anything until run() is called
@@ -51,9 +55,6 @@ public:
         exe_next();
     }
 
-    ~action_queue() {
-
-    }
 
 private:
     void exe_next()
@@ -62,7 +63,9 @@ private:
             if (!acts_.empty()) {
                 auto act = std::move(acts_.front());
                 acts_.pop();
-                std::invoke(std::move(act), [this] { exe_next(); });
+                std::invoke(std::move(act), [this] {
+                    if (!acts_.empty()) { exe_next(); }
+                });
             }
         });
     }
