@@ -41,7 +41,7 @@ public:
      * @param act
      */
     void push(act_t act) {
-        boost::asio::post(m_ioc, [this, act = std::move(act)]() mutable -> void {
+        boost::asio::dispatch(m_ioc, [this, act = std::move(act)]() mutable -> void {
             m_acts.push(std::move(act));
             if (m_acts.size() == 1 && m_running) {
                 run();
@@ -61,7 +61,7 @@ public:
 private:
     void exe_next()
     {
-        boost::asio::post(m_ioc, [this] {
+        boost::asio::dispatch(m_ioc, [this] {
             if (!m_acts.empty()) {
                 auto act = std::move(m_acts.front());
                 m_acts.pop();
