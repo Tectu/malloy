@@ -32,7 +32,8 @@ namespace malloy::websocket
 #endif
 			boost::beast::websocket::stream<boost::beast::tcp_stream>
 		>;
-
+        template<typename T>
+        concept rw_completion_token = boost::asio::completion_token_for<T, void(malloy::error_code, std::size_t)>;
 	}
 
 	/**
@@ -73,10 +74,10 @@ namespace malloy::websocket
         }
 #endif
 
-		template<concepts::const_buffer_sequence Buff, concepts::async_read_handler Callback>
-		void async_write(const Buff& buffers, Callback&& done)
+		template<concepts::const_buffer_sequence Buff, detail::rw_completion_token Callback>
+		auto async_write(const Buff& buffers, Callback&& done)
 		{
-			std::visit([&buffers, done = std::forward<Callback>(done)](auto& stream) mutable { return stream.async_write(buffers, std::forward<Callback>(done)); }, m_underlying_conn);
+			return std::visit([&buffers, done = std::forward<Callback>(done)](auto& stream) mutable { return stream.async_write(buffers, std::forward<Callback>(done)); }, m_underlying_conn);
 		}
 
 		template<concepts::const_buffer_sequence Buff>
@@ -85,10 +86,10 @@ namespace malloy::websocket
 			return std::visit([&buffers](auto& stream) mutable { return stream.write(buffers); }, m_underlying_conn);
 		}
 
-		template<concepts::dynamic_buffer Buff, concepts::async_read_handler Callback>
-		void async_read(Buff& buff, Callback&& done)
+		template<concepts::dynamic_buffer Buff, detail::rw_completion_token Callback>
+		auto async_read(Buff& buff, Callback&& done)
 		{
-			std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { s.async_read(buff, std::forward<Callback>(done)); }, m_underlying_conn);
+			return std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { return s.async_read(buff, std::forward<Callback>(done)); }, m_underlying_conn);
 		}
 
 		template<concepts::dynamic_buffer Buff>
@@ -96,10 +97,10 @@ namespace malloy::websocket
 		{
 			return std::visit([&buff, &ec](auto& s) mutable { return s.read(buff, ec); }, m_underlying_conn);
 		}
-        template<concepts::accept_handler Callback>
-		void async_close(boost::beast::websocket::close_reason why, Callback&& done) {
-            std::visit([why, done = std::forward<Callback>(done)](auto& s) mutable { 
-                    s.async_close(why, std::forward<Callback>(done));
+        template<boost::asio::completion_token_for<void(malloy::error_code)> CompletionToken>
+		auto async_close(boost::beast::websocket::close_reason why, CompletionToken&& done) {
+            return std::visit([why, done = std::forward<CompletionToken>(done)](auto& s) mutable {
+                    return s.async_close(why, std::forward<CompletionToken>(done));
             }, m_underlying_conn);
 		}
 
@@ -108,10 +109,10 @@ namespace malloy::websocket
 			std::visit([opt = std::forward<decltype(opt)>(opt)](auto& s) mutable { s.set_option(std::forward<decltype(opt)>(opt));  }, m_underlying_conn);
 		}
 
-		template<typename Body, typename Fields>
-		auto async_accept(const boost::beast::http::request<Body, Fields>& req, concepts::accept_handler auto&& done)
+		template<typename Body, typename Fields, boost::asio::completion_token_for<void(malloy::error_code)> CompletionHandler>
+		auto async_accept(const boost::beast::http::request<Body, Fields>& req, CompletionHandler&& done)
 		{
-			std::visit([req, done = std::forward<decltype(done)>(done)](auto& s) mutable { return s.async_accept(req, std::forward<decltype(done)>(done)); }, m_underlying_conn);
+			return std::visit([req, done = std::forward<decltype(done)>(done)](auto& s) mutable { return s.async_accept(req, std::forward<decltype(done)>(done)); }, m_underlying_conn);
 		}
 
 		template<typename Body, typename Fields>
@@ -120,11 +121,11 @@ namespace malloy::websocket
 			return std::visit([req](auto& s) { return s.accept(req); }, m_underlying_conn);
 		}
 
-		template<concepts::accept_handler Callback>
-		void async_handshake(std::string host, std::string target, Callback&& done)
+		template<boost::asio::completion_token_for<void(malloy::error_code)> Callback>
+		auto async_handshake(std::string host, std::string target, Callback&& done)
 		{
-			std::visit([host = std::move(host), target = std::move(target), done = std::forward<Callback>(done)](auto& s) mutable {
-				s.async_handshake(host, target, std::forward<Callback>(done)); 
+			return std::visit([host = std::move(host), target = std::move(target), done = std::forward<Callback>(done)](auto& s) mutable {
+				return s.async_handshake(host, target, std::forward<Callback>(done));
 			}, m_underlying_conn);
 		}
 
