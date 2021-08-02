@@ -19,6 +19,7 @@ if (MALLOY_FEATURE_TLS)
     add_subdirectory(tls)
 endif()
 add_subdirectory(websocket)
+add_subdirectory(detail)
 
 # Add files
 target_sources(

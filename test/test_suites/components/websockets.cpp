@@ -6,6 +6,7 @@
 #include <malloy/server/controller.hpp>
 #include <malloy/server/routing/router.hpp>
 
+
 namespace mc = malloy::client;
 namespace ms = malloy::server;
 using malloy::tests::embedded::tls_cert;
@@ -147,9 +148,83 @@ namespace
 
 }    // namespace
 
+namespace boost::system {
+
+    auto operator<<(std::ostream& is, const error_condition& cond) -> std::ostream& {
+        is << cond.value();
+        return is;
+    }
+
+}
+
 TEST_SUITE("websockets")
 {
     constexpr uint16_t port = 13312;
+    constexpr auto loopback = "127.0.0.1";
+
+    TEST_CASE("force_disconnect bypasses all queues")
+    {
+        constexpr uint16_t lport = 13311;
+        std::promise<std::shared_ptr<malloy::client::websocket::connection>> cli_conn_prom;
+        auto cli_conn = cli_conn_prom.get_future();
+        ws_roundtrip(
+            lport, [&](auto& c_ctrl) mutable { c_ctrl.ws_connect(loopback, lport, "/",
+                                                                 [&](auto ec, auto conn) mutable {
+                                                                     REQUIRE(!ec);
+                                                                     auto buff = std::make_shared<boost::beast::flat_buffer>();
+                                                                     conn->read(*buff, [buff](malloy::error_code ec, auto) {
+                                                                         REQUIRE(ec.default_error_condition() == boost::asio::error::operation_aborted);
+                                                                     });
+                                                                     cli_conn_prom.set_value(conn);
+                                                                 }); },
+            [&cli_conn](auto& s_ctrl) mutable {
+                s_ctrl.router()->add_websocket("/",
+                                               [&](const auto& req, auto conn) mutable {
+                                                   conn->accept(req, [conn, &cli_conn]() mutable {
+                                                       auto buff = std::make_shared<boost::beast::flat_buffer>();
+                                                       conn->read(*buff, [buff](auto ec, auto) {
+                                                           REQUIRE(ec.value() == 1);    // Connection closed gracefully
+                                                       });
+                                                       cli_conn.get()->force_disconnect();
+                                                   });
+                                               });
+            });
+    }
+
+    TEST_CASE("queued send/reads") {
+        constexpr uint16_t local_port = 13313;
+        constexpr auto bounceback = "Hello";
+        
+        ws_roundtrip(local_port, [bounceback](auto& c_ctrl){
+            c_ctrl.ws_connect("127.0.0.1", local_port, "/", [bounceback](auto ec, auto conn){
+                    REQUIRE(!ec);
+                    auto read_buff = std::make_shared<boost::beast::flat_buffer>();
+                    conn->read(*read_buff, [bounceback, conn, read_buff](auto ec, auto){
+                        REQUIRE(!ec);
+                        auto msg = std::make_shared<std::string>(bounceback);
+                        conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){
+                            REQUIRE(!ec);
+                        });
+                    });
+            });
+        }, [bounceback](auto& s_ctrl){
+                s_ctrl.router()->add_websocket("/", [&](const auto& req, auto conn){
+                    conn->accept(req, [bounceback, conn]{
+                        auto msg = std::make_shared<std::string>(bounceback);
+                        conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){
+                            CHECK(!ec);
+                        });
+
+                        auto read_buff = std::make_shared<boost::beast::flat_buffer>();
+                        conn->read(*read_buff, [msg, read_buff](auto ec, auto){
+                            CHECK(!ec);
+                            const auto data = boost::beast::buffers_to_string(read_buff->data());
+                            CHECK(data == *msg);
+                        });
+                    });
+                });
+            });
+    }
 
     TEST_CASE("roundtrips")
 	{
