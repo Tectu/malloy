@@ -8,13 +8,6 @@ using namespace malloy::server;
 TEST_SUITE("components - router")
 {
     TEST_CASE("policies block unaccepted requests") {
-        struct always_blocked {
-            template<typename T>
-            auto operator()(T) -> std::optional<response<>> {
-                response<> res{status::unauthorized};
-                return res;
-            }
-        };
         constexpr auto port = 4413;
         malloy::test::roundtrip(port, [&, port](auto& c_ctrl){
                 request<> req{method::get, "127.0.0.1", port, "/"};
@@ -27,7 +20,7 @@ TEST_SUITE("components - router")
                 r->add(method::get, "/", [](const auto& req){
                     return generator::ok();
                 });
-                r->add_policy("/", always_blocked{});
+                r->add_policy("/", [](auto) -> std::optional<response<>> { return response<>{status::unauthorized}; });
             });
     }
 
