@@ -66,42 +66,7 @@ namespace
         });
     }
 
-    /**
-     * Performs a roundtrip using server & client components.
-     *
-     * @param port The port to perform the test on.
-     * @param setup_client The client setup routine.
-     * @param setup_server The server setup routine.
-     */
-    void ws_roundtrip(
-        const uint16_t port,
-        std::function<void(malloy::client::controller&)> setup_client,
-        std::function<void(malloy::server::controller&)> setup_server
-    )
-    {
-        mc::controller c_ctrl;
-		ms::controller s_ctrl;
 
-		malloy::controller::config general_cfg;
-		general_cfg.num_threads = 2;
-		general_cfg.logger = spdlog::default_logger();
-
-		ms::controller::config server_cfg{ general_cfg };
-		server_cfg.interface = "127.0.0.1";
-		server_cfg.port = port;
-
-        mc::controller::config cli_cfg{general_cfg};
-
-		REQUIRE(s_ctrl.init(server_cfg));
-		REQUIRE(c_ctrl.init(cli_cfg));
-
-        setup_server(s_ctrl);
-        setup_client(c_ctrl);
-
-		REQUIRE(s_ctrl.start());
-        CHECK(c_ctrl.run());
-        c_ctrl.stop().get();
-    }
 
     /**
      * Performs a roundtrip.
@@ -118,7 +83,7 @@ namespace
     {
         // Plain
         if constexpr (!Secure)
-            ws_roundtrip(
+            malloy::test::roundtrip(
                 port,
                 [port](auto& c_ctrl) {
                     c_ctrl.ws_connect("127.0.0.1", port, "/", &client_ws_handler<BinaryMode>);
@@ -130,7 +95,7 @@ namespace
 
         // Secure
         else
-            ws_roundtrip(
+            malloy::test::roundtrip(
                 port,
                 [port](auto& c_ctrl) {
                     REQUIRE(c_ctrl.init_tls());
@@ -167,7 +132,7 @@ TEST_SUITE("websockets")
         constexpr uint16_t lport = 13311;
         std::promise<std::shared_ptr<malloy::client::websocket::connection>> cli_conn_prom;
         auto cli_conn = cli_conn_prom.get_future();
-        ws_roundtrip(
+        malloy::test::roundtrip(
             lport, [&](auto& c_ctrl) mutable { c_ctrl.ws_connect(loopback, lport, "/",
                                                                  [&](auto ec, auto conn) mutable {
                                                                      REQUIRE(!ec);
@@ -194,8 +159,8 @@ TEST_SUITE("websockets")
     TEST_CASE("queued send/reads") {
         constexpr uint16_t local_port = 13313;
         constexpr auto bounceback = "Hello";
-        
-        ws_roundtrip(local_port, [bounceback](auto& c_ctrl){
+
+        malloy::test::roundtrip(local_port, [bounceback](auto& c_ctrl){
             c_ctrl.ws_connect("127.0.0.1", local_port, "/", [bounceback](auto ec, auto conn){
                     REQUIRE(!ec);
                     auto read_buff = std::make_shared<boost::beast::flat_buffer>();
