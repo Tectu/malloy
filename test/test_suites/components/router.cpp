@@ -9,7 +9,8 @@ TEST_SUITE("components - router")
 {
     TEST_CASE("policies block unaccepted requests") {
         struct always_blocked {
-            auto operator()(auto) -> std::optional<response<>> {
+            template<typename T>
+            auto operator()(T) -> std::optional<response<>> {
                 response<> res{status::unauthorized};
                 return res;
             }
