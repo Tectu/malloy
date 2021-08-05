@@ -116,6 +116,7 @@ namespace malloy::server
                     return false;
                 } else {
                     writer(h, std::move(*maybe_resp), conn);
+                    return true;
                 }
             }
 
@@ -126,7 +127,7 @@ namespace malloy::server
         public:
             policy_store(std::string reg, std::unique_ptr<abstract_req_validator> validator) : m_validator{std::move(validator)}, m_raw_reg{std::move(reg)} {}
 
-            auto process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) -> bool {
+            auto process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) const -> bool {
                 if (!matches(h.target())) {
                     return false;
                 } else {
@@ -134,18 +135,18 @@ namespace malloy::server
                 }
             }
         private:
-            auto matches(std::string_view url) -> bool {
+            auto matches(std::string_view url) const -> bool {
                 if (!m_compiled_reg) {
                     compile_match_expr();
                 }
                 std::string surl{url.begin(), url.end()}; // Must be null terminated
                 return std::regex_match(surl, *m_compiled_reg);
             }
-            void compile_match_expr() {
+            void compile_match_expr() const {
                 m_compiled_reg = std::regex{m_raw_reg};
             }
             std::unique_ptr<abstract_req_validator> m_validator;
-            std::optional<std::regex> m_compiled_reg;
+            mutable std::optional<std::regex> m_compiled_reg;
             std::string m_raw_reg;
             
         };
@@ -386,6 +387,10 @@ namespace malloy::server
                 if (!ep->matches(header))
                     continue;
 
+                if (is_handled_by_policies<Derived>(req, connection)) {
+                    return;
+                }
+
                 // Generate the response for the request
                 auto resp = ep->handle(req, connection);
                 if (resp) {
@@ -448,6 +453,14 @@ namespace malloy::server
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
         std::vector<policy_store> m_policies;
         std::string m_server_str{BOOST_BEAST_VERSION_STRING};
+
+        template<typename Derived>
+        auto is_handled_by_policies(const req_generator<Derived>& req,
+                            const http::connection_t& connection) -> bool {
+            return std::any_of(m_policies.begin(), m_policies.end(), [&](const policy_store& policy){
+                return policy.process(req->header(), connection);
+            });
+        }
 
         /// Create the lambda wrapped callback for the writer
         auto make_endpt_writer_callback() {
