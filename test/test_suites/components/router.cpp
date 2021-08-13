@@ -7,6 +7,22 @@ using namespace malloy::server;
 
 TEST_SUITE("components - router")
 {
+    TEST_CASE("policies block unaccepted requests") {
+        constexpr auto port = 4413;
+        malloy::test::roundtrip(port, [&, port](auto& c_ctrl){
+                request<> req{method::get, "127.0.0.1", port, "/"};
+                auto st = c_ctrl.http_request(req, [](const auto& resp){
+                    CHECK(resp.result() == status::unauthorized);
+                });
+
+        }, [&](auto& s_ctrl){
+                auto r = s_ctrl.router();
+                r->add(method::get, "/", [](const auto& req){
+                    return generator::ok();
+                });
+                r->add_policy("/", [](auto) -> std::optional<response<>> { return response<>{status::unauthorized}; });
+            });
+    }
 
     TEST_CASE("add [regex]") {
         router r;

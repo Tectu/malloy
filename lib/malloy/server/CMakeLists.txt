@@ -15,6 +15,7 @@ malloy_target_common_setup(${TARGET})
 add_subdirectory(http)
 add_subdirectory(routing)
 add_subdirectory(websocket)
+add_subdirectory(auth)
 
 # Add sources
 target_sources(
