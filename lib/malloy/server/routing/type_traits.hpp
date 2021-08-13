@@ -34,6 +34,11 @@ namespace malloy::server::concepts
     // clang-format on
     };
 
+    template<typename P>
+    concept request_validator = requires(P p, const boost::beast::http::request_header<>& h) {
+        { std::invoke(p, h) } -> malloy::concepts::is_container_of<malloy::http::response, std::optional>;
+    };
+
 } // namespace malloy::server::concepts
 
 /**

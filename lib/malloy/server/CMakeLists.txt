@@ -17,6 +17,7 @@ add_subdirectory(websocket)
 if (MALLOY_FEATURE_APPFW)
     add_subdirectory(app_fw)
 endif()
+add_subdirectory(auth)
 
 # Add sources
 target_sources(

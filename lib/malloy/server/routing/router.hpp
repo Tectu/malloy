@@ -98,6 +98,58 @@ namespace malloy::server
      */
     class router
     {
+        class abstract_req_validator {
+        public:
+            virtual ~abstract_req_validator() = default;
+            virtual auto process(const boost::beast::http::request_header<>&, const http::connection_t& conn) -> bool = 0;
+        };
+        template<concepts::request_validator V, typename Writer>
+        class req_validator_impl: public abstract_req_validator {
+        public:
+            Writer writer;
+
+            req_validator_impl(V validator, Writer writer_) : writer{std::move(writer_)}, validator_{std::move(validator)} {}
+
+            auto process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) -> bool override {
+                auto maybe_resp = std::invoke(validator_, h);
+                if (!maybe_resp) {
+                    return false;
+                } else {
+                    writer(h, std::move(*maybe_resp), conn);
+                    return true;
+                }
+            }
+
+        private:
+            V validator_;
+        };
+        class policy_store {
+        public:
+            policy_store(std::string reg, std::unique_ptr<abstract_req_validator> validator) : m_validator{std::move(validator)}, m_raw_reg{std::move(reg)} {}
+
+            auto process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) const -> bool {
+                if (!matches(h.target())) {
+                    return false;
+                } else {
+                    return m_validator->process(h, conn);
+                }
+            }
+        private:
+            auto matches(std::string_view url) const -> bool {
+                if (!m_compiled_reg) {
+                    compile_match_expr();
+                }
+                std::string surl{url.begin(), url.end()}; // Must be null terminated
+                return std::regex_match(surl, *m_compiled_reg);
+            }
+            void compile_match_expr() const {
+                m_compiled_reg = std::regex{m_raw_reg};
+            }
+            std::unique_ptr<abstract_req_validator> m_validator;
+            mutable std::optional<std::regex> m_compiled_reg;
+            std::string m_raw_reg;
+            
+        };
     public:
         template<typename Derived>
         using req_generator = std::shared_ptr<typename http::connection<Derived>::request_generator>;
@@ -251,6 +303,14 @@ namespace malloy::server
          */
         bool add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
 
+        template<concepts::request_validator Policy>
+        void add_policy(const std::string& target, Policy&& policy) {
+            using policy_t = std::decay_t<Policy>;
+            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::move(conn), m_server_str); };
+
+            m_policies.emplace_back(target, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
+        }
+
         /**
          * Handle a request.
          *
@@ -327,6 +387,10 @@ namespace malloy::server
                 if (!ep->matches(header))
                     continue;
 
+                if (is_handled_by_policies<Derived>(req, connection)) {
+                    return;
+                }
+
                 // Generate the response for the request
                 auto resp = ep->handle(req, connection);
                 if (resp) {
@@ -387,7 +451,16 @@ namespace malloy::server
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
         std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
+        std::vector<policy_store> m_policies;
         std::string m_server_str{BOOST_BEAST_VERSION_STRING};
+
+        template<typename Derived>
+        auto is_handled_by_policies(const req_generator<Derived>& req,
+                            const http::connection_t& connection) -> bool {
+            return std::any_of(m_policies.begin(), m_policies.end(), [&](const policy_store& policy){
+                return policy.process(req->header(), connection);
+            });
+        }
 
         /// Create the lambda wrapped callback for the writer
         auto make_endpt_writer_callback() {
