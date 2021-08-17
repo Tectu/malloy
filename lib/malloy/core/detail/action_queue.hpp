@@ -70,7 +70,7 @@ namespace malloy::detail
                     auto act = std::move(m_acts.front());
                     m_acts.pop();
                     std::invoke(std::move(act), [this] {
-                        if (!m_acts.empty()) { exe_next(); }
+                        if (!m_acts.empty()) { exe_next(); } else { currently_running_act_ = false; }
                     });
                 } else {
                     currently_running_act_ = false;
