@@ -555,7 +555,7 @@ namespace malloy::server
         bool log_or_throw(const std::exception& exception, const spdlog::level::level_enum level, const FormatString& fmt, Args&&... args)
         {
             if (m_logger) {
-                m_logger->log(level, fmt, std::forward<Args>(args)...);
+                m_logger->log(level, fmt::runtime(fmt), std::forward<Args>(args)...);
                 return false;
             }
 
