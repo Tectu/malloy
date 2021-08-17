@@ -45,7 +45,7 @@ namespace malloy::detail
         {
             boost::asio::dispatch(m_ioc, [this, act = std::move(act)]() mutable -> void {
                 m_acts.push(std::move(act));
-                if (!currently_running_act_) {
+                if (!m_currently_running_act) {
                     run();
                 }
             });
@@ -64,16 +64,20 @@ namespace malloy::detail
     private:
         void exe_next()
         {
-            currently_running_act_ = true;
+            m_currently_running_act = true;
             boost::asio::dispatch(m_ioc, [this] {
                 if (!m_acts.empty()) {
                     auto act = std::move(m_acts.front());
                     m_acts.pop();
                     std::invoke(std::move(act), [this] {
-                        if (!m_acts.empty()) { exe_next(); } else { currently_running_act_ = false; }
+                        if (!m_acts.empty()) {
+                            exe_next();
+                        } else {
+                            m_currently_running_act = false;
+                        }
                     });
                 } else {
-                    currently_running_act_ = false;
+                    m_currently_running_act = false;
                 }
             });
         }
@@ -81,7 +85,7 @@ namespace malloy::detail
         acts_t m_acts;
         ioc_t m_ioc;
         std::atomic_bool m_running{false};
-        std::atomic_bool currently_running_act_{false};
+        std::atomic_bool m_currently_running_act{false};
     };
 
 }    // namespace malloy::detail
