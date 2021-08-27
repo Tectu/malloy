@@ -1,3 +1,8 @@
+# Ensure that both server and client are enabled
+if (NOT (MALLOY_FEATURE_SERVER AND MALLOY_FEATURE_CLIENT))
+    message(FATAL_ERROR "Both client and server components must be enabled when building the test suite.")
+endif()
+
 set(TARGET malloy-tests)
 
 add_executable(${TARGET})
@@ -38,4 +43,3 @@ add_test(
 )
 
 set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR})
-
