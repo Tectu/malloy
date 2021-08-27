@@ -1,4 +1,4 @@
-#include "../../example.hpp"
+#include "../../../example.hpp"
 
 #include <malloy/core/http/generator.hpp>
 #include <malloy/server/controller.hpp>
@@ -6,14 +6,18 @@
 #include <malloy/server/auth/basic.hpp>
 
 #include <iostream>
-#include <memory>
 
-
-// Borrowed from: https://stackoverflow.com/a/5291537/12448530
-struct b64_decode {
-
+/**
+ * Simple base64 decoder implementation.
+ * This is used for the HTTP basic auth policy.
+ *
+ * Borrowed from: https://stackoverflow.com/a/5291537/12448530
+ */
+struct b64_decode
+{
     template<malloy::concepts::dynamic_buffer Buff>
-    static void decode(std::string_view in, Buff& out_raw) {
+    static void decode(std::string_view in, Buff& out_raw)
+    {
         constexpr char reverse_table[128] = {
             64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
             64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
@@ -24,6 +28,7 @@ struct b64_decode {
             64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
             41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64
         };
+
         const auto needed = static_cast<std::size_t>(std::ceil(4 * (static_cast<double>(in.size()) / 3.0)));
         auto out = out_raw.prepare(needed);
         const auto last = in.end();
@@ -49,7 +54,6 @@ struct b64_decode {
             }
         }
     }
-
 };
 
 int main()
@@ -69,18 +73,20 @@ int main()
         return EXIT_FAILURE;
     }
 
-    // Create the router
-    auto router = c.router();
-    using namespace malloy::http;
+    // Setup the router
+    {
+        using namespace malloy::http;
+        auto router = c.router();
 
-    // A simple GET route handler
-    router->add_policy("/", malloy::server::http::auth::basic<b64_decode>{"username", "password", "My Realm"});
-    router->add(method::get, "/", [](const auto& req) {
-      response res{status::ok};
-      res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
-      return res;
-    });
-
+        // A policy using HTTP basic auth
+        router->add_policy("/", malloy::server::http::auth::basic<b64_decode>{"user01", "malloy", "My Realm"});
+        router->add(method::get, "/", [](const auto &req)
+        {
+            response res{status::ok};
+            res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
+            return res;
+        });
+    }
 
     // Start
     c.start();
@@ -91,5 +97,3 @@ int main()
 
     return EXIT_SUCCESS;
 }
-
-
