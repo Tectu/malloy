@@ -26,6 +26,9 @@ The following list provides an overview of the currently implemented features. S
       - Redirections
       - File serving locations
       - Preflight responses
+      - Access policies
+        - HTTP basic auth
+        - Custom access policies
       - Websocket endpoints (with auto-upgrade from HTTP)
     - Request filters
 - WebSocket
