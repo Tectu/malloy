@@ -21,6 +21,9 @@ option(MALLOY_DEPENDENCY_FMT_DOWNLOAD "Whether to automatically fetch fmt" ON)
 option(MALLOY_DEPENDENCY_JSON_DOWNLOAD "Whether to automatically fetch nlohmann/json" ON)
 option(MALLOY_DEPENDENCY_INJA_DOWNLOAD "Whether to automatically fetch pantor/inja" ON)
 
+# Settings
+set(MALLOY_WIN32_WINNT "0x0A00")
+
 set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
 
 if (MSVC AND MALLOY_BUILD_SHARED)

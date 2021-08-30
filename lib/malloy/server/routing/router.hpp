@@ -17,6 +17,7 @@
 #if MALLOY_FEATURE_TLS
     #include "../http/connection_tls.hpp"
 #endif
+#include "malloy/core/detail/version_checks.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -555,7 +556,14 @@ namespace malloy::server
         bool log_or_throw(const std::exception& exception, const spdlog::level::level_enum level, const FormatString& fmt, Args&&... args)
         {
             if (m_logger) {
-                m_logger->log(level, fmt, std::forward<Args>(args)...);
+                m_logger->log(level,
+#if MALLOY_DETAIL_HAS_FMT_8
+                              fmt::runtime(fmt)
+#else
+                              fmt
+#endif
+                                  ,
+                              std::forward<Args>(args)...);
                 return false;
             }
 

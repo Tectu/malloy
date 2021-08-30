@@ -6,6 +6,8 @@
     #include "connection_tls.hpp"
 #endif
 
+#include <spdlog/logger.h>
+
 using namespace malloy::server::http;
 
 connection_detector::connection_detector(

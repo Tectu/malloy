@@ -32,3 +32,16 @@ target_sources(
     PRIVATE
         controller.cpp
 )
+
+# Set _WIN32_WINNT correctly (if needed)
+if (WIN32)
+    include (../win32_version.cmake)
+
+    get_WIN32_WINNT(winnt_version)
+
+    target_compile_definitions(
+        ${TARGET}
+        PUBLIC
+            _WIN32_WINNT=${winnt_version}   # Keep this public so user's can't accidentally use conflicting versions
+    )
+endif()

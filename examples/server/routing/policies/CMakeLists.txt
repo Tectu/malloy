@@ -1,11 +1,11 @@
 # Set a target name
-set(TARGET malloy-example-server-http-auth)
+set(TARGET malloy-example-server-routing-policies)
 
 # Create the executable
 add_executable(${TARGET})
 
 # Setup example
-include(../example.cmake)
+include(../../example.cmake)
 malloy_example_setup(${TARGET})
 
 # Add source files

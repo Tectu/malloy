@@ -1,6 +1,3 @@
-[![CI](https://github.com/Tectu/malloy/actions/workflows/ci.yml/badge.svg)](https://github.com/Tectu/malloy/actions/workflows/ci.yml)
-[![MSYS2 CI](https://github.com/Tectu/malloy/actions/workflows/msys2.yml/badge.svg)](https://github.com/Tectu/malloy/actions/workflows/msys2.yml)
-
 # Overview
 Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [boost.beast](https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/index.html).
 
@@ -26,6 +23,9 @@ The following list provides an overview of the currently implemented features. S
       - Redirections
       - File serving locations
       - Preflight responses
+      - Access policies
+        - HTTP basic auth
+        - Custom access policies
       - Websocket endpoints (with auto-upgrade from HTTP)
     - Request filters
 - WebSocket
@@ -61,22 +61,21 @@ Optional:
 - [pantor/inja](https://github.com/pantor/inja)
 
 # Examples
-A variety of examples can be found in the `/examples` directory.
+A variety of examples can be found in the `/examples` directory. You should definitely check those out! What follows are snippets for a simple HTTP server and a simple HTTP client.
 
 HTTP Server:
 ```cpp
 int main()
 {
-    const std::filesystem::path doc_root = "../../../../examples/static_content";
-
-    // Create malloy controller config
+    // Create controller config
     malloy::server::controller::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
-    cfg.doc_root    = doc_root;
+    cfg.doc_root    = "/path/to/http/docs"
     cfg.num_threads = 5;
+    cfg.logger      = std::make_shared<spdlog::logger>();
 
-    // Create malloy controller
+    // Create controller
     malloy::server::controller c;
     if (!c.init(cfg)) {
         std::cerr << "could not start controller." << std::endl;
@@ -96,16 +95,34 @@ int main()
         });
 
         // Add a route to an existing file
-        router->add(method::get, "/file", [doc_root](const auto& req) {
-            return generator::file(doc_root, "index.html");
+        router->add(method::get, "/file", [](const auto& req) {
+            return generator::file(examples_doc_root, "index.html");
         });
 
+        // Add a route to a non-existing file
+        router->add(method::get, "/file_nonexist", [](const auto& req) {
+            return generator::file(examples_doc_root, "/some_nonexisting_file.xzy");
+        });
+
+        // Add some redirections
+        router->add_redirect(status::permanent_redirect, "/redirect1", "/");
+        router->add_redirect(status::temporary_redirect, "/redirect2", "/");
+
         // Add some file serving
-        router->add_file_serving("/files", doc_root);
+        router->add_file_serving("/files", examples_doc_root);
+
+        // Add a websocket echo endpoint
+        router->add_websocket("/echo", [](const auto& req, auto writer) {
+            std::make_shared<malloy::examples::ws::server_echo>(writer)->run(req);
+        });
     }
 
     // Start
     c.start();
+
+    // Keep the application alive
+    while (true)
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
     return EXIT_SUCCESS;
 }
@@ -133,17 +150,24 @@ int main()
         return EXIT_FAILURE;
     }
 
-    // Make request
+    // Prepare the requst
     malloy::http::request req(
         malloy::http::method::get,
         "www.google.com",
         80,
         "/"
     );
-    auto resp = c.http_request(req);
 
-    // Print HTTP response
-    std::cout << resp.get() << std::endl;
+    // Make the request
+    auto stop_token = c.http_request(req, [](auto&& resp) mutable {
+        // Print the HTTP response
+        std::cout << resp << std::endl;
+    });
+    const auto ec = stop_token.get();
+    if (ec) {
+        std::cerr << "error making HTTP request: " << ec.message() << std::endl;
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
