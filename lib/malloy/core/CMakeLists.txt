@@ -33,9 +33,15 @@ target_sources(
         controller.cpp
 )
 
-# Defines
-target_compile_definitions(
-    ${TARGET}
-    PUBLIC
-        $<$<BOOL:${WIN32}>:_WIN32_WINNT=MALLOY_WIN32_WINNT>     # Keep this public so user's can't accidentally use conflicting versions
-)
+# Set _WIN32_WINNT correctly (if needed)
+if (WIN32)
+    include (../win32_version.cmake)
+
+    get_WIN32_WINNT(winnt_version)
+
+    target_compile_definitions(
+        ${TARGET}
+        PUBLIC
+            _WIN32_WINNT=${winnt_version}   # Keep this public so user's can't accidentally use conflicting versions
+    )
+endif()
