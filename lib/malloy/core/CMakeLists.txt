@@ -32,3 +32,10 @@ target_sources(
     PRIVATE
         controller.cpp
 )
+
+# Defines
+target_compile_definitions(
+    ${TARGET}
+    PUBLIC
+        $<$<BOOL:${WIN32}>:_WIN32_WINNT=MALLOY_WIN32_WINNT>     # Keep this public so user's can't accidentally use conflicting versions
+)

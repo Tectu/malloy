@@ -18,6 +18,9 @@ option(MALLOY_FEATURE_TLS    "Whether to enable TLS features"  OFF)
 option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog" ON)
 option(MALLOY_DEPENDENCY_FMT_DOWNLOAD "Whether to automatically fetch fmt" ON)
 
+# Settings
+set(MALLOY_WIN32_WINNT "0x0A00")
+
 set(MALLOY_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin) # Needed for later
 
 if (MSVC AND MALLOY_BUILD_SHARED)
