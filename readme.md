@@ -47,8 +47,16 @@ This library is MIT licensed. Dependencies ship with their own licensing models.
 # Requirements
 Building (and using) this library requires:
 - A C++20 capable compiler
+  - GCC >= 10.3 (MinGW works!)
+  - Clang >= 13
+  - MSVC >= 19.29 (VS 2019)
 - CMake 3.17 or newer
-  
+
+As of today, this library was tested successfully on:
+- Windows 10 (with both MSVC and MinGW)
+- Linux (Ubuntu, Debian, Fedora, ...)
+- FreeBSD
+
 ## Dependencies
 Required:
 - [Boost](https://www.boost.org/) 1.74.0 or newer
