@@ -92,7 +92,7 @@ if (MALLOY_DEPENDENCY_INJA)
     FetchContent_Declare(
         inja
         GIT_REPOSITORY https://github.com/pantor/inja.git
-        GIT_TAG        4d5a7d1c33ab7b05947010e0d16b33d18f04ce4d
+        GIT_TAG        v3.3.0
     )
     FetchContent_GetProperties(inja)
     if(NOT inja_POPULATED)
