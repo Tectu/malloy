@@ -11,9 +11,9 @@ app::app(
     std::string name,
     environment env
 ) :
+    m_env(std::move(env)),
     m_logger(std::move(logger)),
-    m_name(std::move(name)),
-    m_env(std::move(env))
+    m_name(std::move(name))
 {
     // Sanity check logger
     if (!m_logger)
