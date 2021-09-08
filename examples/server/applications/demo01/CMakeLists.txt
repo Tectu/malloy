@@ -23,7 +23,7 @@ target_sources(
         main.cpp
         app.cpp
         app.hpp
-        from_renderer.cpp
+        form_renderer.cpp
         form_renderer.hpp
         database.cpp
         database.hpp
