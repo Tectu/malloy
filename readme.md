@@ -1,3 +1,5 @@
+![](./doc/logo.svg)
+
 # Overview
 Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [boost.beast](https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/index.html).
 
