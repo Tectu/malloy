@@ -139,7 +139,7 @@ TEST_SUITE("websockets")
                                                                      REQUIRE(!ec);
                                                                      auto buff = std::make_shared<boost::beast::flat_buffer>();
                                                                      conn->read(*buff, [buff](malloy::error_code ec, auto) {
-                                                                         REQUIRE(ec.default_error_condition().value() == boost::asio::error::operation_aborted);
+                                                                         REQUIRE(ec.value() == boost::asio::error::operation_aborted);
                                                                      });
                                                                      cli_conn_prom.set_value(conn);
                                                                  }); },
