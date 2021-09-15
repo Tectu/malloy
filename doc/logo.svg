@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="Layer_1"
+   data-name="Layer 1"
+   width="180"
+   height="180"
+   viewBox="0 0 135.00001 135.00001"
+   version="1.1"
+   sodipodi:docname="logo.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
+  <metadata
+     id="metadata29">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs27" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="3840"
+     inkscape:window-height="2081"
+     id="namedview25"
+     showgrid="false"
+     units="px"
+     inkscape:zoom="0.79048712"
+     inkscape:cx="842.4082"
+     inkscape:cy="823.41304"
+     inkscape:window-x="1791"
+     inkscape:window-y="217"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
+  <g
+     id="g22"
+     transform="matrix(0.13846289,0,0,0.13846289,-43.517671,-20.191374)">
+    <g
+       id="g6">
+      <polygon
+         points="906.877,443.142 1041.38,387.231 1003.814,443.142 "
+         style="fill:#606161"
+         id="polygon2" />
+      <path
+         d="m 845.73,651.18425 -128.52661,22 22.97437,-50.07739 104.82214,-16.403 L 965.81508,623.629 889.58082,539.99741 816.11696,539.47526 772.07863,227.07439 562.19276,348.252 V 674.58672 L 844.8069,837.75413 954.00172,774.71037 H 861.3943 Z M 648.23378,387.23131 782.73707,443.14244 h -96.937 z"
+         style="fill:#606161"
+         id="path4"
+         inkscape:connector-curvature="0" />
+    </g>
+    <g
+       id="g20">
+      <polygon
+         points="357.918,927.063 333.628,927.063 333.628,1039.566 357.758,1039.566 357.758,968.772 410.813,1039.566 432.227,1039.566 484.963,968.613 484.963,1039.566 509.094,1039.566 509.094,927.063 486.881,927.063 422.639,1014.157 "
+         style="fill:#606161"
+         id="polygon8" />
+      <polygon
+         points="696.552,1039.566 811.93,1039.566 811.93,1019.111 722.919,1019.111 722.919,927.063 696.552,927.063 "
+         style="fill:#606161"
+         id="polygon10" />
+      <polygon
+         points="825.678,1039.566 941.056,1039.566 941.056,1019.111 852.045,1019.111 852.045,927.063 825.678,927.063 "
+         style="fill:#606161"
+         id="polygon12" />
+      <path
+         d="m 1063.3113,927.06346 h -76.22753 c -26.208,0 -36.11523,11.02637 -36.11523,27.167 v 58.16904 c 0,16.1406 9.90722,27.167 36.11523,27.167 h 76.22753 c 26.208,0 36.1162,-11.0264 36.1162,-27.167 v -58.16905 c 0,-16.14062 -9.9082,-27.16699 -36.1162,-27.16699 z m 10.0674,85.49604 c 0,4.6338 -3.5156,6.5518 -10.0674,6.5518 h -76.22753 c -6.55176,0 -10.06738,-1.918 -10.06738,-6.5518 v -58.64838 c 0,-4.47461 3.51562,-6.55274 10.06738,-6.55274 h 76.22753 c 6.5518,0 10.0674,2.07813 10.0674,6.55274 z"
+         style="fill:#606161"
+         id="path14"
+         inkscape:connector-curvature="0" />
+      <polygon
+         points="1172.623,1039.566 1198.672,1039.566 1198.672,994.98 1269.945,927.063 1237.025,927.063 1185.567,976.124 1133.95,927.063 1100.711,927.063 1172.623,994.98 "
+         style="fill:#606161"
+         id="polygon16" />
+      <path
+         d="m 660.2233,998.88036 -0.036,-2.5e-4 -47.5381,-71.81665 h -19.17578 l -47.60693,71.46069 -0.10926,-4.8e-4 0.057,0.079 -27.29,40.96373 h 29.085 l 13.28,-20.4541 h 83.81275 l 13.01269,20.4541 h 29.4043 l -26.9148,-40.66088 z m -86.02442,-0.26807 29.02259,-44.70117 28.55261,44.88061 z"
+         style="fill:#606161"
+         id="path18"
+         inkscape:connector-curvature="0" />
+    </g>
+  </g>
+</svg>
