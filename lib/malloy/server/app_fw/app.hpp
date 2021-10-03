@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../routing/router.hpp"
+#include "environment.hpp"
 
 #include <spdlog/logger.h>
 
@@ -20,29 +21,6 @@ namespace malloy::server::app_fw
     class app
     {
     public:
-        struct environment
-        {
-            struct {
-                std::string base_url;
-            } site;
-
-            struct {
-                std::string base_url;
-                std::filesystem::path assets_fs_path;
-            } app;
-
-            [[nodiscard]]
-            environment
-            make_sub_environment(const std::string& name)
-            {
-                environment env{ *this };
-                env.app.base_url += "/" + name;
-                env.app.assets_fs_path /= name;
-
-                return env;
-            }
-        };
-
         app(
             std::shared_ptr<spdlog::logger> logger,
             std::string name,

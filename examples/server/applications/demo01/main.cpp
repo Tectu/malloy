@@ -34,7 +34,7 @@ int main()
     }
 
     // Setup application environment
-    server::app_fw::app::environment env {
+    server::app_fw::environment env {
         .site {
             .base_url       = "http://127.0.0.1:8080",
         },

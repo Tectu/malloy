@@ -14,7 +14,7 @@ class app :
 public:
     app(
         std::shared_ptr<spdlog::logger> logger,
-        malloy::server::app_fw::app::environment env,
+        malloy::server::app_fw::environment env,
         std::shared_ptr<database> db
     );
 

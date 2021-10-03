@@ -2,6 +2,7 @@ target_sources(
     ${TARGET}
     PUBLIC
         app.hpp
+        environment.hpp
         page.hpp
         page_content.hpp
         page_master.hpp
