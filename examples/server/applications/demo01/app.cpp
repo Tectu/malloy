@@ -32,7 +32,6 @@ app::init()
     make_subapp<apps::gallery::app>("gallery", m_db, m_master_page);
 
     // Endpoints
-    m_logger->warn("FOO: {}", m_env.app.assets_fs_path.string());
     m_router->add_file_serving("/assets", m_env.app.assets_fs_path);
 
     return true;
