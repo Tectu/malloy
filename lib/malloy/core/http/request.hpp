@@ -6,6 +6,8 @@
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/string_body.hpp>
 
+#include <unordered_map>
+
 namespace malloy::http
 {
     template<typename Fields = boost::beast::http::fields>

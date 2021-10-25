@@ -4,6 +4,7 @@
 #include "../http/utils.hpp"
 
 #include <algorithm>
+#include <sstream>
 #include <vector>
 
 using namespace malloy::html;
