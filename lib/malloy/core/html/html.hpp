@@ -5,6 +5,6 @@
  *
  * A namespace for core features related to HTML.
  */
-namespace malloy::websocket
+namespace malloy::html
 {
 }
