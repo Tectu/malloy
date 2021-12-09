@@ -45,9 +45,14 @@ int main() {
 		return EXIT_FAILURE;
 	}
 
-	ctrl.router()->add(malloy::http::method::post, "/.+", [](auto&&) {
-		return malloy::http::generator::ok();
-		}, request_filter{});
+	ctrl.router()->add(
+        malloy::http::method::post,
+        "/.+",
+        [](auto&&) {
+		    return malloy::http::generator::ok();
+		},
+        request_filter{ }
+    );
 
 	if (!ctrl.start()) {
 		spdlog::critical("Failed to start server");

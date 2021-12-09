@@ -11,15 +11,17 @@
 
 using namespace malloy::server;
 
-auto controller::init(config cfg) -> bool {
-    if (!malloy::controller::init(cfg)) {
+bool controller::init(config cfg)
+{
+    if (!malloy::controller::init(cfg))
         return false;
-    }
+
     // Grab the config
     m_cfg = std::move(cfg);
 
     // Create the top-level router
     m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"), m_cfg.agent_string);
+
     return true;
 }
 

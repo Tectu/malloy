@@ -32,7 +32,6 @@ bool controller::init(const config& cfg)
         return false;
     }
 
-
     // Create the I/O context
     m_io_ctx = std::make_shared<boost::asio::io_context>();
 
@@ -70,7 +69,9 @@ bool controller::root_start(const config& cfg)
 
     return true;
 }
-void controller::remove_workguard() const {
+
+void controller::remove_workguard() const
+{
     m_workguard->reset();
 }
 

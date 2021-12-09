@@ -54,7 +54,7 @@ listener::listener(
     // Start listening for connections
     m_acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
     if (ec) {
-        m_logger->critical("could not start licensing: {}", ec.message());
+        m_logger->critical("could not start listening: {}", ec.message());
         return;
     }
 }

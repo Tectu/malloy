@@ -8,8 +8,14 @@
 #include <concepts>
 #include <variant>
 
+/**
+ * @namespace malloy::concepts
+ *
+ * Namespace for concepts used throughout malloy.
+ */
 namespace malloy::concepts
 {
+
     namespace detail
     {
 
@@ -21,8 +27,7 @@ namespace malloy::concepts
         };
 
 
-    }    // namespace detail
-
+    }   // namespace detail
 
     template<typename B>
     concept const_buffer_sequence = boost::asio::is_const_buffer_sequence<B>::value;
@@ -35,7 +40,6 @@ namespace malloy::concepts
 
     template<typename Func>
     concept async_read_handler = std::invocable<Func, boost::beast::error_code, std::size_t>;
-
 
     namespace detail
     {
@@ -101,6 +105,7 @@ namespace malloy::concepts
     static_assert(is_container_of<std::variant<std::tuple<std::string>, std::tuple<int>>, std::tuple, std::variant>, "is_container_of is defective");
 
 }    // namespace malloy::concepts
+
 /** 
  * @page general_concepts Core Concepts
  * @section const_buffer_sequence 

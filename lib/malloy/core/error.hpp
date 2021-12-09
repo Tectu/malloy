@@ -5,7 +5,7 @@
 namespace malloy
 {
 
-    /// Error code used to signify errors without throwing. truthy means it holds an error
+    /// Error code used to signify errors without throwing. Truthy means it holds an error.
 	using error_code = boost::beast::error_code;
 
 }

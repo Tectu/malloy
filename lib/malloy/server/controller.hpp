@@ -37,12 +37,12 @@ namespace malloy::server
             /**
              * The interface to bind to.
              */
-            std::string interface          = "127.0.0.1";
+            std::string interface = "127.0.0.1";
 
             /**
              * The port to listen on.
              */
-            std::uint16_t port             = 8080;
+            std::uint16_t port = 8080;
 
             /**
              * The root path for HTTP documents.
