@@ -27,11 +27,8 @@ namespace malloy::server::concepts
 
     template<typename H>
     concept request_filter = std::move_constructible<H> && requires(const H& f, const typename H::request_type::header_type& h, typename H::request_type::body_type::value_type& v)
-
-    // clang-format off
     {
         { f.setup_body(h, v) };
-    // clang-format on
     };
 
     template<typename P>

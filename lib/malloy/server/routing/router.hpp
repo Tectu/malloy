@@ -304,12 +304,22 @@ namespace malloy::server
          */
         bool add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
 
+        /**
+         * Add an access policy.
+         *
+         * A policy allow restricting access to any resource registered on this router.
+         *
+         * @param resource The resource path.
+         * @param policy The policy.
+         */
         template<concepts::request_validator Policy>
-        void add_policy(const std::string& target, Policy&& policy) {
+        void
+        add_policy(const std::string& resource, Policy&& policy)
+        {
             using policy_t = std::decay_t<Policy>;
             auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::move(conn), m_server_str); };
 
-            m_policies.emplace_back(target, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
+            m_policies.emplace_back(resource, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
         }
 
         /**
@@ -333,8 +343,7 @@ namespace malloy::server
         void handle_request(
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
-            Connection&& connection
-            )
+            Connection&& connection)
         {
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {

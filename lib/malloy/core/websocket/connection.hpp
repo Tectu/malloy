@@ -19,6 +19,7 @@
 
 namespace malloy::websocket
 {
+
     /**
      * @class connection
      * @tparam isClient: Whether it is the client end of a websocket connection
@@ -35,8 +36,13 @@ namespace malloy::websocket
     {
         using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
         using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
+
     public:
         using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
+
+        /**
+         * The connection state.
+         */
         enum class state
         {
             handshaking,
@@ -62,19 +68,22 @@ namespace malloy::websocket
          * @param ws Stream to use. May be unopened/connected but in that case
          * `connect` must be called before this connection can be used
          */
-        static auto
-        make(const std::shared_ptr<spdlog::logger> logger, stream&& ws, const std::string& agent_string) -> std::shared_ptr<connection>
+        static
+        std::shared_ptr<connection>
+        make(const std::shared_ptr<spdlog::logger> logger, stream&& ws, const std::string& agent_string)
         {
             // We have to emulate make_shared here because the ctor is private
             connection* me = nullptr;
             try {
                 me = new connection{logger, std::move(ws), agent_string};
                 return std::shared_ptr<connection>{me};
-            } catch (...) {
+            }
+            catch (...) {
                 delete me;
                 throw;
             }
         }
+
         /**
          * @brief Connect to a remote (websocket) endpoint
          * @note Only available if isClient == true
@@ -158,9 +167,13 @@ namespace malloy::websocket
         /**
          * @brief Disconnect/stop/close the connection.
          * @note Attempting to send or receive after calling this will result in error(s).
+         *
          * @param why Reason why the connection is being closed.
+         *
+         * @sa force_disconnect()
          */
-        void disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
+        void
+        disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
             if (m_state == state::closed || m_state == state::closing) {
                 throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
@@ -178,16 +191,21 @@ namespace malloy::websocket
             m_write_queue.push(build_act);
             m_read_queue.push(build_act);
         }
+
         /**
          * @brief Same as disconnect, but bypasses all queues and runs immediately
+         *
+         * @sa disconnect()
          */
-        void force_disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal) {
-            if (m_state == state::inactive) {
+        void
+        force_disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
+        {
+            if (m_state == state::inactive)
                 throw std::logic_error{"force_disconnect() called on inactive websocket connection"};
-            }
-            else if (m_state == state::closed || m_state == state::closing) {
+
+            else if (m_state == state::closed || m_state == state::closing)
                 return; // Already disconnecting
-            }
+
             do_disconnect(why, []{});
         }
 
@@ -273,7 +291,9 @@ namespace malloy::websocket
         }
 
         
-        void go_active() {
+        void
+        go_active()
+        {
             m_state = state::active;
             m_read_queue.run();
             m_write_queue.run();
@@ -295,7 +315,10 @@ namespace malloy::websocket
                         req.set(agent_field, m_agent_string);
                     }));
         }
-        void do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done) {
+
+        void
+        do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done)
+        {
             // Update state
             m_state = state::closing;
 
@@ -337,9 +360,8 @@ namespace malloy::websocket
                     // TODO: Should this be a seperate method?
                     m_ws.async_handshake_tls(boost::asio::ssl::stream_base::handshake_type::client, [on_handshake = std::forward<decltype(on_handshake)>(on_handshake),
                                                                                                      resource, host, me = this->shared_from_this()](auto ec) mutable {
-                        if (ec) {
+                        if (ec)
                             on_handshake(ec);
-                        }
 
                         me->on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
                     });
@@ -349,7 +371,9 @@ namespace malloy::websocket
 #endif
             on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
         }
-        void on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake)
+
+        void
+        on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake)
         {
             // Turn off the timeout on the tcp_stream, because
             // the websocket stream has its own timeout system.
