@@ -38,15 +38,17 @@ struct b64_decode
 
         for (auto i = in.begin(); i != last; ++i) {
             const int c = *i;
-            if (std::isspace(c) || c == '=') {
-                // Skip whitespace and padding. Be liberal in what you accept.
+
+            // Skip whitespace and padding. Be liberal in what you accept.
+            if (std::isspace(c) || c == '=')
                 continue;
-            }
-            if ((c > 127) || (c < 0) || (reverse_table[c] > 63)) {
+
+            if ((c > 127) || (c < 0) || (reverse_table[c] > 63))
                 throw std::invalid_argument("This contains characters not legal in a base64 encoded string.");
-            }
+
             accumulator = (accumulator << 6) | reverse_table[c];
             bits_collected += 6;
+
             if (bits_collected >= 8) {
                 bits_collected -= 8;
                 *out_iter = static_cast<char>((accumulator >> bits_collected) & 0xffu);
@@ -78,12 +80,18 @@ int main()
         using namespace malloy::http;
         auto router = c.router();
 
+        // Root page
+        router->add(method::get, "/", [](const auto& req){
+            response res{ status::ok };
+            res.body() = "<html><body><h1>Malloy Access Policy demo</h1><p><a href=\"./restricted\">Access restricted area</a></p><p>Username: user01</p><p>Password: malloy</p></body></html>";
+            return res;
+        });
+
         // A policy using HTTP basic auth
-        router->add_policy("/", malloy::server::http::auth::basic<b64_decode>{"user01", "malloy", "My Realm"});
-        router->add(method::get, "/", [](const auto &req)
-        {
+        router->add_policy("/restricted", malloy::server::http::auth::basic<b64_decode>{"user01", "malloy", "My Realm"});
+        router->add(method::get, "/restricted", [](const auto &req) {
             response res{status::ok};
-            res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
+            res.body() = "<html><body><h1>Hello User01!</h1><p>some content...</p></body></html>";
             return res;
         });
     }
