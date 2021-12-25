@@ -24,6 +24,7 @@ The following list provides an overview of the currently implemented features. S
       - Sub-routers (nested/chained routers)
       - Redirections
       - File serving locations
+        - Optional cache-control directives
       - Preflight responses
       - Access policies
         - HTTP basic auth
