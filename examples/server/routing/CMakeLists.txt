@@ -1,3 +1,4 @@
+add_subdirectory(files)
 add_subdirectory(policies)
 add_subdirectory(preflights)
 add_subdirectory(regex)
