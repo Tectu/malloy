@@ -28,6 +28,11 @@ namespace malloy::http
          */
         response() = default;
 
+        /**
+         * Constructor.
+         *
+         * @param msg The HTTP message.
+         */
         explicit
         response(msg_t&& msg)
         {
