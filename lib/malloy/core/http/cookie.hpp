@@ -27,7 +27,7 @@ namespace malloy::http
 
         std::string name;
         std::string value;
-        std::chrono::seconds max_age;
+        std::chrono::seconds max_age{ 0 };
         std::string expires;
         std::string domain;
         std::filesystem::path path;
