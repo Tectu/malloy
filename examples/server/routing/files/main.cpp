@@ -29,7 +29,8 @@ int main(int argc, char* argv[])
         using namespace malloy;
         using namespace malloy::http;
 
-        router->add_file_serving("/files", examples_doc_root);
+        // Serve files and set caching max-age to 120 seconds
+        router->add_file_serving("/files", examples_doc_root, []() -> std::string { return "max-age=120"; });
     }
 
     // Start

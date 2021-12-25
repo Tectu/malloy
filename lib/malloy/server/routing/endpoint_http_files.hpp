@@ -3,6 +3,7 @@
 #include "endpoint_http.hpp"
 #include "../../core/http/request.hpp"
 #include "malloy/core/http/utils.hpp"
+#include "malloy/core/type_traits.hpp"
 
 #include <filesystem>
 
@@ -10,10 +11,11 @@ namespace malloy::server
 {
     /**
      * @brief Endpoint for file serving
+     *
      * @details Serves files at a resource path. The url path after the resource
-     * base is appended to a base path on the filesystem. e.g. /content/img.svg
-     * with a resource path of / and a base path of /var/www/content would
-     * result in the file at /var/www/content/content/img.svg being served.
+     *          base is appended to a base path on the filesystem. e.g. /content/img.svg
+     *          with a resource path of / and a base path of /var/www/content would
+     *          result in the file at /var/www/content/content/img.svg being served.
      */
     class endpoint_http_files :
         public endpoint_http
@@ -23,6 +25,7 @@ namespace malloy::server
     public:
         std::string resource_base;
         std::filesystem::path base_path;
+        std::string cache_control;
 
         write_func writer;
 
@@ -41,7 +44,11 @@ namespace malloy::server
                     malloy::http::chop_resource(req_clone, resource_base);
 
                     // Create response
-                    writer(req, malloy::http::generator::file(req_clone, base_path), conn);
+                    auto resp = malloy::http::generator::file(req_clone, base_path);
+                    std::visit([this]<typename Resp>(Resp& resp){ resp.set(boost::beast::http::field::cache_control, cache_control); }, resp);  // Add Cache-Control header
+
+                    // Send
+                    writer(req, std::move(resp), conn);
                     });
                 },
                 req

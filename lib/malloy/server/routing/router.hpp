@@ -2,8 +2,9 @@
 
 #include "endpoint_http.hpp"
 #include "endpoint_http_regex.hpp"
-#include "malloy/core/http/utils.hpp"
+#include "endpoint_http_files.hpp"
 #include "endpoint_websocket.hpp"
+#include "malloy/core/http/utils.hpp"
 #include "type_traits.hpp"
 #include "../http/connection.hpp"
 #include "../http/connection_plain.hpp"
@@ -99,13 +100,24 @@ namespace malloy::server
      */
     class router
     {
-        class abstract_req_validator {
+        /// Create the lambda wrapped callback for the writer
+        auto make_endpt_writer_callback() {
+            return [this]<typename R>(const auto& req, R&& resp, const auto& conn) {
+                std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, m_server_str); }, std::forward<R>(resp));
+            };
+        }
+
+        class abstract_req_validator
+        {
         public:
             virtual ~abstract_req_validator() = default;
             virtual auto process(const boost::beast::http::request_header<>&, const http::connection_t& conn) -> bool = 0;
         };
+
         template<concepts::request_validator V, typename Writer>
-        class req_validator_impl: public abstract_req_validator {
+        class req_validator_impl :
+            public abstract_req_validator
+        {
         public:
             Writer writer;
 
@@ -277,13 +289,47 @@ namespace malloy::server
         bool add_preflight(std::string_view target, http::preflight_config cfg);
 
         /**
+         * Add an HTTP file-servinc location.
+         *
+         * @tparam CacheControl
+         * @param resource
+         * @param storage_base_path
+         * @param cc
+         * @return Whether adding the file serving was successful.
+         */
+        template<malloy::concepts::callable_string CacheControl>
+        bool add_file_serving(std::string resource, std::filesystem::path storage_base_path, const CacheControl& cc)
+        {
+            // Log
+            if (m_logger)
+                m_logger->trace("adding file serving location: {} -> {}", resource, storage_base_path.string());
+
+            // Create endpoint
+            auto ep = std::make_shared<endpoint_http_files>();
+            ep->resource_base = resource;
+            ep->base_path     = std::move(storage_base_path);
+            ep->cache_control = cc();
+            ep->writer        = make_endpt_writer_callback();
+
+            // Add
+            return add_http_endpoint(std::move(ep));
+        }
+
+        /**
          * Add an HTTP file-serving location.
          *
          * @param resource
          * @param storage_base_path
          * @return Whether adding the file serving was successful.
          */
-        bool add_file_serving(std::string resource, std::filesystem::path storage_base_path);
+        bool add_file_serving(std::string resource, std::filesystem::path storage_base_path)
+        {
+            return add_file_serving(
+                std::move(resource),
+                std::move(storage_base_path),
+                []() -> std::string { return ""; }
+            );
+        }
 
         /**
          * Adds an HTTP redirection rule.
@@ -470,13 +516,6 @@ namespace malloy::server
             return std::any_of(m_policies.begin(), m_policies.end(), [&](const policy_store& policy){
                 return policy.process(req->header(), connection);
             });
-        }
-
-        /// Create the lambda wrapped callback for the writer
-        auto make_endpt_writer_callback() {
-            return [this]<typename R>(const auto& req, R&& resp, const auto& conn) {
-              std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, m_server_str); }, std::forward<R>(resp));
-            };
         }
 
         template<

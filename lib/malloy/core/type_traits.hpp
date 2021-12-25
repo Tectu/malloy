@@ -41,6 +41,18 @@ namespace malloy::concepts
     template<typename Func>
     concept async_read_handler = std::invocable<Func, boost::beast::error_code, std::size_t>;
 
+    /**
+     * Concept to check whether a type has a function with the following signature:
+     *   - `std::string operator()()`
+     *
+     * @tparam T
+     */
+    template<typename T>
+    concept callable_string = requires(T t) {
+        { t() } -> std::same_as<std::string>;
+        // { t() } -> std::same_as<std::string_view>;     // ToDo: Want to extend this to also accept std::string_view as return type.
+    };
+
     namespace detail
     {
         /**

@@ -120,23 +120,6 @@ bool router::add_preflight(const std::string_view target, http::preflight_config
     );
 }
 
-bool router::add_file_serving(std::string resource, std::filesystem::path storage_base_path)
-{
-    // Log
-    if (m_logger)
-        m_logger->trace("adding file serving location: {} -> {}", resource, storage_base_path.string());
-
-    // Create endpoint
-    auto ep = std::make_shared<endpoint_http_files>();
-
-    ep->resource_base = resource;
-    ep->base_path = std::move(storage_base_path);
-    ep->writer = make_endpt_writer_callback();
-
-    // Add
-    return add_http_endpoint(std::move(ep));
-}
-
 bool router::add_redirect(const malloy::http::status status, std::string&& resource_old, std::string&& resource_new)
 {
     // Log
