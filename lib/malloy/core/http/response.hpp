@@ -28,6 +28,7 @@ namespace malloy::http
          */
         response() = default;
 
+        explicit
         response(msg_t&& msg)
         {
             msg_t::operator=(std::move(msg));
@@ -38,6 +39,7 @@ namespace malloy::http
          *
          * @param status_ The HTTP status to use.
          */
+        explicit
         response(const status& status_)
         {
             msg_t::result(status_);
