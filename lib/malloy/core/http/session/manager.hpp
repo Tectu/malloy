@@ -79,6 +79,17 @@ namespace malloy::http::sessions
         std::shared_ptr<session> get(const request<>& req);
 
         /**
+         * Get an existing session (if any).
+         *
+         * @param id The session ID.
+         * @return The session (if any).
+         *
+         * @sa start()
+         */
+        [[nodiscard]]
+        std::shared_ptr<session> get(const id_type& id);
+
+        /**
          * Get an existing session (if any) or create a new one.
          *
          * @param req The request.
@@ -117,6 +128,15 @@ namespace malloy::http::sessions
          */
         [[nodiscard]]
         bool is_valid(const request<>& req);
+
+        /**
+         * Checks whether the session is valid.
+         *
+         * @param id The session id.
+         * @return Whether the session is valid.
+         */
+        [[nodiscard]]
+        bool is_valid(const id_type& id);
 
     private:
         std::shared_ptr<storage> m_storage;

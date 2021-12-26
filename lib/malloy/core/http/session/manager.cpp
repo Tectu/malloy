@@ -19,18 +19,24 @@ std::shared_ptr<session> manager::get(const request<>& req)
 {
     // Sanity check
     if (!m_storage)
-        return { };
+        return {};
 
     // Get session ID
     const auto& ses_id = get_id(req);
     if (!ses_id.has_value())
-        return { };
+        return {};
 
+    // Get the session
+    return get(ses_id.value());
+}
+
+std::shared_ptr<session> manager::get(const id_type& ses_id)
+{
     // Acquire mutex
     std::lock_guard lock(m_lock);
 
     // Check if storage has a session for this ID
-    return m_storage->get(ses_id.value());
+    return m_storage->get(ses_id);
 }
 
 std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
@@ -109,6 +115,11 @@ std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
 bool manager::is_valid(const request<>& req)
 {
     return get(req) != nullptr;
+}
+
+bool manager::is_valid(const id_type& id)
+{
+    return get(id) != nullptr;
 }
 
 std::optional<id_type> manager::get_id(const request<>& req) const
