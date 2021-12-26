@@ -54,7 +54,8 @@ namespace malloy::server::http
             header() const { return header_; }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback, typename SetupCb>
-            auto body(Callback&& done, SetupCb&& setup) {
+            auto body(Callback&& done, SetupCb&& setup)
+            {
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
                 auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
@@ -75,7 +76,8 @@ namespace malloy::server::http
             }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
-            auto body(Callback&& done) {
+            auto body(Callback&& done)
+            {
                 return body<Body>(std::forward<Callback>(done), [](auto) {});
             }
 

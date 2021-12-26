@@ -138,16 +138,20 @@ namespace malloy::http
          * Gets the value of a cookie.
          */
         [[nodiscard]] std::string_view
-        cookie(const std::string_view &name) const
+        cookie(const std::string_view& name) const
         {
-          const auto &it = std::find_if(
-              std::cbegin(m_cookies), std::cend(m_cookies),
-              [&name](const auto &pair) { return pair.first == name; });
+            const auto& it = std::find_if(
+                std::cbegin(m_cookies),
+                std::cend(m_cookies),
+                [&name](const auto& pair) {
+                    return pair.first == name;
+                }
+            );
 
-          if (it == std::cend(m_cookies))
-            return { };
+            if (it == std::cend(m_cookies))
+                return { };
 
-          return it->second;
+            return it->second;
         }
 
     private:
