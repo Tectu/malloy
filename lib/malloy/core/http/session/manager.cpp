@@ -63,7 +63,7 @@ std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
         // session cookie on every response (as subsequent calls to this function will
         // pass this branch
         if (session)
-            resp.add_cookie(session->generate_cookie(m_cookie_name));
+            resp.add_cookie(session->generate_cookie(cookie_name));
     }
 
     return session;
@@ -86,7 +86,7 @@ void manager::destroy(const request<>& req, response<>& resp)
     m_storage->destroy(std::string{ ses_id.value() });
 
     // Send back an invalid/expired cookie
-    cookie_clear c(m_cookie_name);
+    cookie_clear c(cookie_name);
     resp.add_cookie(c);
 }
 
@@ -113,11 +113,11 @@ bool manager::is_valid(const request<>& req)
 
 std::optional<id_type> manager::get_id(const request<>& req) const
 {
-    if (!req.has_cookie(m_cookie_name))
+    if (!req.has_cookie(cookie_name))
         return std::nullopt;
 
     // Get session ID
-    const auto& ses_id = req.cookie(m_cookie_name);
+    const auto& ses_id = req.cookie(cookie_name);
     if (ses_id.empty())
         return std::nullopt;
 

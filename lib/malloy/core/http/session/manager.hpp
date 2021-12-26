@@ -19,6 +19,11 @@ namespace malloy::http::sessions
     {
     public:
         /**
+         * Name of the session cookie
+         */
+        constexpr static const char* cookie_name = "sessionId";
+
+        /**
          * Constructor.
          *
          * This will throw `std::invalid_argument` if no valid storage is provided.
@@ -116,7 +121,6 @@ namespace malloy::http::sessions
     private:
         std::shared_ptr<storage> m_storage;
         std::mutex m_lock; // protects sessions
-        std::string m_cookie_name = "sessionId";      // The name of the session cookie
 
         /**
          * Gets the session ID from a request (if any).
