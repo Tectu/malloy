@@ -41,34 +41,36 @@ namespace malloy::server::http
         class request_generator :
             public std::enable_shared_from_this<request_generator>
         {
+            friend class connection;
+
         public:
             using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
             using header_t = boost::beast::http::request_header<>;
 
             [[nodiscard]]
             header_t&
-            header() { return header_; }
+            header() { return m_header; }
 
             [[nodiscard]]
             const header_t&
-            header() const { return header_; }
+            header() const { return m_header; }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback, typename SetupCb>
             auto body(Callback&& done, SetupCb&& setup)
             {
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
-                auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*h_parser_));
-                parser->get().base() = header_;
+                auto parser = std::make_shared<boost::beast::http::request_parser<body_t>>(std::move(*m_parser));
+                parser->get().base() = m_header;
                 std::invoke(setup, parser->get().body());
 
                 boost::beast::http::async_read(
-                    parent_->derived().m_stream, buff_, *parser,
-                    [_ = parent_,
+                    m_parent->derived().m_stream, m_buffer, *parser,
+                    [_ = m_parent,
                      done = std::forward<Callback>(done),
                      p = parser, this_ = this->shared_from_this(), this](const auto& ec, auto) {
-                        if (ec && parent_->m_logger) {    // TODO: see #40
-                            parent_->m_logger->error("failed to read http request body: '{}'", ec.message());
+                        if (ec && m_parent->m_logger) {    // TODO: see #40
+                            m_parent->m_logger->error("failed to read http request body: '{}'", ec.message());
                             return;
                         }
                         done(malloy::http::request<Body>{p->release()});
@@ -84,20 +86,18 @@ namespace malloy::server::http
 
         private:
             request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent, boost::beast::flat_buffer buff) :
-                buff_{ std::move(buff) },
-                h_parser_{ std::move(hparser) },
-                header_{ std::move(header) },
-                parent_{ std::move(parent) }
+                m_buffer{ std::move(buff) },
+                m_parser{ std::move(hparser) },
+                m_header{ std::move(header) },
+                m_parent{ std::move(parent) }
             {
-                assert(parent_); // ToDo: Should this be BOOST_ASSERT?
+                assert(m_parent); // ToDo: Should this be BOOST_ASSERT?
             }
 
-            boost::beast::flat_buffer buff_;
-            h_parser_t h_parser_;
-            header_t header_;
-            std::shared_ptr<connection> parent_;
-
-            friend class connection;
+            boost::beast::flat_buffer m_buffer;
+            h_parser_t m_parser;
+            header_t m_header;
+            std::shared_ptr<connection> m_parent;
         };
         
         class handler
