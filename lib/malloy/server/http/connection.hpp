@@ -38,20 +38,22 @@ namespace malloy::server::http
     class connection
     {
     public:
-        class request_generator : public std::enable_shared_from_this<request_generator> {
+        class request_generator :
+            public std::enable_shared_from_this<request_generator>
+        {
         public:
             using h_parser_t = std::unique_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
             using header_t = boost::beast::http::request_header<>;
 
-            auto header() -> header_t& {
-                return header_;
-            }
+            [[nodiscard]]
+            header_t&
+            header() { return header_; }
 
-            auto header() const -> const header_t& {
-                return header_;
-            }
-            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback,
-               typename SetupCb>
+            [[nodiscard]]
+            const header_t&
+            header() const { return header_; }
+
+            template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback, typename SetupCb>
             auto body(Callback&& done, SetupCb&& setup) {
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
@@ -79,11 +81,13 @@ namespace malloy::server::http
 
 
         private:
-            request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent, boost::beast::flat_buffer buff)
-                : buff_{ std::move(buff) }, h_parser_ {
-                std::move(hparser)
-            }, header_{ std::move(header) }, parent_{ std::move(parent) } {
-                assert(parent_); // TODO: Should this be BOOST_ASSERT?
+            request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent, boost::beast::flat_buffer buff) :
+                buff_{ std::move(buff) },
+                h_parser_{ std::move(hparser) },
+                header_{ std::move(header) },
+                parent_{ std::move(parent) }
+            {
+                assert(parent_); // ToDo: Should this be BOOST_ASSERT?
             }
 
             boost::beast::flat_buffer buff_;
@@ -94,7 +98,8 @@ namespace malloy::server::http
             friend class connection;
         };
         
-        class handler {
+        class handler
+        {
         public:
             using request = malloy::http::request<>;
             using conn_t = const connection_t&;
@@ -107,6 +112,7 @@ namespace malloy::server::http
             virtual ~handler() = default;
         
         };
+
         /**
          * Session configuration structure.
          */

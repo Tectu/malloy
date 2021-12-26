@@ -12,6 +12,7 @@ namespace malloy::http
 {
     template<typename Fields = boost::beast::http::fields>
     using request_header = boost::beast::http::request_header<Fields>;
+
     /**
      * Represents an HTTP request.
      */
@@ -25,7 +26,7 @@ namespace malloy::http
         request() = default;
 
         /**
-         * Cosntructor.
+         * Constructor.
          *
          * @param method_ The HTTP method
          * @param host The host to connect to.
@@ -39,7 +40,6 @@ namespace malloy::http
             msg_t::method(method_);
             msg_t::target(target_);
             msg_t::set(http::field::host, host);
-
         }
 
         /**
@@ -47,6 +47,7 @@ namespace malloy::http
          *
          * @param raw The underlying raw HTTP message
          */
+        explicit
         request(msg_t&& raw)
         {
             using namespace boost::beast::http;
