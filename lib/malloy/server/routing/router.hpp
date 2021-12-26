@@ -443,9 +443,9 @@ namespace malloy::server
                 if (!ep->matches(header))
                     continue;
 
-                if (is_handled_by_policies<Derived>(req, connection)) {
+                // Check policies
+                if (is_handled_by_policies<Derived>(req, connection))
                     return;
-                }
 
                 // Generate the response for the request
                 auto resp = ep->handle(req, connection);
