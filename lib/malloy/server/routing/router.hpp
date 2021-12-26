@@ -511,9 +511,11 @@ namespace malloy::server
         std::string m_server_str{BOOST_BEAST_VERSION_STRING};
 
         template<typename Derived>
-        auto is_handled_by_policies(const req_generator<Derived>& req,
-                            const http::connection_t& connection) -> bool {
-            return std::any_of(m_policies.begin(), m_policies.end(), [&](const policy_store& policy){
+        [[nodiscard]]
+        bool
+        is_handled_by_policies(const req_generator<Derived>& req, const http::connection_t& connection)
+        {
+            return std::any_of(std::cbegin(m_policies), std::cend(m_policies), [&](const policy_store& policy) {
                 return policy.process(req->header(), connection);
             });
         }
@@ -523,7 +525,8 @@ namespace malloy::server
             typename Body,
             concepts::request_filter ExtraInfo,
             typename Func>
-        auto add_regex_endpoint(method_type method, std::string_view target, Func&& handler, ExtraInfo&& extra) -> bool
+        bool
+        add_regex_endpoint(method_type method, std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             // Log
             if (m_logger)
