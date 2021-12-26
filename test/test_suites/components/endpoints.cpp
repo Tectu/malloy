@@ -8,15 +8,17 @@
 using namespace malloy::http;
 using namespace malloy::server;
 
-
-void endpt_handle(const auto& endpt, const std::string& url) {
+void endpt_handle(const auto& endpt, const std::string& url)
+{
     malloy::http::request_header<> reqh;
     reqh.target(url);
     reqh.method(method::get);
     [[maybe_unused]] const auto rs = endpt.handle(std::make_shared<malloy::mock::http::connection::request_generator>(reqh), http::connection_t{ std::shared_ptr<http::connection_plain>{nullptr} });
 }
 
-TEST_SUITE("components - endpoints") {
+TEST_SUITE("components - endpoints")
+{
+
     TEST_CASE("An http_regex_endpoint with a handler that takes "
               "std::vector<std::string> as an additional param will pass the "
               "values of the capture groups in the input regex as elements of "
@@ -45,7 +47,9 @@ TEST_SUITE("components - endpoints") {
         CHECK(handler_called);
         
     }
-    TEST_CASE("An endpoint_http_regex with a handler that only accepts malloy::http::request will not try to pass capture group values"){
+
+    TEST_CASE("An endpoint_http_regex with a handler that only accepts malloy::http::request will not try to pass capture group values")
+    {
         constexpr auto input_url = "/content/word";
         const auto input_reg{R"(/content/(\w+))"};
 
@@ -60,9 +64,6 @@ TEST_SUITE("components - endpoints") {
 
         endpt_handle(endpt, input_url);
         CHECK(handler_called);
-        
-
-
     }
-}
 
+}
