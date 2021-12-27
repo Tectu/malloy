@@ -136,33 +136,43 @@ namespace malloy::server
         private:
             V validator_;
         };
-        class policy_store {
-        public:
-            policy_store(std::string reg, std::unique_ptr<abstract_req_validator> validator) : m_validator{std::move(validator)}, m_raw_reg{std::move(reg)} {}
 
-            auto process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) const -> bool {
-                if (!matches(h.target())) {
+        class policy_store
+        {
+        public:
+            policy_store(std::string reg, std::unique_ptr<abstract_req_validator> validator) :
+                m_validator{std::move(validator)},
+                m_raw_reg{std::move(reg)}
+            {}
+
+            [[nodiscard]]
+            bool process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) const
+            {
+                if (!matches(h.target()))
                     return false;
-                } else {
+                else
                     return m_validator->process(h, conn);
-                }
             }
+
         private:
-            auto matches(std::string_view url) const -> bool {
-                if (!m_compiled_reg) {
+            bool matches(std::string_view url) const
+            {
+                if (!m_compiled_reg)
                     compile_match_expr();
-                }
                 std::string surl{url.begin(), url.end()}; // Must be null terminated
                 return std::regex_match(surl, *m_compiled_reg);
             }
-            void compile_match_expr() const {
+
+            void compile_match_expr() const
+            {
                 m_compiled_reg = std::regex{m_raw_reg};
             }
+
             std::unique_ptr<abstract_req_validator> m_validator;
             mutable std::optional<std::regex> m_compiled_reg;
             std::string m_raw_reg;
-            
         };
+
     public:
         template<typename Derived>
         using req_generator = std::shared_ptr<typename http::connection<Derived>::request_generator>;
@@ -351,7 +361,23 @@ namespace malloy::server
         bool add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
 
         /**
-         * Add an access policy.
+         * Set the global access policy for this router.
+         *
+         * @note Even if a policy was added to a specific resource using @p add_policy() the request first needs to pass
+         *       the policy check set by this call.
+         *
+         * @tparam Policy
+         * @param policy The policy.
+         */
+        template<concepts::request_validator Policy>
+        void
+        set_policy(Policy&& policy)
+        {
+            m_policy = make_request_validator(std::forward<Policy>(policy));
+        }
+
+        /**
+         * Add an access policy for a specific resource.
          *
          * A policy allow restricting access to any resource registered on this router.
          *
@@ -362,10 +388,7 @@ namespace malloy::server
         void
         add_policy(const std::string& resource, Policy&& policy)
         {
-            using policy_t = std::decay_t<Policy>;
-            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::move(conn), m_server_str); };
-
-            m_policies.emplace_back(resource, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
+            m_policies.emplace_back(resource, make_request_validator(std::forward<Policy>(policy)));
         }
 
         /**
@@ -435,6 +458,10 @@ namespace malloy::server
                                 req->header().method_string(),
                                 req->header().target());
             }
+
+            // Check access policy (router-wide)
+            if (m_policy && m_policy->process(req->header(), connection))
+                return;
 
             const auto& header = req->header();
             // Check routes
@@ -507,8 +534,20 @@ namespace malloy::server
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
         std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
-        std::vector<policy_store> m_policies;
+        std::unique_ptr<abstract_req_validator> m_policy; // Access policy for the entire router
+        std::vector<policy_store> m_policies;                           // Access policies for resources
         std::string m_server_str{BOOST_BEAST_VERSION_STRING};
+
+        template<concepts::request_validator Policy>
+        [[nodiscard]]
+        std::unique_ptr<abstract_req_validator>
+        make_request_validator(Policy&& policy)
+        {
+            using policy_t = std::decay_t<Policy>;
+            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::move(conn), m_server_str); };
+
+            return std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer));
+        }
 
         template<typename Derived>
         [[nodiscard]]

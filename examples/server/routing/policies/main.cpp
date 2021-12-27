@@ -75,25 +75,49 @@ int main()
         return EXIT_FAILURE;
     }
 
+    // Setup simple HTTP basic auth policy
+    //   - Username: user01
+    //   - Password: malloy
+    malloy::server::http::auth::basic<b64_decode> policy{"user01", "malloy", "My Realm"};
+
     // Setup the router
     {
         using namespace malloy::http;
         auto router = c.router();
 
-        // Root page
+        // Root page (no access restrictions)
         router->add(method::get, "/", [](const auto& req){
             response res{ status::ok };
-            res.body() = "<html><body><h1>Malloy Access Policy demo</h1><p><a href=\"./restricted\">Access restricted area</a></p><p>Username: user01</p><p>Password: malloy</p></body></html>";
+            res.body() = "<html><body>"
+                         "  <h1>Malloy Access Policy demo</h1>"
+                         "   <p><a href=\"./restricted\">Access restricted resource</a></p>"
+                         "   <p><a href=\"./admin\">Access restricted sub-router</a></p>"
+                         "   <p>Username: user01</p><p>Password: malloy</p></body></html>";
             return res;
         });
 
-        // A policy using HTTP basic auth
-        router->add_policy("/restricted", malloy::server::http::auth::basic<b64_decode>{"user01", "malloy", "My Realm"});
+        // Restricted endpoint
+        router->add_policy("/restricted", policy);
         router->add(method::get, "/restricted", [](const auto &req) {
             response res{status::ok};
             res.body() = "<html><body><h1>Hello User01!</h1><p>some content...</p></body></html>";
             return res;
         });
+
+        // Restricted sub-router
+        auto sub_router = std::make_shared<malloy::server::router>();
+        {
+            // Add access restriction policy
+            sub_router->set_policy(policy);
+
+            // Add simple endpoint
+            sub_router->add(method::get, "", [](const auto &req) {
+                response res{status::ok};
+                res.body() = "<html><body><h1>Hello User01!</h1><p>Welcome to the access restricted admin panel!</p></body></html>";
+                return res;
+            });
+        }
+        router->add_subrouter("/admin", std::move(sub_router));
     }
 
     // Start
