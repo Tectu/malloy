@@ -29,6 +29,7 @@ function(malloy_target_common_setup TARGET)
                 -Wextra 
                 -Wpedantic 
                 -Werror
+                -fdiagnostics-color=always
             )
     endif()
 

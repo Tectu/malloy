@@ -37,20 +37,20 @@ namespace malloy::websocket
     {
         using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
         using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
-        template<typename Handler, typename Func>
-        class then : public boost::beast::stable_async_base<std::decay_t<Handler>, ws_executor_t> {
-            using base_t = boost::beast::stable_async_base<std::decay_t<Handler>, ws_executor_t>;
+        template<typename Handler, typename Func, typename... Args>
+        class then : public boost::beast::stable_async_base<std::decay_t<Handler>, std::decay_t<ws_executor_t>> {
+            using base_t = boost::beast::stable_async_base<std::decay_t<Handler>, std::decay_t<ws_executor_t>>;
             using act_t = std::decay_t<Func>;//std::function<void(then&, Args...)>;
                 struct state {
                     act_t action;
                     explicit state(act_t action) : action{std::move(action)} {}
                 };
                 public:
-                    then(Func act, Handler after)
-                        : base_t{std::forward<Handler>(after)}
-                        , st{allocate_stable<state>(*this, std::move(act))} {}
-                    template<typename... Args>
-                    void operator()(Args&&... args) requires (std::invocable<act_t, then, Args...>){
+                    template<typename F, typename A>
+                    then(F&& act, A&& after, const std::decay_t<ws_executor_t>& executor)
+                        : base_t{std::move(after), executor}
+                        , st{allocate_stable<state>(*this, std::forward<F>(act))} {}
+                    void operator()(Args... args) {
                         std::invoke(std::move(st.action), std::move(*this), std::forward<Args>(args)...);
                     }
                     then(then&&) = default;
@@ -59,8 +59,8 @@ namespace malloy::websocket
                     state& st;
             };
         template<typename... Args>
-        static auto build_then(auto&& func, auto&& >after) requires (std::invocable<std::decay_t<decltype(func)>, then<decltype(after), decltype(func)>, Args...>) {
-            return then{std::forward<decltype(func)>(func), std::forward<dectlype(after)>(after)};
+        auto build_then(auto&& func, auto&& after) requires (std::invocable<std::decay_t<decltype(func)>, then<std::decay_t<decltype(after)>, std::decay_t<decltype(func)>, Args...>, Args...>) {
+            return then<std::decay_t<decltype(after)>, std::decay_t<decltype(func)>, Args...>{std::forward<decltype(func)>(func), std::forward<decltype(after)>(after), m_ws.get_executor()};
         }
     public:
 
@@ -122,41 +122,22 @@ namespace malloy::websocket
         auto
         connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
         {
-            //using cb_t = std::decay_t<Callback>;
-            /*class op : public base_t {
-                struct state {
-                    std::shared_ptr<connection> parent;
-                    stream* ws;
-                };
-                public:
-                    op(std::shared_ptr<connection> parent, stream* ws, Callback handler)
-                        : base_t{std::forward<Callback>(handler)}
-                        , st{allocate_stable<state>(*this, std::move(parent, ws))} {}
-                    void operator()(error_code ec) {
-                    }
-                private:
-
-                    state& st;
-            };*/
             if (m_state != state::inactive) {
                 throw std::logic_error{"connect() called on already active websocket connection"};
             }
             auto me = this->shared_from_this();
-            then on_conn{[me](auto after, auto ec){
-                me->go_active();
-                (void)after;
-                (void)ec;
-                //after.complete(true, ec);
-            }, std::forward<Callback>(done)};
-            then on_sock_conn{[me, resource](auto after, auto ec, auto ep){
+            auto on_sock_conn = build_then<error_code, boost::asio::ip::tcp::endpoint>([me, resource](auto act, auto ec, auto ep){
                 if (ec) {
-                    //after.complete(true, ec);
+                    std::move(act).complete(true, ec);
                 } else {
-                    me->on_connect(ec, ep, resource, std::move(after));
+                    me->on_connect(ec, ep, resource, [act = std::move(act)](auto ec) mutable { std::move(act).complete_now(ec); });
                 }
-            }, std::move(on_conn)};
+            }, build_then<malloy::error_code>([me](auto after, auto ec){
+                me->go_active();
+                after.complete(true, ec);
+            }, std::forward<Callback>(done)));
                 // Set the timeout for the operation
-                return m_ws.get_lowest_layer([&, me, this, on_sock_conn = std::move(on_sock_conn), resource](auto& sock) mutable {
+            return m_ws.get_lowest_layer([&, me, this, on_sock_conn = std::move(on_sock_conn), resource](auto& sock) mutable {
                     sock.expires_after(std::chrono::seconds(30));
 
                     // Make the connection on the IP address we get from a lookup
@@ -377,12 +358,13 @@ namespace malloy::websocket
             });
         }
 
+        template<concepts::err_completion_token Tkn>
         void
         on_connect(
             boost::beast::error_code ec,
             boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
             const std::string& resource,
-            concepts::err_completion_token auto&& on_handshake)
+            Tkn&& on_handshake)
         {
             m_logger->trace("on_connect()");
 

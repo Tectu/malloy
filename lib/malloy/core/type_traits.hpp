@@ -3,6 +3,7 @@
 #include "error.hpp"
 
 #include <boost/asio/buffer.hpp>
+#include <boost/asio/connect.hpp>
 #include <boost/beast/core/buffer_traits.hpp>
 
 #include <concepts>
@@ -34,6 +35,10 @@ namespace malloy::concepts
 
     template<typename Func>
     concept accept_handler = std::invocable<Func, malloy::error_code>;
+
+    template<typename Func>
+    concept err_completion_token = boost::asio::completion_token_for<Func, void(malloy::error_code)>;
+
 
     template<typename B>
     concept dynamic_buffer = boost::asio::is_dynamic_buffer<B>::value;
