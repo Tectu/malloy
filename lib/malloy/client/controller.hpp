@@ -1,6 +1,7 @@
 #pragma once
 
 #include "http/connection_plain.hpp"
+#include "malloy/core/then.hpp"
 #include "type_traits.hpp"
 #include "websocket/connection.hpp"
 #include "../core/controller.hpp"
@@ -36,6 +37,9 @@ namespace malloy::client
 
     namespace detail
     {
+
+        template<typename T>
+        concept ws_accept_completion_tkn = boost::asio::completion_token_for<T, void(malloy::error_code, std::shared_ptr<websocket::connection>)>;
 
         /** 
          * @brief Default filter provided to ease use of interface
@@ -130,16 +134,16 @@ namespace malloy::client
          *
          * @sa ws_connect()
          */
-        void wss_connect(
+        auto wss_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
+            detail::ws_accept_completion_tkn auto&& handler)
         {
             check_tls();
 
             // Create connection
-            make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
+            return make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
         /**
@@ -176,14 +180,14 @@ namespace malloy::client
          *
          * @sa wss_connect()
          */
-        void ws_connect(
+        auto ws_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
+            detail::ws_accept_completion_tkn auto&& handler)
         {
             // Create connection
-            make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
+            return make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
         /**
@@ -252,21 +256,18 @@ namespace malloy::client
         }
 
         template<bool isSecure>
-        void make_ws_connection(
+        auto make_ws_connection(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+            detail::ws_accept_completion_tkn auto&& handler
         )
         {
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
-            resolver->async_resolve(
-                host,
-                std::to_string(port),
-                [this, resolver, done = std::forward<decltype(handler)>(handler), resource](auto ec, auto results) mutable {
+            auto on_resolve = [this, resolver, resource](auto act, error_code ec, auto results) mutable {
                     if (ec) {
-                        std::invoke(std::forward<decltype(done)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
+                        act.complete_now(ec, std::shared_ptr<websocket::connection>(nullptr));
                     } else {
                         auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
@@ -278,15 +279,21 @@ namespace malloy::client
                                 return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
                         }(), m_cfg.user_agent);
 
-                        conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
+                        conn->connect(results, resource, [conn, act = std::move(act)](auto ec) mutable {
                             if (ec) {
-                                std::invoke(std::forward<decltype(handler)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
+                                act.complete_now(ec, std::shared_ptr<websocket::connection>{nullptr});
                             } else {
-                                std::invoke(std::forward<decltype(handler)>(done), ec, conn);
+                                act.complete_now(ec, conn);
                             }
                         });
-                    }
-                }
+                    }};
+
+            auto builder = async::start<error_code, boost::asio::ip::tcp::resolver::results_type>(std::forward<decltype(handler)>(handler), std::move(on_resolve), resolver->get_executor());
+
+            return resolver->async_resolve(
+                host,
+                std::to_string(port),
+                std::move(builder).compile()
             );
         }
     };

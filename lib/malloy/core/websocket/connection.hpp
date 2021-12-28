@@ -5,6 +5,7 @@
 #include "../type_traits.hpp"
 #include "../utils.hpp"
 #include "../websocket/stream.hpp"
+#include "malloy/core/then.hpp"
 #include "malloy/core/detail/action_queue.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -37,30 +38,11 @@ namespace malloy::websocket
     {
         using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
         using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
-        template<typename Handler, typename Func, typename... Args>
-        class then : public boost::beast::stable_async_base<std::decay_t<Handler>, std::decay_t<ws_executor_t>> {
-            using base_t = boost::beast::stable_async_base<std::decay_t<Handler>, std::decay_t<ws_executor_t>>;
-            using act_t = std::decay_t<Func>;//std::function<void(then&, Args...)>;
-                struct state {
-                    act_t action;
-                    explicit state(act_t action) : action{std::move(action)} {}
-                };
-                public:
-                    template<typename F, typename A>
-                    then(F&& act, A&& after, const std::decay_t<ws_executor_t>& executor)
-                        : base_t{std::move(after), executor}
-                        , st{allocate_stable<state>(*this, std::forward<F>(act))} {}
-                    void operator()(Args... args) {
-                        std::invoke(std::move(st.action), std::move(*this), std::forward<Args>(args)...);
-                    }
-                    then(then&&) = default;
-                    then(const then&) = delete;
-                private:
-                    state& st;
-            };
+        template<typename A, typename F, typename... Args>
+        using then_t = then<std::decay_t<A>, std::decay_t<F>, std::decay_t<ws_executor_t>, Args...>;
         template<typename... Args>
-        auto build_then(auto&& func, auto&& after) requires (std::invocable<std::decay_t<decltype(func)>, then<std::decay_t<decltype(after)>, std::decay_t<decltype(func)>, Args...>, Args...>) {
-            return then<std::decay_t<decltype(after)>, std::decay_t<decltype(func)>, Args...>{std::forward<decltype(func)>(func), std::forward<decltype(after)>(after), m_ws.get_executor()};
+        auto build_then(auto&& func, auto&& after) requires (std::invocable<std::decay_t<decltype(func)>, then_t<decltype(after), decltype(func), Args...>, Args...>) {
+            return then_t<decltype(after), decltype(func), Args...>{std::forward<decltype(func)>(func), std::forward<decltype(after)>(after), m_ws.get_executor()};
         }
     public:
 
