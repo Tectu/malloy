@@ -12,6 +12,7 @@
 #include <boost/beast/core/error.hpp>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
+#include <boost/beast/core.hpp>
 
 #include <concepts>
 #include <functional>
@@ -36,8 +37,33 @@ namespace malloy::websocket
     {
         using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
         using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
-
+        template<typename Handler, typename Func>
+        class then : public boost::beast::stable_async_base<std::decay_t<Handler>, ws_executor_t> {
+            using base_t = boost::beast::stable_async_base<std::decay_t<Handler>, ws_executor_t>;
+            using act_t = std::decay_t<Func>;//std::function<void(then&, Args...)>;
+                struct state {
+                    act_t action;
+                    explicit state(act_t action) : action{std::move(action)} {}
+                };
+                public:
+                    then(Func act, Handler after)
+                        : base_t{std::forward<Handler>(after)}
+                        , st{allocate_stable<state>(*this, std::move(act))} {}
+                    template<typename... Args>
+                    void operator()(Args&&... args) requires (std::invocable<act_t, then, Args...>){
+                        std::invoke(std::move(st.action), std::move(*this), std::forward<Args>(args)...);
+                    }
+                    then(then&&) = default;
+                    then(const then&) = delete;
+                private:
+                    state& st;
+            };
+        template<typename... Args>
+        static auto build_then(auto&& func, auto&& >after) requires (std::invocable<std::decay_t<decltype(func)>, then<decltype(after), decltype(func)>, Args...>) {
+            return then{std::forward<decltype(func)>(func), std::forward<dectlype(after)>(after)};
+        }
     public:
+
         using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
 
         /**
@@ -92,31 +118,50 @@ namespace malloy::websocket
          * @param done Callback invoked on accepting the handshake or an error
          * occurring
          */
-        template<concepts::accept_handler Callback>
-        void
+        template<concepts::err_completion_token Callback>
+        auto
         connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
         {
+            //using cb_t = std::decay_t<Callback>;
+            /*class op : public base_t {
+                struct state {
+                    std::shared_ptr<connection> parent;
+                    stream* ws;
+                };
+                public:
+                    op(std::shared_ptr<connection> parent, stream* ws, Callback handler)
+                        : base_t{std::forward<Callback>(handler)}
+                        , st{allocate_stable<state>(*this, std::move(parent, ws))} {}
+                    void operator()(error_code ec) {
+                    }
+                private:
 
+                    state& st;
+            };*/
             if (m_state != state::inactive) {
                 throw std::logic_error{"connect() called on already active websocket connection"};
             }
+            auto me = this->shared_from_this();
+            then on_conn{[me](auto after, auto ec){
+                me->go_active();
+                (void)after;
+                (void)ec;
+                //after.complete(true, ec);
+            }, std::forward<Callback>(done)};
+            then on_sock_conn{[me, resource](auto after, auto ec, auto ep){
+                if (ec) {
+                    //after.complete(true, ec);
+                } else {
+                    me->on_connect(ec, ep, resource, std::move(after));
+                }
+            }, std::move(on_conn)};
                 // Set the timeout for the operation
-                m_ws.get_lowest_layer([&, me = this->shared_from_this(), this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
+                return m_ws.get_lowest_layer([&, me, this, on_sock_conn = std::move(on_sock_conn), resource](auto& sock) mutable {
                     sock.expires_after(std::chrono::seconds(30));
 
                     // Make the connection on the IP address we get from a lookup
-                    sock.async_connect(
-                        target,
-                        [this, me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
-                            if (ec) {
-                                done(ec);
-                            } else {
-                            me->on_connect(ec, ep, resource, [this, done = std::forward<Callback>(done)](auto ec) mutable { 
-                                go_active();
-                                std::invoke(std::forward<decltype(done)>(done), ec);
-                                    });
-                            }
-                        });
+                    return sock.async_connect(
+                        target, std::move(on_sock_conn));
                 });
         }
 
@@ -337,7 +382,7 @@ namespace malloy::websocket
             boost::beast::error_code ec,
             boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
             const std::string& resource,
-            concepts::accept_handler auto&& on_handshake)
+            concepts::err_completion_token auto&& on_handshake)
         {
             m_logger->trace("on_connect()");
 
@@ -372,8 +417,8 @@ namespace malloy::websocket
             on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
         }
 
-        void
-        on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake)
+        auto
+        on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::err_completion_token auto&& on_handshake)
         {
             // Turn off the timeout on the tcp_stream, because
             // the websocket stream has its own timeout system.
@@ -382,7 +427,7 @@ namespace malloy::websocket
 
 
             // Perform the websocket handshake
-            m_ws.async_handshake(
+            return m_ws.async_handshake(
                 host,
                 resource,
                 std::forward<decltype(on_handshake)>(on_handshake));
