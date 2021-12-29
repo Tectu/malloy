@@ -5,7 +5,6 @@
 #include "../type_traits.hpp"
 #include "../utils.hpp"
 #include "../websocket/stream.hpp"
-#include "malloy/core/then.hpp"
 #include "malloy/core/detail/action_queue.hpp"
 
 #include <boost/asio/io_context.hpp>
@@ -38,12 +37,6 @@ namespace malloy::websocket
     {
         using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
         using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
-        template<typename A, typename F, typename... Args>
-        using then_t = then<std::decay_t<A>, std::decay_t<F>, std::decay_t<ws_executor_t>, Args...>;
-        template<typename... Args>
-        auto build_then(auto&& func, auto&& after) requires (std::invocable<std::decay_t<decltype(func)>, then_t<decltype(after), decltype(func), Args...>, Args...>) {
-            return then_t<decltype(after), decltype(func), Args...>{std::forward<decltype(func)>(func), std::forward<decltype(after)>(after), m_ws.get_executor()};
-        }
     public:
 
         using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
@@ -110,26 +103,26 @@ namespace malloy::websocket
             auto me = this->shared_from_this();
 
             //boost::asio::async_completion<std::decay_t<Callback>, void(error_code)> comp{std::forward<Callback>(done)};
-            auto on_sock_conn = [me, resource](auto act, auto ec, auto ep){
+            auto on_sock_conn = [me, resource](auto act, auto ec, auto ep) {
                 if (ec) {
                     std::invoke(std::move(act), ec);
                 } else {
-                    me->on_connect(ec, ep, resource, [me, act = std::move(act)](auto ec) mutable { 
-                            me->go_active();
-                            std::invoke(std::move(act), ec);
-                            });
+                    me->on_connect(ec, ep, resource, [me, act = std::move(act)](auto ec) mutable {
+                        me->go_active();
+                        std::invoke(std::move(act), ec);
+                    });
                 }
             };
-                // Set the timeout for the operation
+            // Set the timeout for the operation
             return m_ws.get_lowest_layer([me, this, on_sock_conn = std::move(on_sock_conn), &target, resource, done = std::forward<Callback>(done)](auto& sock) mutable {
-                    sock.expires_after(std::chrono::seconds(30));
+                sock.expires_after(std::chrono::seconds(30));
 
-                    // Make the connection on the IP address we get from a lookup
-                    auto act = [target, on_sock_conn, &sock](auto done) mutable {
-                        sock.async_connect(target, [on_sock_conn, done = std::move(done)](auto ec, auto ep)mutable{on_sock_conn(std::move(done), ec, ep);});
-                    };
-                    return boost::asio::async_initiate<Callback, void(error_code)>(std::move(act), done);
-                });
+                // Make the connection on the IP address we get from a lookup
+                auto act = [target, on_sock_conn, &sock](auto done) mutable {
+                    sock.async_connect(target, [on_sock_conn, done = std::move(done)](auto ec, auto ep) mutable { on_sock_conn(std::move(done), ec, ep); });
+                };
+                return boost::asio::async_initiate<Callback, void(error_code)>(std::move(act), done);
+            });
         }
 
         /**

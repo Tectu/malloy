@@ -1,7 +1,6 @@
 #pragma once
 
 #include "http/connection_plain.hpp"
-#include "malloy/core/then.hpp"
 #include "type_traits.hpp"
 #include "websocket/connection.hpp"
 #include "../core/controller.hpp"
@@ -287,14 +286,13 @@ namespace malloy::client
                             std::invoke(act, ec, conn);
                             }
                         });
-                    }};
+                    } };
 
             auto resolve_wrapper = [host, port, resolver, on_resolve = std::move(on_resolve)](auto done) mutable {
-                    resolver->async_resolve(
+                resolver->async_resolve(
                     host,
                     std::to_string(port),
-                    [done = std::forward<decltype(done)>(done), on_resolve = std::move(on_resolve)](auto ec, auto rs) mutable { on_resolve(std::forward<decltype(done)>(done), ec, rs); }
-                );
+                    [done = std::forward<decltype(done)>(done), on_resolve = std::move(on_resolve)](auto ec, auto rs) mutable { on_resolve(std::forward<decltype(done)>(done), ec, rs); });
             };
             return boost::asio::async_initiate<decltype(handler), void(error_code, std::shared_ptr<websocket::connection>)>(std::move(resolve_wrapper), handler);
         }

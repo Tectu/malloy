@@ -14,8 +14,54 @@
 #include <malloy/client/controller.hpp>
 #include <malloy/server/controller.hpp>
 
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <boost/asio/use_future.hpp>
+#include <boost/asio/co_spawn.hpp>
+
+
 namespace malloy::test
 {
+
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
+    using boost::asio::awaitable;
+
+    inline void roundtrip_coro(
+        const uint16_t port,
+        std::function<awaitable<void>(malloy::client::controller&)> setup_client,
+        std::function<void(malloy::server::controller&)> setup_server)
+    {
+        namespace mc = malloy::client;
+        namespace ms = malloy::server;
+        mc::controller c_ctrl;
+        ms::controller s_ctrl;
+
+        malloy::controller::config general_cfg;
+        general_cfg.num_threads = 2;
+        general_cfg.logger = spdlog::default_logger();
+
+        ms::controller::config server_cfg{general_cfg};
+        server_cfg.interface = "127.0.0.1";
+        server_cfg.port = port;
+
+        mc::controller::config cli_cfg{general_cfg};
+
+        REQUIRE(s_ctrl.init(server_cfg));
+        REQUIRE(c_ctrl.init(cli_cfg));
+
+        setup_server(s_ctrl);
+
+        REQUIRE(s_ctrl.start());
+        CHECK(c_ctrl.start());
+
+        boost::asio::io_context ioc;
+        boost::asio::co_spawn(ioc, setup_client(c_ctrl), boost::asio::use_future);
+        ioc.run();
+        c_ctrl.stop().get();
+    }
+#endif
+
+
     /**
      * Performs a roundtrip using server & client components.
      *
