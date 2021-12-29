@@ -1,6 +1,6 @@
 #pragma once
 
-#include "doctest.hpp"
+#include "3rdparty/doctest/doctest.hpp"
 
 /*
  * These includes get included by doctest.hpp. However, there is a note:
