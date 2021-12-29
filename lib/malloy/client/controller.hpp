@@ -9,8 +9,6 @@
 #include "../core/http/type_traits.hpp"
 #include "../core/error.hpp"
 #include "malloy/core/http/utils.hpp"
-
-
 #if MALLOY_FEATURE_TLS
     #include "http/connection_tls.hpp"
 
@@ -49,15 +47,18 @@ namespace malloy::client
             using header_type = boost::beast::http::response_header<>;
             using value_type = std::string;
 
-            auto body_for(const header_type&) const -> std::variant<boost::beast::http::string_body>
+            [[nodiscard]]
+            std::variant<boost::beast::http::string_body>
+            body_for(const header_type&) const
             {
                 return {};
             }
-            void setup_body(const header_type&, std::string&) const {}
+
+            void setup_body(const header_type&, std::string&) const { }
         };
 
         static_assert(malloy::client::concepts::response_filter<default_resp_filter>, "default_resp_filter must satisfy response_filter");
-    }    // namespace detail
+    } // namespace detail
 
     /**
      * High-level controller for client activities.
@@ -190,11 +191,9 @@ namespace malloy::client
          * @brief Block until all queued async actions completed
          * @return whether starting was successful
          */
-        auto run() -> bool;
+        bool run();
 
-        auto start() -> bool;
-
-    protected:
+        bool start();
 
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;

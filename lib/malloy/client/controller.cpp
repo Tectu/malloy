@@ -10,24 +10,29 @@
 using namespace malloy::client;
 
 namespace fs = std::filesystem;
-auto controller::run() -> bool
+
+
+bool controller::run()
 {
-    if (!start()) {
+    if (!start())
         return false;
-    }
-    remove_workguard(); 
+
+    remove_workguard();
     io_ctx().run();
     return true;
 }
 
-auto controller::init(config cfg) -> bool {
-    if (!malloy::controller::init(cfg)) {
+bool controller::init(config cfg)
+{
+    if (!malloy::controller::init(cfg))
         return false;
-    }
+
     m_cfg = std::move(cfg);
     return true;
 }
-auto controller::start() -> bool {
+
+bool controller::start()
+{
     return root_start(m_cfg);
 }
 
