@@ -75,21 +75,22 @@ endif()
 ########################################################################################################################
 # nlohmann/json: https://github.com/nlohmann/json
 ########################################################################################################################
-if (MALLOY_DEPENDENCY_JSON_DOWNLOAD)
-    FetchContent_Declare(
-        json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG        v3.9.1
-    )
-    FetchContent_GetProperties(json)
-    if (NOT json_POPULATED)
-        FetchContent_Populate(json)
+if (MALLOY_DEPENDENCY_JSON)
+    if (MALLOY_DEPENDENCY_JSON_DOWNLOAD)
+        FetchContent_Declare(
+            json
+            GIT_REPOSITORY https://github.com/nlohmann/json.git
+            GIT_TAG        v3.9.1
+        )
+        FetchContent_GetProperties(json)
+        if (NOT json_POPULATED)
+            FetchContent_Populate(json)
 
-        set(JSON_BuildTests OFF CACHE INTERNAL "")
-        add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR})
+            set(JSON_BuildTests OFF CACHE INTERNAL "")
+            add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR})
+        endif()
     endif()
 endif()
-
 
 ########################################################################################################################
 # pantor/inja: https://github.com/pantor/inja
