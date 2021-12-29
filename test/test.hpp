@@ -47,10 +47,12 @@ namespace malloy::test
         REQUIRE(c_ctrl.init(cli_cfg));
 
         setup_server(s_ctrl);
-        setup_client(c_ctrl);
 
         REQUIRE(s_ctrl.start());
-        CHECK(c_ctrl.run());
+
+        CHECK(c_ctrl.start());
+
+        setup_client(c_ctrl);
         c_ctrl.stop().get();
     }
 }

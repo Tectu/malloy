@@ -107,24 +107,29 @@ namespace malloy::websocket
             if (m_state != state::inactive) {
                 throw std::logic_error{"connect() called on already active websocket connection"};
             }
+            boost::asio::async_completion<Callback, void(error_code)> comp{done};
             auto me = this->shared_from_this();
+            auto on_conn = build_then<malloy::error_code>([me](auto after, auto ec){
+                me->go_active();
+                after.complete(true, ec);
+            }, comp.completion_handler);
+
+            //boost::asio::async_completion<std::decay_t<Callback>, void(error_code)> comp{std::forward<Callback>(done)};
             auto on_sock_conn = build_then<error_code, boost::asio::ip::tcp::endpoint>([me, resource](auto act, auto ec, auto ep){
                 if (ec) {
                     std::move(act).complete(true, ec);
                 } else {
                     me->on_connect(ec, ep, resource, [act = std::move(act)](auto ec) mutable { std::move(act).complete_now(ec); });
                 }
-            }, build_then<malloy::error_code>([me](auto after, auto ec){
-                me->go_active();
-                after.complete(true, ec);
-            }, std::forward<Callback>(done)));
+            }, std::move(on_conn));
                 // Set the timeout for the operation
-            return m_ws.get_lowest_layer([&, me, this, on_sock_conn = std::move(on_sock_conn), resource](auto& sock) mutable {
+            return m_ws.get_lowest_layer([me, this, on_sock_conn = std::move(on_sock_conn), &target, &comp, resource](auto& sock) mutable {
                     sock.expires_after(std::chrono::seconds(30));
 
                     // Make the connection on the IP address we get from a lookup
-                    return sock.async_connect(
+                    sock.async_connect(
                         target, std::move(on_sock_conn));
+                    return comp.result.get();
                 });
         }
 

@@ -7,14 +7,49 @@
 #include <malloy/server/controller.hpp>
 #include <malloy/server/routing/router.hpp>
 
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <boost/asio/use_future.hpp>
+
 
 namespace mc = malloy::client;
 namespace ms = malloy::server;
 using malloy::tests::embedded::tls_cert;
 using malloy::tests::embedded::tls_key;
+//using boost::asio::awaitable;
 
 namespace
 {
+    /*inline void roundtrip_coro(
+        const uint16_t port,
+        std::function<awaitable<void>(malloy::client::controller&)> setup_client,
+        std::function<void(malloy::server::controller&)> setup_server)
+    {
+        namespace mc = malloy::client;
+        namespace ms = malloy::server;
+        mc::controller c_ctrl;
+        ms::controller s_ctrl;
+
+        malloy::controller::config general_cfg;
+        general_cfg.num_threads = 2;
+        general_cfg.logger = spdlog::default_logger();
+
+        ms::controller::config server_cfg{general_cfg};
+        server_cfg.interface = "127.0.0.1";
+        server_cfg.port = port;
+
+        mc::controller::config cli_cfg{general_cfg};
+
+        REQUIRE(s_ctrl.init(server_cfg));
+        REQUIRE(c_ctrl.init(cli_cfg));
+
+        setup_server(s_ctrl);
+        //boost::asio::co_spawn(setup_client(c_ctrl), boost::asio::use_future).get();
+
+        REQUIRE(s_ctrl.start());
+        CHECK(c_ctrl.run());
+        c_ctrl.stop().get();
+    }*/
 
 	constexpr auto server_msg = "Hello from server";
 	constexpr auto cli_msg = "Hello from client";
@@ -215,5 +250,20 @@ TEST_SUITE("websockets")
             ws_roundtrip<true, true>(port);
         }
 #endif
+
+        SUBCASE("ws_connect coroutines") {
+            /*roundtrip_coro(port, [](auto& ctrl) -> awaitable<void>{
+                    auto v = co_await ctrl.ws_connect("127.0.0.1", port, "/", boost::asio::use_awaitable);
+                    client_ws_handler<false>(malloy::error_code{}, v);
+                    }, [](auto& ctrl){
+                    ctrl.router()->add_websocket("/", &server_ws_handler<false>);
+                    });*/
+            malloy::test::roundtrip(port, [](auto& ctrl) {
+                    auto v = ctrl.ws_connect("127.0.0.1", port, "/", boost::asio::use_future).get();
+                    client_ws_handler<false>(malloy::error_code{}, v);
+                    }, [](auto& ctrl){
+                    ctrl.router()->add_websocket("/", &server_ws_handler<false>);
+                    });
+        }
     }
 }
