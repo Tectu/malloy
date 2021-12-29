@@ -81,7 +81,13 @@ if (MALLOY_DEPENDENCY_JSON_DOWNLOAD)
         GIT_REPOSITORY https://github.com/nlohmann/json.git
         GIT_TAG        v3.9.1
     )
-    FetchContent_MakeAvailable(json)
+    FetchContent_GetProperties(json)
+    if (NOT json_POPULATED)
+        FetchContent_Populate(json)
+
+        set(JSON_BuildTests OFF CACHE INTERNAL "")
+        add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR})
+    endif()
 endif()
 
 
