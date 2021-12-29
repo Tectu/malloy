@@ -24,7 +24,7 @@ TEST_SUITE("components - http - generator")
 
             CHECK_EQ(r.status(), status::not_found);
             CHECK_EQ(static_cast<int>(r.status()), 404);
-            CHECK_EQ(r.body(), "foobar");
+            CHECK_EQ(r.body(), "The resource 'foobar' was not found.");
         }
 
         SUBCASE("500 - server error")
@@ -33,7 +33,7 @@ TEST_SUITE("components - http - generator")
 
             CHECK_EQ(r.status(), status::internal_server_error);
             CHECK_EQ(static_cast<int>(r.status()), 500);
-            CHECK_EQ(r.body(), "foobar");
+            CHECK_EQ(r.body(), "An error occurred: 'foobar'");
         }
     }
 
