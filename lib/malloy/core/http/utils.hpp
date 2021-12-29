@@ -6,6 +6,8 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/http/message.hpp>
 
+#include <optional>
+
 namespace malloy::http
 {
 
@@ -60,6 +62,40 @@ namespace malloy::http
         using namespace std::literals;
 
         return malloy::split(field_value, "; "sv);
+    }
+
+    /**
+     * Extracts a cookie value (if any).
+     *
+     * @tparam isReq
+     * @tparam Fields
+     * @param header The HTTP header.
+     * @param cookie_name The cookie name.
+     * @return The cookie value (if any).
+     */
+    template<bool isReq, typename Fields>
+    [[nodiscard]]
+    std::optional<std::string_view>
+    cookie_value(const boost::beast::http::header<isReq, Fields>& header, const std::string_view cookie_name)
+    {
+        const auto& [begin, end] = header.equal_range(field::cookie);
+        for (auto it = begin; it != end; it++) {
+            const auto& str = it->value();
+
+            const auto& sep_pos = it->value().find('=');
+            if (sep_pos == std::string::npos)
+                continue;
+
+            const std::string_view key{ str.substr(0, sep_pos) };
+            const std::string_view value{ str.substr(sep_pos+1) };
+
+            if (key != cookie_name)
+                continue;
+
+            return value;
+        }
+
+        return std::nullopt;
     }
 
 }
