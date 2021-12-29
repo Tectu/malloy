@@ -263,13 +263,12 @@ namespace malloy::client
             detail::ws_accept_completion_tkn auto&& handler
         )
         {
-            boost::asio::async_completion<decltype(handler), void(error_code, std::shared_ptr<websocket::connection>)> comp{handler};
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
             auto on_resolve = [this, resolver, resource, handler = std::forward<decltype(handler)>(handler)](auto act, error_code ec, auto results) mutable {
                 (void)handler;
                     if (ec) {
-                        act.complete_now(ec, std::shared_ptr<websocket::connection>(nullptr));
+                        std::invoke(act, ec, std::shared_ptr<websocket::connection>(nullptr));
                     } else {
                         auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
@@ -283,21 +282,21 @@ namespace malloy::client
 
                         conn->connect(results, resource, [conn, act = std::move(act)](auto ec) mutable {
                             if (ec) {
-                                act.complete_now(ec, std::shared_ptr<websocket::connection>{nullptr});
+                            std::invoke(act, ec, std::shared_ptr<websocket::connection>{nullptr});
                             } else {
-                                act.complete_now(ec, conn);
+                            std::invoke(act, ec, conn);
                             }
                         });
                     }};
 
-            auto builder = async::start<error_code, boost::asio::ip::tcp::resolver::results_type>(comp.completion_handler, std::move(on_resolve), resolver->get_executor());
-
-            resolver->async_resolve(
-                host,
-                std::to_string(port),
-                std::move(builder).compile()
-            );
-            return comp.result.get();
+            auto resolve_wrapper = [host, port, resolver, on_resolve = std::move(on_resolve)](auto done) mutable {
+                    resolver->async_resolve(
+                    host,
+                    std::to_string(port),
+                    [done = std::forward<decltype(done)>(done), on_resolve = std::move(on_resolve)](auto ec, auto rs) mutable { on_resolve(std::forward<decltype(done)>(done), ec, rs); }
+                );
+            };
+            return boost::asio::async_initiate<decltype(handler), void(error_code, std::shared_ptr<websocket::connection>)>(std::move(resolve_wrapper), handler);
         }
     };
 
