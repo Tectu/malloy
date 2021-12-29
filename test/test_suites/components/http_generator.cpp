@@ -13,25 +13,27 @@ TEST_SUITE("components - http - generator")
         {
             auto r = generator::bad_request("foobar");
 
-            REQUIRE_EQ(r.status(), status::bad_request);
-            REQUIRE_EQ(static_cast<int>(r.status()), 400);
-            REQUIRE_EQ(r.body(), "foobar");
+            CHECK_EQ(r.status(), status::bad_request);
+            CHECK_EQ(static_cast<int>(r.status()), 400);
+            CHECK_EQ(r.body(), "foobar");
         }
 
         SUBCASE("404 - not found")
         {
             auto r = generator::not_found("foobar");
 
-            REQUIRE_EQ(r.status(), status::not_found);
-            REQUIRE_EQ(static_cast<int>(r.status()), 404);
+            CHECK_EQ(r.status(), status::not_found);
+            CHECK_EQ(static_cast<int>(r.status()), 404);
+            CHECK_EQ(r.body(), "foobar");
         }
 
         SUBCASE("500 - server error")
         {
             auto r = generator::server_error("foobar");
 
-            REQUIRE_EQ(r.status(), status::internal_server_error);
-            REQUIRE_EQ(static_cast<int>(r.status()), 500);
+            CHECK_EQ(r.status(), status::internal_server_error);
+            CHECK_EQ(static_cast<int>(r.status()), 500);
+            CHECK_EQ(r.body(), "foobar");
         }
     }
 
