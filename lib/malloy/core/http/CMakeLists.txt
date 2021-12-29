@@ -9,6 +9,7 @@ target_sources(
         http.hpp
         request.hpp
         response.hpp
+		type_traits.hpp
 		types.hpp
         utils.hpp
 	PRIVATE
