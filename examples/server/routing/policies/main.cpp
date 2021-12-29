@@ -107,9 +107,6 @@ int main()
         // Restricted sub-router
         auto sub_router = std::make_shared<malloy::server::router>();
         {
-            // Add access restriction policy
-            sub_router->set_policy(policy);
-
             // Add simple endpoint
             sub_router->add(method::get, "", [](const auto &req) {
                 response res{status::ok};
@@ -117,6 +114,7 @@ int main()
                 return res;
             });
         }
+        router->add_policy("/admin", policy);
         router->add_subrouter("/admin", std::move(sub_router));
     }
 

@@ -361,22 +361,6 @@ namespace malloy::server
         bool add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
 
         /**
-         * Set the global access policy for this router.
-         *
-         * @note Even if a policy was added to a specific resource using @p add_policy() the request first needs to pass
-         *       the policy check set by this call.
-         *
-         * @tparam Policy
-         * @param policy The policy.
-         */
-        template<concepts::request_validator Policy>
-        void
-        set_policy(Policy&& policy)
-        {
-            m_policy = make_request_validator(std::forward<Policy>(policy));
-        }
-
-        /**
          * Add an access policy for a specific resource.
          *
          * A policy allow restricting access to any resource registered on this router.
@@ -388,7 +372,10 @@ namespace malloy::server
         void
         add_policy(const std::string& resource, Policy&& policy)
         {
-            m_policies.emplace_back(resource, make_request_validator(std::forward<Policy>(policy)));
+            using policy_t = std::decay_t<Policy>;
+            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::forward<decltype(conn)>(conn), m_server_str); };
+
+            m_policies.emplace_back(resource, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
         }
 
         /**
@@ -398,6 +385,8 @@ namespace malloy::server
          *   - Forward to the appropriate sub-router
          *   - Handle the HTTP request
          *   - Handle the WS request
+         *
+         * HTTP requests are first policy checked.
          *
          * @tparam isWebsocket
          * @tparam Connection
@@ -414,6 +403,12 @@ namespace malloy::server
             const req_generator<Derived>& req,
             Connection&& connection)
         {
+            // Handle policy
+            if constexpr (!isWebsocket) {
+                if (is_handled_by_policies<Derived>(req, connection))
+                    return;
+            }
+
             // Check sub-routers
             for (const auto& [resource_base, router] : m_sub_routers) {
                 // Check match
@@ -442,20 +437,8 @@ namespace malloy::server
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
         std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
-        std::unique_ptr<abstract_req_validator> m_policy; // Access policy for the entire router
         std::vector<policy_store> m_policies;                           // Access policies for resources
         std::string m_server_str{BOOST_BEAST_VERSION_STRING};
-
-        template<concepts::request_validator Policy>
-        [[nodiscard]]
-        std::unique_ptr<abstract_req_validator>
-        make_request_validator(Policy&& policy)
-        {
-            using policy_t = std::decay_t<Policy>;
-            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::move(conn), m_server_str); };
-
-            return std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer));
-        }
 
         template<typename Derived>
         [[nodiscard]]
@@ -467,7 +450,6 @@ namespace malloy::server
             });
         }
 
-
         /**
          * Handle an HTTP request.
          *
@@ -478,9 +460,9 @@ namespace malloy::server
          */
         template<typename Derived>
         void handle_http_request(
-                const std::filesystem::path&,
-                const req_generator<Derived>& req,
-                const http::connection_t& connection
+            const std::filesystem::path&,
+            const req_generator<Derived>& req,
+            const http::connection_t& connection
         )
         {
             // Log
@@ -490,20 +472,13 @@ namespace malloy::server
                                 req->header().target());
             }
 
-            // Check access policy (router-wide)
-            if (m_policy && m_policy->process(req->header(), connection))
-                return;
-
             const auto& header = req->header();
+
             // Check routes
             for (const auto& ep : m_endpoints_http) {
                 // Check match
                 if (!ep->matches(header))
                     continue;
-
-                // Check policies
-                if (is_handled_by_policies<Derived>(req, connection))
-                    return;
 
                 // Generate the response for the request
                 auto resp = ep->handle(req, connection);
