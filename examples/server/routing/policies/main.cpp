@@ -113,8 +113,18 @@ int main()
                 res.body() = "<html><body><h1>Hello User01!</h1><p>Welcome to the access restricted admin panel!</p></body></html>";
                 return res;
             });
+
+            // Add simple endpoint
+            sub_router->add(method::get, "/foo", [](const auto &req) {
+                response res{status::ok};
+                res.body() = "<html><body>Foo</body></html>";
+                return res;
+            });
+
+            // Serve files
+            sub_router->add_file_serving("/files", cfg.doc_root);
         }
-        router->add_policy("/admin", policy);
+        router->add_policy("/admin/.+", policy);
         router->add_subrouter("/admin", std::move(sub_router));
     }
 
