@@ -8,26 +8,32 @@
 
 namespace malloy::http
 {
+
     template<bool isReq, typename Fields>
-    auto resource_string(const boost::beast::http::header<isReq, Fields>& head) -> boost::beast::string_view
+    [[nodiscard]]
+    std::string_view
+    resource_string(const boost::beast::http::header<isReq, Fields>& header)
     {
-        const auto target = head.target();
-        // Taken from: https://github.com/Tectu/malloy/blob/f6b06b25ba7f78f81e22d077f64acb95c0551d88/lib/malloy/core/http/uri.cpp#L72
+        const auto target = header.target();
+
         const auto pos = target.find_first_of("?#");
-        if (pos == std::string::npos) {
+        if (pos == std::string::npos)
             return target;
-        } else {
+        else
             return target.substr(0, pos);
-        }
     }
+
     template<bool isReq, typename Fields>
-    void chop_resource(boost::beast::http::header<isReq, Fields>& head, boost::beast::string_view resource)
+    void
+    chop_resource(boost::beast::http::header<isReq, Fields>& head, std::string_view resource)
     {
         head.target(head.target().substr(resource.size()));
     }
 
     template<bool isReq, typename Fields>
-    auto has_field(const boost::beast::http::header<isReq, Fields>& head, const malloy::http::field check) -> bool
+    [[nodiscard]]
+    bool
+    has_field(const boost::beast::http::header<isReq, Fields>& head, const malloy::http::field check)
     {
         return head.find(check) != head.end();
     }
@@ -56,7 +62,4 @@ namespace malloy::http
         return malloy::split(field_value, "; "sv);
     }
 
-
 }
-
-
