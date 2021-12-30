@@ -37,6 +37,62 @@ namespace malloy::websocket
     {
         using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
         using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
+
+        /**
+         * @brief Expanded lambda for read(), allows support for non-copyable completion tokens
+         */
+        template<std::invocable<error_code, std::size_t> Callback, concepts::dynamic_buffer Buff>
+        class read_delegate : public act_queue_t::action
+        {
+        public:
+            Callback done;
+            std::shared_ptr<connection> me;
+            Buff* buff;
+
+            template<typename Cb>
+            requires(std::is_constructible_v<Callback, Cb>)
+                read_delegate(Cb&& done, std::shared_ptr<connection> me, Buff* buff) :
+                done{std::forward<Cb>(done)},
+                me{std::move(me)}, buff{buff} {}
+
+            void invoke(act_queue_t::act_args on_done) override
+            {
+                assert(buff != nullptr);
+                me->m_ws.async_read(*buff, [me = me, &on_done, done = std::move(done)](auto ec, auto size) mutable {
+                    // Warning: This is outside the lifetime of the delegate, do not capture [this]
+                    std::invoke(std::move(done), ec, size);
+                    on_done();
+                });
+            }
+        };
+        /**
+         * @brief Same as read_delegate but for send()
+         */
+        template<std::invocable<error_code, std::size_t> Callback, concepts::const_buffer_sequence Payload>
+        class write_delegate : public act_queue_t::action
+        {
+        public:
+            Callback done;
+            std::shared_ptr<connection> me;
+            Payload buff;
+
+            template<typename Cb>
+            requires(std::is_constructible_v<Callback, Cb>)
+                write_delegate(Cb&& done, std::shared_ptr<connection> me, Payload buff) :
+                done{std::forward<Cb>(done)},
+                me{std::move(me)}, buff{buff} {}
+
+            void invoke(act_queue_t::act_args on_done) override
+            {
+                me->m_ws.async_write(buff, [me = me, &on_done, done = std::move(done)](auto ec, auto size) mutable {
+                    // Warning: This is outside the lifetime of the delegate, do not capture [this]
+                    me->on_write(ec, size);
+                    std::invoke(std::move(done), ec, size);
+                    on_done();
+                });
+            }
+        };
+
     public:
 
         using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
@@ -216,26 +272,6 @@ namespace malloy::websocket
 
             do_disconnect(why, []{});
         }
-        template<std::invocable<error_code, std::size_t> Callback, concepts::dynamic_buffer Buff>
-        class read_delegate : public act_queue_t::action {
-            public:
-                Callback done;
-                std::shared_ptr<connection> me;
-                Buff* buff;
-
-                template<typename Cb>
-                requires (std::is_constructible_v<Callback, Cb>)
-                read_delegate(Cb&& done, std::shared_ptr<connection> me, Buff* buff) : done{std::forward<Cb>(done)}, me{std::move(me)}, buff{buff} {}
-
-                void invoke(act_queue_t::act_args on_done) override {
-                        assert(buff != nullptr);
-                        me->m_ws.async_read(*buff, [me = me, &on_done, done = std::move(done)](auto ec, auto size) mutable {
-                            // Warning: This is outside the lifetime of the delegate, do not capture [this]
-                            std::invoke(std::move(done), ec, size);
-                            on_done();
-                        });
-                }
-            };
 
         /**
          * @brief Read a complete message into a buffer
@@ -259,27 +295,6 @@ namespace malloy::websocket
             };
             return boost::asio::async_initiate<decltype(done), void(error_code, std::size_t)>(std::move(wrapper), done);
         }
-        template<std::invocable<error_code, std::size_t> Callback, concepts::const_buffer_sequence Payload>
-        class write_delegate : public act_queue_t::action {
-            public:
-                Callback done;
-                std::shared_ptr<connection> me;
-                Payload buff;
-
-                template<typename Cb>
-                requires (std::is_constructible_v<Callback, Cb>)
-                write_delegate(Cb&& done, std::shared_ptr<connection> me, Payload buff) : done{std::forward<Cb>(done)}, me{std::move(me)}, buff{buff} {}
-
-                void invoke(act_queue_t::act_args on_done) override {
-                    me->m_ws.async_write(buff, [me = me, &on_done, done = std::move(done)](auto ec, auto size) mutable {
-                            // Warning: This is outside the lifetime of the delegate, do not capture [this]
-                        me->on_write(ec, size);
-                        std::invoke(std::move(done), ec, size);
-                        on_done();
-                    });
-                }
-
-            };
 
         /**
          * @brief Send the contents of a buffer to the client.
