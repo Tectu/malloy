@@ -21,9 +21,43 @@ namespace malloy::detail
     template<typename Executor>
     class action_queue
     {
-        using act_t  = std::function<void(const std::function<void()>&)>;
+        template<typename... Args>
+        class basic_action
+        {
+        public:
+            virtual void invoke(Args...) = 0;
+
+            void operator()(Args... args)
+            {
+                invoke(std::forward<Args>(args)...);
+            }
+
+            virtual ~basic_action() = default;
+        };
+    public:
+        using act_args = basic_action<>&;
+        using action = basic_action<act_args>;
+
+    private:
+        using act_t = std::unique_ptr<action>;    //std::function<void(const std::function<void()>&)>;
         using acts_t = std::queue<act_t>;
-        using ioc_t  = boost::asio::strand<Executor>;
+        using ioc_t = boost::asio::strand<Executor>;
+
+        class on_done_delegate : public basic_action<> {
+        public:
+            action_queue* parent;
+
+            explicit on_done_delegate(action_queue* parent) : parent{parent} {}
+
+            void invoke() override
+            {
+                if (!parent->m_acts.empty()) {
+                    parent->exe_next();
+                } else {
+                    parent->m_currently_running_act = false;
+                }
+            }
+        };
 
     public:
         /**
@@ -40,13 +74,15 @@ namespace malloy::detail
          * @brief Add an action to the queue.
          *
          * @note If run() has been called and the queue is currently empty, the new action will run immediately.
+         * @note This uses a custom class rather than std::function to enable non-copyable delegates being used
          *
          * @param act
          */
-        void push(act_t act)
+        template<std::derived_from<action> Act>
+        void push(Act&& act) requires(std::is_move_constructible_v<Act>)
         {
             boost::asio::dispatch(m_ioc, [this, act = std::move(act)]() mutable -> void {
-                m_acts.push(std::move(act));
+                m_acts.push(std::make_unique<Act>(std::move(act)));
                 if (!m_currently_running_act) {
                     run();
                 }
@@ -75,17 +111,12 @@ namespace malloy::detail
                 if (!m_acts.empty()) {
                     auto act = std::move(m_acts.front());
                     m_acts.pop();
-                    std::invoke(std::move(act), [this] {
-                        if (!m_acts.empty())
-                            exe_next();
-                        else
-                            m_currently_running_act = false;
-                    });
+                    act->invoke(m_on_done);
                 }
-
                 // Nothing left to do...
-                else
+                else {
                     m_currently_running_act = false;
+                }
             });
         }
 
@@ -93,6 +124,7 @@ namespace malloy::detail
         ioc_t m_ioc;
         std::atomic_bool m_running{false};
         std::atomic_bool m_currently_running_act{false};
+        on_done_delegate m_on_done{this};
     };
 
-}    // namespace malloy::detail
+    }    // namespace malloy::detail

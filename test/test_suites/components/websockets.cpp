@@ -27,6 +27,30 @@ namespace
 	constexpr auto server_msg = "Hello from server";
 	constexpr auto cli_msg = "Hello from client";
 
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
+    template<bool BinaryMode>
+    awaitable<void> client_ws_handler_coro(
+        malloy::error_code ec,
+        std::shared_ptr<malloy::client::websocket::connection> conn
+    )
+    {
+        CHECK(!ec);
+        REQUIRE(conn);
+
+        conn->set_binary(BinaryMode);
+
+        auto buffer = std::make_shared<boost::beast::flat_buffer>();
+
+        auto size = co_await conn->read(*buffer, boost::asio::use_awaitable);
+
+        CHECK(size == std::strlen(server_msg));
+        CHECK(malloy::buffers_to_string(buffer->cdata()) == server_msg);
+
+        size = co_await conn->send(malloy::buffer(cli_msg, std::strlen(cli_msg)), boost::asio::use_awaitable);
+        CHECK(size == std::strlen(cli_msg));
+    }
+#endif
+
 	template<bool BinaryMode>
     void client_ws_handler(
         malloy::error_code ec,
@@ -228,7 +252,7 @@ TEST_SUITE("websockets")
         SUBCASE("ws_connect coroutines") {
             malloy::test::roundtrip_coro(port, [](auto& ctrl) -> awaitable<void>{
                     auto v = co_await ctrl.ws_connect("127.0.0.1", port, "/", boost::asio::use_awaitable);
-                    client_ws_handler<false>(malloy::error_code{}, v);
+                    co_await client_ws_handler_coro<false>(malloy::error_code{}, v);
                     }, [](auto& ctrl){
                     ctrl.router()->add_websocket("/", &server_ws_handler<false>);
                     });

@@ -46,6 +46,10 @@ namespace malloy::concepts
     template<typename Func>
     concept async_read_handler = std::invocable<Func, boost::beast::error_code, std::size_t>;
 
+    template<typename Func>
+    concept read_completion_token = boost::asio::completion_token_for<Func, void(boost::beast::error_code, std::size_t)>;
+
+
     /**
      * Concept to check whether a type has a function with the following signature:
      *   - `std::string operator()()`
