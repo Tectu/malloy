@@ -121,7 +121,7 @@ namespace malloy::client
          * @sa http_request()
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
-        requires concepts::http_callback<Callback, Filter>
+        requires concepts::http_completion_token<Callback, tmp::bodies_for_t<std::remove_cvref_t<Filter>>>
         auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {})
         {
             return make_http_connection<true>(std::move(req), std::forward<Callback>(done), std::move(filter));
