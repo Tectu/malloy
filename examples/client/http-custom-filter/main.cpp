@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include <boost/asio/use_future.hpp>
+
 namespace mc = malloy::client;
 
 constexpr auto download_path = "./downloaded.html";
@@ -51,21 +53,24 @@ int main()
 	};
 
 	// Perform request
-	auto stop_token = ctrl.http_request(req, [](auto&& req) mutable {
-		if constexpr (std::same_as<std::decay_t<decltype(req)>, malloy::http::response<boost::beast::http::string_body>>)
-			std::cout << req << '\n';
-		else
-			std::cout << "Downloaded webpage to: " << download_path << '\n';
-		},
-        response_filter{ }
-    );
+	auto stop_token = ctrl.http_request(req, boost::asio::use_future, response_filter{});
 
 	// Wait for completion and check for errors
-	const auto ec = stop_token.get();
-	if (ec) {
-		spdlog::error("error: {}", ec.message());
-		return EXIT_FAILURE;
-	}
+    try {
+        auto resp = stop_token.get();
+        std::visit([](auto&& req) {
+            if constexpr (std::same_as<std::decay_t<decltype(req)>, malloy::http::response<boost::beast::http::string_body>>) {
+                std::cout << req << '\n';
+            } else {
+                std::cout << "Downloaded webpage to: " << download_path << '\n';
+            }
+        },
+                   resp);
 
-	return EXIT_SUCCESS;
+    } catch (const std::future_error& e) {
+        spdlog::error("error: {}", e.what());
+		return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }

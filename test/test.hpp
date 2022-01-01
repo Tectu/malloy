@@ -23,7 +23,7 @@
 namespace malloy::test
 {
 
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#if MALLOY_TESTS_ENABLE_CORO
     using boost::asio::awaitable;
 
     inline void roundtrip_coro(

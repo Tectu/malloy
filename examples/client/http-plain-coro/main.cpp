@@ -2,12 +2,13 @@
 
 #include <malloy/client/controller.hpp>
 
+#include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/use_future.hpp>
+#include <boost/asio/co_spawn.hpp>
 
 #include <iostream>
 
-int main()
-{
+auto make_request() -> boost::asio::awaitable<void> {
     // Create the controller config
     malloy::client::controller::config cfg;
     cfg.num_threads = 1;
@@ -16,14 +17,12 @@ int main()
     // Create the controller
     malloy::client::controller c;
     if (!c.init(cfg)) {
-        std::cerr << "initializing controller failed." << std::endl;
-        return EXIT_FAILURE;
+        throw std::runtime_error{"initializing controller failed."};
     }
 
     // Start
     if (!c.start()) {
-        std::cerr << "starting controller failed." << std::endl;
-        return EXIT_FAILURE;
+        throw std::runtime_error{"starting controller failed."};
     }
 
     malloy::http::request req(
@@ -32,13 +31,15 @@ int main()
         80,
         "/"
     );
-    auto stop_token = c.http_request(req, boost::asio::use_future);
-    try {
-        std::cout << stop_token.get() << std::endl;
-    } catch(const std::future_error& e) {
-        spdlog::error(e.what());
-        return EXIT_FAILURE;
-    }
+    auto resp = co_await c.http_request(req, boost::asio::use_awaitable);
+    std::cout << resp << '\n';
 
+}
+
+int main()
+{
+    boost::asio::io_context ioc;
+    boost::asio::co_spawn(ioc, make_request(), boost::asio::use_future);
+    ioc.run();
     return EXIT_SUCCESS;
 }

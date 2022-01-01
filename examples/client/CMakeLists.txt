@@ -7,4 +7,7 @@ if (MALLOY_FEATURE_TLS)
     add_subdirectory(http_tls)
     add_subdirectory(websocket_secure)
 endif()
+if (MALLOY_BUILD_CORO_EXAMPLES)
+    add_subdirectory(http-plain-coro)
+endif()
 

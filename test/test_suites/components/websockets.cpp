@@ -11,7 +11,7 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/use_future.hpp>
 
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#if MALLOY_TESTS_ENABLE_CORO
 using boost::asio::awaitable;
 #endif
 
@@ -27,7 +27,7 @@ namespace
 	constexpr auto server_msg = "Hello from server";
 	constexpr auto cli_msg = "Hello from client";
 
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#if MALLOY_TESTS_ENABLE_CORO
     template<bool BinaryMode>
     awaitable<void> client_ws_handler_coro(
         malloy::error_code ec,
@@ -248,7 +248,7 @@ TEST_SUITE("websockets")
         }
 #endif
 
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#if MALLOY_TESTS_ENABLE_CORO
         SUBCASE("ws_connect coroutines") {
             malloy::test::roundtrip_coro(port, [](auto& ctrl) -> awaitable<void>{
                     auto v = co_await ctrl.ws_connect("127.0.0.1", port, "/", boost::asio::use_awaitable);
