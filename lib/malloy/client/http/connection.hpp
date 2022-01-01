@@ -200,7 +200,7 @@ namespace malloy::client::http
         }
         void report_err(error_code ec) {
             tmp::filter_resp_t<Filter> v;
-            (*m_cb)(ec, v);
+            (*m_cb)(ec, std::move(v));
         }
     };
 
