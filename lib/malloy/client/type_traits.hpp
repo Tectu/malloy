@@ -4,10 +4,40 @@
 #include "../core/http/type_traits.hpp"
 #include "../core/type_traits.hpp"
 
+#include "malloy/core/tmp.hpp"
+
 #include <concepts>
 #include <variant>
 
-namespace malloy::client::concepts
+
+namespace malloy::client {
+namespace tmp {
+
+namespace detail {
+template<template<typename...> typename V, typename... Vargs>
+struct conv_to_resp_helper {
+    constexpr conv_to_resp_helper(V<Vargs...>) {}
+    using type = V<http::response<Vargs>...>;
+};
+}
+
+template<typename V>
+requires (malloy::concepts::is_variant_of_bodies<V>)
+using body_type = malloy::tmp::unwrap_variant<V>;
+
+template<typename F>
+using bodies_for_t = std::invoke_result_t<decltype(&F::body_for), const F*, const typename F::header_type&>;
+
+template<typename Bodies>
+requires (malloy::concepts::is_variant_of_bodies<Bodies>)
+using to_responses = typename decltype(detail::conv_to_resp_helper{std::declval<Bodies>()})::type;
+
+template<typename Filter>
+using filter_resp_t = malloy::tmp::unwrap_variant<to_responses<bodies_for_t<Filter>>>;
+
+};
+
+namespace concepts
 {
 
     namespace detail
@@ -42,14 +72,16 @@ namespace malloy::client::concepts
             {
                 using body_t = std::decay_t<V>;
                 malloy::http::response<body_t> res;
+                error_code ec;
 
-                cb(std::move(res));
+                cb(ec, std::move(res));
             }
-        
         };
-    
     }
 
+    template<typename T, typename Bodies>
+    concept http_completion_token = malloy::concepts::is_variant_of_bodies<Bodies>
+                                 && boost::asio::completion_token_for<T, void(error_code, malloy::tmp::unwrap_variant<tmp::to_responses<Bodies>>)>;
     template<typename F>
     concept response_filter = std::move_constructible<F> && requires(const F& f, const typename F::header_type& h)
     {
@@ -65,6 +97,7 @@ namespace malloy::client::concepts
         std::visit(detail::http_cb_helper<F>{std::move(cb)}, f.body_for(h));
     };
 
+}
 }
 
 /** 

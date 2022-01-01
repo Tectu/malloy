@@ -21,35 +21,24 @@ namespace malloy::client::http
      *
      * @tparam Derived The type inheriting from this class.
      */
-    template<class Derived, malloy::http::concepts::body ReqBody, concepts::response_filter Filter, typename Callback>
+    template<class Derived, malloy::http::concepts::body ReqBody, concepts::response_filter Filter, std::invocable<error_code, tmp::filter_resp_t<Filter>> Callback>
     class connection
     {
     public:
         using resp_t = typename Filter::response_type;
         using callback_t = Callback;
 
-        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx) :
+        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, callback_t cb, std::string_view port, malloy::http::request<ReqBody> req, Filter&& filter) :
             m_logger(std::move(logger)),
             m_resolver(boost::asio::make_strand(io_ctx))
         {
             // Sanity check
             if (!m_logger)
                 throw std::invalid_argument("no valid logger provided.");
-        }
 
-        // Start the asynchronous operation
-        void
-        run(
-            char const* port,
-            malloy::http::request<ReqBody> req,
-            std::promise<malloy::error_code> err_channel,
-            callback_t&& cb,
-            Filter&& filter
-        )
-        {
+
             m_req_filter = std::move(filter);
             m_req = std::move(req);
-            m_err_channel = std::move(err_channel);
             m_cb.emplace(std::move(cb));
 
             // Look up the domain name
@@ -85,7 +74,6 @@ namespace malloy::client::http
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
         boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
         malloy::http::request<ReqBody> m_req;
-        std::promise<malloy::error_code> m_err_channel;
         std::optional<callback_t> m_cb;
         Filter m_req_filter;
 
@@ -101,7 +89,8 @@ namespace malloy::client::http
         {
             if (ec) {
                 m_logger->error("on_resolve: {}", ec.message());
-                m_err_channel.set_value(ec);
+                (*m_cb)(ec, {});
+                //m_err_channel.set_value(ec);
                 return;
             }
 
@@ -123,7 +112,8 @@ namespace malloy::client::http
         {
             if (ec) {
                 m_logger->error("on_connect: {}", ec.message());
-                m_err_channel.set_value(ec);
+                //m_err_channel.set_value(ec);
+                (*m_cb)(ec, {});
                 return;
             }
 
@@ -139,7 +129,8 @@ namespace malloy::client::http
         {
             if (ec) {
                 m_logger->error("on_write: {}", ec.message());
-                m_err_channel.set_value(ec);
+                //m_err_channel.set_value(ec);
+                (*m_cb)(ec, {});
                 return;
             }
 
@@ -158,7 +149,8 @@ namespace malloy::client::http
         void on_read_header(malloy::error_code ec, std::size_t) {
             if (ec) {
                 m_logger->error("on_read_header: '{}'", ec.message());
-                m_err_channel.set_value(ec);
+                //m_err_channel.set_value(ec);
+                (*m_cb)(ec, {});
                 return;
             }
 
@@ -175,11 +167,12 @@ namespace malloy::client::http
                     [this, parser, me = derived().shared_from_this()](auto ec, auto) {
                     if (ec) {
                         m_logger->error("on_read(): {}", ec.message());
-                        m_err_channel.set_value(ec);
+                        //m_err_channel.set_value(ec);
+                        (*m_cb)(ec, {});
                         return;
                     }
                     // Notify via callback
-                    (*m_cb)(malloy::http::response<body_t>{parser->release()});
+                    (*m_cb)(ec, malloy::http::response<body_t>{parser->release()});
                     on_read();
                 }
                 );
@@ -197,8 +190,9 @@ namespace malloy::client::http
             if (ec && ec != boost::beast::errc::not_connected) {
                 m_logger->error("shutdown: {}", ec.message());
             }
-            m_err_channel.set_value(ec); // Set it even if its not an error, to signify that we are done
-
+            if (ec) {
+                (*m_cb)(ec, {});
+            }
         }
     };
 

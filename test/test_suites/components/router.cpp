@@ -11,7 +11,8 @@ TEST_SUITE("components - router")
         constexpr auto port = 44173;
         malloy::test::roundtrip(port, [&, port](auto& c_ctrl){
                 request<> req{method::get, "127.0.0.1", port, "/"};
-                auto st = c_ctrl.http_request(req, [](const auto& resp){
+                c_ctrl.http_request(req, [](auto ec, const auto& resp){
+                    REQUIRE(!ec);
                     CHECK(resp.result() == status::unauthorized);
                 });
 
