@@ -226,13 +226,13 @@ namespace malloy::client
                     std::make_shared<http::connection_tls<Body, Filter, std::remove_cvref_t<decltype(act)>>>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                         io_ctx(),
-                        *m_tls_ctx, std::forward<decltype(act)>(act), std::forward<decltype(args)>(args)...);
+                        *m_tls_ctx, std::forward<decltype(act)>(act), std::forward<decltype(args)>(args)...)->start();
                     return;
                 }
 #endif
                 std::make_shared<http::connection_plain<Body, Filter, std::remove_cvref_t<decltype(act)>>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                    io_ctx(), std::forward<decltype(act)>(act), std::forward<decltype(args)>(args)...);
+                    io_ctx(), std::forward<decltype(act)>(act), std::forward<decltype(args)>(args)...)->start();
             };
             if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                     req.set(malloy::http::field::user_agent, m_cfg.user_agent);

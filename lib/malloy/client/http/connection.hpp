@@ -28,31 +28,34 @@ namespace malloy::client::http
         using resp_t = typename Filter::response_type;
         using callback_t = Callback;
 
-        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, callback_t cb, std::string_view port, malloy::http::request<ReqBody> req, Filter&& filter) :
+        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, callback_t cb, std::string port, malloy::http::request<ReqBody> req, Filter&& filter) :
             m_logger(std::move(logger)),
-            m_resolver(boost::asio::make_strand(io_ctx))
+            m_resolver(boost::asio::make_strand(io_ctx)),
+            m_port{std::move(port)},
+            m_req_filter{std::move(filter)},
+            m_req{std::move(req)},
+            m_cb{std::move(cb)}
         {
             // Sanity check
             if (!m_logger)
                 throw std::invalid_argument("no valid logger provided.");
 
+        }
 
-            m_req_filter = std::move(filter);
-            m_req = std::move(req);
-            m_cb.emplace(std::move(cb));
-
+        /// Call after construction to start, needed to allow enable_shared_from_this
+        void start() {
             // Look up the domain name
             m_resolver.async_resolve(
                 m_req.base()[malloy::http::field::host],
-                port,
+                m_port,
                 boost::beast::bind_front_handler(
                     &connection::on_resolve,
                     derived().shared_from_this()
                 )
             );
         }
-
     protected:
+
         std::shared_ptr<spdlog::logger> m_logger;
 
         void
@@ -75,6 +78,7 @@ namespace malloy::client::http
         boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
         malloy::http::request<ReqBody> m_req;
         std::optional<callback_t> m_cb;
+        std::string m_port;
         Filter m_req_filter;
 
         [[nodiscard]]
@@ -89,7 +93,7 @@ namespace malloy::client::http
         {
             if (ec) {
                 m_logger->error("on_resolve: {}", ec.message());
-                (*m_cb)(ec, {});
+                report_err(ec);
                 //m_err_channel.set_value(ec);
                 return;
             }
@@ -113,7 +117,7 @@ namespace malloy::client::http
             if (ec) {
                 m_logger->error("on_connect: {}", ec.message());
                 //m_err_channel.set_value(ec);
-                (*m_cb)(ec, {});
+                report_err(ec);
                 return;
             }
 
@@ -130,7 +134,7 @@ namespace malloy::client::http
             if (ec) {
                 m_logger->error("on_write: {}", ec.message());
                 //m_err_channel.set_value(ec);
-                (*m_cb)(ec, {});
+                report_err(ec);
                 return;
             }
 
@@ -150,7 +154,7 @@ namespace malloy::client::http
             if (ec) {
                 m_logger->error("on_read_header: '{}'", ec.message());
                 //m_err_channel.set_value(ec);
-                (*m_cb)(ec, {});
+                report_err(ec);
                 return;
             }
 
@@ -168,7 +172,7 @@ namespace malloy::client::http
                     if (ec) {
                         m_logger->error("on_read(): {}", ec.message());
                         //m_err_channel.set_value(ec);
-                        (*m_cb)(ec, {});
+                        report_err(ec);
                         return;
                     }
                     // Notify via callback
@@ -191,8 +195,12 @@ namespace malloy::client::http
                 m_logger->error("shutdown: {}", ec.message());
             }
             if (ec) {
-                (*m_cb)(ec, {});
+                report_err(ec);
             }
+        }
+        void report_err(error_code ec) {
+            tmp::filter_resp_t<Filter> v;
+            (*m_cb)(ec, v);
         }
     };
 
