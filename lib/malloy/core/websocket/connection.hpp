@@ -93,6 +93,24 @@ namespace malloy::websocket
             }
         };
 
+        class disconnect_delegate : public act_queue_t::action {
+        public:
+            std::shared_ptr<connection> parent;
+            boost::beast::websocket::close_reason why;
+
+            disconnect_delegate(std::shared_ptr<connection> parent, boost::beast::websocket::close_reason why) : parent{std::move(parent)}, why{why} {}
+
+            void invoke(act_queue_t::act_args on_done) override {
+                // Check we haven't been beaten
+                if (parent->m_state == state::closed || parent->m_state == state::closing) {
+                    on_done();
+                    return;
+                }
+                parent->do_disconnect(why, [on_done = &on_done]() { (*on_done)(); });
+            }
+
+        };
+
     public:
 
         using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
@@ -242,18 +260,11 @@ namespace malloy::websocket
             if (m_state == state::closed || m_state == state::closing) {
                 throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
             }
-            auto build_act = [this, why, me = this->shared_from_this()](const auto& on_done) mutable {
-                // Check we haven't been beaten
-                if (m_state == state::closed || m_state == state::closing) {
-                    on_done();
-                    return;
-                }
-                do_disconnect(why, on_done);
-            };
+            auto build_act = [this, why]{ return disconnect_delegate{this->shared_from_this(), why}; };
 
-            // We queue in both read and write, and whichever gets there first wins 
-            m_write_queue.push(build_act);
-            m_read_queue.push(build_act);
+            // We queue in both read and write, and whichever gets there first wins
+            m_write_queue.push(build_act());
+            m_read_queue.push(build_act());
         }
 
         /**
@@ -378,7 +389,7 @@ namespace malloy::websocket
             // Update state
             m_state = state::closing;
 
-            m_ws.async_close(why, [me = this->shared_from_this(), this, on_done](auto ec){
+            m_ws.async_close(why, [me = this->shared_from_this(), this, &on_done](auto ec){
                 if (ec) {
                     m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
                 } else {
