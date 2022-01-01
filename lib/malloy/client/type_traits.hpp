@@ -27,30 +27,6 @@ namespace malloy::client::concepts
                 f2.setup_body(h2, r);
             }
         };
-
-
-        /**
-         * @class http_cb_helper
-         * @brief Helper for http_callback concept
-         * @note This is effectively [cb = std::move(cb)]<typename V>(V&& v) mutable { ... }
-         * @tparam Callback carries the functor type being checked by the
-         * concept
-         *
-         */
-        template<typename Callback>
-        struct http_cb_helper {
-            Callback cb;
-
-            template<typename V>
-            void operator()(V&&)
-            {
-                using body_t = std::decay_t<V>;
-                malloy::http::response<body_t> res;
-                error_code ec;
-
-                cb(ec, std::move(res));
-            }
-        };
     }
 
     template<typename T, typename Bodies>
@@ -65,12 +41,6 @@ namespace malloy::client::concepts
         {
             std::visit(detail::response_filter_body_helper<F>{}, f.body_for(h))};
     };
-
-    template<typename F, typename Filter>
-    concept http_callback = response_filter<Filter>&& std::move_constructible<F>&& requires(F cb, const Filter& f, const typename Filter::header_type& h){
-        std::visit(detail::http_cb_helper<F>{std::move(cb)}, f.body_for(h));
-    };
-
 }
 
 /** 
