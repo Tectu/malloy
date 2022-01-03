@@ -103,7 +103,7 @@ namespace malloy::server
         /// Create the lambda wrapped callback for the writer
         auto make_endpt_writer_callback() {
             return [this]<typename R>(const auto& req, R&& resp, const auto& conn) {
-                std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, m_server_str); }, std::forward<R>(resp));
+                std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, *m_server_str); }, std::forward<R>(resp));
             };
         }
 
@@ -204,7 +204,7 @@ namespace malloy::server
          *
          * @param logger The logger instance to use.
          */
-        router(std::shared_ptr<spdlog::logger> logger, std::string server_str);
+        router(std::shared_ptr<spdlog::logger> logger, std::optional<std::string> server_str = std::nullopt);
 
         /**
          * Copy constructor.
@@ -373,7 +373,7 @@ namespace malloy::server
         add_policy(const std::string& resource, Policy&& policy)
         {
             using policy_t = std::decay_t<Policy>;
-            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::forward<decltype(conn)>(conn), m_server_str); };
+            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::forward<decltype(conn)>(conn), *m_server_str); };
 
             m_policies.emplace_back(resource, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
         }
@@ -432,13 +432,20 @@ namespace malloy::server
                 handle_http_request<Derived>(doc_root, std::move(req), connection);
         }
 
+        constexpr auto server_string() const -> const std::optional<std::string>& {
+            return m_server_str;
+        }
     private:
         std::shared_ptr<spdlog::logger> m_logger;
         std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
         std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
         std::vector<policy_store> m_policies;                           // Access policies for resources
-        std::string m_server_str{BOOST_BEAST_VERSION_STRING};
+        std::optional<std::string> m_server_str;
+
+
+        void set_server_string(const std::string& str);
+
 
         template<typename Derived>
         [[nodiscard]]
@@ -484,7 +491,7 @@ namespace malloy::server
                 auto resp = ep->handle(req, connection);
                 if (resp) {
                     // Send the response
-                    detail::send_response(req->header(), std::move(*resp), connection, m_server_str);
+                    detail::send_response(req->header(), std::move(*resp), connection, *m_server_str);
                 }
 
                 // We're done handling this request
@@ -492,7 +499,7 @@ namespace malloy::server
             }
 
             // If we end up where we have no meaningful way of handling this request
-            detail::send_response(req->header(), malloy::http::generator::bad_request("unknown request"), connection, m_server_str);
+            detail::send_response(req->header(), malloy::http::generator::bad_request("unknown request"), connection, *m_server_str);
         }
 
         /**
