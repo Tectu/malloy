@@ -4,7 +4,7 @@ target_sources(
         http_generator.cpp
         response.cpp
         router.cpp
-        #endpoints.cpp
+        endpoints.cpp
         html_multipart_parser.cpp
         request.cpp
         websockets.cpp

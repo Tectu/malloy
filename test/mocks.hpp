@@ -35,7 +35,8 @@ namespace malloy::mock::http
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
             void body(Callback&& done)
             {
-                return done(malloy::http::request<Body>{header_});
+                malloy::http::request<Body> req{boost::beast::http::request<Body>{header_}};
+                done(std::move(req));
             }
         };
     };
