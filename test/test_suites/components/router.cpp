@@ -78,6 +78,44 @@ TEST_SUITE("components - router")
                 CHECK_FALSE(r.add_redirect(status::permanent_redirect, "/foo", "bar"));
             }
         }
+        SUBCASE("server string propagates to subrouters without explicit strings") {
+            constexpr auto server_str = "hello";
+            constexpr auto server_str2 = "hello2";
+
+            router r1{nullptr, server_str};
+            CHECK(r1.server_string().has_value());
+
+            auto sub1 = std::make_shared<router>();
+            CHECK(!sub1->server_string().has_value());
+            r1.add_subrouter("/", sub1);
+
+            REQUIRE(sub1->server_string().has_value());
+            CHECK(*sub1->server_string() == server_str);
+
+            auto sub2 = std::make_shared<router>(nullptr, server_str2);
+            REQUIRE(sub2->server_string().has_value());
+            CHECK(*sub2->server_string() == server_str2);
+
+            r1.add_subrouter("/hello", sub2);
+            REQUIRE(sub2->server_string().has_value());
+            CHECK(*sub2->server_string() == server_str2);
+
+        }
+        SUBCASE("server string propagation composes over multiple levels") {
+            constexpr auto server_str = "hello";
+            router r1{nullptr, server_str};
+
+            auto sub1 = std::make_shared<router>();
+            auto sub1_1 = std::make_shared<router>();
+
+            sub1->add_subrouter("/", sub1_1);
+            REQUIRE(!sub1_1->server_string().has_value());
+            REQUIRE(!sub1->server_string().has_value());
+
+            r1.add_subrouter("/", sub1);
+            REQUIRE(sub1_1->server_string().has_value());
+            REQUIRE(sub1->server_string().has_value());
+        }
 
     }
 
