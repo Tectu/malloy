@@ -22,7 +22,7 @@ jobs:
     env:
       BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
 
-    name: "msys2/clang (boost v${{ matrix.boost_version }}) (tls: ${{ matrix.malloy_tls }}) (shared: ${{ matrix.shared }})"
+    name: "msys2/mingw (boost v${{ matrix.boost_version }}) (tls: ${{ matrix.malloy_tls }}) (shared: ${{ matrix.shared }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     defaults:
       run:
