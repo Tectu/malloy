@@ -41,6 +41,6 @@ if (MSVC AND MALLOY_INTERNAL_CIMODE)
     target_compile_options(
         ${TARGET}
         PRIVATE
-            /Zm200
+            /Zm10
         )
 endif()
