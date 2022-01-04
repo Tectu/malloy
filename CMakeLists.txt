@@ -21,6 +21,8 @@ option(MALLOY_DEPENDENCY_FMT_DOWNLOAD "Whether to automatically fetch fmt" ON)
 option(MALLOY_DEPENDENCY_JSON_DOWNLOAD "Whether to automatically fetch nlohmann/json" ON)
 option(MALLOY_DEPENDENCY_INJA_DOWNLOAD "Whether to automatically fetch pantor/inja" ON)
 
+option(MALLOY_INTERNAL_CIMODE "Internal flag for CI, do not use" OFF)
+
 # Settings
 set(MALLOY_WIN32_WINNT "0x0A00")
 

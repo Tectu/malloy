@@ -36,3 +36,11 @@ add_test(
 )
 
 set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR})
+
+if (MSVC AND MALLOY_INTERNAL_CIMODE)
+    target_compile_options(
+        ${TARGET}
+        PRIVATE
+            /Zm200
+        )
+endif()

@@ -18,38 +18,38 @@ jobs:
         shared: [ON, OFF]
         toolchain:
           [
-            {
-              name: "Ubuntu GCC TLS",
-              cxx: "g++-11",
-              cc: "gcc-11",
-              packages: "libssl-dev gcc-11 g++-11",
-              tls: ON,
-              os: ubuntu-latest,
-            },
-            {
-              name: "Ubuntu GCC",
-              cxx: "g++-11",
-              cc: "gcc-11",
-              packages: "gcc-11 g++-11",
-              tls: OFF,
-              os: ubuntu-latest,
-            },
-            {
-              name: "Ubuntu Clang TLS",
-              cxx: "clang++",
-              cc: "clang",
-              packages: "libssl-dev",
-              tls: ON,
-              os: ubuntu-latest,
-            },
-            {
-              name: "Ubuntu Clang",
-              cxx: "clang++",
-              cc: "clang",
-              packages: "",
-              tls: OFF,
-              os: ubuntu-latest,
-            },
+            #{
+              #name: "Ubuntu GCC TLS",
+              #cxx: "g++-11",
+              #cc: "gcc-11",
+              #packages: "libssl-dev gcc-11 g++-11",
+              #tls: ON,
+              #os: ubuntu-latest,
+            #},
+            #{
+              #name: "Ubuntu GCC",
+              #cxx: "g++-11",
+              #cc: "gcc-11",
+              #packages: "gcc-11 g++-11",
+              #tls: OFF,
+              #os: ubuntu-latest,
+            #},
+            #{
+              #name: "Ubuntu Clang TLS",
+              #cxx: "clang++",
+              #cc: "clang",
+              #packages: "libssl-dev",
+              #tls: ON,
+              #os: ubuntu-latest,
+            #},
+            #{
+              #name: "Ubuntu Clang",
+              #cxx: "clang++",
+              #cc: "clang",
+              #packages: "",
+              #tls: OFF,
+              #os: ubuntu-latest,
+            #},
             {
               name: "VS2019",
               cxx: "cl.exe",
@@ -125,7 +125,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }}
+        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }} -DMALLOY_INTERNAL_CIMODE=ON
 
       - name: Build
         run: cmake --build build
