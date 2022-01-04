@@ -1,6 +1,7 @@
 #include "manager.hpp"
 #include "session.hpp"
 #include "storage.hpp"
+#include "../utils.hpp"
 
 #include <stdexcept>
 #include <random>
@@ -15,14 +16,14 @@ manager::manager(std::shared_ptr<storage> storage) :
         throw std::invalid_argument("no valid storage provided.");
 }
 
-std::shared_ptr<session> manager::get(const request<>& req)
+std::shared_ptr<session> manager::get(const request_header<>& hdr)
 {
     // Sanity check
     if (!m_storage)
         return {};
 
     // Get session ID
-    const auto& ses_id = get_id(req);
+    const auto& ses_id = get_id(hdr);
     if (!ses_id.has_value())
         return {};
 
@@ -112,9 +113,9 @@ std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
     return m_storage->destroy_expired(max_lifetime);
 }
 
-bool manager::is_valid(const request<>& req)
+bool manager::is_valid(const malloy::http::request_header<>& hdr)
 {
-    return get(req) != nullptr;
+    return get(hdr) != nullptr;
 }
 
 bool manager::is_valid(const id_type& id)
@@ -122,17 +123,14 @@ bool manager::is_valid(const id_type& id)
     return get(id) != nullptr;
 }
 
-std::optional<id_type> manager::get_id(const request<>& req) const
+std::optional<id_type> manager::get_id(const request_header<>& hdr) const
 {
-    if (!req.has_cookie(cookie_name))
+    // Get session cookie value
+    const auto& ses_id = cookie_value(hdr, cookie_name);
+    if (!ses_id)
         return std::nullopt;
 
-    // Get session ID
-    const auto& ses_id = req.cookie(cookie_name);
-    if (ses_id.empty())
-        return std::nullopt;
-
-    return static_cast<id_type>(ses_id);
+    return std::string{ ses_id.value() };
 }
 
 id_type manager::generate_id()
