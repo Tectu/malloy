@@ -117,7 +117,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }} -DMALLOY_INTERNAL_CIMODE=ON
+        run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }}
 
       - name: Build
         run: cmake --build build
