@@ -226,23 +226,28 @@ FetchContent_Declare(
 FetchContent_GetProperties(malloy)
 if(NOT malloy_POPULATED)
     FetchContent_Populate(malloy)
+    
+    # Change various malloy cmake options
     set(MALLOY_BUILD_EXAMPLES OFF CACHE INTERNAL "")
     set(MALLOY_BUILD_TESTS OFF CACHE INTERNAL "")
     set(MALLOY_BUILD_SHARED ON CACHE INTERNAL "")
     set(MALLOY_FEATURE_CLIENT OFF CACHE INTERNAL "")
     set(MALLOY_FEATURE_SERVER ON CACHE INTERNAL "")
     set(MALLOY_FEATURE_TLS ON CACHE INTERNAL "")
+    set(MALLOY_FEATURE_APPFW ON CACHE INTERNAL "")
+    
     add_subdirectory(${malloy_SOURCE_DIR} ${malloy_BINARY_DIR})
 endif()
 ```
-You may replace `GIT_TAG` with a commit hash or a release tag such as `v1.0.0`.
+You may replace `GIT_TAG` with a commit hash or a release tag such as `1.0.0`.
 
-After fetching the content, it's only a matter of linking the malloy library target to the client application:
+After fetching the content, it's only a matter of linking the malloy library target(s) to the consuming application:
 ```cmake
 target_link_libraries(
     my_application
     PRIVATE
-        malloy-objs
+        malloy-server       # Link malloy's server components
+        malloy-client       # Link malloy's client components
 )
 ```
 Where `my_application` is your application (or library) target that should consume malloy.
@@ -258,12 +263,13 @@ Various `cmake` options are available to control the build:
 | `MALLOY_BUILD_SHARED` | `OFF` | Whether to build shared libraries. If set to `OFF`, static libraries will be built.  |
 
 ### Features
-| Option | Default | Description |
-| --- | --- | --- |
-| `MALLOY_FEATURE_CLIENT` | `ON` | Enable client features. |
-| `MALLOY_FEATURE_SERVER` | `ON` | Enable server features. |
-| `MALLOY_FEATURE_HTML` | `ON` | Whether to enable HTML support. |
-| `MALLOY_FEATURE_TLS` | `OFF` | Whether to enable TLS support. |
+| Option                  | Default | Description |
+|-------------------------|-------| --- |
+| `MALLOY_FEATURE_CLIENT` | `ON`  | Enable client features. |
+| `MALLOY_FEATURE_SERVER` | `ON`  | Enable server features. |
+| `MALLOY_FEATURE_HTML`   | `ON`  | Whether to enable HTML support. |
+| `MALLOY_FEATURE_TLS`    | `OFF` | Whether to enable TLS support. |
+| `MALLOY_FEATURE_APPFW`  | `OFF` | Whether to enable the server-side application framework components. |
 
 ### Dependencies
 | Option | Default | Description |
