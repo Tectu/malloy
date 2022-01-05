@@ -58,14 +58,6 @@ jobs:
               packages: "openssl", # We have to install something
               os: windows-latest,
             },
-            {
-              name: "VS2019 TLS",
-              cxx: "cl.exe",
-              cc: "cl.exe",
-              tls: ON,
-              packages: "openssl",
-              os: windows-latest,
-            },
           ]
 
     continue-on-error: false
