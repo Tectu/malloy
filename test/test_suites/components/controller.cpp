@@ -52,7 +52,6 @@ TEST_SUITE("controller - roundtrips") {
         REQUIRE(cli_ctrl.run());
 
         CHECK(!stop_tkn.get());
-        serve_session.stop(boost::asio::use_future).wait();
 
     }
 }

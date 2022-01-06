@@ -56,30 +56,19 @@ namespace malloy
                 // Log
                 cfg.logger->debug("starting i/o context.");
             }
-            template<boost::asio::completion_token_for<void()> CompTkn>
-            auto stop(CompTkn&& tkn)
-            {
-                auto wrapper = [this](auto&& done) {
-                    // Stop the `io_context`. This will cause `run()`
-                    // to return immediately, eventually destroying the
-                    // `io_context` and all of the sockets in it.
-                    m_io_ctx->stop();
-
-                    // Tell the workguard that we no longer need it's service
-                    m_workguard.reset();
-
-
-                    for (auto& thread : m_io_threads) {
-                        thread.join();
-                    };
-                    std::invoke(std::forward<decltype(done)>(done));
-                };
-                return boost::asio::async_initiate<CompTkn, void()>(std::move(wrapper), tkn);
-            }
             ~controller_run_result() {
-                if (!m_io_ctx->stopped()) {
-                    stop(boost::asio::use_future).wait();
-                }
+                // Stop the `io_context`. This will cause `run()`
+                // to return immediately, eventually destroying the
+                // `io_context` and all of the sockets in it.
+                m_io_ctx->stop();
+
+                // Tell the workguard that we no longer need it's service
+                m_workguard.reset();
+
+
+                for (auto& thread : m_io_threads) {
+                    thread.join();
+                };
             }
 
         private:
