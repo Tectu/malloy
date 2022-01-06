@@ -84,17 +84,24 @@ namespace malloy::server
         #endif
 
         /**
-         * Get the top-level HTTP router.
+         * Get the top-level router.
          *
-         * @return The top-level HTTP router.
+         * @return The top-level router.
          */
         [[nodiscard]]
         constexpr const malloy::server::router& router() const noexcept
         {
             return m_router;
         }
+
+        /**
+         * Get the top-level router.
+         *
+         * @return The top-level router.
+         */
         [[nodiscard]]
-        constexpr auto router() noexcept -> class router& {
+        constexpr class malloy::server::router& router() noexcept
+        {
             return m_router;
         }
 
