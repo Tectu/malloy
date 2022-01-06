@@ -82,7 +82,8 @@ namespace malloy::server
         /**
          * Start the server. This function will not return until the server is stopped.
          *
-         * @note The controller may not be reused after this call
+         * @note The controller must not be reused after this call
+         *
          * @return Whether starting the server was successful.
          */
         bool start() &&;
