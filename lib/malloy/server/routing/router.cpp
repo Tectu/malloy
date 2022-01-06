@@ -45,7 +45,7 @@ bool router::add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep)
     return true;
 }
 
-bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_router)
+bool router::add_subrouter(std::string resource, std::unique_ptr<router> sub_router)
 {
     // Log
     if (m_logger)
@@ -80,6 +80,11 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
 
     return true;
 }
+
+auto router::add_subrouter(std::string resource, router&& sub) -> bool {
+    return add_subrouter(std::move(resource), std::make_unique<router>(std::move(sub)));
+}
+
 void router::set_server_string(std::string_view str) {
     if (str == m_server_str) {
         return;

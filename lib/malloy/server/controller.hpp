@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../core/controller.hpp"
+#include "malloy/core/controller.hpp"
+#include "malloy/server/routing/router.hpp"
 
 
 #include <memory>
@@ -106,16 +107,20 @@ namespace malloy::server
          * @return The top-level HTTP router.
          */
         [[nodiscard]]
-        std::shared_ptr<malloy::server::router> router() const noexcept
+        constexpr const malloy::server::router& router() const noexcept
         {
+            return m_router;
+        }
+        [[nodiscard]]
+        constexpr auto router() noexcept -> class router& {
             return m_router;
         }
 
     private:
         config m_cfg;
         std::shared_ptr<listener> m_listener;
-        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
-        std::shared_ptr<malloy::server::router> m_router;
+        std::optional<boost::asio::ssl::context> m_tls_ctx;
+        malloy::server::router m_router;
     };
 
 }

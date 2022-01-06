@@ -99,7 +99,7 @@ namespace malloy::server
      *
      * @details This class implements a basic router for HTTP requests.
      */
-    class router
+    class router final
     {
         /// Create the lambda wrapped callback for the writer
         auto make_endpt_writer_callback() {
@@ -215,12 +215,12 @@ namespace malloy::server
         /**
          * Move constructor.
          */
-        router(router&& other) noexcept = delete;
+        router(router&& other) noexcept = default;
 
         /**
          * Destructor.
          */
-        virtual ~router() = default;
+        ~router() = default;
 
         /**
          * Copy assignment operator.
@@ -236,7 +236,7 @@ namespace malloy::server
          * @param rhs The right-hand-side object to move-assign from.
          * @return A reference to the assignee.
          */
-        router& operator=(router&& rhs) noexcept = delete;
+        router& operator=(router&& rhs) noexcept = default;
 
         /**
          * Set the logger to use.
@@ -252,7 +252,8 @@ namespace malloy::server
          * @param sub_router The sub-router.
          * @return Whether adding the sub-router was successful.
          */
-        bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
+        bool add_subrouter(std::string resource, std::unique_ptr<router> sub_router);
+        bool add_subrouter(std::string resource, router&& sub_router);
 
         /**
          * Add an HTTP regex endpoint.
@@ -438,9 +439,9 @@ namespace malloy::server
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
-        std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
-        std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
-        std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
+        std::unordered_map<std::string, std::unique_ptr<router>> m_sub_routers;
+        std::vector<std::unique_ptr<endpoint_http>> m_endpoints_http;
+        std::vector<std::unique_ptr<endpoint_websocket>> m_endpoints_websocket;
         std::vector<policy_store> m_policies;                           // Access policies for resources
         std::string_view m_server_str;
 
