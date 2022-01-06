@@ -188,7 +188,7 @@ namespace malloy::client
         friend auto start(controller& ctrl) -> start_rs_t {
             return start_rs_t{ctrl.m_cfg, ctrl.m_tls_ctx, std::move(ctrl.m_ioc_sm)};
         }
-        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx{nullptr};
         std::unique_ptr<boost::asio::io_context> m_ioc_sm{std::make_unique<boost::asio::io_context>()};
         boost::asio::io_context* m_ioc{m_ioc_sm.get()};
         config m_cfg;
