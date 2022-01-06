@@ -37,6 +37,9 @@ add_test(
 
 set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR})
 
+target_compile_definitions(${TARGET} PRIVATE MALLOY_INTERNAL_TESTING)
+target_include_directories(${TARGET} PRIVATE ".")
+
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|AppleClang|Clang)" AND ${CMAKE_GENERATOR} STREQUAL "Ninja")
     target_compile_options(
         ${TARGET}

@@ -7,6 +7,9 @@
 #if MALLOY_FEATURE_TLS
     #include "connection_tls.hpp"
 #endif
+#ifdef MALLOY_INTERNAL_TESTING
+    #include "mocks.hpp"
+#endif
 
 namespace malloy::server::http
 {
