@@ -70,7 +70,6 @@ namespace malloy
         std::future<void> stop();
 
     protected:
-
         [[nodiscard("init may fail")]]
         bool init(const config& cfg);
 
