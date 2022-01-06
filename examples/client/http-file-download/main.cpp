@@ -2,6 +2,8 @@
 #include <malloy/client/controller.hpp>
 #include <spdlog/spdlog.h>
 
+#include <boost/asio/use_future.hpp>
+
 namespace mc = malloy::client;
 
 void log_error(malloy::error_code ec)
@@ -33,13 +35,14 @@ int main()
 	};
 
 	// Perform request (with file response filter)
-	auto stop_token = ctrl.http_request(req, [](auto&&) {},
-		malloy::http::filters::file_response::open("./google.com.html", log_error, boost::beast::file_mode::write));
+	auto stop_token = ctrl.http_request(req, boost::asio::use_future);
 
 	// Wait for completion and check for errors
-	const auto ec = stop_token.get();
-	if (ec) {
-		spdlog::error(ec.message());
+    try {
+        stop_token.get();
+		malloy::http::filters::file_response::open("./google.com.html", log_error, boost::beast::file_mode::write);
+    } catch(const std::future_error& e) {
+		spdlog::error(e.what());
 		return EXIT_FAILURE;
 	}
 

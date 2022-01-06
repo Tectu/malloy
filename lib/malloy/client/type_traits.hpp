@@ -4,8 +4,12 @@
 #include "../core/http/type_traits.hpp"
 #include "../core/type_traits.hpp"
 
+#include "malloy/core/tmp.hpp"
+#include "malloy/client/tmp.hpp"
+
 #include <concepts>
 #include <variant>
+
 
 namespace malloy::client::concepts
 {
@@ -23,33 +27,11 @@ namespace malloy::client::concepts
                 f2.setup_body(h2, r);
             }
         };
-
-
-        /**
-         * @class http_cb_helper
-         * @brief Helper for http_callback concept
-         * @note This is effectively [cb = std::move(cb)]<typename V>(V&& v) mutable { ... }
-         * @tparam Callback carries the functor type being checked by the
-         * concept
-         *
-         */
-        template<typename Callback>
-        struct http_cb_helper {
-            Callback cb;
-
-            template<typename V>
-            void operator()(V&&)
-            {
-                using body_t = std::decay_t<V>;
-                malloy::http::response<body_t> res;
-
-                cb(std::move(res));
-            }
-        
-        };
-    
     }
 
+    template<typename T, typename Bodies>
+    concept http_completion_token = malloy::concepts::is_variant_of_bodies<Bodies>
+                                 && boost::asio::completion_token_for<T, void(error_code, malloy::tmp::unwrap_variant<tmp::to_responses<Bodies>>)>;
     template<typename F>
     concept response_filter = std::move_constructible<F> && requires(const F& f, const typename F::header_type& h)
     {
@@ -59,12 +41,6 @@ namespace malloy::client::concepts
         {
             std::visit(detail::response_filter_body_helper<F>{}, f.body_for(h))};
     };
-
-    template<typename F, typename Filter>
-    concept http_callback = response_filter<Filter>&& std::move_constructible<F>&& requires(F cb, const Filter& f, const typename Filter::header_type& h){
-        std::visit(detail::http_cb_helper<F>{std::move(cb)}, f.body_for(h));
-    };
-
 }
 
 /** 

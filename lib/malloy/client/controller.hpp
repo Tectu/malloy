@@ -35,6 +35,9 @@ namespace malloy::client
     namespace detail
     {
 
+        template<typename T>
+        concept ws_accept_completion_tkn = boost::asio::completion_token_for<T, void(malloy::error_code, std::shared_ptr<websocket::connection>)>;
+
         /** 
          * @brief Default filter provided to ease use of interface
          * @details Provides an implementation of response_filter @ref client_concepts for 
@@ -106,8 +109,8 @@ namespace malloy::client
          * @sa https_request()
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
-        requires concepts::http_callback<Callback, Filter>
-        [[nodiscard]] auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
+        requires concepts::http_completion_token<Callback, tmp::bodies_for_t<std::remove_cvref_t<Filter>>>
+        auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {})
         {
             return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
         }
@@ -119,8 +122,8 @@ namespace malloy::client
          * @sa http_request()
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
-        requires concepts::http_callback<Callback, Filter>
-        [[nodiscard]] auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
+        requires concepts::http_completion_token<Callback, tmp::bodies_for_t<std::remove_cvref_t<Filter>>>
+        auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {})
         {
             return make_http_connection<true>(std::move(req), std::forward<Callback>(done), std::move(filter));
         }
@@ -131,16 +134,16 @@ namespace malloy::client
          *
          * @sa ws_connect()
          */
-        void wss_connect(
+        auto wss_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
+            detail::ws_accept_completion_tkn auto&& handler)
         {
             check_tls();
 
             // Create connection
-            make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
+            return make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
         /**
@@ -177,14 +180,14 @@ namespace malloy::client
          *
          * @sa wss_connect()
          */
-        void ws_connect(
+        auto ws_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
+            detail::ws_accept_completion_tkn auto&& handler)
         {
             // Create connection
-            make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
+            return make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
         /**
@@ -211,61 +214,49 @@ namespace malloy::client
         }
 
         template<bool isHttps, malloy::http::concepts::body Body, typename Callback, typename Filter>
-        auto make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter) -> std::future<malloy::error_code>
+        auto make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter)
         {
-
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-            [this](auto&& cb) {
+            auto make_conn = [this](auto&& act, auto&&... args) {
 #if MALLOY_FEATURE_TLS
                 if constexpr (isHttps) {
                     if (!init_tls()) {
                         throw std::runtime_error{"failed to init tls"};
                     }
-                    cb(std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
+                    std::make_shared<http::connection_tls<Body, Filter, std::remove_cvref_t<decltype(act)>>>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                         io_ctx(),
-                        *m_tls_ctx));
+                        *m_tls_ctx, std::forward<decltype(act)>(act), std::forward<decltype(args)>(args)...)->start();
                     return;
                 }
 #endif
-                cb(std::make_shared<http::connection_plain<Body, Filter, std::decay_t<Callback>>>(
+                std::make_shared<http::connection_plain<Body, Filter, std::remove_cvref_t<decltype(act)>>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                    io_ctx()));
-            }([this, prom = std::move(prom), req = std::move(req), filter = std::forward<Filter>(filter), cb = std::forward<Callback>(cb)](auto&& conn) mutable {
-                if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
+                    io_ctx(), std::forward<decltype(act)>(act), std::forward<decltype(args)>(args)...)->start();
+            };
+            if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                     req.set(malloy::http::field::user_agent, m_cfg.user_agent);
-                }
-
-                // Run
-                conn->run(
-                    std::to_string(req.port()).c_str(),
-                    req,
-                    std::move(prom),
-                    std::forward<Callback>(cb),
-                    std::forward<Filter>(filter));
-            });
-
-            return err_channel;
+            }
+            auto do_init = [filter = std::forward<Filter>(filter), &req, &make_conn](auto&& act) mutable {
+                make_conn(std::forward<decltype(act)>(act), std::to_string(req.port()), req, std::forward<Filter>(filter));
+            };
+            return boost::asio::async_initiate<Callback, void(error_code, tmp::filter_resp_t<std::remove_cvref_t<Filter>>)>(std::move(do_init), cb);
 
         }
 
         template<bool isSecure>
-        void make_ws_connection(
+        auto make_ws_connection(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+            detail::ws_accept_completion_tkn auto&& handler
         )
         {
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
-            resolver->async_resolve(
-                host,
-                std::to_string(port),
-                [this, resolver, done = std::forward<decltype(handler)>(handler), resource](auto ec, auto results) mutable {
+            auto on_resolve = [this, resolver, resource, handler = std::forward<decltype(handler)>(handler)](auto act, error_code ec, auto results) mutable {
+                (void)handler;
                     if (ec) {
-                        std::invoke(std::forward<decltype(done)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
+                        std::invoke(act, ec, std::shared_ptr<websocket::connection>(nullptr));
                     } else {
                         auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
@@ -277,16 +268,22 @@ namespace malloy::client
                                 return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
                         }(), m_cfg.user_agent);
 
-                        conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
+                        conn->connect(results, resource, [conn, act = std::move(act)](auto ec) mutable {
                             if (ec) {
-                                std::invoke(std::forward<decltype(handler)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
+                            std::invoke(act, ec, std::shared_ptr<websocket::connection>{nullptr});
                             } else {
-                                std::invoke(std::forward<decltype(handler)>(done), ec, conn);
+                            std::invoke(act, ec, conn);
                             }
                         });
-                    }
-                }
-            );
+                    } };
+
+            auto resolve_wrapper = [host, port, resolver, on_resolve = std::move(on_resolve)](auto done) mutable {
+                resolver->async_resolve(
+                    host,
+                    std::to_string(port),
+                    [done = std::forward<decltype(done)>(done), on_resolve = std::move(on_resolve)](auto ec, auto rs) mutable { on_resolve(std::forward<decltype(done)>(done), ec, rs); });
+            };
+            return boost::asio::async_initiate<decltype(handler), void(error_code, std::shared_ptr<websocket::connection>)>(std::move(resolve_wrapper), handler);
         }
     };
 

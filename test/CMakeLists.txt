@@ -25,6 +25,8 @@ target_link_libraries(
         malloy-server
 )
 
+target_compile_definitions(${TARGET} PRIVATE MALLOY_TESTS_ENABLE_CORO=${MALLOY_BUILD_CORO_TESTS})
+
 ###
 # CTest
 ###

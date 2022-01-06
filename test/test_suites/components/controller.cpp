@@ -36,9 +36,7 @@ TEST_SUITE("controller - roundtrips") {
             port,
             "/"
         };
-        auto stop_tkn = cli_ctrl.http_request(req, [&](auto&& resp){
-            CHECK(resp[malloy::http::field::server] == serve_agent_str);
-        });
+        auto stop_tkn = cli_ctrl.http_request(req, boost::asio::use_future);
 
         ms::controller serve_ctrl;
 
@@ -52,7 +50,8 @@ TEST_SUITE("controller - roundtrips") {
         REQUIRE(serve_ctrl.start());
         REQUIRE(cli_ctrl.run());
 
-        CHECK(!stop_tkn.get());
+        auto resp = stop_tkn.get();
+        CHECK(resp[malloy::http::field::server] == serve_agent_str);
 
     }
 }

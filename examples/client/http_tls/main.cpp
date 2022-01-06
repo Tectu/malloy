@@ -1,5 +1,6 @@
 #include "../../example.hpp"
 
+#include <boost/asio/use_future.hpp>
 #include <malloy/client/controller.hpp>
 
 #include <iostream>
@@ -34,12 +35,13 @@ int main()
         443,
         "/"
     );
-    auto stop_token = c.https_request(req, [](auto&& resp) mutable {
-        std::cout << resp << std::endl;
-    });
-    const auto ec = stop_token.get();
-    if (ec) {
-        spdlog::error(ec.message());
+
+    auto stop_token = c.https_request(req, boost::asio::use_future);
+    try {
+        std::cout << stop_token.get() << "\n";
+
+    } catch(const std::future_error& e) {
+        spdlog::error(e.what());
         return EXIT_FAILURE;
     }
 

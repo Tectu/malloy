@@ -21,6 +21,18 @@ option(MALLOY_DEPENDENCY_FMT_DOWNLOAD "Whether to automatically fetch fmt" ON)
 option(MALLOY_DEPENDENCY_JSON_DOWNLOAD "Whether to automatically fetch nlohmann/json" ON)
 option(MALLOY_DEPENDENCY_INJA_DOWNLOAD "Whether to automatically fetch pantor/inja" ON)
 
+if (MALLOY_BUILD_TESTS)
+    option(MALLOY_BUILD_CORO_TESTS "Whether to build the coroutine tests, currently disabled by default due to a gcc bug" OFF)
+endif()
+if (MALLOY_BUILD_EXAMPLES)
+    if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+        set(TMP ON)
+    else()
+        set(TMP OFF)
+    endif()
+    option(MALLOY_BUILD_CORO_EXAMPLES "Whether to build the coroutine examples, defaults to off for everything but gcc" ${TMP})
+endif()
+
 # Settings
 set(MALLOY_WIN32_WINNT "0x0A00")
 

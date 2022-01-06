@@ -12,6 +12,7 @@
 #include <boost/beast/core/error.hpp>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
+#include <boost/beast/core.hpp>
 
 #include <concepts>
 #include <functional>
@@ -37,7 +38,81 @@ namespace malloy::websocket
         using ws_executor_t = std::invoke_result_t<decltype(&stream::get_executor), stream*>;
         using act_queue_t = malloy::detail::action_queue<ws_executor_t>;
 
+        /**
+         * @brief Expanded lambda for read(), allows support for non-copyable completion tokens
+         */
+        template<std::invocable<error_code, std::size_t> Callback, concepts::dynamic_buffer Buff>
+        class read_delegate : public act_queue_t::action
+        {
+        public:
+            Callback done;
+            std::shared_ptr<connection> me;
+            Buff* buff;
+
+            template<typename Cb>
+            requires(std::is_constructible_v<Callback, Cb>)
+                read_delegate(Cb&& done, std::shared_ptr<connection> me, Buff* buff) :
+                done{std::forward<Cb>(done)},
+                me{std::move(me)}, buff{buff} {}
+
+            void invoke(act_queue_t::act_args on_done) override
+            {
+                assert(buff != nullptr);
+                me->m_ws.async_read(*buff, [me = me, &on_done, done = std::move(done)](auto ec, auto size) mutable {
+                    // Warning: This is outside the lifetime of the delegate, do not capture [this]
+                    std::invoke(std::move(done), ec, size);
+                    on_done();
+                });
+            }
+        };
+        /**
+         * @brief Same as read_delegate but for send()
+         */
+        template<std::invocable<error_code, std::size_t> Callback, concepts::const_buffer_sequence Payload>
+        class write_delegate : public act_queue_t::action
+        {
+        public:
+            Callback done;
+            std::shared_ptr<connection> me;
+            Payload buff;
+
+            template<typename Cb>
+            requires(std::is_constructible_v<Callback, Cb>)
+                write_delegate(Cb&& done, std::shared_ptr<connection> me, Payload buff) :
+                done{std::forward<Cb>(done)},
+                me{std::move(me)}, buff{buff} {}
+
+            void invoke(act_queue_t::act_args on_done) override
+            {
+                me->m_ws.async_write(buff, [me = me, &on_done, done = std::move(done)](auto ec, auto size) mutable {
+                    // Warning: This is outside the lifetime of the delegate, do not capture [this]
+                    me->on_write(ec, size);
+                    std::invoke(std::move(done), ec, size);
+                    on_done();
+                });
+            }
+        };
+
+        class disconnect_delegate : public act_queue_t::action {
+        public:
+            std::shared_ptr<connection> parent;
+            boost::beast::websocket::close_reason why;
+
+            disconnect_delegate(std::shared_ptr<connection> parent, boost::beast::websocket::close_reason why) : parent{std::move(parent)}, why{why} {}
+
+            void invoke(act_queue_t::act_args on_done) override {
+                // Check we haven't been beaten
+                if (parent->m_state == state::closed || parent->m_state == state::closing) {
+                    on_done();
+                    return;
+                }
+                parent->do_disconnect(why, [on_done = &on_done]() { (*on_done)(); });
+            }
+
+        };
+
     public:
+
         using handler_t = std::function<void(const malloy::http::request<>&, const std::shared_ptr<connection>&)>;
 
         /**
@@ -92,32 +167,36 @@ namespace malloy::websocket
          * @param done Callback invoked on accepting the handshake or an error
          * occurring
          */
-        template<concepts::accept_handler Callback>
-        void
+        template<concepts::err_completion_token Callback>
+        auto
         connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
         {
-
             if (m_state != state::inactive) {
                 throw std::logic_error{"connect() called on already active websocket connection"};
             }
-                // Set the timeout for the operation
-                m_ws.get_lowest_layer([&, me = this->shared_from_this(), this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
-                    sock.expires_after(std::chrono::seconds(30));
+            auto me = this->shared_from_this();
 
-                    // Make the connection on the IP address we get from a lookup
-                    sock.async_connect(
-                        target,
-                        [this, me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
-                            if (ec) {
-                                done(ec);
-                            } else {
-                            me->on_connect(ec, ep, resource, [this, done = std::forward<Callback>(done)](auto ec) mutable { 
-                                go_active();
-                                std::invoke(std::forward<decltype(done)>(done), ec);
-                                    });
-                            }
-                        });
-                });
+            //boost::asio::async_completion<std::decay_t<Callback>, void(error_code)> comp{std::forward<Callback>(done)};
+            auto on_sock_conn = [me, resource](auto act, auto ec, auto ep) {
+                if (ec) {
+                    std::invoke(std::move(act), ec);
+                } else {
+                    me->on_connect(ec, ep, resource, [me, act = std::move(act)](auto ec) mutable {
+                        me->go_active();
+                        std::invoke(std::move(act), ec);
+                    });
+                }
+            };
+            // Set the timeout for the operation
+            return m_ws.get_lowest_layer([me, this, on_sock_conn = std::move(on_sock_conn), &target, resource, done = std::forward<Callback>(done)](auto& sock) mutable {
+                sock.expires_after(std::chrono::seconds(30));
+
+                // Make the connection on the IP address we get from a lookup
+                auto act = [target, on_sock_conn, &sock](auto done) mutable {
+                    sock.async_connect(target, [on_sock_conn, done = std::move(done)](auto ec, auto ep) mutable { on_sock_conn(std::move(done), ec, ep); });
+                };
+                return boost::asio::async_initiate<Callback, void(error_code)>(std::move(act), done);
+            });
         }
 
         /**
@@ -131,8 +210,8 @@ namespace malloy::websocket
          * @param done Callback invoked on successful accepting of the request. NOT
          * invoked on failure. Must be invocable without any parameters (i.e. `f()`)
          */
-        template<class Body, class Fields, std::invocable<> Callback>
-        void
+        template<class Body, class Fields, boost::asio::completion_token_for<void()> Callback>
+        auto
         accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done) requires(!isClient)
         {
             if (m_state != state::inactive) {
@@ -148,7 +227,8 @@ namespace malloy::websocket
             setup_connection();
 
             // Accept the websocket handshake
-            m_ws.async_accept(req, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](malloy::error_code ec) mutable {
+            auto wrapper = [req, this, me = this->shared_from_this()](auto done){
+                m_ws.async_accept(req, [this, me = this->shared_from_this(), done = std::forward<decltype(done)>(done)](malloy::error_code ec) mutable {
                 m_logger->trace("on_accept()");
 
                 // Check for errors
@@ -162,6 +242,8 @@ namespace malloy::websocket
 
                 std::invoke(std::forward<decltype(done)>(done));
             });
+            };
+            return boost::asio::async_initiate<Callback, void()>(std::move(wrapper), done);
         }
 
         /**
@@ -178,18 +260,11 @@ namespace malloy::websocket
             if (m_state == state::closed || m_state == state::closing) {
                 throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
             }
-            auto build_act = [this, why, me = this->shared_from_this()](const auto& on_done) mutable {
-                // Check we haven't been beaten
-                if (m_state == state::closed || m_state == state::closing) {
-                    on_done();
-                    return;
-                }
-                do_disconnect(why, on_done);
-            };
+            auto build_act = [this, why]{ return disconnect_delegate{this->shared_from_this(), why}; };
 
-            // We queue in both read and write, and whichever gets there first wins 
-            m_write_queue.push(build_act);
-            m_read_queue.push(build_act);
+            // We queue in both read and write, and whichever gets there first wins
+            m_write_queue.push(build_act());
+            m_read_queue.push(build_act());
         }
 
         /**
@@ -221,20 +296,15 @@ namespace malloy::websocket
          * before the message could be fully or partially read
          *
          */
-        void
-        read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done)
+        auto
+        read(concepts::dynamic_buffer auto& buff, concepts::read_completion_token auto&& done)
         {
+            using buff_t = std::remove_cvref_t<decltype(buff)>;
             m_logger->trace("read()");
-            m_read_queue.push(
-                [this, me = this->shared_from_this(),
-                 buff = &buff /* Capturing reference by value copies the object */,
-                 done = std::forward<decltype(done)>(done)](const auto& on_done) mutable {
-                    assert(buff != nullptr);
-                    m_ws.async_read(*buff, [me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
-                        std::invoke(std::forward<decltype(done)>(done), ec, size);
-                        on_done();
-                    });
-                });
+            auto wrapper = [buff = &buff /* Capturing reference by value copies the object */, this, me = this->shared_from_this()](auto done) mutable {
+                m_read_queue.push(read_delegate<std::remove_cvref_t<decltype(done)>, buff_t>{ std::move(done), me, buff});
+            };
+            return boost::asio::async_initiate<decltype(done), void(error_code, std::size_t)>(std::move(wrapper), done);
         }
 
         /**
@@ -247,18 +317,16 @@ namespace malloy::websocket
          * @param done Callback invoked after the message is written (successfully
          * or otherwise). Must satisfy async_read_handler @ref general_concepts
          */
-        template<concepts::async_read_handler Callback>
-        void
+        template<concepts::read_completion_token Callback>
+        auto
         send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
         {
-                m_logger->trace("send(). payload size: {}", payload.size());
-                m_write_queue.push([buff = payload, done = std::forward<Callback>(done), this, me = this->shared_from_this()](const auto& on_done) mutable {
-                    m_ws.async_write(buff, [this, me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
-                        on_write(ec, size);
-                        std::invoke(std::forward<Callback>(done), ec, size);
-                        on_done();
-                    });
-                });
+            using payload_t = std::remove_cvref_t<decltype(payload)>;
+            m_logger->trace("send(). payload size: {}", payload.size());
+            auto wrapper = [this, payload = payload, me = this->shared_from_this()](auto done) mutable {
+                m_write_queue.push(write_delegate<std::remove_cv_t<decltype(done)>, payload_t>{std::move(done), me, payload });
+            };
+            return boost::asio::async_initiate<Callback, void(error_code, std::size_t)>(std::move(wrapper), done);
         }
 
     private:
@@ -290,7 +358,6 @@ namespace malloy::websocket
                 throw std::invalid_argument("no valid logger provided.");
         }
 
-        
         void
         go_active()
         {
@@ -322,7 +389,7 @@ namespace malloy::websocket
             // Update state
             m_state = state::closing;
 
-            m_ws.async_close(why, [me = this->shared_from_this(), this, on_done](auto ec){
+            m_ws.async_close(why, [me = this->shared_from_this(), this, &on_done](auto ec){
                 if (ec) {
                     m_logger->error("could not close websocket: '{}'", ec.message());    // TODO: See #40
                 } else {
@@ -332,12 +399,13 @@ namespace malloy::websocket
             });
         }
 
+        template<concepts::err_completion_token Tkn>
         void
         on_connect(
             boost::beast::error_code ec,
             boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
             const std::string& resource,
-            concepts::accept_handler auto&& on_handshake)
+            Tkn&& on_handshake)
         {
             m_logger->trace("on_connect()");
 
@@ -372,8 +440,8 @@ namespace malloy::websocket
             on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
         }
 
-        void
-        on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake)
+        auto
+        on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::err_completion_token auto&& on_handshake)
         {
             // Turn off the timeout on the tcp_stream, because
             // the websocket stream has its own timeout system.
@@ -382,7 +450,7 @@ namespace malloy::websocket
 
 
             // Perform the websocket handshake
-            m_ws.async_handshake(
+            return m_ws.async_handshake(
                 host,
                 resource,
                 std::forward<decltype(on_handshake)>(on_handshake));

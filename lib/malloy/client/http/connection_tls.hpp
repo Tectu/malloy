@@ -18,12 +18,13 @@ namespace malloy::client::http
     {
         using parent_t = connection<connection_tls<ConnArgs...>, ConnArgs...>;
     public:
+        template<typename... Args>
         connection_tls(
             std::shared_ptr<spdlog::logger> logger,
             boost::asio::io_context& io_ctx,
-            boost::asio::ssl::context& tls_ctx
+            boost::asio::ssl::context& tls_ctx, Args&&... args
         ) :
-            parent_t(std::move(logger), io_ctx),
+            parent_t(std::move(logger), io_ctx, std::forward<Args>(args)...),
             m_stream(boost::asio::make_strand(io_ctx), tls_ctx)
         {
         }
