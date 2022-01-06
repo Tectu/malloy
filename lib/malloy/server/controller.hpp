@@ -25,8 +25,7 @@ namespace malloy::server
      *
      * @brief A high-level controller.
      */
-    class controller :
-        public malloy::controller
+    class controller
     {
     public:
         /**
