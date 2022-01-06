@@ -44,12 +44,12 @@ TEST_SUITE("controller - roundtrips") {
 
         REQUIRE(serve_ctrl.init(serve_cfg));
 
-        serve_ctrl.router()->add(malloy::http::method::get, "/", [&](auto&& req){
+        serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req){
             CHECK(req[malloy::http::field::user_agent] == cli_agent_str);
             return malloy::http::generator::ok();
         });
 
-        REQUIRE(serve_ctrl.start());
+        REQUIRE(std::move(serve_ctrl).start());
         REQUIRE(cli_ctrl.run());
 
         CHECK(!stop_tkn.get());

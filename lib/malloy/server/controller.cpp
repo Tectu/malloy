@@ -56,7 +56,7 @@ bool controller::init(config cfg)
     }
 #endif
 
-bool controller::start()
+bool controller::start() &&
 {
     // Log
     m_cfg.logger->debug("starting server.");
@@ -65,9 +65,9 @@ bool controller::start()
     m_listener = std::make_shared<malloy::server::listener>(
         m_cfg.logger->clone("listener"),
         io_ctx(),
-        m_tls_ctx,
+        std::move(m_tls_ctx),
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
-        m_router,
+        std::make_shared<router>(std::move(m_router)),
         std::make_shared<std::filesystem::path>(m_cfg.doc_root),
         m_cfg.agent_string);
 
