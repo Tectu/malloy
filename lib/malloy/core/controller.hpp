@@ -3,6 +3,7 @@
 #include <spdlog/logger.h>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/use_future.hpp>
 
 #include <future>
 #include <memory>
@@ -41,7 +42,7 @@ namespace malloy
         template<typename T>
         class controller_run_result {
         public:
-            controller_run_result(T&& ctrl, const controller_config& cfg) : m_ctrl{std::move(ctrl)}
+            controller_run_result(const controller_config& cfg, T&& ctrl, std::unique_ptr<boost::asio::io_context> ioc) : m_ctrl{std::move(ctrl)}, m_io_ctx{std::move(ioc)}, m_workguard{m_io_ctx->get_executor()}
             {
                 // Create the I/O context threads
                 m_io_threads.reserve(cfg.num_threads - 1);
@@ -56,31 +57,35 @@ namespace malloy
                 cfg.logger->debug("starting i/o context.");
             }
             template<boost::asio::completion_token_for<void()> CompTkn>
-            auto stop(CompTkn&& tkn) {
+            auto stop(CompTkn&& tkn)
+            {
                 auto wrapper = [this](auto&& done) {
-                // Stop the `io_context`. This will cause `run()`
-                // to return immediately, eventually destroying the
-                // `io_context` and all of the sockets in it.
-                m_io_ctx->stop();
+                    // Stop the `io_context`. This will cause `run()`
+                    // to return immediately, eventually destroying the
+                    // `io_context` and all of the sockets in it.
+                    m_io_ctx->stop();
 
-                // Tell the workguard that we no longer need it's service
-                m_workguard.reset();
+                    // Tell the workguard that we no longer need it's service
+                    m_workguard.reset();
 
 
-                for (auto& thread : m_io_threads) {
-                    thread.join();
+                    for (auto& thread : m_io_threads) {
+                        thread.join();
+                    };
+                    std::invoke(std::forward<decltype(done)>(done));
                 };
-                std::invoke(std::forward<decltype(done)>(done));
-            };
-            return boost::asio::async_initiate<std::remove_cvref_t<CompTkn>, void()>(std::move(wrapper), tkn);
+                return boost::asio::async_initiate<CompTkn, void()>(std::move(wrapper), tkn);
+            }
+            ~controller_run_result() {
+                stop(boost::asio::use_future).wait();
             }
 
         private:
             using workguard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
 
             T m_ctrl;
-            std::shared_ptr<boost::asio::io_context> m_io_ctx{std::make_shared<boost::asio::io_context>()};
-            workguard_t m_workguard{*m_io_ctx};
+            std::unique_ptr<boost::asio::io_context> m_io_ctx;
+            workguard_t m_workguard;
             std::vector<std::thread> m_io_threads;
         };
     }

@@ -31,7 +31,6 @@ namespace malloy::test
         namespace mc = malloy::client;
         namespace ms = malloy::server;
         mc::controller c_ctrl;
-        ms::controller s_ctrl;
 
         malloy::controller::config general_cfg;
         general_cfg.num_threads = 2;
@@ -41,15 +40,16 @@ namespace malloy::test
         server_cfg.interface = "127.0.0.1";
         server_cfg.port = port;
 
+        ms::controller s_ctrl{server_cfg};
+
         mc::controller::config cli_cfg{general_cfg};
 
-        REQUIRE(s_ctrl.init(server_cfg));
         REQUIRE(c_ctrl.init(cli_cfg));
 
         setup_server(s_ctrl);
         setup_client(c_ctrl);
 
-        REQUIRE(std::move(s_ctrl).start());
+        start(std::move(s_ctrl));
         CHECK(c_ctrl.run());
         c_ctrl.stop().get();
     }

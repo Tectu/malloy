@@ -1,6 +1,7 @@
 #pragma once
 
 #include "malloy/core/controller.hpp"
+#include "malloy/server/listener.hpp"
 #include "malloy/server/routing/router.hpp"
 
 
@@ -59,32 +60,13 @@ namespace malloy::server
             std::string agent_string{"malloy-server"};
         };
 
-        controller() = default;
+        controller(config cfg);
         controller(const controller& other) = delete;
-        controller(controller&& other) noexcept = delete;
+        controller(controller&& other) noexcept = default;
         ~controller() = default;
 
         controller& operator=(const controller& rhs) = delete;
-        controller& operator=(controller&& rhs) noexcept = delete;
-
-        /**
-         * Initialize the controller.
-         *
-         * @note This function must be called before any other.
-         *
-         * @param cfg The configuration to use.
-         * @return Whether the initialization was successful.
-         */
-         [[nodiscard("init may fail")]]
-        bool init(config cfg);
-
-        /**
-         * Start the server. This function will not return until the server is stopped.
-         *
-         * @note The controller may not be reused after this call
-         * @return Whether starting the server was successful.
-         */
-        bool start() &&;
+        controller& operator=(controller&& rhs) noexcept = default;
 
         #if MALLOY_FEATURE_TLS
             /**
@@ -117,8 +99,32 @@ namespace malloy::server
         }
 
     private:
+        using run_result_t = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
+        friend auto start(controller&& ctrl) -> run_result_t
+        {
+            // Log
+            ctrl.m_cfg.logger->debug("starting server.");
+            auto ioc = std::make_unique<boost::asio::io_context>();
+
+            // Create the listener
+            auto l = std::make_shared<malloy::server::listener>(
+                ctrl.m_cfg.logger->clone("listener"),
+                *ioc,
+#if MALLOY_FEATURE_TLS
+                std::move(ctrl.m_tls_ctx),
+#else
+                nullptr,
+#endif
+                boost::asio::ip::tcp::endpoint{boost::asio::ip::make_address(ctrl.m_cfg.interface), ctrl.m_cfg.port},
+                std::make_shared<class router>(std::move(ctrl.m_router)),
+                std::make_shared<std::filesystem::path>(ctrl.m_cfg.doc_root),
+                ctrl.m_cfg.agent_string);
+
+            // Run the listener
+            l->run();
+            return run_result_t{ctrl.m_cfg, std::move(l), std::move(ioc)};
+        }
         config m_cfg;
-        std::shared_ptr<listener> m_listener;
 #if MALLOY_FEATURE_TLS
         std::unique_ptr<boost::asio::ssl::context> m_tls_ctx;
 #endif

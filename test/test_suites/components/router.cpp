@@ -87,8 +87,7 @@ TEST_SUITE("components - router")
         cfg.logger = spdlog::default_logger();
         cfg.logger->set_level(spdlog::level::off);
         cfg.agent_string = server_str;
-        controller ctrl;
-        REQUIRE(ctrl.init(cfg));
+        controller ctrl{cfg};
 
         SUBCASE("server string propagates to child routers") {
             constexpr auto server_str2 = "hello2";
