@@ -84,6 +84,8 @@ TEST_SUITE("components - router")
     TEST_CASE("server_string propagation") {
         constexpr auto server_str = "hello";
         controller::config cfg;
+        cfg.logger = spdlog::default_logger();
+        cfg.logger->set_level(spdlog::level::off);
         cfg.agent_string = server_str;
         controller ctrl;
         REQUIRE(ctrl.init(cfg));
