@@ -60,6 +60,7 @@ namespace malloy::server::app_fw
         {
             return m_router;
         }
+
     protected:
         environment m_env;
         std::shared_ptr<spdlog::logger> m_logger;
