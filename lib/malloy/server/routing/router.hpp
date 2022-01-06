@@ -438,7 +438,7 @@ namespace malloy::server
         }
 
     private:
-        std::shared_ptr<spdlog::logger> m_logger;
+        std::shared_ptr<spdlog::logger> m_logger{nullptr};
         std::unordered_map<std::string, std::unique_ptr<router>> m_sub_routers;
         std::vector<std::unique_ptr<endpoint_http>> m_endpoints_http;
         std::vector<std::unique_ptr<endpoint_websocket>> m_endpoints_websocket;

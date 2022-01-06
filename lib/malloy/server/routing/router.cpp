@@ -17,6 +17,11 @@ router::router(std::shared_ptr<spdlog::logger> logger, std::string_view server_s
 void router::set_logger(std::shared_ptr<spdlog::logger> logger)
 {
     m_logger = std::move(logger);
+    for (const auto&[_, sub] : m_sub_routers) {
+        if (!sub->m_logger) {
+            sub->m_logger = m_logger;
+        }
+    }
 }
 
 bool router::add_http_endpoint(std::shared_ptr<endpoint_http>&& ep)
