@@ -36,3 +36,11 @@ add_test(
 )
 
 set_target_properties(${TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR})
+
+if (${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|AppleClang|Clang)" AND ${CMAKE_GENERATOR} STREQUAL "Ninja")
+    target_compile_options(
+        ${TARGET}
+        PRIVATE
+            -fdiagnostics-color=always
+        )
+endif()
