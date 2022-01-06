@@ -34,12 +34,21 @@ namespace malloy::tls
             const std::filesystem::path& cert_path,
             const std::filesystem::path& key_path
         );
+        
+        /**
+         * Create a TLS context.
+         *
+         * @param cert The certificate.
+         * @param key The key.
+         * @return The context (if any)
+         */
         [[nodiscard]]
         static
-        auto make_context(
+        std::unique_ptr<boost::asio::ssl::context>
+        make_context(
             const std::string& cert,
             const std::string& key
-        ) -> std::unique_ptr<boost::asio::ssl::context>;
+        );
     };
 
 }
