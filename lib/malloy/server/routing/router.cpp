@@ -107,14 +107,14 @@ bool router::add_preflight(const std::string_view target, http::preflight_config
         target,
         [cfg = std::move(cfg), this](const auto& req) {
             // Look for matching endpoints
-            std::vector<std::shared_ptr<const endpoint_http>> endpoints;
+            std::vector<std::unique_ptr<const endpoint_http>> endpoints;
             std::copy_if(
                 std::cbegin(m_endpoints_http),
                 std::cend(m_endpoints_http),
                 std::back_inserter(endpoints),
                 [req](const auto& ep){
                     // Only support this for endpoint_http_regex (for now?)
-                    const auto& matcher = std::dynamic_pointer_cast<resource_matcher>(ep);
+                    const auto* matcher = dynamic_cast<const resource_matcher*>(ep.get());
                     if (!matcher)
                         return false;
 
