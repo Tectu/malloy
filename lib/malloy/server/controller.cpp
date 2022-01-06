@@ -20,7 +20,8 @@ bool controller::init(config cfg)
     m_cfg = std::move(cfg);
 
     // Create the top-level router
-    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"), m_cfg.agent_string);
+    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"));
+    m_router->set_server_string(m_cfg.agent_string);
 
     return true;
 }

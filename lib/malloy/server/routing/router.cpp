@@ -7,7 +7,9 @@
 
 using namespace malloy::server;
 
-router::router(std::shared_ptr<spdlog::logger> logger, std::optional<std::string> server_str) :
+router::router(std::shared_ptr<spdlog::logger> logger) : router{std::move(logger), ""} {}
+
+router::router(std::shared_ptr<spdlog::logger> logger, std::string_view server_str) :
     m_logger(std::move(logger)), m_server_str{std::move(server_str)}
 {
 }
@@ -67,8 +69,7 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
     if (m_logger)
         sub_router->set_logger(m_logger->clone(m_logger->name() + " | " + resource));
 
-    if (!sub_router->server_string() && m_server_str)
-        sub_router->set_server_string(*m_server_str);
+    sub_router->set_server_string(m_server_str);
 
     // Add router
     try {
@@ -79,11 +80,13 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
 
     return true;
 }
-void router::set_server_string(const std::string& str) {
-    m_server_str.emplace(str);
+void router::set_server_string(std::string_view str) {
+    if (str == m_server_str) {
+        return;
+    }
+    m_server_str = str;
     for (const auto&[_, sub] : m_sub_routers) {
-        if (!sub->server_string())
-            sub->set_server_string(str);
+        sub->set_server_string(str);
     }
 }
 
