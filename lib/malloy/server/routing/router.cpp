@@ -7,7 +7,10 @@
 
 using namespace malloy::server;
 
-router::router(std::shared_ptr<spdlog::logger> logger) : router{std::move(logger), ""} {}
+router::router(std::shared_ptr<spdlog::logger> logger) :
+    router{std::move(logger), ""}
+{
+}
 
 router::router(std::shared_ptr<spdlog::logger> logger, std::string_view server_str) :
     m_logger(std::move(logger)), m_server_str{std::move(server_str)}
@@ -86,11 +89,13 @@ bool router::add_subrouter(std::string resource, std::unique_ptr<router> sub_rou
     return true;
 }
 
-auto router::add_subrouter(std::string resource, router&& sub) -> bool {
+bool router::add_subrouter(std::string resource, router&& sub)
+{
     return add_subrouter(std::move(resource), std::make_unique<router>(std::move(sub)));
 }
 
-void router::set_server_string(std::string_view str) {
+void router::set_server_string(std::string_view str)
+{
     if (str == m_server_str) {
         return;
     }
