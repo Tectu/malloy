@@ -433,7 +433,9 @@ namespace malloy::server
             else
                 handle_http_request<Derived>(doc_root, std::move(req), connection);
         }
-        constexpr auto server_string() const -> std::string_view {
+
+        constexpr std::string_view server_string() const
+        {
             return m_server_str;
         }
 
