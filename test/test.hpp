@@ -49,8 +49,9 @@ namespace malloy::test
         setup_server(s_ctrl);
         setup_client(c_ctrl);
 
-        start(std::move(s_ctrl));
+        auto s_session = start(std::move(s_ctrl));
         CHECK(c_ctrl.run());
         c_ctrl.stop().get();
+        s_session.stop(boost::asio::use_future).wait();
     }
 }

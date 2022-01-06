@@ -48,10 +48,11 @@ TEST_SUITE("controller - roundtrips") {
             return malloy::http::generator::ok();
         });
 
-        start(std::move(serve_ctrl));
+        auto serve_session = start(std::move(serve_ctrl));
         REQUIRE(cli_ctrl.run());
 
         CHECK(!stop_tkn.get());
+        serve_session.stop(boost::asio::use_future).wait();
 
     }
 }

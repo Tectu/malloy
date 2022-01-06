@@ -77,7 +77,9 @@ namespace malloy
                 return boost::asio::async_initiate<CompTkn, void()>(std::move(wrapper), tkn);
             }
             ~controller_run_result() {
-                stop(boost::asio::use_future).wait();
+                if (!m_io_ctx->stopped()) {
+                    stop(boost::asio::use_future).wait();
+                }
             }
 
         private:

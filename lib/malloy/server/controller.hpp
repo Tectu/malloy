@@ -100,7 +100,7 @@ namespace malloy::server
 
     private:
         using run_result_t = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
-        friend auto start(controller&& ctrl) -> run_result_t
+        [[nodiscard("ignoring result will cause the server to instantly stop")]] friend auto start(controller&& ctrl) -> run_result_t
         {
             // Log
             ctrl.m_cfg.logger->debug("starting server.");
