@@ -90,18 +90,18 @@ int main()
     }
 
     // Create the router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy::html;
         using namespace malloy::http;
 
         // Serve root page
-        router->add(method::get, "/", [](const auto& req) {
+        router.add(method::get, "/", [](const auto& req) {
             return generator::ok();
         });
 
         // GET form1
-        router->add(method::get, "/form1", [&form1](const auto& req) {
+        router.add(method::get, "/form1", [&form1](const auto& req) {
             // Prepare renderer
             html::form_renderer_basic renderer;
 
@@ -120,7 +120,7 @@ int main()
         });
 
         // POST form1
-        router->add(method::post, "/form1", [&form1](const auto& req) {
+        router.add(method::post, "/form1", [&form1](const auto& req) {
             // Parse the form
             if (!form1.parse(req))
                 return generator::bad_request("invalid form data.");
@@ -134,7 +134,7 @@ int main()
         });
 
         // GET form2
-        router->add(method::get, "/form2", [&form2](const auto& req) {
+        router.add(method::get, "/form2", [&form2](const auto& req) {
             // Prepare renderer
             html::form_renderer_basic renderer;
 
@@ -153,7 +153,7 @@ int main()
         });
 
         // POST form1
-        router->add(method::post, "/form2", [&form2](const auto& req) {
+        router.add(method::post, "/form2", [&form2](const auto& req) {
             // Parse the form
             if (!form2.parse(req))
                 return generator::bad_request("invalid form data.");
@@ -168,7 +168,7 @@ int main()
     }
 
     // Start
-    c.start();
+    std::move(c).start();
 
     // Keep the application alive
     while (true)

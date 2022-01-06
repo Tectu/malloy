@@ -23,12 +23,12 @@ int main()
     }
 
     // Create the router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy::http;
 
         // A simple GET route handler
-        router->add(method::get, "/", [](const auto& req) {
+        router.add(method::get, "/", [](const auto& req) {
             response resp{ status::ok };
             resp.body() = "<html><body><h1>Hello Malloy!</h1><p>Demo: server-routing-regex</p></body></html>";
 
@@ -36,7 +36,7 @@ int main()
         });
 
         // A regex route without capturing
-        router->add(method::get, "^/regex", [](const auto& req) {
+        router.add(method::get, "^/regex", [](const auto& req) {
             response resp{ status::ok };
             resp.body() = "regex";
 
@@ -44,7 +44,7 @@ int main()
         });
 
         // A regex route with capturing
-        router->add(method::get, "^/regex/\\d+$", [](const auto& req) {
+        router.add(method::get, "^/regex/\\d+$", [](const auto& req) {
             response resp{ status::ok };
             resp.body() = "^/regex/\\d+$";
 
@@ -52,7 +52,7 @@ int main()
         });
 
         // A regex route with one capturing group
-        router->add(method::get, "^/regex/(\\w+)$", [](const auto& req, const std::vector<std::string>& captures) {
+        router.add(method::get, "^/regex/(\\w+)$", [](const auto& req, const std::vector<std::string>& captures) {
             std::string body;
             body += "^/regex/(\\w)$\n";
             body += "\n";
@@ -67,7 +67,7 @@ int main()
         });
 
         // A regex route with two capturing groups
-        router->add(method::get, R"(^/regex\?one=(\w+)&two=(\w+)$)", [](const auto& req, const std::vector<std::string>& captures) {
+        router.add(method::get, R"(^/regex\?one=(\w+)&two=(\w+)$)", [](const auto& req, const std::vector<std::string>& captures) {
             std::string body;
             body += "captures:\n";
             for (std::size_t i = 0; i < captures.size(); i++)
@@ -81,7 +81,7 @@ int main()
     }
 
     // Start
-    c.start();
+    std::move(c).start();
 
     // Keep the application alive
     while (true)

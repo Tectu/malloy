@@ -24,17 +24,17 @@ int main(int argc, char* argv[])
     }
 
     // Create top-level router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy;
         using namespace malloy::http;
 
         // Serve files and set caching max-age to 120 seconds
-        router->add_file_serving("/files", examples_doc_root, []() -> std::string { return "max-age=120"; });
+        router.add_file_serving("/files", examples_doc_root, []() -> std::string { return "max-age=120"; });
     }
 
     // Start
-    c.start();
+    std::move(c).start();
 
     // Keep the application alive
     while (true)

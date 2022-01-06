@@ -34,26 +34,26 @@ int main()
 #endif
 
     // Add some routes
-    auto router = c.router();
-    if (router) { // TODO: Should the first two be done via optional capture groups?
+    auto& router = c.router();
+    { // TODO: Should the first two be done via optional capture groups?
         // Add a websocket endpoint
-        router->add_websocket("/", [](const malloy::http::request<>& req, auto writer){
+        router.add_websocket("/", [](const malloy::http::request<>& req, auto writer){
             malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /: {}", req.body()));
         });
 
         // Add a websocket endpoint
-        router->add_websocket("/echo", [](const malloy::http::request<>& req, auto writer){
+        router.add_websocket("/echo", [](const malloy::http::request<>& req, auto writer){
             malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /echo: {}", req.body()));
         });
 
         // Add a websocket endpoint
-        router->add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
+        router.add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
             std::make_shared<malloy::examples::ws::server_timer>(writer)->run(req);
         });
     }
 
     // Start
-    c.start();
+    std::move(c).start();
 
     // Keep the application alive
     while (true)

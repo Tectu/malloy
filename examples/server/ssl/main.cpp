@@ -32,12 +32,12 @@ int main()
     }
 
     // Create the router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy::http;
 
         // A simple GET route handler
-        router->add(method::get, "/", [](const auto& req) {
+        router.add(method::get, "/", [](const auto& req) {
             response res{status::ok};
             res.body() = "<html><body><h1>Hello World!</h1><p>This should work with HTTPS!</p></body></html>";
             return res;
@@ -45,7 +45,7 @@ int main()
     }
 
     // Start
-    c.start();
+    std::move(c).start();
 
     // Keep the application alive
     while (true)

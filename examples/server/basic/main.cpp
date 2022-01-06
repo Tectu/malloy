@@ -26,42 +26,42 @@ int main()
     }
 
     // Create the router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy::http;
 
         // A simple GET route handler
-        router->add(method::get, "/", [](const auto& req) {
+        router.add(method::get, "/", [](const auto& req) {
             response res{status::ok};
             res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });
 
         // Add a route to an existing file
-        router->add(method::get, "/file", [](const auto& req) {
+        router.add(method::get, "/file", [](const auto& req) {
             return generator::file(examples_doc_root, "index.html");
         });
 
         // Add a route to a non-existing file
-        router->add(method::get, "/file_nonexist", [](const auto& req) {
+        router.add(method::get, "/file_nonexist", [](const auto& req) {
             return generator::file(examples_doc_root, "/some_nonexisting_file.xzy");
         });
 
         // Add some redirections
-        router->add_redirect(status::permanent_redirect, "/redirect1", "/");
-        router->add_redirect(status::temporary_redirect, "/redirect2", "/");
+        router.add_redirect(status::permanent_redirect, "/redirect1", "/");
+        router.add_redirect(status::temporary_redirect, "/redirect2", "/");
 
         // Add some file serving
-        router->add_file_serving("/files", examples_doc_root);
+        router.add_file_serving("/files", examples_doc_root);
 
         // Add a websocket echo endpoint
-        router->add_websocket("/echo", [](const auto& req, auto writer) {
+        router.add_websocket("/echo", [](const auto& req, auto writer) {
             std::make_shared<malloy::examples::ws::server_echo>(writer)->run(req);
         });
     }
 
     // Start
-    c.start();
+    std::move(c).start();
 
     // Keep the application alive
     while (true)
