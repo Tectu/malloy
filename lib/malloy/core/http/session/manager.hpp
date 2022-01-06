@@ -70,13 +70,27 @@ namespace malloy::http::sessions
         /**
          * Get an existing session (if any).
          *
+         * @param hdr The HTTP request header.
+         * @return The session (if any).
+         *
+         * @sa start()
+         */
+        [[nodiscard]]
+        std::shared_ptr<session> get(const request_header<>& hdr);
+
+        /**
+         * Get an existing session (if any).
+         *
          * @param req The HTTP request.
          * @return The session (if any).
          *
          * @sa start()
          */
         [[nodiscard]]
-        std::shared_ptr<session> get(const request<>& req);
+        std::shared_ptr<session> get(const request<>& req)
+        {
+            return get(req.base());
+        }
 
         /**
          * Get an existing session (if any).
@@ -127,7 +141,19 @@ namespace malloy::http::sessions
          * @return Whether the session is valid.
          */
         [[nodiscard]]
-        bool is_valid(const request<>& req);
+        bool is_valid(const request<>& req)
+        {
+            return is_valid(req.base());
+        }
+
+        /**
+         * Checks whether the session is valid.
+         *
+         * @param hdr The request header.
+         * @return Whether the session is valid.
+         */
+        [[nodiscard]]
+        bool is_valid(const malloy::http::request_header<>& hdr);
 
         /**
          * Checks whether the session is valid.
@@ -145,11 +171,11 @@ namespace malloy::http::sessions
         /**
          * Gets the session ID from a request (if any).
          *
-         * @param req The request.
+         * @param req The request header.
          * @return The session ID (if any).
          */
         [[nodiscard]]
-        std::optional<id_type> get_id(const request<>& req) const;
+        std::optional<id_type> get_id(const request_header<>& hdr) const;
 
         /**
          * Generates a new, unique session ID

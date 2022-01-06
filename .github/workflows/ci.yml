@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        boost_version: [1.74.0, 1.75.0, 1.76.0, 1.77.0]
+        boost_version: [1.74.0, 1.75.0, 1.76.0, 1.77.0, 1.78.0]
         shared: [ON, OFF]
         toolchain:
           [
@@ -56,14 +56,6 @@ jobs:
               cc: "cl.exe",
               tls: OFF,
               packages: "openssl", # We have to install something
-              os: windows-latest,
-            },
-            {
-              name: "VS2019 TLS",
-              cxx: "cl.exe",
-              cc: "cl.exe",
-              tls: ON,
-              packages: "openssl",
               os: windows-latest,
             },
           ]

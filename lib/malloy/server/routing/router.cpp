@@ -67,9 +67,8 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
     if (m_logger)
         sub_router->set_logger(m_logger->clone(m_logger->name() + " | " + resource));
 
-    if (!sub_router->server_string() && m_server_str) {
+    if (!sub_router->server_string() && m_server_str)
         sub_router->set_server_string(*m_server_str);
-    }
 
     // Add router
     try {
@@ -83,9 +82,8 @@ bool router::add_subrouter(std::string resource, std::shared_ptr<router> sub_rou
 void router::set_server_string(const std::string& str) {
     m_server_str.emplace(str);
     for (const auto&[_, sub] : m_sub_routers) {
-        if (!sub->server_string()) {
+        if (!sub->server_string())
             sub->set_server_string(str);
-        }
     }
 }
 
