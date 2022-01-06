@@ -1,6 +1,7 @@
 #include "../../test.hpp"
 
 #include <malloy/server/routing/router.hpp>
+#include <malloy/server/controller.hpp>
 
 using namespace malloy::http;
 using namespace malloy::server;
@@ -78,45 +79,42 @@ TEST_SUITE("components - router")
                 CHECK_FALSE(r.add_redirect(status::permanent_redirect, "/foo", "bar"));
             }
         }
-        SUBCASE("server string propagates to subrouters without explicit strings") {
-            constexpr auto server_str = "hello";
-            constexpr auto server_str2 = "hello2";
+        
+    }
+    TEST_CASE("server_string propagation") {
+        constexpr auto server_str = "hello";
+        controller::config cfg;
+        cfg.agent_string = server_str;
+        controller ctrl;
+        REQUIRE(ctrl.init(cfg));
 
-            router r1{nullptr, server_str};
-            CHECK(r1.server_string().has_value());
+        SUBCASE("server string propagates to child routers") {
+            constexpr auto server_str2 = "hello2";
+            router r1{nullptr};
+            CHECK(r1.server_string().empty());
 
             auto sub1 = std::make_shared<router>();
-            CHECK(!sub1->server_string().has_value());
+            CHECK(sub1->server_string().empty());
             r1.add_subrouter("/", sub1);
 
-            REQUIRE(sub1->server_string().has_value());
-            CHECK(*sub1->server_string() == server_str);
+            CHECK(ctrl.router()->server_string() == server_str);
+            ctrl.router()->add_subrouter("/", sub1);
 
-            auto sub2 = std::make_shared<router>(nullptr, server_str2);
-            REQUIRE(sub2->server_string().has_value());
-            CHECK(*sub2->server_string() == server_str2);
-
-            r1.add_subrouter("/hello", sub2);
-            REQUIRE(sub2->server_string().has_value());
-            CHECK(*sub2->server_string() == server_str2);
+            CHECK(sub1->server_string() == server_str);
 
         }
         SUBCASE("server string propagation composes over multiple levels") {
-            constexpr auto server_str = "hello";
-            router r1{nullptr, server_str};
-
             auto sub1 = std::make_shared<router>();
             auto sub1_1 = std::make_shared<router>();
 
             sub1->add_subrouter("/", sub1_1);
-            REQUIRE(!sub1_1->server_string().has_value());
-            REQUIRE(!sub1->server_string().has_value());
+            REQUIRE(sub1_1->server_string().empty());
+            REQUIRE(sub1->server_string().empty());
 
-            r1.add_subrouter("/", sub1);
-            REQUIRE(sub1_1->server_string().has_value());
-            REQUIRE(sub1->server_string().has_value());
+            ctrl.router()->add_subrouter("/", sub1);
+            REQUIRE(sub1_1->server_string() == server_str);
+            REQUIRE(sub1->server_string() == server_str);
         }
-
     }
 
 }
