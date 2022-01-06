@@ -317,7 +317,7 @@ namespace malloy::server
                 m_logger->trace("adding file serving location: {} -> {}", resource, storage_base_path.string());
 
             // Create endpoint
-            auto ep = std::make_shared<endpoint_http_files>();
+            auto ep = std::make_unique<endpoint_http_files>();
             ep->resource_base = resource;
             ep->base_path     = std::move(storage_base_path);
             ep->cache_control = cc();
@@ -574,7 +574,7 @@ namespace malloy::server
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
 
             // Build endpoint
-            auto ep = std::make_shared<endpoint_http_regex<bodies_t, std::decay_t<ExtraInfo>, UsesCaptures>>();
+            auto ep = std::make_unique<endpoint_http_regex<bodies_t, std::decay_t<ExtraInfo>, UsesCaptures>>();
             ep->resource_base = std::move(regex);
             ep->method = method;
             ep->filter = std::forward<ExtraInfo>(extra);
@@ -608,7 +608,7 @@ namespace malloy::server
          * @param ep The endpoint to add.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_http_endpoint(std::shared_ptr<endpoint_http>&& ep);
+        bool add_http_endpoint(std::unique_ptr<endpoint_http>&& ep);
 
         /**
          * Adds a WebSocket endpoint.
@@ -618,7 +618,7 @@ namespace malloy::server
          * @param ep The endpoint to add.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep);
+        bool add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep);
 
         /**
          * Adds a message to the log or throws an exception if no logger is available.

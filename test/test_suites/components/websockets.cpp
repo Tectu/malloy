@@ -90,7 +90,7 @@ namespace
                     c_ctrl.ws_connect("127.0.0.1", port, "/", &client_ws_handler<BinaryMode>);
                 },
                 [](auto& s_ctrl) {
-                    s_ctrl.router()->add_websocket("/", &server_ws_handler<BinaryMode>);
+                    s_ctrl.router().add_websocket("/", &server_ws_handler<BinaryMode>);
                 }
             );
 
@@ -107,7 +107,7 @@ namespace
                 [](auto& s_ctrl) {
                     REQUIRE(s_ctrl.init_tls(std::string{tls_cert}, std::string{tls_key}));
 
-                    s_ctrl.router()->add_websocket("/", &server_ws_handler<BinaryMode>);
+                    s_ctrl.router().add_websocket("/", &server_ws_handler<BinaryMode>);
                 }
             );
     }
@@ -144,7 +144,7 @@ TEST_SUITE("websockets")
                                                                      cli_conn_prom.set_value(conn);
                                                                  }); },
             [&cli_conn](auto& s_ctrl) mutable {
-                s_ctrl.router()->add_websocket("/",
+                s_ctrl.router().add_websocket("/",
                                                [&](const auto& req, auto conn) mutable {
                                                    conn->accept(req, [conn, &cli_conn]() mutable {
                                                        auto buff = std::make_shared<boost::beast::flat_buffer>();
@@ -174,7 +174,7 @@ TEST_SUITE("websockets")
                     });
             });
         }, [bounceback](auto& s_ctrl){
-                s_ctrl.router()->add_websocket("/", [&](const auto& req, auto conn){
+                s_ctrl.router().add_websocket("/", [&](const auto& req, auto conn){
                     conn->accept(req, [bounceback, conn]{
                         auto msg = std::make_shared<std::string>(bounceback);
                         conn->send(malloy::buffer(msg->data(), msg->size()), [msg](auto ec, auto){

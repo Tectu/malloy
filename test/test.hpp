@@ -49,7 +49,7 @@ namespace malloy::test
         setup_server(s_ctrl);
         setup_client(c_ctrl);
 
-        REQUIRE(s_ctrl.start());
+        REQUIRE(std::move(s_ctrl).start());
         CHECK(c_ctrl.run());
         c_ctrl.stop().get();
     }

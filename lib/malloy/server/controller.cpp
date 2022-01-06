@@ -67,7 +67,7 @@ bool controller::start() &&
         io_ctx(),
         std::move(m_tls_ctx),
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
-        std::make_shared<router>(std::move(m_router)),
+        std::make_shared<class router>(std::move(m_router)),
         std::make_shared<std::filesystem::path>(m_cfg.doc_root),
         m_cfg.agent_string);
 

@@ -24,7 +24,7 @@ void router::set_logger(std::shared_ptr<spdlog::logger> logger)
     }
 }
 
-bool router::add_http_endpoint(std::shared_ptr<endpoint_http>&& ep)
+bool router::add_http_endpoint(std::unique_ptr<endpoint_http>&& ep)
 {
     try {
         m_endpoints_http.emplace_back(std::move(ep));
@@ -37,7 +37,7 @@ bool router::add_http_endpoint(std::shared_ptr<endpoint_http>&& ep)
     return true;
 }
 
-bool router::add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep)
+bool router::add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep)
 {
     try {
         m_endpoints_websocket.emplace_back(std::move(ep));
@@ -107,20 +107,13 @@ bool router::add_preflight(const std::string_view target, http::preflight_config
         target,
         [cfg = std::move(cfg), this](const auto& req) {
             // Look for matching endpoints
-            std::vector<std::unique_ptr<const endpoint_http>> endpoints;
-            std::copy_if(
-                std::cbegin(m_endpoints_http),
-                std::cend(m_endpoints_http),
-                std::back_inserter(endpoints),
-                [req](const auto& ep){
-                    // Only support this for endpoint_http_regex (for now?)
-                    const auto* matcher = dynamic_cast<const resource_matcher*>(ep.get());
-                    if (!matcher)
-                        return false;
-
-                    return matcher->matches_resource(req);
+            std::vector<const endpoint_http*> endpoints;
+            for (const auto& endpt : m_endpoints_http) {
+                const auto* matcher = dynamic_cast<const resource_matcher*>(endpt.get());
+                if (matcher && matcher->matches_resource(req)) {
+                    endpoints.emplace_back(endpt.get());
                 }
-            );
+            }
 
             // Assemble list of methods
             std::vector<malloy::http::method> methods;
@@ -165,7 +158,7 @@ bool router::add_redirect(const malloy::http::status status, std::string&& resou
         return false;
 
     // Create endpoint
-    auto ep = std::make_shared<endpoint_http_redirect>();
+    auto ep = std::make_unique<endpoint_http_redirect>();
     ep->resource_old = std::move(resource_old);
     ep->resource_new = std::move(resource_new);
     ep->status = status;
@@ -188,7 +181,7 @@ bool router::add_websocket(std::string&& resource, typename websocket::connectio
     }
 
     // Create endpoint
-    auto ep = std::make_shared<endpoint_websocket>();
+    auto ep = std::make_unique<endpoint_websocket>();
     ep->resource = std::move(resource);
     ep->handler = std::move(handler);
 
