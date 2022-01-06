@@ -12,29 +12,8 @@ using namespace malloy::client;
 namespace fs = std::filesystem;
 
 
-bool controller::run()
-{
-    if (!start())
-        return false;
+controller::controller(config cfg) : m_cfg{std::move(cfg)} {}
 
-    remove_workguard();
-    io_ctx().run();
-    return true;
-}
-
-bool controller::init(config cfg)
-{
-    if (!malloy::controller::init(cfg))
-        return false;
-
-    m_cfg = std::move(cfg);
-    return true;
-}
-
-bool controller::start()
-{
-    return root_start(m_cfg);
-}
 
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls()
@@ -53,7 +32,6 @@ bool controller::start()
             throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
 
         check_tls();
-        
         m_tls_ctx->load_verify_file(file.string());
     }
 

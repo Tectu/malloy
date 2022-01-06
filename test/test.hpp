@@ -30,7 +30,6 @@ namespace malloy::test
     {
         namespace mc = malloy::client;
         namespace ms = malloy::server;
-        mc::controller c_ctrl;
 
         malloy::controller::config general_cfg;
         general_cfg.num_threads = 2;
@@ -43,14 +42,12 @@ namespace malloy::test
         ms::controller s_ctrl{server_cfg};
 
         mc::controller::config cli_cfg{general_cfg};
-
-        REQUIRE(c_ctrl.init(cli_cfg));
+        mc::controller c_ctrl{cli_cfg};
 
         setup_server(s_ctrl);
         setup_client(c_ctrl);
 
         auto s_session = start(std::move(s_ctrl));
-        CHECK(c_ctrl.run());
-        c_ctrl.stop().get();
+        start(c_ctrl).run();
     }
 }

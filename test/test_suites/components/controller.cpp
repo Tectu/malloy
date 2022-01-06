@@ -26,9 +26,7 @@ TEST_SUITE("controller - roundtrips") {
         serve_cfg.interface = addr;
         serve_cfg.port = port;
 
-        mc::controller cli_ctrl;
-
-        REQUIRE(cli_ctrl.init(cli_cfg));
+        mc::controller cli_ctrl{cli_cfg};
 
         malloy::http::request<> req{
             malloy::http::method::get,
@@ -49,7 +47,7 @@ TEST_SUITE("controller - roundtrips") {
         });
 
         auto serve_session = start(std::move(serve_ctrl));
-        REQUIRE(cli_ctrl.run());
+        start(cli_ctrl).run();
 
         CHECK(!stop_tkn.get());
 
