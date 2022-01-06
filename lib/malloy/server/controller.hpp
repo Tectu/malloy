@@ -119,7 +119,7 @@ namespace malloy::server
     private:
         config m_cfg;
         std::shared_ptr<listener> m_listener;
-        std::optional<boost::asio::ssl::context> m_tls_ctx;
+        std::unique_ptr<boost::asio::ssl::context> m_tls_ctx;
         malloy::server::router m_router;
     };
 
