@@ -17,11 +17,11 @@ TEST_SUITE("components - router")
                 });
 
         }, [&](auto& s_ctrl){
-                auto r = s_ctrl.router();
-                r->add(method::get, "/", [](const auto& req){
+                auto& r = s_ctrl.router();
+                r.add(method::get, "/", [](const auto& req){
                     return generator::ok();
                 });
-                r->add_policy("/", [](auto) -> std::optional<response<>> { return response<>{status::unauthorized}; });
+                r.add_policy("/", [](auto) -> std::optional<response<>> { return response<>{status::unauthorized}; });
             });
     }
 
@@ -93,25 +93,28 @@ TEST_SUITE("components - router")
             router r1{nullptr};
             CHECK(r1.server_string().empty());
 
-            auto sub1 = std::make_shared<router>();
+            auto sub1_sm = std::make_unique<router>();
+            auto* sub1 = sub1_sm.get();
             CHECK(sub1->server_string().empty());
-            r1.add_subrouter("/", sub1);
+            r1.add_subrouter("/", std::move(sub1_sm));
 
-            CHECK(ctrl.router()->server_string() == server_str);
-            ctrl.router()->add_subrouter("/", sub1);
+            CHECK(ctrl.router().server_string() == server_str);
+            ctrl.router().add_subrouter("/", std::move(r1));
 
             CHECK(sub1->server_string() == server_str);
 
         }
         SUBCASE("server string propagation composes over multiple levels") {
-            auto sub1 = std::make_shared<router>();
-            auto sub1_1 = std::make_shared<router>();
+            auto sub1_sm = std::make_unique<router>();
+            auto sub1_1_sm = std::make_unique<router>();
+            auto* sub1 = sub1_sm.get();
+            auto* sub1_1 = sub1_1_sm.get();
 
-            sub1->add_subrouter("/", sub1_1);
+            sub1->add_subrouter("/", std::move(sub1_1_sm));
             REQUIRE(sub1_1->server_string().empty());
             REQUIRE(sub1->server_string().empty());
 
-            ctrl.router()->add_subrouter("/", sub1);
+            ctrl.router().add_subrouter("/", std::move(sub1_sm));
             REQUIRE(sub1_1->server_string() == server_str);
             REQUIRE(sub1->server_string() == server_str);
         }
