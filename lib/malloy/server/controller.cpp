@@ -65,7 +65,11 @@ bool controller::start() &&
     m_listener = std::make_shared<malloy::server::listener>(
         m_cfg.logger->clone("listener"),
         io_ctx(),
+#if MALLOY_FEATURE_TLS
         std::move(m_tls_ctx),
+#else
+        nullptr,
+#endif
         boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
         std::make_shared<class router>(std::move(m_router)),
         std::make_shared<std::filesystem::path>(m_cfg.doc_root),
