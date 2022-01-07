@@ -12,7 +12,9 @@ using namespace malloy::client;
 namespace fs = std::filesystem;
 
 
-controller::controller(config cfg) : m_cfg{std::move(cfg)} {}
+controller::controller(config cfg) : m_cfg{std::move(cfg)} {
+    m_cfg.validate();
+}
 
 
 #if MALLOY_FEATURE_TLS

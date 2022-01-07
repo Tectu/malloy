@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <thread>
+#include <stdexcept>
 
 namespace malloy::detail
 {
@@ -24,6 +25,14 @@ namespace malloy::detail
              * The logger instance to use.
              */
         std::shared_ptr<spdlog::logger> logger;
+
+        void validate() {
+            if (!logger) {
+                throw std::logic_error{"invalid config: logger is null"};
+            } else if (num_threads == 0) {
+                throw std::logic_error{"invalid config: cannot have 0 threads"};
+            }
+        };
     };
     template<typename T>
     class controller_run_result
