@@ -11,7 +11,10 @@
 
 using namespace malloy::server;
 
-controller::controller(config cfg) : m_cfg{std::move(cfg)}, m_router{m_cfg.logger != nullptr ? m_cfg.logger->clone("router") : nullptr, m_cfg.agent_string} {
+controller::controller(config cfg) :
+    m_cfg{std::move(cfg)},
+    m_router{m_cfg.logger != nullptr ? m_cfg.logger->clone("router") : nullptr, m_cfg.agent_string}
+{
     m_cfg.validate();
 }
 
@@ -45,4 +48,3 @@ controller::controller(config cfg) : m_cfg{std::move(cfg)}, m_router{m_cfg.logge
         return m_tls_ctx != nullptr;
     }
 #endif
-
