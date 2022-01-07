@@ -22,11 +22,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Create the session manager
     auto session_storage = std::make_shared<malloy::http::sessions::storage_memory>();
@@ -93,11 +89,6 @@ int main()
     }
 
     // Start
-    std::move(c).start();
-
-    // Keep the application alive
-    while (true)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-
+    start(std::move(c)).run(); // Keep the application alive
     return EXIT_SUCCESS;
  }

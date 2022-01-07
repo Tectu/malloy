@@ -16,11 +16,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Create the router
     auto& router = c.router();
@@ -59,7 +55,7 @@ int main()
     }
 
     // Start
-    std::move(c).start();
+    [[maybe_unused]] auto session = start(std::move(c));
 
     // Keep the application alive
     while (true)

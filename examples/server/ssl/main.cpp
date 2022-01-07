@@ -17,11 +17,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Setup TLS (SSL)
     const auto& cert_path = examples_doc_root / "malloy.cert";
@@ -45,11 +41,7 @@ int main()
     }
 
     // Start
-    std::move(c).start();
-
-    // Keep the application alive
-    while (true)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    start(std::move(c)).run();
 
     return EXIT_SUCCESS;
 }

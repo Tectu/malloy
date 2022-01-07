@@ -13,22 +13,16 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create the controller
-    malloy::client::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "initializing controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::client::controller c{cfg};
 
     // Start
-    if (!c.start()) {
-        std::cerr << "starting controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
     if (!c.init_tls()) {
         std::cerr << "initializing TLS context failed." << std::endl;
         return EXIT_FAILURE;
     }
     c.add_ca_file("../../../../examples/server/static_content/malloy.cert");
+
+    auto session = start(c);
 
     c.wss_connect(
         "127.0.0.1",
@@ -67,9 +61,7 @@ int main()
         }
     );
 
-    if (!c.run()) {
-        std::cerr << "Failed to start client\n";
-    }
+    session.run();
 
     return EXIT_SUCCESS;
 }

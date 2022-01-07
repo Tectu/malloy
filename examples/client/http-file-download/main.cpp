@@ -18,11 +18,8 @@ int main()
 	cfg.num_threads = 1;
 
 	// Create controller
-	mc::controller ctrl;
-	if (!ctrl.init(cfg) || !ctrl.start()) {
-		spdlog::critical("Failed to init controller");
-		return EXIT_FAILURE;
-	}
+	mc::controller ctrl{cfg};
+    [[maybe_unused]] auto session = start(ctrl);
 
 	// Create request
 	malloy::http::request req{

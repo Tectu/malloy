@@ -20,11 +20,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    server::controller c{cfg};
 
     // Setup the database
     auto db = std::make_shared<database>(cfg.logger->clone("database"));
@@ -64,11 +60,7 @@ int main()
     }
 
     // Start
-    c.start();
-
-    // Keep the application alive
-    while (true)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    start(std::move(c)).run();
 
     return EXIT_SUCCESS;
 }

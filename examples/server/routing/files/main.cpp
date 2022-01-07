@@ -17,11 +17,7 @@ int main(int argc, char* argv[])
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Create top-level router
     auto& router = c.router();
@@ -34,7 +30,7 @@ int main(int argc, char* argv[])
     }
 
     // Start
-    std::move(c).start();
+    [[maybe_unused]] auto session = start(std::move(c));
 
     // Keep the application alive
     while (true)

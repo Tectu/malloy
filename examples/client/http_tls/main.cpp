@@ -12,21 +12,15 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create the controller
-    malloy::client::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "initializing controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::client::controller c{cfg};
+
     if (!c.init_tls()) {
         std::cerr << "initializing TLS context failed." << std::endl;
         return EXIT_FAILURE;
     }
 
     // Start
-    if (!c.start()) {
-        std::cerr << "starting controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    [[maybe_unused]] auto session = start(c);
 
     malloy::http::request req(
         malloy::http::method::get,

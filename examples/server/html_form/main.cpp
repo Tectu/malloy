@@ -21,11 +21,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    server::controller c{cfg};
 
     // Create form1
     // This is a simple login form using application/x-www-form-urlencoded
@@ -168,7 +164,7 @@ int main()
     }
 
     // Start
-    std::move(c).start();
+    [[maybe_unused]] auto session = start(std::move(c));
 
     // Keep the application alive
     while (true)
