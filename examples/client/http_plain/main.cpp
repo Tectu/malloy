@@ -14,14 +14,18 @@ int main()
     // Create the controller
     malloy::client::controller c{cfg};
 
+    // Start
     [[maybe_unused]] auto session = start(c);
 
+    // Create request
     malloy::http::request req(
         malloy::http::method::get,
         "www.google.com",
         80,
         "/"
     );
+
+    // Make request
     auto stop_token = c.http_request(req, [](auto&& resp) mutable {
         std::cout << resp << std::endl;
     });
