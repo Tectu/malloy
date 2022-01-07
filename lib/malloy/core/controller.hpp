@@ -2,8 +2,7 @@
 
 #include "malloy/core/detail/controller_run_result.hpp"
 
-namespace malloy::controller {
+namespace malloy::controller
+{
     using config = detail::controller_config;
 }
-
-
