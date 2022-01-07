@@ -78,7 +78,7 @@ HTTP Server:
 ```cpp
 int main()
 {
-    // Create controller config
+    // Create malloy controller config
     malloy::server::controller::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
@@ -86,54 +86,46 @@ int main()
     cfg.num_threads = 5;
     cfg.logger      = std::make_shared<spdlog::logger>();
 
-    // Create controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    // Create malloy controller
+    malloy::server::controller c{cfg};
 
     // Create the router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy::http;
 
         // A simple GET route handler
-        router->add(method::get, "/", [](const auto& req) {
+        router.add(method::get, "/", [](const auto& req) {
             response res{status::ok};
             res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });
 
         // Add a route to an existing file
-        router->add(method::get, "/file", [](const auto& req) {
+        router.add(method::get, "/file", [](const auto& req) {
             return generator::file(examples_doc_root, "index.html");
         });
 
         // Add a route to a non-existing file
-        router->add(method::get, "/file_nonexist", [](const auto& req) {
+        router.add(method::get, "/file_nonexist", [](const auto& req) {
             return generator::file(examples_doc_root, "/some_nonexisting_file.xzy");
         });
 
         // Add some redirections
-        router->add_redirect(status::permanent_redirect, "/redirect1", "/");
-        router->add_redirect(status::temporary_redirect, "/redirect2", "/");
+        router.add_redirect(status::permanent_redirect, "/redirect1", "/");
+        router.add_redirect(status::temporary_redirect, "/redirect2", "/");
 
         // Add some file serving
-        router->add_file_serving("/files", examples_doc_root);
+        router.add_file_serving("/files", examples_doc_root);
 
         // Add a websocket echo endpoint
-        router->add_websocket("/echo", [](const auto& req, auto writer) {
+        router.add_websocket("/echo", [](const auto& req, auto writer) {
             std::make_shared<malloy::examples::ws::server_echo>(writer)->run(req);
         });
     }
 
     // Start
-    c.start();
-
-    // Keep the application alive
-    while (true)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    start(std::move(c)).run();
 
     return EXIT_SUCCESS;
 }
@@ -146,39 +138,32 @@ int main()
     // Create the controller config
     malloy::client::controller::config cfg;
     cfg.num_threads = 1;
-    cfg.logger      = std::make_shared<spdlog::logger>();
+    cfg.logger      = create_example_logger();
 
     // Create the controller
-    malloy::client::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "initializing controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::client::controller c{cfg};
 
     // Start
-    if (!c.start()) {
-        std::cerr << "starting controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    [[maybe_unused]] auto session = start(c);
 
-    // Prepare the requst
+    // Create HTTP request
     malloy::http::request req(
         malloy::http::method::get,
         "www.google.com",
         80,
         "/"
     );
-
-    // Make the request
+    
+    // Make HTTP request
     auto stop_token = c.http_request(req, [](auto&& resp) mutable {
-        // Print the HTTP response
         std::cout << resp << std::endl;
     });
     const auto ec = stop_token.get();
     if (ec) {
-        std::cerr << "error making HTTP request: " << ec.message() << std::endl;
+        spdlog::error(ec.message());
         return EXIT_FAILURE;
     }
+
 
     return EXIT_SUCCESS;
 }
