@@ -15,7 +15,8 @@ namespace malloy::detail
     /**
      * Controller configuration.
     */
-    struct controller_config {
+    struct controller_config
+    {
         /**
              * The number of worked threads for the I/O context to use.
              */
@@ -26,20 +27,23 @@ namespace malloy::detail
              */
         std::shared_ptr<spdlog::logger> logger;
 
-        void validate() {
-            if (!logger) {
+        void validate()
+        {
+            if (!logger)
                 throw std::logic_error{"invalid config: logger is null"};
-            } else if (num_threads == 0) {
+            else if (num_threads == 0)
                 throw std::logic_error{"invalid config: cannot have 0 threads"};
-            }
         };
     };
+
     template<typename T>
     class controller_run_result
     {
     public:
         controller_run_result(const controller_config& cfg, T ctrl, std::unique_ptr<boost::asio::io_context> ioc) :
-            m_io_ctx{std::move(ioc)}, m_workguard{m_io_ctx->get_executor()}, m_ctrl{std::move(ctrl)}
+            m_io_ctx{std::move(ioc)},
+            m_workguard{m_io_ctx->get_executor()},
+            m_ctrl{std::move(ctrl)}
         {
             // Create the I/O context threads
             m_io_threads.reserve(cfg.num_threads - 1);
@@ -53,6 +57,7 @@ namespace malloy::detail
             // Log
             cfg.logger->debug("starting i/o context.");
         }
+
         ~controller_run_result()
         {
             // Stop the `io_context`. This will cause `run()`
