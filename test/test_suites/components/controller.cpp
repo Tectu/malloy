@@ -26,9 +26,7 @@ TEST_SUITE("controller - roundtrips") {
         serve_cfg.interface = addr;
         serve_cfg.port = port;
 
-        mc::controller cli_ctrl;
-
-        REQUIRE(cli_ctrl.init(cli_cfg));
+        mc::controller cli_ctrl{cli_cfg};
 
         malloy::http::request<> req{
             malloy::http::method::get,
@@ -40,17 +38,16 @@ TEST_SUITE("controller - roundtrips") {
             CHECK(resp[malloy::http::field::server] == serve_agent_str);
         });
 
-        ms::controller serve_ctrl;
+        ms::controller serve_ctrl{serve_cfg};
 
-        REQUIRE(serve_ctrl.init(serve_cfg));
 
-        serve_ctrl.router()->add(malloy::http::method::get, "/", [&](auto&& req){
+        serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req){
             CHECK(req[malloy::http::field::user_agent] == cli_agent_str);
             return malloy::http::generator::ok();
         });
 
-        REQUIRE(serve_ctrl.start());
-        REQUIRE(cli_ctrl.run());
+        auto serve_session = start(std::move(serve_ctrl));
+        start(cli_ctrl).run();
 
         CHECK(!stop_tkn.get());
 

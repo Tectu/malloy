@@ -17,11 +17,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Setup TLS (SSL)
     const auto& cert_path = examples_doc_root / "malloy.cert";
@@ -32,12 +28,12 @@ int main()
     }
 
     // Create the router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy::http;
 
         // A simple GET route handler
-        router->add(method::get, "/", [](const auto& req) {
+        router.add(method::get, "/", [](const auto& req) {
             response res{status::ok};
             res.body() = "<html><body><h1>Hello World!</h1><p>This should work with HTTPS!</p></body></html>";
             return res;
@@ -45,11 +41,7 @@ int main()
     }
 
     // Start
-    c.start();
-
-    // Keep the application alive
-    while (true)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    start(std::move(c)).run();
 
     return EXIT_SUCCESS;
 }

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../core/controller.hpp"
-
+#include "malloy/core/detail/controller_run_result.hpp"
+#include "malloy/server/listener.hpp"
+#include "malloy/server/routing/router.hpp"
+#include "malloy/core/controller.hpp"
 
 #include <memory>
 #include <filesystem>
@@ -24,8 +26,7 @@ namespace malloy::server
      *
      * @brief A high-level controller.
      */
-    class controller :
-        public malloy::controller
+    class controller
     {
     public:
         /**
@@ -59,31 +60,13 @@ namespace malloy::server
             std::string agent_string{"malloy-server"};
         };
 
-        controller() = default;
+        controller(config cfg);
         controller(const controller& other) = delete;
-        controller(controller&& other) noexcept = delete;
+        controller(controller&& other) noexcept = default;
         ~controller() = default;
 
         controller& operator=(const controller& rhs) = delete;
-        controller& operator=(controller&& rhs) noexcept = delete;
-
-        /**
-         * Initialize the controller.
-         *
-         * @note This function must be called before any other.
-         *
-         * @param cfg The configuration to use.
-         * @return Whether the initialization was successful.
-         */
-         [[nodiscard("init may fail")]]
-        bool init(config cfg);
-
-        /**
-         * Start the server. This function will not return until the server is stopped.
-         *
-         * @return Whether starting the server was successful.
-         */
-        bool start();
+        controller& operator=(controller&& rhs) noexcept = default;
 
         #if MALLOY_FEATURE_TLS
             /**
@@ -101,21 +84,62 @@ namespace malloy::server
         #endif
 
         /**
-         * Get the top-level HTTP router.
+         * Get the top-level router.
          *
-         * @return The top-level HTTP router.
+         * @return The top-level router.
          */
         [[nodiscard]]
-        std::shared_ptr<malloy::server::router> router() const noexcept
+        constexpr const malloy::server::router& router() const noexcept
+        {
+            return m_router;
+        }
+
+        /**
+         * Get the top-level router.
+         *
+         * @return The top-level router.
+         */
+        [[nodiscard]]
+        constexpr class malloy::server::router& router() noexcept
         {
             return m_router;
         }
 
     private:
+        using run_result_t = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
+        
         config m_cfg;
-        std::shared_ptr<listener> m_listener;
-        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
-        std::shared_ptr<malloy::server::router> m_router;
+        malloy::server::router m_router;
+        #if MALLOY_FEATURE_TLS
+            std::unique_ptr<boost::asio::ssl::context> m_tls_ctx;
+        #endif
+
+        [[nodiscard("ignoring result will cause the server to instantly stop")]]
+        friend
+        run_result_t start(controller&& ctrl)
+        {
+            // Log
+            ctrl.m_cfg.logger->debug("starting server.");
+            auto ioc = std::make_unique<boost::asio::io_context>();
+
+            // Create the listener
+            auto l = std::make_shared<malloy::server::listener>(
+                ctrl.m_cfg.logger->clone("listener"),
+                *ioc,
+#if MALLOY_FEATURE_TLS
+                std::move(ctrl.m_tls_ctx),
+#else
+                nullptr,
+#endif
+                boost::asio::ip::tcp::endpoint{boost::asio::ip::make_address(ctrl.m_cfg.interface), ctrl.m_cfg.port},
+                std::make_shared<class router>(std::move(ctrl.m_router)),
+                std::make_shared<std::filesystem::path>(ctrl.m_cfg.doc_root),
+                ctrl.m_cfg.agent_string);
+
+            // Run the listener
+            l->run();
+            return run_result_t{ctrl.m_cfg, std::move(l), std::move(ioc)};
+        }
     };
 
 }

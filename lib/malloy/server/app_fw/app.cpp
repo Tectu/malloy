@@ -22,9 +22,6 @@ app::app(
     // Sanity check name
     if (m_name.empty())
         throw std::invalid_argument("application name must not be empty.");
-
-    // Create router
-    m_router = std::make_shared<malloy::server::router>();
 }
 
 bool
@@ -35,7 +32,7 @@ app::add_page(std::string&& target, std::shared_ptr<page> page)
         return false;
 
     // Add endpoint
-    return m_router->add(
+    return m_router.add(
         malloy::http::method::get,
         std::move(target),
         [page = std::move(page)]([[maybe_unused]] const auto& req) {

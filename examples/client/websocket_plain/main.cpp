@@ -13,17 +13,10 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create the controller
-    malloy::client::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "initializing controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::client::controller c{cfg};
 
     // Start
-    if (!c.start()) {
-        std::cerr << "starting controller failed." << std::endl;
-        return EXIT_FAILURE;
-    }
+    [[maybe_unused]] auto session = start(c);
 
     c.ws_connect(
         "127.0.0.1",
@@ -61,8 +54,7 @@ int main()
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(15s);
 
-    // Stop
-    c.stop().wait();
+    // Session will stop the server when it goes out of scope
 
     return EXIT_SUCCESS;
 }

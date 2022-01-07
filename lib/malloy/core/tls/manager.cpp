@@ -6,7 +6,7 @@
 
 using namespace malloy::tls;
 
-std::shared_ptr<boost::asio::ssl::context> manager::make_context(
+std::unique_ptr<boost::asio::ssl::context> manager::make_context(
     const std::filesystem::path& cert_path,
     const std::filesystem::path& key_path
 )
@@ -32,9 +32,9 @@ std::shared_ptr<boost::asio::ssl::context> manager::make_context(
 }
 auto manager::make_context(
     const std::string& cert,
-    const std::string& key) -> std::shared_ptr<boost::asio::ssl::context>
+    const std::string& key) -> std::unique_ptr<boost::asio::ssl::context>
 {
-    auto ctx = std::make_shared<boost::asio::ssl::context>( boost::asio::ssl::context::tls_server );
+    auto ctx = std::make_unique<boost::asio::ssl::context>( boost::asio::ssl::context::tls_server );
 
     // Options
     ctx->set_options(static_cast<long>(

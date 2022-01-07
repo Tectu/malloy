@@ -1,6 +1,7 @@
 #include "../../test.hpp"
 
 #include <malloy/server/routing/router.hpp>
+#include <malloy/server/controller.hpp>
 
 using namespace malloy::http;
 using namespace malloy::server;
@@ -16,11 +17,11 @@ TEST_SUITE("components - router")
                 });
 
         }, [&](auto& s_ctrl){
-                auto r = s_ctrl.router();
-                r->add(method::get, "/", [](const auto& req){
+                auto& r = s_ctrl.router();
+                r.add(method::get, "/", [](const auto& req){
                     return generator::ok();
                 });
-                r->add_policy("/", [](auto) -> std::optional<response<>> { return response<>{status::unauthorized}; });
+                r.add_policy("/", [](auto) -> std::optional<response<>> { return response<>{status::unauthorized}; });
             });
     }
 
@@ -78,45 +79,46 @@ TEST_SUITE("components - router")
                 CHECK_FALSE(r.add_redirect(status::permanent_redirect, "/foo", "bar"));
             }
         }
-        SUBCASE("server string propagates to subrouters without explicit strings") {
-            constexpr auto server_str = "hello";
+        
+    }
+    TEST_CASE("server_string propagation") {
+        constexpr auto server_str = "hello";
+        controller::config cfg;
+        cfg.logger = spdlog::default_logger();
+        cfg.logger->set_level(spdlog::level::off);
+        cfg.agent_string = server_str;
+        controller ctrl{cfg};
+
+        SUBCASE("server string propagates to child routers") {
             constexpr auto server_str2 = "hello2";
+            router r1{nullptr};
+            CHECK(r1.server_string().empty());
 
-            router r1{nullptr, server_str};
-            CHECK(r1.server_string().has_value());
+            auto sub1_sm = std::make_unique<router>();
+            auto* sub1 = sub1_sm.get();
+            CHECK(sub1->server_string().empty());
+            r1.add_subrouter("/", std::move(sub1_sm));
 
-            auto sub1 = std::make_shared<router>();
-            CHECK(!sub1->server_string().has_value());
-            r1.add_subrouter("/", sub1);
+            CHECK(ctrl.router().server_string() == server_str);
+            ctrl.router().add_subrouter("/", std::move(r1));
 
-            REQUIRE(sub1->server_string().has_value());
-            CHECK(*sub1->server_string() == server_str);
-
-            auto sub2 = std::make_shared<router>(nullptr, server_str2);
-            REQUIRE(sub2->server_string().has_value());
-            CHECK(*sub2->server_string() == server_str2);
-
-            r1.add_subrouter("/hello", sub2);
-            REQUIRE(sub2->server_string().has_value());
-            CHECK(*sub2->server_string() == server_str2);
+            CHECK(sub1->server_string() == server_str);
 
         }
         SUBCASE("server string propagation composes over multiple levels") {
-            constexpr auto server_str = "hello";
-            router r1{nullptr, server_str};
+            auto sub1_sm = std::make_unique<router>();
+            auto sub1_1_sm = std::make_unique<router>();
+            auto* sub1 = sub1_sm.get();
+            auto* sub1_1 = sub1_1_sm.get();
 
-            auto sub1 = std::make_shared<router>();
-            auto sub1_1 = std::make_shared<router>();
+            sub1->add_subrouter("/", std::move(sub1_1_sm));
+            REQUIRE(sub1_1->server_string().empty());
+            REQUIRE(sub1->server_string().empty());
 
-            sub1->add_subrouter("/", sub1_1);
-            REQUIRE(!sub1_1->server_string().has_value());
-            REQUIRE(!sub1->server_string().has_value());
-
-            r1.add_subrouter("/", sub1);
-            REQUIRE(sub1_1->server_string().has_value());
-            REQUIRE(sub1->server_string().has_value());
+            ctrl.router().add_subrouter("/", std::move(sub1_sm));
+            REQUIRE(sub1_1->server_string() == server_str);
+            REQUIRE(sub1->server_string() == server_str);
         }
-
     }
 
 }

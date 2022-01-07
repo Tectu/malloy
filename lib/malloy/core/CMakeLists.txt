@@ -29,8 +29,6 @@ target_sources(
         error.hpp
         type_traits.hpp
         utils.hpp
-    PRIVATE
-        controller.cpp
 )
 
 # Set _WIN32_WINNT correctly (if needed)

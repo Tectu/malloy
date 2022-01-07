@@ -12,32 +12,16 @@ using namespace malloy::client;
 namespace fs = std::filesystem;
 
 
-bool controller::run()
+controller::controller(config cfg) :
+    m_cfg{std::move(cfg)}
 {
-    if (!start())
-        return false;
-
-    remove_workguard();
-    io_ctx().run();
-    return true;
+    m_cfg.validate();
 }
 
-bool controller::init(config cfg)
-{
-    if (!malloy::controller::init(cfg))
-        return false;
-
-    m_cfg = std::move(cfg);
-    return true;
-}
-
-bool controller::start()
-{
-    return root_start(m_cfg);
-}
 
 #if MALLOY_FEATURE_TLS
-    bool controller::init_tls()
+    bool
+    controller::init_tls()
     {
         m_tls_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
         m_tls_ctx->set_verify_mode(boost::asio::ssl::verify_peer | boost::asio::ssl::context::verify_fail_if_no_peer_cert);
@@ -47,17 +31,18 @@ bool controller::start()
         return true;
     }
 
-    void controller::add_ca_file(const std::filesystem::path& file)
+    void
+    controller::add_ca_file(const std::filesystem::path& file)
     {
         if (!fs::exists(file))
             throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
 
         check_tls();
-        
         m_tls_ctx->load_verify_file(file.string());
     }
 
-    void controller::add_ca(const std::string& contents)
+    void
+    controller::add_ca(const std::string& contents)
     {
         check_tls();
         m_tls_ctx->add_certificate_authority(malloy::buffer(contents));

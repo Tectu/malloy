@@ -17,26 +17,22 @@ int main(int argc, char* argv[])
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Create top-level router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy;
         using namespace malloy::http;
 
-        router->add(method::get, "/", [](const auto& req) {
+        router.add(method::get, "/", [](const auto& req) {
             response res{ status::ok };
             res.body() = "<html><body><h1>Hello World!</h1><p>some content...</p></body></html>";
             return res;
         });
 
         // Create sub-router 1
-        auto sub_router_1 = std::make_shared<server::router>();
+        auto sub_router_1 = std::make_unique<server::router>();
         sub_router_1->add(method::get, "/", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 1 target \"/\"";
@@ -57,10 +53,10 @@ int main(int argc, char* argv[])
             resp.body() = "router 1 target \"/foo/\\w+\"";
             return resp;
         });
-        router->add_subrouter("/router1", sub_router_1);
+        router.add_subrouter("/router1", std::move(sub_router_1));
 
         // Create sub-router 2
-        auto sub_router_2 = std::make_shared<server::router>();
+        auto sub_router_2 = std::make_unique<server::router>();
         sub_router_2->add(method::get, "/", [](const auto& req){
             response resp{ status::ok };
             resp.body() = "router 2 target \"/\"";
@@ -71,11 +67,11 @@ int main(int argc, char* argv[])
             resp.body() = "router 2 target \"/foo\"";
             return resp;
         });
-        router->add_subrouter("/router2", sub_router_2);
+        router.add_subrouter("/router2", std::move(sub_router_2));
     }
 
     // Start
-    c.start();
+    [[maybe_unused]] auto session = start(std::move(c));
 
     // Keep the application alive
     while (true)

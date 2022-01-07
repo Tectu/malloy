@@ -3,7 +3,8 @@
 #include "http/connection_plain.hpp"
 #include "type_traits.hpp"
 #include "websocket/connection.hpp"
-#include "../core/controller.hpp"
+#include "malloy/core/detail/controller_run_result.hpp"
+#include "malloy/core/controller.hpp"
 #include "../core/http/request.hpp"
 #include "../core/http/response.hpp"
 #include "../core/http/type_traits.hpp"
@@ -63,8 +64,7 @@ namespace malloy::client
     /**
      * High-level controller for client activities.
      */
-    class controller :
-        public malloy::controller
+    class controller
     {
     public:
         struct config :
@@ -77,11 +77,8 @@ namespace malloy::client
             std::string user_agent{"malloy-client"};
         };
 
-        controller() = default;
-        ~controller() override = default;
-
-        [[nodiscard("init may fail")]]
-        auto init(config cfg) -> bool;
+        controller(config cfg);
+        ~controller() = default;
 
 #if MALLOY_FEATURE_TLS
         /**
@@ -187,16 +184,14 @@ namespace malloy::client
             make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
-        /**
-         * @brief Block until all queued async actions completed
-         * @return whether starting was successful
-         */
-        bool run();
-
-        bool start();
-
     private:
-        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
+        using start_rs_t = malloy::detail::controller_run_result<std::shared_ptr<boost::asio::ssl::context>>;
+        friend auto start(controller& ctrl) -> start_rs_t {
+            return start_rs_t{ctrl.m_cfg, ctrl.m_tls_ctx, std::move(ctrl.m_ioc_sm)};
+        }
+        std::shared_ptr<boost::asio::ssl::context> m_tls_ctx{nullptr};
+        std::unique_ptr<boost::asio::io_context> m_ioc_sm{std::make_unique<boost::asio::io_context>()};
+        boost::asio::io_context* m_ioc{m_ioc_sm.get()};
         config m_cfg;
 
         /**
@@ -224,14 +219,14 @@ namespace malloy::client
                     }
                     cb(std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                        io_ctx(),
+                        *m_ioc,
                         *m_tls_ctx));
                     return;
                 }
 #endif
                 cb(std::make_shared<http::connection_plain<Body, Filter, std::decay_t<Callback>>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                    io_ctx()));
+                    *m_ioc));
             }([this, prom = std::move(prom), req = std::move(req), filter = std::forward<Filter>(filter), cb = std::forward<Callback>(cb)](auto&& conn) mutable {
                 if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                     req.set(malloy::http::field::user_agent, m_cfg.user_agent);
@@ -259,7 +254,7 @@ namespace malloy::client
         )
         {
             // Create connection
-            auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(io_ctx()));
+            auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(*m_ioc));
             resolver->async_resolve(
                 host,
                 std::to_string(port),
@@ -271,10 +266,10 @@ namespace malloy::client
 #if MALLOY_FEATURE_TLS
                             if constexpr (isSecure) {
                                 return malloy::websocket::stream{boost::beast::ssl_stream<boost::beast::tcp_stream>{
-                                    boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}, *m_tls_ctx}};
+                                    boost::beast::tcp_stream{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
                             } else
 #endif
-                                return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(io_ctx())}};
+                                return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(*m_ioc)}};
                         }(), m_cfg.user_agent);
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {

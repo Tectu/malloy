@@ -22,24 +22,20 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Create the session manager
     auto session_storage = std::make_shared<malloy::http::sessions::storage_memory>();
     auto session_manager = std::make_shared<malloy::http::sessions::manager>(session_storage);
 
     // Create the router
-    auto router = c.router();
-    if (router) {
+    auto& router = c.router();
+    {
         using namespace malloy;
         using namespace malloy::http;
 
         // Use a session to increment a counter
-        router->add(method::get, "/", [session_manager](const auto &req)
+        router.add(method::get, "/", [session_manager](const auto &req)
         {
             response res{status::ok};
 
@@ -62,7 +58,7 @@ int main()
         });
 
         // Check validity
-        router->add(method::get, "/check", [session_manager](const auto& req)
+        router.add(method::get, "/check", [session_manager](const auto& req)
         {
             response resp{ status::ok };
             resp.body() = "valid session: " + std::string{(session_manager->is_valid(req) ? "true" : "false")};
@@ -71,7 +67,7 @@ int main()
         });
 
         // Logout
-        router->add(method::get, "/logout", [session_manager](const auto& req)
+        router.add(method::get, "/logout", [session_manager](const auto& req)
         {
             response resp{ status::ok };
 
@@ -81,7 +77,7 @@ int main()
         });
 
         // Clear expired sessions
-        router->add(method::get, "/clear_expired", [session_manager](const auto& req)
+        router.add(method::get, "/clear_expired", [session_manager](const auto& req)
         {
             const std::size_t count = session_manager->destroy_expired(10s);
 
@@ -93,11 +89,6 @@ int main()
     }
 
     // Start
-    c.start();
-
-    // Keep the application alive
-    while (true)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-
+    start(std::move(c)).run(); // Keep the application alive
     return EXIT_SUCCESS;
-}
+ }

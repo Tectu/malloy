@@ -11,19 +11,13 @@
 
 using namespace malloy::server;
 
-bool controller::init(config cfg)
+controller::controller(config cfg) :
+    m_cfg{std::move(cfg)},
+    m_router{m_cfg.logger != nullptr ? m_cfg.logger->clone("router") : nullptr, m_cfg.agent_string}
 {
-    if (!malloy::controller::init(cfg))
-        return false;
-
-    // Grab the config
-    m_cfg = std::move(cfg);
-
-    // Create the top-level router
-    m_router = std::make_shared<malloy::server::router>(m_cfg.logger->clone("router"), m_cfg.agent_string);
-
-    return true;
+    m_cfg.validate();
 }
+
 
 #if MALLOY_FEATURE_TLS
     bool controller::init_tls(
@@ -54,28 +48,3 @@ bool controller::init(config cfg)
         return m_tls_ctx != nullptr;
     }
 #endif
-
-bool controller::start()
-{
-    // Log
-    m_cfg.logger->debug("starting server.");
-
-    // Create the listener
-    m_listener = std::make_shared<malloy::server::listener>(
-        m_cfg.logger->clone("listener"),
-        io_ctx(),
-        m_tls_ctx,
-        boost::asio::ip::tcp::endpoint{ boost::asio::ip::make_address(m_cfg.interface), m_cfg.port },
-        m_router,
-        std::make_shared<std::filesystem::path>(m_cfg.doc_root),
-        m_cfg.agent_string);
-
-    // Run the listener
-    m_listener->run();
-
-    // Base class
-    if (!root_start(m_cfg))
-        return false;
-
-    return true;
-}

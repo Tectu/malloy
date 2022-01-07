@@ -41,6 +41,7 @@ namespace spdlog
 
 namespace malloy::server
 {
+    class controller;
 
     namespace detail
     {
@@ -98,12 +99,12 @@ namespace malloy::server
      *
      * @details This class implements a basic router for HTTP requests.
      */
-    class router
+    class router final
     {
         /// Create the lambda wrapped callback for the writer
         auto make_endpt_writer_callback() {
             return [this]<typename R>(const auto& req, R&& resp, const auto& conn) {
-                std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, *m_server_str); }, std::forward<R>(resp));
+                std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, m_server_str); }, std::forward<R>(resp));
             };
         }
 
@@ -204,7 +205,7 @@ namespace malloy::server
          *
          * @param logger The logger instance to use.
          */
-        router(std::shared_ptr<spdlog::logger> logger, std::optional<std::string> server_str = std::nullopt);
+        explicit router(std::shared_ptr<spdlog::logger> logger);
 
         /**
          * Copy constructor.
@@ -214,12 +215,12 @@ namespace malloy::server
         /**
          * Move constructor.
          */
-        router(router&& other) noexcept = delete;
+        router(router&& other) noexcept = default;
 
         /**
          * Destructor.
          */
-        virtual ~router() = default;
+        ~router() = default;
 
         /**
          * Copy assignment operator.
@@ -235,7 +236,7 @@ namespace malloy::server
          * @param rhs The right-hand-side object to move-assign from.
          * @return A reference to the assignee.
          */
-        router& operator=(router&& rhs) noexcept = delete;
+        router& operator=(router&& rhs) noexcept = default;
 
         /**
          * Set the logger to use.
@@ -251,7 +252,8 @@ namespace malloy::server
          * @param sub_router The sub-router.
          * @return Whether adding the sub-router was successful.
          */
-        bool add_subrouter(std::string resource, std::shared_ptr<router> sub_router);
+        bool add_subrouter(std::string resource, std::unique_ptr<router> sub_router);
+        bool add_subrouter(std::string resource, router&& sub_router);
 
         /**
          * Add an HTTP regex endpoint.
@@ -315,7 +317,7 @@ namespace malloy::server
                 m_logger->trace("adding file serving location: {} -> {}", resource, storage_base_path.string());
 
             // Create endpoint
-            auto ep = std::make_shared<endpoint_http_files>();
+            auto ep = std::make_unique<endpoint_http_files>();
             ep->resource_base = resource;
             ep->base_path     = std::move(storage_base_path);
             ep->cache_control = cc();
@@ -373,7 +375,7 @@ namespace malloy::server
         add_policy(const std::string& resource, Policy&& policy)
         {
             using policy_t = std::decay_t<Policy>;
-            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::forward<decltype(conn)>(conn), *m_server_str); };
+            auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::forward<decltype(conn)>(conn), m_server_str); };
 
             m_policies.emplace_back(resource, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
         }
@@ -432,19 +434,25 @@ namespace malloy::server
                 handle_http_request<Derived>(doc_root, std::move(req), connection);
         }
 
-        constexpr auto server_string() const -> const std::optional<std::string>& {
+        constexpr std::string_view server_string() const
+        {
             return m_server_str;
         }
+
     private:
-        std::shared_ptr<spdlog::logger> m_logger;
-        std::unordered_map<std::string, std::shared_ptr<router>> m_sub_routers;
-        std::vector<std::shared_ptr<endpoint_http>> m_endpoints_http;
-        std::vector<std::shared_ptr<endpoint_websocket>> m_endpoints_websocket;
+        std::shared_ptr<spdlog::logger> m_logger{nullptr};
+        std::unordered_map<std::string, std::unique_ptr<router>> m_sub_routers;
+        std::vector<std::unique_ptr<endpoint_http>> m_endpoints_http;
+        std::vector<std::unique_ptr<endpoint_websocket>> m_endpoints_websocket;
         std::vector<policy_store> m_policies;                           // Access policies for resources
-        std::optional<std::string> m_server_str;
+        std::string_view m_server_str;
+
+        friend class controller;
+
+        router(std::shared_ptr<spdlog::logger> logger, std::string_view m_server_str);
 
 
-        void set_server_string(const std::string& str);
+        void set_server_string(std::string_view str);
 
 
         template<typename Derived>
@@ -491,7 +499,7 @@ namespace malloy::server
                 auto resp = ep->handle(req, connection);
                 if (resp) {
                     // Send the response
-                    detail::send_response(req->header(), std::move(*resp), connection, *m_server_str);
+                    detail::send_response(req->header(), std::move(*resp), connection, m_server_str);
                 }
 
                 // We're done handling this request
@@ -499,7 +507,7 @@ namespace malloy::server
             }
 
             // If we end up where we have no meaningful way of handling this request
-            detail::send_response(req->header(), malloy::http::generator::bad_request("unknown request"), connection, *m_server_str);
+            detail::send_response(req->header(), malloy::http::generator::bad_request("unknown request"), connection, m_server_str);
         }
 
         /**
@@ -568,7 +576,7 @@ namespace malloy::server
             using bodies_t = std::conditional_t<wrapped, Body, std::variant<Body>>;
 
             // Build endpoint
-            auto ep = std::make_shared<endpoint_http_regex<bodies_t, std::decay_t<ExtraInfo>, UsesCaptures>>();
+            auto ep = std::make_unique<endpoint_http_regex<bodies_t, std::decay_t<ExtraInfo>, UsesCaptures>>();
             ep->resource_base = std::move(regex);
             ep->method = method;
             ep->filter = std::forward<ExtraInfo>(extra);
@@ -602,7 +610,7 @@ namespace malloy::server
          * @param ep The endpoint to add.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_http_endpoint(std::shared_ptr<endpoint_http>&& ep);
+        bool add_http_endpoint(std::unique_ptr<endpoint_http>&& ep);
 
         /**
          * Adds a WebSocket endpoint.
@@ -612,7 +620,7 @@ namespace malloy::server
          * @param ep The endpoint to add.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_websocket_endpoint(std::shared_ptr<endpoint_websocket>&& ep);
+        bool add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep);
 
         /**
          * Adds a message to the log or throws an exception if no logger is available.

@@ -30,22 +30,17 @@ struct request_filter
 
 int main() {
 
-	ms::controller ctrl;
 	ms::controller::config cfg;
 	cfg.num_threads = 2;
 	cfg.interface = "0.0.0.0";
 	cfg.port = 8080;
 	cfg.logger = spdlog::default_logger();
 	cfg.doc_root = "/";
+	ms::controller ctrl{cfg};
 
 	spdlog::set_level(spdlog::level::debug);
 
-	if (!ctrl.init(cfg)) {
-		spdlog::critical("Failed to init server controller");
-		return EXIT_FAILURE;
-	}
-
-	ctrl.router()->add(
+	ctrl.router().add(
         malloy::http::method::post,
         "/.+",
         [](auto&&) {
@@ -54,13 +49,6 @@ int main() {
         request_filter{ }
     );
 
-	if (!ctrl.start()) {
-		spdlog::critical("Failed to start server");
-		return EXIT_FAILURE;
-	}
-
-	while (true) {
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
+    start(std::move(ctrl)).run();
 
 }

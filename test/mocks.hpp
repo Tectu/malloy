@@ -2,8 +2,6 @@
 
 #include <malloy/core/http/request.hpp>
 
-#define MALLOY_INTERNAL_TESTING    // Enable testing overloads
-
 namespace malloy::mock::http
 {
 

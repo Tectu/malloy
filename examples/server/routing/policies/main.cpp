@@ -69,11 +69,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
     // Setup simple HTTP basic auth policy
     //   - Username: user01
@@ -83,10 +79,10 @@ int main()
     // Setup the router
     {
         using namespace malloy::http;
-        auto router = c.router();
+        auto& router = c.router();
 
         // Root page (no access restrictions)
-        router->add(method::get, "/", [](const auto& req){
+        router.add(method::get, "/", [](const auto& req){
             response res{ status::ok };
             res.body() = "<html><body>"
                          "  <h1>Malloy Access Policy demo</h1>"
@@ -97,15 +93,15 @@ int main()
         });
 
         // Restricted endpoint
-        router->add_policy("/restricted", policy);
-        router->add(method::get, "/restricted", [](const auto &req) {
+        router.add_policy("/restricted", policy);
+        router.add(method::get, "/restricted", [](const auto &req) {
             response res{status::ok};
             res.body() = "<html><body><h1>Hello User01!</h1><p>some content...</p></body></html>";
             return res;
         });
 
         // Restricted sub-router
-        auto sub_router = std::make_shared<malloy::server::router>();
+        auto sub_router = std::make_unique<malloy::server::router>();
         {
             // Add simple endpoint
             sub_router->add(method::get, "", [](const auto &req) {
@@ -124,12 +120,12 @@ int main()
             // Serve files
             sub_router->add_file_serving("/files", cfg.doc_root);
         }
-        router->add_policy("/admin/.+", policy);
-        router->add_subrouter("/admin", std::move(sub_router));
+        router.add_policy("/admin/.+", policy);
+        router.add_subrouter("/admin", std::move(sub_router));
     }
 
     // Start
-    c.start();
+    [[maybe_unused]] auto session = start(std::move(c));
 
     // Keep the application alive
     while (true)

@@ -17,11 +17,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c;
-    if (!c.init(cfg)) {
-        std::cerr << "could not start controller." << std::endl;
-        return EXIT_FAILURE;
-    }
+    malloy::server::controller c{cfg};
 
 #if MALLOY_FEATURE_TLS
     // Setup TLS (SSL)
@@ -34,30 +30,26 @@ int main()
 #endif
 
     // Add some routes
-    auto router = c.router();
-    if (router) { // TODO: Should the first two be done via optional capture groups?
+    auto& router = c.router();
+    { // TODO: Should the first two be done via optional capture groups?
         // Add a websocket endpoint
-        router->add_websocket("/", [](const malloy::http::request<>& req, auto writer){
+        router.add_websocket("/", [](const malloy::http::request<>& req, auto writer){
             malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /: {}", req.body()));
         });
 
         // Add a websocket endpoint
-        router->add_websocket("/echo", [](const malloy::http::request<>& req, auto writer){
+        router.add_websocket("/echo", [](const malloy::http::request<>& req, auto writer){
             malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /echo: {}", req.body()));
         });
 
         // Add a websocket endpoint
-        router->add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
+        router.add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
             std::make_shared<malloy::examples::ws::server_timer>(writer)->run(req);
         });
     }
 
     // Start
-    c.start();
-
-    // Keep the application alive
-    while (true)
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    start(std::move(c)).run();
 
     return EXIT_SUCCESS;
 }

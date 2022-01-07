@@ -48,8 +48,15 @@ namespace malloy::server::app_fw
         }
 
         [[nodiscard]]
-        std::shared_ptr<malloy::server::router>
+        const malloy::server::router&
         router() const noexcept
+        {
+            return m_router;
+        }
+
+        [[nodiscard]]
+        malloy::server::router&
+        router() noexcept
         {
             return m_router;
         }
@@ -57,7 +64,7 @@ namespace malloy::server::app_fw
     protected:
         environment m_env;
         std::shared_ptr<spdlog::logger> m_logger;
-        std::shared_ptr<malloy::server::router> m_router;
+        malloy::server::router m_router;
 
         /**
          * Adds an endpoint for an HTML page.
