@@ -1,8 +1,9 @@
 #pragma once
 
-#include "malloy/core/controller.hpp"
+#include "malloy/core/detail/controller_run_result.hpp"
 #include "malloy/server/listener.hpp"
 #include "malloy/server/routing/router.hpp"
+#include "malloy/core/controller.hpp"
 
 
 #include <memory>
