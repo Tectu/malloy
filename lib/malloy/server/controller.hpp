@@ -5,7 +5,6 @@
 #include "malloy/server/routing/router.hpp"
 #include "malloy/core/controller.hpp"
 
-
 #include <memory>
 #include <filesystem>
 #include <string>
@@ -108,7 +107,16 @@ namespace malloy::server
 
     private:
         using run_result_t = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
-        [[nodiscard("ignoring result will cause the server to instantly stop")]] friend auto start(controller&& ctrl) -> run_result_t
+        
+        config m_cfg;
+        malloy::server::router m_router;
+        #if MALLOY_FEATURE_TLS
+            std::unique_ptr<boost::asio::ssl::context> m_tls_ctx;
+        #endif
+
+        [[nodiscard("ignoring result will cause the server to instantly stop")]]
+        friend
+        run_result_t start(controller&& ctrl)
         {
             // Log
             ctrl.m_cfg.logger->debug("starting server.");
@@ -132,11 +140,6 @@ namespace malloy::server
             l->run();
             return run_result_t{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
-        config m_cfg;
-#if MALLOY_FEATURE_TLS
-        std::unique_ptr<boost::asio::ssl::context> m_tls_ctx;
-#endif
-        malloy::server::router m_router;
     };
 
 }
