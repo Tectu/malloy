@@ -6,6 +6,8 @@
 
 #include <fmt/format.h>
 
+#include <iostream>
+
 namespace malloy::server::http::auth
 {
     namespace detail
@@ -42,7 +44,7 @@ namespace malloy::server::http::auth
             if (method_pos == std::string::npos)
                 return std::nullopt;
 
-            auto encoded_usepass = std::string_view{txt.begin() + method_pos + 1, txt.end()};
+            auto encoded_usepass = txt.substr(method_pos+1);
             try {
                 std::string out;
                 auto outbuff = boost::asio::dynamic_buffer(out);
