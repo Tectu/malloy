@@ -38,13 +38,13 @@ page_master::render_impl(const nlohmann::json& data, const page_content* content
         // Render
         body = env.render(tmpl, data);
     }
-    catch (const nlohmann::json::exception& e) {
+    catch ([[maybe_unused]] const nlohmann::json::exception& e) {
         return generator::server_error("JSON exception during template rendering.");
     }
-    catch (const inja::RenderError& e) {
+    catch ([[maybe_unused]] const inja::RenderError& e) {
         return generator::server_error("Exception during template rendering.");
     }
-    catch (const std::exception& e) {
+    catch ([[maybe_unused]] const std::exception& e) {
         return generator::server_error("General exception during template rendering.");
     }
 
