@@ -51,13 +51,8 @@ int main()
         return EXIT_FAILURE;
     }
 
-    // Initialize router
-    {
-        auto router = c.router();
-
-        // Add top-level app
-        router->add_subrouter("/apps", toplevel_app->router());
-    }
+    // Add top-level app router
+    c.router().add_subrouter("/apps", std::move(toplevel_app->router()));
 
     // Start
     start(std::move(c)).run();

@@ -48,23 +48,16 @@ namespace malloy::server::app_fw
         }
 
         [[nodiscard]]
-        const malloy::server::router&
-        router() const noexcept
-        {
-            return m_router;
-        }
-
-        [[nodiscard]]
-        malloy::server::router&
+        std::unique_ptr<malloy::server::router>
         router() noexcept
         {
-            return m_router;
+            return std::move(m_router);
         }
 
     protected:
         environment m_env;
         std::shared_ptr<spdlog::logger> m_logger;
-        malloy::server::router m_router;
+        std::unique_ptr<malloy::server::router> m_router;
 
         /**
          * Adds an endpoint for an HTML page.
@@ -101,7 +94,7 @@ namespace malloy::server::app_fw
             app->m_name = name;
             app->m_env = m_env.make_sub_environment(name);
             app->m_logger = m_logger->clone(m_logger->name() + " | " + name);
-            app->m_router = std::make_shared<malloy::server::router>();
+            app->m_router = std::make_unique<malloy::server::router>(m_logger->clone(m_logger->name() + " | "  + name + " | router"));
 
             // Initialize app
             if (!app->init()) {

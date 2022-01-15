@@ -22,17 +22,19 @@ app::app(
     // Sanity check name
     if (m_name.empty())
         throw std::invalid_argument("application name must not be empty.");
+
+    m_router = std::make_unique<malloy::server::router>();
 }
 
 bool
 app::add_page(std::string&& target, std::shared_ptr<page> page)
 {
     // Sanity check
-    if (!page)
+    if (!page || !m_router)
         return false;
 
     // Add endpoint
-    return m_router.add(
+    return m_router->add(
         malloy::http::method::get,
         std::move(target),
         [page = std::move(page)]([[maybe_unused]] const auto& req) {

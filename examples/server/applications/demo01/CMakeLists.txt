@@ -11,12 +11,6 @@ malloy_example_setup(${TARGET})
 add_subdirectory(3rdparty/sqlite)
 add_subdirectory(apps)
 
-target_include_directories(
-    ${TARGET}
-    PRIVATE
-        3rdparty/sqlite
-)
-
 target_sources(
     ${TARGET}
     PRIVATE
@@ -28,10 +22,4 @@ target_sources(
         database.cpp
         database.hpp
         page_master.hpp
-)
-
-target_link_libraries(
-    ${TARGET}
-    PRIVATE
-        sqlite3
 )

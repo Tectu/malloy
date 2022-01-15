@@ -1,7 +1,7 @@
 #include "database.hpp"
+#include "3rdparty/sqlite/sqlite3.h"
 
 #include <spdlog/logger.h>
-#include <sqlite3.h>
 
 #include <stdexcept>
 
