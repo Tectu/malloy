@@ -9,12 +9,18 @@ namespace ms = malloy::server;
 
 TEST_SUITE("controller - roundtrips") {
     TEST_CASE("A controller_run_result<T> where T is moveable is also movable and well defined") {
-        ms::controller::config cfg;
+        mc::controller::config cfg;
         cfg.logger = spdlog::default_logger();
         cfg.num_threads = 1;
-        ms::controller ctrl{cfg};
-        auto tkn = start(std::move(ctrl));
+        mc::controller ctrl{cfg};
+        auto tkn = start(ctrl);
         auto tkn2 = std::move(tkn);
+        SUBCASE("calling run on a moved-from run result raises an exception") {
+            CHECK_THROWS(tkn.run());
+        }
+        SUBCASE("calling run on the move constructed result is well defined") {
+            tkn2.run();
+        }
     }
     TEST_CASE("Server and client set agent strings based on user_agent") {
         constexpr auto cli_agent_str = "test-cli";
