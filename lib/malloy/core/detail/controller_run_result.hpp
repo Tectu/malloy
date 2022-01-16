@@ -42,6 +42,7 @@ namespace malloy::detail
     public:
         controller_run_result(const controller_config& cfg, T ctrl, std::unique_ptr<boost::asio::io_context> ioc) :
             m_io_ctx{std::move(ioc)},
+            m_workguard{m_io_ctx->get_executor()},
             m_ctrl{std::move(ctrl)}
         {
             // Create the I/O context threads
@@ -74,6 +75,7 @@ namespace malloy::detail
             m_io_ctx->stop();
 
             // Tell the workguard that we no longer need it's service
+            m_workguard.reset();
 
 
             for (auto& thread : m_io_threads) {
@@ -89,6 +91,7 @@ namespace malloy::detail
             if (!m_io_ctx) {
                 throw std::logic_error{"attempt to call run() on moved from run_result_t"};
             }
+            m_workguard.reset();
             m_io_ctx->run();
         }
 
@@ -96,6 +99,7 @@ namespace malloy::detail
         using workguard_t = boost::asio::executor_work_guard<boost::asio::io_context::executor_type>;
 
         std::unique_ptr<boost::asio::io_context> m_io_ctx;
+        workguard_t m_workguard;
         std::vector<std::thread> m_io_threads;
         T m_ctrl;    // This order matters, the T may destructor need access to something related to the io context
     };
