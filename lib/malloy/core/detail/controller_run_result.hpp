@@ -40,6 +40,13 @@ namespace malloy::detail
     class controller_run_result
     {
     public:
+        /**
+         * Constructor.
+         *
+         * @param cfg The controller configuration.
+         * @param ctrl The controller.
+         * @param ioc The I/O context.
+         */
         controller_run_result(const controller_config& cfg, T ctrl, std::unique_ptr<boost::asio::io_context> ioc) :
             m_io_ctx{std::move(ioc)},
             m_workguard{m_io_ctx->get_executor()},
@@ -58,6 +65,9 @@ namespace malloy::detail
             cfg.logger->debug("starting i/o context.");
         }
 
+        /**
+         * Destructor.
+         */
         ~controller_run_result()
         {
             // Stop the `io_context`. This will cause `run()`
@@ -75,8 +85,8 @@ namespace malloy::detail
         }
 
         /**
-             * @brief Block until all queued async actions completed
-             */
+         * @brief Block until all queued async actions completed
+         */
         void run()
         {
             m_workguard.reset();
