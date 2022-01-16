@@ -78,10 +78,8 @@ namespace malloy::detail
             // Tell the workguard that we no longer need it's service
             m_workguard.reset();
 
-
-            for (auto& thread : m_io_threads) {
+            for (auto& thread : m_io_threads)
                 thread.join();
-            };
         }
 
         /**
@@ -101,4 +99,5 @@ namespace malloy::detail
         std::vector<std::thread> m_io_threads;
         T m_ctrl;    // This order matters, the T may destructor need access to something related to the io context
     };
+
 }    // namespace malloy::detail
