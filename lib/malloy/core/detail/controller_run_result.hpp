@@ -37,7 +37,6 @@ namespace malloy::detail
     };
 
     template<typename T>
-        requires std::movable<T>
     class controller_run_result
     {
     public:
@@ -67,19 +66,6 @@ namespace malloy::detail
         }
 
         /**
-         * Move constructor.
-         */
-        controller_run_result(controller_run_result&&) noexcept = default;
-
-        /**
-         * Move-assignment operator.
-         */
-        controller_run_result& operator=(controller_run_result&&) noexcept = default;
-
-        controller_run_result(const controller_run_result&) = delete;
-        controller_run_result& operator=(const controller_run_result&) = delete;
-
-        /**
          * Destructor.
          */
         ~controller_run_result()
@@ -87,13 +73,11 @@ namespace malloy::detail
             // Stop the `io_context`. This will cause `run()`
             // to return immediately, eventually destroying the
             // `io_context` and all of the sockets in it.
-            if (m_io_ctx)
-                m_io_ctx->stop();
+            m_io_ctx->stop();
 
             // Tell the workguard that we no longer need it's service
             m_workguard.reset();
 
-            // Join threads
             for (auto& thread : m_io_threads)
                 thread.join();
         }
