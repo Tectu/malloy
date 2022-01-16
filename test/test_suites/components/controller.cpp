@@ -7,6 +7,14 @@
 namespace mc = malloy::client;
 namespace ms = malloy::server;
 
+template<typename T>
+concept check_start_result = requires(T v) {
+    { start(std::forward<T>(v)) } -> std::same_as<typename std::remove_cvref_t<T>::start_result>;
+};
+
+static_assert(check_start_result<mc::controller&>, "start returns the type of start_result for client controller");
+static_assert(check_start_result<ms::controller>, "start returns the type of start_result for server controller");
+
 TEST_SUITE("controller - roundtrips") {
     TEST_CASE("A controller_run_result<T> where T is moveable is also movable and well defined") {
         mc::controller::config cfg;

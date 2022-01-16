@@ -29,6 +29,7 @@ namespace malloy::server
     class controller
     {
     public:
+        using start_result = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
         /**
          * Controller configuration.
          */
@@ -106,8 +107,6 @@ namespace malloy::server
         }
 
     private:
-        using run_result_t = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
-        
         config m_cfg;
         malloy::server::router m_router;
         #if MALLOY_FEATURE_TLS
@@ -116,7 +115,7 @@ namespace malloy::server
 
         [[nodiscard("ignoring result will cause the server to instantly stop")]]
         friend
-        run_result_t start(controller&& ctrl)
+        start_result start(controller&& ctrl)
         {
             // Log
             ctrl.m_cfg.logger->debug("starting server.");
@@ -138,7 +137,7 @@ namespace malloy::server
 
             // Run the listener
             l->run();
-            return run_result_t{ctrl.m_cfg, std::move(l), std::move(ioc)};
+            return start_result{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
     };
 
