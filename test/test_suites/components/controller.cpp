@@ -8,6 +8,14 @@ namespace mc = malloy::client;
 namespace ms = malloy::server;
 
 TEST_SUITE("controller - roundtrips") {
+    TEST_CASE("A controller_run_result<T> where T is moveable is also movable and well defined") {
+        ms::controller::config cfg;
+        cfg.logger = spdlog::default_logger();
+        cfg.num_threads = 1;
+        ms::controller ctrl{cfg};
+        auto tkn = start(std::move(ctrl));
+        auto tkn2 = std::move(tkn);
+    }
     TEST_CASE("Server and client set agent strings based on user_agent") {
         constexpr auto cli_agent_str = "test-cli";
         constexpr auto serve_agent_str = "test-serve";
