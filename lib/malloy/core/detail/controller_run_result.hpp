@@ -40,6 +40,13 @@ namespace malloy::detail
     class controller_run_result
     {
     public:
+        /**
+         * Constructor.
+         *
+         * @param cfg The controller configuration.
+         * @param ctrl The controller.
+         * @param ioc The I/O context.
+         */
         controller_run_result(const controller_config& cfg, T ctrl, std::unique_ptr<boost::asio::io_context> ioc) :
             m_io_ctx{std::move(ioc)},
             m_workguard{m_io_ctx->get_executor()},
@@ -65,6 +72,9 @@ namespace malloy::detail
         controller_run_result& operator=(const controller_run_result&) = delete;
         controller_run_result& operator=(controller_run_result&&) noexcept = default;
 
+        /**
+         * Destructor.
+         */
         ~controller_run_result()
         {
             if (!m_io_ctx)
@@ -84,8 +94,8 @@ namespace malloy::detail
         }
 
         /**
-             * @brief Block until all queued async actions completed
-             */
+         * @brief Block until all queued async actions completed
+         */
         void run()
         {
             if (!m_io_ctx)
