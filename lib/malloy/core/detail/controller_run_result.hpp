@@ -58,6 +58,7 @@ namespace malloy::detail
             // Log
             cfg.logger->debug("starting i/o context.");
         }
+
         controller_run_result(const controller_run_result&) = delete;
         controller_run_result(controller_run_result&&) noexcept = default;
 
@@ -66,9 +67,9 @@ namespace malloy::detail
 
         ~controller_run_result()
         {
-            if (!m_io_ctx) {
-                return; // We've been moved from
-            }
+            if (!m_io_ctx)
+                return; // We've been moved
+
             // Stop the `io_context`. This will cause `run()`
             // to return immediately, eventually destroying the
             // `io_context` and all of the sockets in it.
@@ -77,10 +78,9 @@ namespace malloy::detail
             // Tell the workguard that we no longer need it's service
             m_workguard.reset();
 
-
-            for (auto& thread : m_io_threads) {
+            // Join I/O threads
+            for (auto& thread : m_io_threads)
                 thread.join();
-            };
         }
 
         /**
@@ -88,9 +88,9 @@ namespace malloy::detail
              */
         void run()
         {
-            if (!m_io_ctx) {
+            if (!m_io_ctx)
                 throw std::logic_error{"attempt to call run() on moved from run_result_t"};
-            }
+
             m_workguard.reset();
             m_io_ctx->run();
         }
@@ -103,4 +103,5 @@ namespace malloy::detail
         std::vector<std::thread> m_io_threads;
         T m_ctrl;    // This order matters, the T may destructor need access to something related to the io context
     };
+
 }    // namespace malloy::detail
