@@ -29,7 +29,7 @@ namespace malloy::server
     class controller
     {
     public:
-        using start_result = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
+        using session = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
         /**
          * Controller configuration.
          */
@@ -115,7 +115,7 @@ namespace malloy::server
 
         [[nodiscard("ignoring result will cause the server to instantly stop")]]
         friend
-        start_result start(controller&& ctrl)
+        session start(controller&& ctrl)
         {
             // Log
             ctrl.m_cfg.logger->debug("starting server.");
@@ -137,7 +137,7 @@ namespace malloy::server
 
             // Run the listener
             l->run();
-            return start_result{ctrl.m_cfg, std::move(l), std::move(ioc)};
+            return session{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
     };
 

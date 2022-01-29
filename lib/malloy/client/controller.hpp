@@ -67,7 +67,7 @@ namespace malloy::client
     class controller
     {
     public:
-        using start_result = malloy::detail::controller_run_result<std::shared_ptr<boost::asio::ssl::context>>;
+        using session = malloy::detail::controller_run_result<std::shared_ptr<boost::asio::ssl::context>>;
         struct config :
             malloy::controller::config {
 
@@ -186,8 +186,8 @@ namespace malloy::client
         }
 
     private:
-        friend auto start(controller& ctrl) -> start_result {
-            return start_result{ctrl.m_cfg, ctrl.m_tls_ctx, std::move(ctrl.m_ioc_sm)};
+        friend auto start(controller& ctrl) -> session {
+            return session{ctrl.m_cfg, ctrl.m_tls_ctx, std::move(ctrl.m_ioc_sm)};
         }
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx{nullptr};
         std::unique_ptr<boost::asio::io_context> m_ioc_sm{std::make_unique<boost::asio::io_context>()};
