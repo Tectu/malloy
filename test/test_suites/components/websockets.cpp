@@ -4,7 +4,7 @@
 #include <boost/asio/error.hpp>
 #include <malloy/client/controller.hpp>
 #include <malloy/core/utils.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 
 

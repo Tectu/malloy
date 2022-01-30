@@ -1,6 +1,6 @@
 #include "../../test.hpp"
 
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 #include <malloy/client/controller.hpp>
 

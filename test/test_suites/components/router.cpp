@@ -1,7 +1,7 @@
 #include "../../test.hpp"
 
 #include <malloy/server/routing/router.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 
 using namespace malloy::http;
 using namespace malloy::server;
