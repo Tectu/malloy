@@ -11,7 +11,7 @@
 
 using namespace malloy::server;
 
-controller::controller(config cfg) :
+routing_context::routing_context(config cfg) :
     m_cfg{std::move(cfg)},
     m_router{m_cfg.logger != nullptr ? m_cfg.logger->clone("router") : nullptr, m_cfg.agent_string}
 {
@@ -20,7 +20,7 @@ controller::controller(config cfg) :
 
 
 #if MALLOY_FEATURE_TLS
-    bool controller::init_tls(
+    bool routing_context::init_tls(
         const std::filesystem::path& cert_path,
         const std::filesystem::path& key_path
     )
@@ -42,7 +42,7 @@ controller::controller(config cfg) :
         return true;
     }
 
-    bool controller::init_tls(const std::string& cert, const std::string& key)
+    bool routing_context::init_tls(const std::string& cert, const std::string& key)
     {
         m_tls_ctx = tls::manager::make_context(cert, key);
         return m_tls_ctx != nullptr;

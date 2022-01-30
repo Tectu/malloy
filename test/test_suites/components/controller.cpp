@@ -13,7 +13,7 @@ concept check_start_result = requires(T v) {
 };
 
 static_assert(check_start_result<mc::controller&>, "start returns the type of start_result for client controller");
-static_assert(check_start_result<ms::controller>, "start returns the type of start_result for server controller");
+static_assert(check_start_result<ms::routing_context>, "start returns the type of start_result for server controller");
 
 TEST_SUITE("controller - roundtrips") {
     TEST_CASE("A controller_run_result<T> where T is moveable is also movable and well defined") {
@@ -41,7 +41,7 @@ TEST_SUITE("controller - roundtrips") {
         general_cfg.logger = spdlog::default_logger();
 
         mc::controller::config cli_cfg{general_cfg};
-        ms::controller::config serve_cfg{general_cfg};
+        ms::routing_context::config serve_cfg{general_cfg};
 
         cli_cfg.user_agent = cli_agent_str;
         serve_cfg.agent_string = serve_agent_str;
@@ -60,7 +60,7 @@ TEST_SUITE("controller - roundtrips") {
             CHECK(resp[malloy::http::field::server] == serve_agent_str);
         });
 
-        ms::controller serve_ctrl{serve_cfg};
+        ms::routing_context serve_ctrl{serve_cfg};
 
 
         serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req){

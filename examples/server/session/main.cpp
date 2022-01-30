@@ -14,7 +14,7 @@ int main()
     using namespace std::chrono_literals;
 
     // Create malloy controller config
-    malloy::server::controller::config cfg;
+    malloy::server::routing_context::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
     cfg.doc_root    = examples_doc_root;
@@ -22,7 +22,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c{cfg};
+    malloy::server::routing_context c{cfg};
 
     // Create the session manager
     auto session_storage = std::make_shared<malloy::http::sessions::storage_memory>();

@@ -26,7 +26,7 @@ namespace malloy::test
     inline void roundtrip(
         const uint16_t port,
         std::function<void(malloy::client::controller&)> setup_client,
-        std::function<void(malloy::server::controller&)> setup_server)
+        std::function<void(malloy::server::routing_context&)> setup_server)
     {
         namespace mc = malloy::client;
         namespace ms = malloy::server;
@@ -35,11 +35,11 @@ namespace malloy::test
         general_cfg.num_threads = 2;
         general_cfg.logger = spdlog::default_logger();
 
-        ms::controller::config server_cfg{general_cfg};
+        ms::routing_context::config server_cfg{general_cfg};
         server_cfg.interface = "127.0.0.1";
         server_cfg.port = port;
 
-        ms::controller s_ctrl{server_cfg};
+        ms::routing_context s_ctrl{server_cfg};
 
         mc::controller::config cli_cfg{general_cfg};
         mc::controller c_ctrl{cli_cfg};

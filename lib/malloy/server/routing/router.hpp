@@ -41,7 +41,7 @@ namespace spdlog
 
 namespace malloy::server
 {
-    class controller;
+    class routing_context;
 
     namespace detail
     {
@@ -447,7 +447,7 @@ namespace malloy::server
         std::vector<policy_store> m_policies;                           // Access policies for resources
         std::string_view m_server_str;
 
-        friend class controller;
+        friend class routing_context;
 
         router(std::shared_ptr<spdlog::logger> logger, std::string_view m_server_str);
 
