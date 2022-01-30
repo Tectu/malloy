@@ -12,7 +12,7 @@
 #include <iostream>
 #include <functional>
 #include <malloy/client/controller.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 
 namespace malloy::test
 {
