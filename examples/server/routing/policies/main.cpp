@@ -1,7 +1,7 @@
 #include "../../../example.hpp"
 
 #include <malloy/core/http/generator.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 #include <malloy/server/auth/basic.hpp>
 
@@ -61,7 +61,7 @@ struct b64_decode
 int main()
 {
     // Create malloy controller config
-    malloy::server::controller::config cfg;
+    malloy::server::routing_context::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
     cfg.doc_root    = examples_doc_root;
@@ -69,7 +69,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c{cfg};
+    malloy::server::routing_context c{cfg};
 
     // Setup simple HTTP basic auth policy
     //   - Username: user01

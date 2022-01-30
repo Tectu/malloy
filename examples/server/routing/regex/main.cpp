@@ -1,6 +1,6 @@
 #include "../../../example.hpp"
 
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 
 #include <iostream>
@@ -8,7 +8,7 @@
 int main()
 {
     // Create malloy controller config
-    malloy::server::controller::config cfg;
+    malloy::server::routing_context::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
     cfg.doc_root    = examples_doc_root;
@@ -16,7 +16,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    malloy::server::controller c{cfg};
+    malloy::server::routing_context c{cfg};
 
     // Create the router
     auto& router = c.router();

@@ -1,7 +1,7 @@
 #include "../../test.hpp"
 
 #include <malloy/server/routing/router.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 
 using namespace malloy::http;
 using namespace malloy::server;
@@ -83,11 +83,11 @@ TEST_SUITE("components - router")
     }
     TEST_CASE("server_string propagation") {
         constexpr auto server_str = "hello";
-        controller::config cfg;
+        routing_context::config cfg;
         cfg.logger = spdlog::default_logger();
         cfg.logger->set_level(spdlog::level::off);
         cfg.agent_string = server_str;
-        controller ctrl{cfg};
+        routing_context ctrl{cfg};
 
         SUBCASE("server string propagates to child routers") {
             constexpr auto server_str2 = "hello2";

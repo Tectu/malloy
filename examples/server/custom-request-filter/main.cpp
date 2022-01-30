@@ -1,6 +1,6 @@
 #include <boost/beast/http/file_body.hpp>
 #include <malloy/core/http/request.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 
 namespace ms = malloy::server;
@@ -30,13 +30,13 @@ struct request_filter
 
 int main() {
 
-	ms::controller::config cfg;
+	ms::routing_context::config cfg;
 	cfg.num_threads = 2;
 	cfg.interface = "0.0.0.0";
 	cfg.port = 8080;
 	cfg.logger = spdlog::default_logger();
 	cfg.doc_root = "/";
-	ms::controller ctrl{cfg};
+	ms::routing_context ctrl{cfg};
 
 	spdlog::set_level(spdlog::level::debug);
 

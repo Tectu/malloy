@@ -26,9 +26,10 @@ namespace malloy::server
      *
      * @brief A high-level controller.
      */
-    class controller
+    class routing_context
     {
     public:
+        using session = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
         /**
          * Controller configuration.
          */
@@ -60,13 +61,13 @@ namespace malloy::server
             std::string agent_string{"malloy-server"};
         };
 
-        controller(config cfg);
-        controller(const controller& other) = delete;
-        controller(controller&& other) noexcept = default;
-        ~controller() = default;
+        routing_context(config cfg);
+        routing_context(const routing_context& other) = delete;
+        routing_context(routing_context&& other) noexcept = default;
+        ~routing_context() = default;
 
-        controller& operator=(const controller& rhs) = delete;
-        controller& operator=(controller&& rhs) noexcept = default;
+        routing_context& operator=(const routing_context& rhs) = delete;
+        routing_context& operator=(routing_context&& rhs) noexcept = default;
 
         #if MALLOY_FEATURE_TLS
             /**
@@ -106,8 +107,6 @@ namespace malloy::server
         }
 
     private:
-        using run_result_t = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
-        
         config m_cfg;
         malloy::server::router m_router;
         #if MALLOY_FEATURE_TLS
@@ -116,7 +115,7 @@ namespace malloy::server
 
         [[nodiscard("ignoring result will cause the server to instantly stop")]]
         friend
-        run_result_t start(controller&& ctrl)
+        session start(routing_context&& ctrl)
         {
             // Log
             ctrl.m_cfg.logger->debug("starting server.");
@@ -138,7 +137,7 @@ namespace malloy::server
 
             // Run the listener
             l->run();
-            return run_result_t{ctrl.m_cfg, std::move(l), std::move(ioc)};
+            return session{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
     };
 

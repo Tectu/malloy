@@ -3,7 +3,7 @@
 #include <malloy/core/html/form.hpp>
 #include <malloy/core/html/form_renderer.hpp>
 #include <malloy/core/http/generator.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 
 #include <iostream>
@@ -13,7 +13,7 @@ int main()
     using namespace malloy;
 
     // Create malloy controller config
-    server::controller::config cfg;
+    server::routing_context::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
     cfg.doc_root    = examples_doc_root;
@@ -21,7 +21,7 @@ int main()
     cfg.logger      = create_example_logger();
 
     // Create malloy controller
-    server::controller c{cfg};
+    server::routing_context c{cfg};
 
     // Create form1
     // This is a simple login form using application/x-www-form-urlencoded

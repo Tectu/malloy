@@ -1,13 +1,35 @@
 #include "../../test.hpp"
 
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 #include <malloy/client/controller.hpp>
 
 namespace mc = malloy::client;
 namespace ms = malloy::server;
 
+template<typename T>
+concept check_start_result = requires(T v) {
+    { start(std::forward<T>(v)) } -> std::same_as<typename std::remove_cvref_t<T>::session>;
+};
+
+static_assert(check_start_result<mc::controller&>, "start returns the type of start_result for client controller");
+static_assert(check_start_result<ms::routing_context>, "start returns the type of start_result for server controller");
+
 TEST_SUITE("controller - roundtrips") {
+    TEST_CASE("A controller_run_result<T> where T is moveable is also movable and well defined") {
+        mc::controller::config cfg;
+        cfg.logger = spdlog::default_logger();
+        cfg.num_threads = 1;
+        mc::controller ctrl{cfg};
+        auto tkn = start(ctrl);
+        auto tkn2 = std::move(tkn);
+        SUBCASE("calling run on a moved-from run result raises an exception") {
+            CHECK_THROWS(tkn.run());
+        }
+        SUBCASE("calling run on the move constructed result is well defined") {
+            tkn2.run();
+        }
+    }
     TEST_CASE("Server and client set agent strings based on user_agent") {
         constexpr auto cli_agent_str = "test-cli";
         constexpr auto serve_agent_str = "test-serve";
@@ -19,7 +41,7 @@ TEST_SUITE("controller - roundtrips") {
         general_cfg.logger = spdlog::default_logger();
 
         mc::controller::config cli_cfg{general_cfg};
-        ms::controller::config serve_cfg{general_cfg};
+        ms::routing_context::config serve_cfg{general_cfg};
 
         cli_cfg.user_agent = cli_agent_str;
         serve_cfg.agent_string = serve_agent_str;
@@ -38,7 +60,7 @@ TEST_SUITE("controller - roundtrips") {
             CHECK(resp[malloy::http::field::server] == serve_agent_str);
         });
 
-        ms::controller serve_ctrl{serve_cfg};
+        ms::routing_context serve_ctrl{serve_cfg};
 
 
         serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req){
