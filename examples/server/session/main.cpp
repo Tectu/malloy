@@ -5,7 +5,7 @@
 #include <malloy/core/http/session/session.hpp>
 #include <malloy/core/http/session/storage_memory.hpp>
 #include <malloy/server/routing/router.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 
 #include <iostream>
 

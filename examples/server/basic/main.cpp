@@ -2,7 +2,7 @@
 #include "../../ws_handlers.hpp"
 
 #include <malloy/core/http/generator.hpp>
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 
 #include <iostream>

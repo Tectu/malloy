@@ -1,7 +1,7 @@
 #include "../../example.hpp"
 #include "../../ws_handlers.hpp"
 
-#include <malloy/server/controller.hpp>
+#include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 
 #include <iostream>
