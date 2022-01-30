@@ -9,7 +9,7 @@ namespace ms = malloy::server;
 
 template<typename T>
 concept check_start_result = requires(T v) {
-    { start(std::forward<T>(v)) } -> std::same_as<typename std::remove_cvref_t<T>::start_result>;
+    { start(std::forward<T>(v)) } -> std::same_as<typename std::remove_cvref_t<T>::session>;
 };
 
 static_assert(check_start_result<mc::controller&>, "start returns the type of start_result for client controller");
