@@ -79,7 +79,7 @@ HTTP Server:
 int main()
 {
     // Create malloy controller config
-    malloy::server::controller::config cfg;
+    malloy::server::routing_context::config cfg;
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
     cfg.doc_root    = "/path/to/http/docs"
@@ -87,7 +87,7 @@ int main()
     cfg.logger      = std::make_shared<spdlog::logger>();
 
     // Create malloy controller
-    malloy::server::controller c{cfg};
+    malloy::server::routing_context c{cfg};
 
     // Create the router
     auto& router = c.router();
