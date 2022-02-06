@@ -140,5 +140,6 @@ namespace malloy::server
             return session{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
     };
+    auto start(routing_context&&) -> routing_context::session;
 
 }

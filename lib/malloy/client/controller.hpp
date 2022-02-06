@@ -284,5 +284,5 @@ namespace malloy::client
             );
         }
     };
-
+    auto start(controller&) -> controller::session;
 }    // namespace malloy::client

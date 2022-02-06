@@ -12,15 +12,28 @@ concept check_start_result = requires(T v) {
     { start(std::forward<T>(v)) } -> std::same_as<typename std::remove_cvref_t<T>::session>;
 };
 
+template<typename T>
+concept check_start_accessible = requires(mc::controller& v) {
+    { mc::start(v) };
+} && requires(ms::routing_context&& v) {
+    { ms::start(std::move(v)) };
+};
+
+static_assert(check_start_accessible<std::void_t<>>);
 static_assert(check_start_result<mc::controller&>, "start returns the type of start_result for client controller");
 static_assert(check_start_result<ms::routing_context>, "start returns the type of start_result for server controller");
 
+TEST_SUITE("controller - compile checks") {
+    TEST_CASE("start(...) is accessible directly from the parent namespace of controller/routing context"){
+    }
+}
 TEST_SUITE("controller - roundtrips") {
     TEST_CASE("A controller_run_result<T> where T is moveable is also movable and well defined") {
         mc::controller::config cfg;
         cfg.logger = spdlog::default_logger();
         cfg.num_threads = 1;
         mc::controller ctrl{cfg};
+
         auto tkn = start(ctrl);
         auto tkn2 = std::move(tkn);
         SUBCASE("calling run on a moved-from run result raises an exception") {
