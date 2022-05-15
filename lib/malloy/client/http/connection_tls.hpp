@@ -10,13 +10,13 @@ namespace malloy::client::http
     /**
      * A TLS (SSL) HTTPS connection.
      */
-
     template<typename... ConnArgs>
     class connection_tls :
         public connection<connection_tls<ConnArgs...>, ConnArgs...>,
         public std::enable_shared_from_this<connection_tls<ConnArgs...>>
     {
         using parent_t = connection<connection_tls<ConnArgs...>, ConnArgs...>;
+
     public:
         connection_tls(
             std::shared_ptr<spdlog::logger> logger,

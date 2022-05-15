@@ -27,7 +27,8 @@ namespace malloy::detail
              */
         std::shared_ptr<spdlog::logger> logger;
 
-        void validate()
+        void
+        validate()
         {
             if (!logger)
                 throw std::logic_error{"invalid config: logger is null"};
@@ -96,7 +97,8 @@ namespace malloy::detail
         /**
          * @brief Block until all queued async actions completed
          */
-        void run()
+        void
+        run()
         {
             if (!m_io_ctx)
                 throw std::logic_error{"attempt to call run() on moved from run_result_t"};

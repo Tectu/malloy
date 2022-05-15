@@ -4,5 +4,7 @@
 
 namespace malloy::controller
 {
+
     using config = detail::controller_config;
+
 }

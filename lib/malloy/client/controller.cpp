@@ -4,20 +4,15 @@
     #include <boost/certify/extensions.hpp>
     #include <boost/certify/https_verification.hpp>
 #endif
-
 #include <fmt/format.h>
 
 using namespace malloy::client;
-
-namespace fs = std::filesystem;
-
 
 controller::controller(config cfg) :
     m_cfg{std::move(cfg)}
 {
     m_cfg.validate();
 }
-
 
 #if MALLOY_FEATURE_TLS
     bool
@@ -34,7 +29,7 @@ controller::controller(config cfg) :
     void
     controller::add_ca_file(const std::filesystem::path& file)
     {
-        if (!fs::exists(file))
+        if (!std::filesystem::exists(file))
             throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
 
         check_tls();

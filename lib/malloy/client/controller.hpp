@@ -179,20 +179,23 @@ namespace malloy::client
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler)
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+        )
         {
             // Create connection
             make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
     private:
-        friend auto start(controller& ctrl) -> session {
-            return session{ctrl.m_cfg, ctrl.m_tls_ctx, std::move(ctrl.m_ioc_sm)};
-        }
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx{nullptr};
         std::unique_ptr<boost::asio::io_context> m_ioc_sm{std::make_unique<boost::asio::io_context>()};
         boost::asio::io_context* m_ioc{m_ioc_sm.get()};
         config m_cfg;
+
+        friend auto start(controller& ctrl) -> session
+        {
+            return session{ctrl.m_cfg, ctrl.m_tls_ctx, std::move(ctrl.m_ioc_sm)};
+        }
 
         /**
          * Checks whether the TLS context was initialized.
@@ -284,5 +287,7 @@ namespace malloy::client
             );
         }
     };
+
     auto start(controller&) -> controller::session;
-}    // namespace malloy::client
+
+}   // namespace malloy::client

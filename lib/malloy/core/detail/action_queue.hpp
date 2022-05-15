@@ -31,7 +31,8 @@ namespace malloy::detail
          *
          * @param ioc The strand to use for synchronisation
          */
-        explicit action_queue(ioc_t ioc) :
+        explicit
+        action_queue(ioc_t ioc) :
             m_ioc{std::move(ioc)}
         {
         }
@@ -43,7 +44,8 @@ namespace malloy::detail
          *
          * @param act
          */
-        void push(act_t act)
+        void
+        push(act_t act)
         {
             boost::asio::dispatch(m_ioc, [this, act = std::move(act)]() mutable -> void {
                 m_acts.push(std::move(act));
@@ -58,14 +60,16 @@ namespace malloy::detail
          *
          * @note Only needs to be called once.
          */
-        void run()
+        void
+        run()
         {
             m_running = true;
             exe_next();
         }
 
     private:
-        void exe_next()
+        void
+        exe_next()
         {
             // Running now...
             m_currently_running_act = true;

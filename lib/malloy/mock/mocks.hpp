@@ -6,6 +6,7 @@
 
 namespace malloy::mock::http
 {
+
     class connection
     {
     public:
@@ -14,16 +15,21 @@ namespace malloy::mock::http
         public:
             malloy::http::request_header<> header_;
 
-            explicit request_generator(malloy::http::request_header<> header) :
-                header_{std::move(header)} {}
+            explicit
+            request_generator(malloy::http::request_header<> header) :
+                header_{std::move(header)}
+            {
+            }
 
-            auto header() const -> const malloy::http::request_header<>&
+            const malloy::http::request_header<>&
+            header() const
             {
                 return header_;
             }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback, typename Setup>
-            void body(Callback&& done, Setup&& s)
+            void
+            body(Callback&& done, Setup&& s)
             {
                 malloy::http::request<Body> r;
                 r.base() = header_;
@@ -32,14 +38,19 @@ namespace malloy::mock::http
             }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
-            void body(Callback&& done)
+            void
+            body(Callback&& done)
             {
                 return done(malloy::http::request<Body>{header_});
             }
         };
 
-        void do_write(auto&&) {}
+        void
+        do_write(auto&&)
+        {
+        }
     };
+
 }    // namespace malloy::mock::http
 
 

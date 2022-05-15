@@ -20,12 +20,12 @@ namespace malloy::concepts
     {
 
         template<template<typename...> typename T>
-        struct is_helper {
+        struct is_helper
+        {
             template<typename... Ts>
             void operator()(const T<Ts...>&) const
             {}
         };
-
 
     }   // namespace detail
 
@@ -48,7 +48,8 @@ namespace malloy::concepts
      * @tparam T
      */
     template<typename T>
-    concept callable_string = requires(T t) {
+    concept callable_string = requires(T t)
+    {
         { t() } -> std::same_as<std::string>;
         // { t() } -> std::same_as<std::string_view>;     // ToDo: Want to extend this to also accept std::string_view as return type.
     };
@@ -70,7 +71,8 @@ namespace malloy::concepts
          * @tparam Cond the condition to use. Must be usable as a predicate for sats_pred
          */
         template<template<typename...> typename A, template<typename> typename Cond>
-        struct is_container_of_helper {
+        struct is_container_of_helper
+        {
             template<sats_pred<Cond>... Ts>
             void operator()(const A<Ts...>&) const
             {}
@@ -80,7 +82,8 @@ namespace malloy::concepts
          * @tparam T
          */
         template<typename T>
-        struct always_true {
+        struct always_true
+        {
             static constexpr bool value = true;
         };
 
@@ -100,7 +103,8 @@ namespace malloy::concepts
     namespace detail
     {
         template<template<typename...> typename A>
-        struct is_a {
+        struct is_a
+        {
             template<typename T>
             struct type {
                 static constexpr bool value = is<T, A>;

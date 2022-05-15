@@ -155,7 +155,10 @@ namespace malloy::client::http
             );
 
        }
-        void on_read_header(malloy::error_code ec, std::size_t) {
+
+        void
+        on_read_header(malloy::error_code ec, std::size_t)
+        {
             if (ec) {
                 m_logger->error("on_read_header: '{}'", ec.message());
                 m_err_channel.set_value(ec);
@@ -166,24 +169,28 @@ namespace malloy::client::http
             auto bodies = m_req_filter.body_for(m_parser.get().base());
             std::visit([this](auto&& body) {
                 using body_t = std::decay_t<decltype(body)>;
+
                 auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));
                 m_req_filter.setup_body(parser->get().base(), parser->get().body());
+
                 boost::beast::http::async_read(
                     derived().stream(),
                     m_buffer,
                     *parser,
                     [this, parser, me = derived().shared_from_this()](auto ec, auto) {
-                    if (ec) {
-                        m_logger->error("on_read(): {}", ec.message());
-                        m_err_channel.set_value(ec);
-                        return;
-                    }
-                    // Notify via callback
-                    (*m_cb)(malloy::http::response<body_t>{parser->release()});
-                    on_read();
-                }
-                );
-                }, std::move(bodies));
+                        if (ec) {
+                            m_logger->error("on_read(): {}", ec.message());
+                            m_err_channel.set_value(ec);
+                            return;
+                        }
+
+                        // Notify via callback
+                        (*m_cb)(malloy::http::response<body_t>{parser->release()});
+                        on_read();
+                    });
+                },
+                std::move(bodies)
+            );
         }
 
         void

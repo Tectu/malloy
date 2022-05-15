@@ -12,8 +12,10 @@ namespace malloy::client::concepts
 
     namespace detail
     {
+
         template<typename F>
-        struct response_filter_body_helper {
+        struct response_filter_body_helper
+        {
             template<malloy::http::concepts::body T>
             void operator()(T&&)
             {
@@ -24,7 +26,6 @@ namespace malloy::client::concepts
             }
         };
 
-
         /**
          * @class http_cb_helper
          * @brief Helper for http_callback concept
@@ -34,7 +35,8 @@ namespace malloy::client::concepts
          *
          */
         template<typename Callback>
-        struct http_cb_helper {
+        struct http_cb_helper
+        {
             Callback cb;
 
             template<typename V>
@@ -48,20 +50,23 @@ namespace malloy::client::concepts
         
         };
     
-    }
+    }   // namespace detail
 
     template<typename F>
     concept response_filter = std::move_constructible<F> && requires(const F& f, const typename F::header_type& h)
     {
         {
             f.body_for(h)
-            } -> malloy::concepts::is_variant_of_bodies;
+        } -> malloy::concepts::is_variant_of_bodies;
+
         {
-            std::visit(detail::response_filter_body_helper<F>{}, f.body_for(h))};
+            std::visit(detail::response_filter_body_helper<F>{}, f.body_for(h))
+        };
     };
 
     template<typename F, typename Filter>
-    concept http_callback = response_filter<Filter>&& std::move_constructible<F>&& requires(F cb, const Filter& f, const typename Filter::header_type& h){
+    concept http_callback = response_filter<Filter>&& std::move_constructible<F>&& requires(F cb, const Filter& f, const typename Filter::header_type& h)
+    {
         std::visit(detail::http_cb_helper<F>{std::move(cb)}, f.body_for(h));
     };
 

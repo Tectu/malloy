@@ -20,7 +20,10 @@ namespace malloy
      * @return The content of the file as it resides on the disk - byte by byte.
      */
     [[nodiscard]]
-    static inline std::string file_contents(const std::filesystem::path& path)
+    static
+    inline
+    std::string
+    file_contents(const std::filesystem::path& path)
     {
         // Sanity check
         if (!std::filesystem::is_regular_file(path))
@@ -51,17 +54,20 @@ namespace malloy
      * @return The decimal output.
      */
     [[nodiscard]]
-    static inline uint8_t hex2dec(uint8_t c)
+    static
+    inline
+    uint8_t
+    hex2dec(uint8_t c)
     {
-        if (c >= '0' && c <= '9') {
+        if (c >= '0' && c <= '9')
             c -= '0';
-        }
-        else if (c >= 'a' && c <= 'f') {
+
+        else if (c >= 'a' && c <= 'f')
             c -= 'a' - 10;
-        }
-        else if (c >= 'A' && c <= 'F') {
+
+        else if (c >= 'A' && c <= 'F')
             c -= 'A' - 10;
-        }
+
         return c;
     }
 
@@ -129,7 +135,10 @@ namespace malloy
      *
      * @param str The string to decode.
      */
-    static inline void url_decode(std::string& str)
+    static
+    inline
+    void
+    url_decode(std::string& str)
     {
         size_t w = 0;
         for (size_t r = 0 ; r < str.size() ; ++r) {
@@ -149,7 +158,11 @@ namespace malloy
      * @param path The file path.
      * @return The corresponding MIME-TYPE.
      */
-    static inline std::string_view mime_type(const std::filesystem::path& path)
+    [[nodiscard]]
+    static
+    inline
+    std::string_view
+    mime_type(const std::filesystem::path& path)
     {
         // Extract file extension
         const std::filesystem::path& ext = path.extension();
