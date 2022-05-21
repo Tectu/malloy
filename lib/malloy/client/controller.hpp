@@ -217,9 +217,6 @@ namespace malloy::client
             [this](auto&& cb) {
 #if MALLOY_FEATURE_TLS
                 if constexpr (isHttps) {
-                    if (!init_tls()) {
-                        throw std::runtime_error{"failed to init tls"};
-                    }
                     cb(std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                         *m_ioc,
