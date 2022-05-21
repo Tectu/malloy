@@ -218,7 +218,7 @@ namespace malloy::client
 #if MALLOY_FEATURE_TLS
                 if constexpr (isHttps) {
                     cb(std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
-                        m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                        m_cfg.logger->clone(m_cfg.logger->name() + " | HTTPS connection"),
                         *m_ioc,
                         *m_tls_ctx));
                     return;
