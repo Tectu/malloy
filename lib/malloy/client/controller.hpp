@@ -87,7 +87,9 @@ namespace malloy::client
          *
          * @return Whether initialization was successful.
          */
-        [[nodiscard("init might fail")]] bool init_tls();
+        [[nodiscard("init might fail")]]
+        bool
+        init_tls();
 #endif
 
         /**
@@ -105,7 +107,9 @@ namespace malloy::client
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
         requires concepts::http_callback<Callback, Filter>
-        [[nodiscard]] auto http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
+        [[nodiscard]]
+        auto
+        http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
             return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
         }
@@ -118,7 +122,9 @@ namespace malloy::client
          */
         template<malloy::http::concepts::body ReqBody, typename Callback, concepts::response_filter Filter = detail::default_resp_filter>
         requires concepts::http_callback<Callback, Filter>
-        [[nodiscard]] auto https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
+        [[nodiscard]]
+        auto
+        https_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
             return make_http_connection<true>(std::move(req), std::forward<Callback>(done), std::move(filter));
         }
@@ -129,7 +135,8 @@ namespace malloy::client
          *
          * @sa ws_connect()
          */
-        void wss_connect(
+        void
+        wss_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
@@ -148,7 +155,9 @@ namespace malloy::client
          *
          * @sa add_ca()
          */
-        void add_ca_file(const std::filesystem::path& file);
+        void
+        add_ca_file(const std::filesystem::path& file);
+
         /**
          * @brief Like add_ca_file(std::filesystem::path) but loads from an in-memory string
          * @warning tls_init() MUST be called before this.
@@ -156,7 +165,8 @@ namespace malloy::client
          *
          * @sa add_ca_file()
          */
-        void add_ca(const std::string& contents);
+        void
+        add_ca(const std::string& contents);
 #endif
 
         /**
@@ -175,7 +185,8 @@ namespace malloy::client
          *
          * @sa wss_connect()
          */
-        void ws_connect(
+        void
+        ws_connect(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
@@ -192,7 +203,9 @@ namespace malloy::client
         boost::asio::io_context* m_ioc{m_ioc_sm.get()};
         config m_cfg;
 
-        friend auto start(controller& ctrl) -> session
+        friend
+        auto
+        start(controller& ctrl) -> session
         {
             return session{ctrl.m_cfg, ctrl.m_tls_ctx, std::move(ctrl.m_ioc_sm)};
         }
@@ -201,7 +214,8 @@ namespace malloy::client
          * Checks whether the TLS context was initialized.
          * @note This will throw if the TLS context was not initialized.
          */
-        void check_tls() const
+        void
+        check_tls() const
         {
             // Check whether TLS context was initialized
             if (!m_tls_ctx)
@@ -209,7 +223,8 @@ namespace malloy::client
         }
 
         template<bool isHttps, malloy::http::concepts::body Body, typename Callback, typename Filter>
-        auto make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter) -> std::future<malloy::error_code>
+        auto
+        make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter) -> std::future<malloy::error_code>
         {
 
             std::promise<malloy::error_code> prom;
@@ -246,7 +261,8 @@ namespace malloy::client
         }
 
         template<bool isSecure>
-        void make_ws_connection(
+        void
+        make_ws_connection(
             const std::string& host,
             std::uint16_t port,
             const std::string& resource,
