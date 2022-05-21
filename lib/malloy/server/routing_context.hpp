@@ -58,7 +58,7 @@ namespace malloy::server
              * @brief Agent string used for connections
              * @details Set as the Server field in http headers
              */
-            std::string agent_string{"malloy-server"};
+            std::string agent_string{"malloy"};
         };
 
         routing_context(config cfg);
