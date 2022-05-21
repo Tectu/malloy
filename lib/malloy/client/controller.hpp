@@ -226,16 +226,31 @@ namespace malloy::client
         auto
         make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter) -> std::future<malloy::error_code>
         {
-
             std::promise<malloy::error_code> prom;
             auto err_channel = prom.get_future();
-            [this](auto&& cb) {
+            [req, this](auto&& cb) {        // ToDo: Don't capture req by value
 #if MALLOY_FEATURE_TLS
                 if constexpr (isHttps) {
-                    cb(std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
+                    // Create connection
+                    auto conn = std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTPS connection"),
                         *m_ioc,
-                        *m_tls_ctx));
+                        *m_tls_ctx
+                    );
+
+                    // Set SNI hostname (many hosts need this to handshake successfully)
+                    // Note: We copy the returned std::string_view into an std::string as the underlying OpenSSL API expects C-strings.
+                    const std::string hostname{ req.base()[malloy::http::field::host] };
+                    if (!SSL_set_tlsext_host_name(conn->stream().native_handle(), hostname.c_str())) {
+                        // ToDo: Improve error handling
+                        m_cfg.logger->error("could not set SNI hostname.");
+                        boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+                        throw boost::system::system_error{ec};
+                    }
+
+                    // Run
+                    cb(std::move(conn));
+
                     return;
                 }
 #endif
