@@ -105,10 +105,10 @@ namespace malloy::examples::ws
     /**
      * @brief Provides a timer over websocket.
      *
-     * @details Will send i = n for n in range 0..9 inclusive at an interval of 1
+     * @details Will send i = n for n in range 0..count inclusive at an interval of 1
      *          second and then close the connection (it counts from 0 to 9 with a second between each message)
      */
-    template<bool isClient>
+    template<bool isClient, size_t count = 5>
     class ws_timer :
         public std::enable_shared_from_this<ws_timer<isClient>>
     {
@@ -117,6 +117,7 @@ namespace malloy::examples::ws
         ws_timer(detail::ws_connection<isClient> conn) :
             m_conn{ std::move(conn) }
         {
+            static_assert(count > 0);
         }
 
         template<typename Req>
@@ -135,7 +136,7 @@ namespace malloy::examples::ws
         {
             if (ec)
                 spdlog::error("Uh oh, I couldn't write: '{}'", ec.message());
-            if (m_wrote_secs == 9)
+            if (m_wrote_secs == count-1)
                 m_conn->disconnect(); // Kill the connection, we've finished our job
         }
 
@@ -143,7 +144,7 @@ namespace malloy::examples::ws
         {
             using namespace std::chrono_literals;
 
-            for (std::size_t i = 0; i < 10; i++) {
+            for (std::size_t i = 0; i < count; i++) {
                 // Write to socket
                 m_msg_store[i] = fmt::format("i = {}", i);
                 m_conn->send(malloy::buffer(m_msg_store[i]), [this, me = this->shared_from_this()](auto ec, auto size) {
@@ -168,7 +169,7 @@ namespace malloy::examples::ws
         boost::beast::flat_buffer m_buffer;
         detail::ws_connection<isClient> m_conn;
         int m_wrote_secs{ 0 };
-        std::array<std::string, 10> m_msg_store; // Keeps sent messages data alive
+        std::array<std::string, count> m_msg_store; // Keeps sent messages data alive
     };
 
     using server_timer = ws_timer<false>;
