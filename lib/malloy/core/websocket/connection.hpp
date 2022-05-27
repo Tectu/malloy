@@ -96,6 +96,8 @@ namespace malloy::websocket
         void
         connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
         {
+            m_logger->trace("connect()");
+
             if (m_state != state::inactive)
                 throw std::logic_error{"connect() called on already active websocket connection"};
 
@@ -172,6 +174,8 @@ namespace malloy::websocket
         void
         disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
+            m_logger->trace("disconnect()");
+
             if (m_state == state::closed || m_state == state::closing)
                 throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
 
@@ -197,6 +201,8 @@ namespace malloy::websocket
         void
         force_disconnect(boost::beast::websocket::close_reason why = boost::beast::websocket::normal)
         {
+            m_logger->trace("force_disconnect()");
+
             if (m_state == state::inactive)
                 throw std::logic_error{"force_disconnect() called on inactive websocket connection"};
 
@@ -294,6 +300,8 @@ namespace malloy::websocket
         void
         go_active()
         {
+            m_logger->trace("go_active()");
+
             m_state = state::active;
             m_read_queue.run();
             m_write_queue.run();
@@ -303,6 +311,8 @@ namespace malloy::websocket
         void
         setup_connection()
         {
+            m_logger->trace("setup_connection()");
+
             // Set suggested timeout settings for the websocket
             m_ws.set_option(
                 boost::beast::websocket::stream_base::timeout::suggested(
@@ -322,6 +332,8 @@ namespace malloy::websocket
         void
         do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done)
         {
+            m_logger->trace("do_disconnect");
+
             // Update state
             m_state = state::closing;
 
@@ -380,6 +392,8 @@ namespace malloy::websocket
         void
         on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake)
         {
+            m_logger->trace("on_ready_for_handshake()");
+
             // Turn off the timeout on the tcp_stream, because
             // the websocket stream has its own timeout system.
             m_ws.get_lowest_layer([](auto& s) { s.expires_never(); });
@@ -396,12 +410,12 @@ namespace malloy::websocket
         void
         on_write(auto ec, auto size)
         {
+            m_logger->trace("on_write() wrote: '{}' bytes", size);
+
             if (ec) {
                 m_logger->error("on_write failed for websocket connection: '{}'", ec.message());
                 return;
             }
-
-            m_logger->trace("on_write() wrote: '{}' bytes", size);
         }
 
         void
