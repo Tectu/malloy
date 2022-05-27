@@ -166,6 +166,7 @@ namespace malloy::websocket
         /**
          * @brief Disconnect/stop/close the connection.
          * @note Attempting to send or receive after calling this will result in error(s).
+         * @note Calling this function will have no effect if the connection state is closed or closing.
          *
          * @param why Reason why the connection is being closed.
          *
@@ -177,14 +178,15 @@ namespace malloy::websocket
             m_logger->trace("disconnect()");
 
             if (m_state == state::closed || m_state == state::closing)
-                throw std::logic_error{"disconnect() called on closed or closing websocket connection"};
+                return;
 
             auto build_act = [this, why, me = this->shared_from_this()](const auto& on_done) mutable {
-                // Check we haven't been beaten
+                // Check we haven't been beaten to it
                 if (m_state == state::closed || m_state == state::closing) {
                     on_done();
                     return;
                 }
+
                 do_disconnect(why, on_done);
             };
 
@@ -194,7 +196,9 @@ namespace malloy::websocket
         }
 
         /**
-         * @brief Same as disconnect, but bypasses all queues and runs immediately
+         * @brief Same as disconnect, but bypasses all queues and runs immediately.
+         * @note Attempting to send or receive after calling this will result in error(s).
+         * @note Calling this function will have no effect if the connection state is closed or closing.
          *
          * @sa disconnect()
          */
