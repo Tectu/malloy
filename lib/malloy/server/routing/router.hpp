@@ -544,7 +544,6 @@ namespace malloy::server
                 req.base() = gen->header();
                 ep->handler(std::move(req), connection);
 
-
                 // We're done handling this request. The route handler will handle everything from hereon.
                 return;
             }
