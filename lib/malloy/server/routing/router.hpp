@@ -284,7 +284,8 @@ namespace malloy::server
                     std::invoke_result_t<func_t, const request_type&,
                                          const std::vector<std::string>&>>(
                     method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra));
-            } else {
+            }
+            else {
                 return add_regex_endpoint<
                     uses_captures,
                     std::invoke_result_t<func_t, const request_type&>>(
@@ -451,9 +452,7 @@ namespace malloy::server
 
         router(std::shared_ptr<spdlog::logger> logger, std::string_view m_server_str);
 
-
         void set_server_string(std::string_view str);
-
 
         template<typename Derived>
         [[nodiscard]]
@@ -565,7 +564,8 @@ namespace malloy::server
             std::regex regex;
             try {
                 regex = std::regex{target.cbegin(), target.cend()};
-            } catch (const std::regex_error& e) {
+            }
+            catch (const std::regex_error& e) {
                 if (m_logger)
                     m_logger->error("invalid route target supplied \"{}\": {}", target, e.what());
                 return false;
@@ -581,7 +581,8 @@ namespace malloy::server
             ep->filter = std::forward<ExtraInfo>(extra);
             if constexpr (wrapped) {
                 ep->handler = std::move(handler);
-            } else {
+            }
+            else {
                 ep->handler =
                     [w = std::forward<Func>(handler)](auto&&... args) {
                         return std::variant<Body>{w(std::forward<decltype(args)>(args)...)};

@@ -21,9 +21,8 @@ void router::set_logger(std::shared_ptr<spdlog::logger> logger)
 {
     m_logger = std::move(logger);
     for (const auto&[_, sub] : m_sub_routers) {
-        if (!sub->m_logger) {
+        if (!sub->m_logger)
             sub->m_logger = m_logger;
-        }
     }
 }
 
@@ -96,13 +95,14 @@ bool router::add_subrouter(std::string resource, router&& sub)
 
 void router::set_server_string(std::string_view str)
 {
-    if (str == m_server_str) {
+    // Nothing to do if the string is the same
+    if (str == m_server_str)
         return;
-    }
+
+    // Assign to this router and propagate through all sub-routers
     m_server_str = str;
-    for (const auto&[_, sub] : m_sub_routers) {
+    for (const auto& [_, sub] : m_sub_routers)
         sub->set_server_string(str);
-    }
 }
 
 bool router::add_preflight(const std::string_view target, http::preflight_config cfg)
@@ -182,6 +182,7 @@ bool router::add_websocket(std::string&& resource, typename websocket::connectio
     if (!handler) {
         if (m_logger)
             m_logger->warn("route has invalid handler. ignoring.");
+
         return false;
     }
 
