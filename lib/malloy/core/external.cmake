@@ -87,6 +87,7 @@ if (MALLOY_DEPENDENCY_JSON)
             FetchContent_Populate(json)
 
             set(JSON_BuildTests OFF CACHE INTERNAL "")
+            set(JSON_Install OFF CACHE INTERNAL "")
             add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR})
         endif()
     endif()
