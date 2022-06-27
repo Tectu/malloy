@@ -1,6 +1,9 @@
 include(external.cmake)
 include(../target_setup.cmake)
 
+# Define directory base path for FILE_SET
+set(MALLOY_SERVER_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Define target name
 set(TARGET "malloy-server")
 
@@ -23,8 +26,13 @@ add_subdirectory(auth)
 target_sources(
     ${TARGET}
     PUBLIC
-        routing_context.hpp
-        listener.hpp
+        FILE_SET
+            HEADERS
+            BASE_DIRS ${MALLOY_SERVER_BASE_DIR}
+            FILES
+                routing_context.hpp
+                listener.hpp
+
     PRIVATE
         routing_context.cpp
         listener.cpp
@@ -37,4 +45,21 @@ target_link_libraries(
         malloy-core
         $<$<BOOL:${MALLOY_FEATURE_APPFW}>:pantor::inja>
         $<$<BOOL:${MALLOY_FEATURE_APPFW}>:nlohmann_json::nlohmann_json>
+)
+
+
+
+########################################################################################################################
+# Install                                                                                                              #
+########################################################################################################################
+
+include(GNUInstallDirs)
+
+install(
+    TARGETS
+        ${TARGET}
+    EXPORT malloy-targets
+    FILE_SET
+        HEADERS
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/malloy/server
 )

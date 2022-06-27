@@ -1,6 +1,9 @@
 target_sources(
-        ${TARGET}
-        PUBLIC
-            basic.hpp
+    ${TARGET}
+    PUBLIC
+        FILE_SET
+            HEADERS
+            BASE_DIRS ${MALLOY_SERVER_BASE_DIR}
+            FILES
+                basic.hpp
 )
-

@@ -56,7 +56,7 @@ function(malloy_target_common_setup TARGET)
     target_include_directories(
         ${TARGET}
         PUBLIC
-            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/..
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_FUNCTION_LIST_DIR}/..>
     )
 
     target_link_libraries(

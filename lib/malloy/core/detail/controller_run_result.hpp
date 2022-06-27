@@ -113,7 +113,7 @@ namespace malloy::detail
         std::unique_ptr<boost::asio::io_context> m_io_ctx;
         workguard_t m_workguard;
         std::vector<std::thread> m_io_threads;
-        T m_ctrl;    // This order matters, the T may destructor need access to something related to the io context
+        T m_ctrl;    // This order matters, the T destructor may need access to something related to the i/o-context
     };
 
 }    // namespace malloy::detail

@@ -1,6 +1,9 @@
 include(external.cmake)
 include("../target_setup.cmake")
 
+# Define directory base path for FILE_SET
+set(MALLOY_CLIENT_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Define target name
 set(TARGET "malloy-client")
 
@@ -17,10 +20,16 @@ add_subdirectory(websocket)
 # Add files
 target_sources(
     ${TARGET}
+    PUBLIC
+        FILE_SET
+            HEADERS
+            BASE_DIRS ${MALLOY_CLIENT_BASE_DIR}
+            FILES
+                controller.hpp
+                type_traits.hpp
+
     PRIVATE
         controller.cpp
-        controller.hpp
-        type_traits.hpp
 )
 
 target_include_directories(
@@ -33,4 +42,20 @@ target_link_libraries(
     ${TARGET}
     PUBLIC
         malloy-core
+)
+
+
+########################################################################################################################
+# Install                                                                                                              #
+########################################################################################################################
+
+include(GNUInstallDirs)
+
+install(
+    TARGETS
+        ${TARGET}
+    EXPORT malloy-targets
+    FILE_SET
+        HEADERS
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/malloy/client
 )

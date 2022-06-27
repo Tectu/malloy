@@ -1,13 +1,19 @@
 target_sources(
     ${TARGET}
-    PRIVATE
-		connection.hpp
+    PUBLIC
+		FILE_SET
+			HEADERS
+			BASE_DIRS ${MALLOY_SERVER_BASE_DIR}
+			FILES
+				connection.hpp
+				connection_detector.hpp
+				connection_plain.hpp
+				connection_t.hpp
+				connection_tls.hpp
+				preflight_config.hpp
+				request_generator_t.hpp
+
+	PRIVATE
 		connection_detector.cpp
-		connection_detector.hpp
-		connection_plain.hpp
-		connection_t.hpp
-		connection_tls.hpp
 		preflight_config.cpp
-		preflight_config.hpp
-		request_generator_t.hpp
 )

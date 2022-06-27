@@ -1,6 +1,9 @@
 include(external.cmake)
 include(../target_setup.cmake)
 
+# Define directory base path for FILE_SET
+set(MALLOY_CORE_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Define target name
 set(TARGET "malloy-core")
 
@@ -25,10 +28,14 @@ add_subdirectory(detail)
 target_sources(
     ${TARGET}
     PUBLIC
-        controller.hpp
-        error.hpp
-        type_traits.hpp
-        utils.hpp
+        FILE_SET
+            HEADERS
+            BASE_DIRS ${MALLOY_CORE_BASE_DIR}
+            FILES
+                controller.hpp
+                error.hpp
+                type_traits.hpp
+                utils.hpp
 )
 
 # Set _WIN32_WINNT correctly (if needed)
@@ -43,3 +50,21 @@ if (WIN32)
             _WIN32_WINNT=${winnt_version}   # Keep this public so user's can't accidentally use conflicting versions
     )
 endif()
+
+
+
+########################################################################################################################
+# Install                                                                                                              #
+########################################################################################################################
+
+include(GNUInstallDirs)
+
+# Targets
+install(
+    TARGETS
+        ${TARGET}
+    EXPORT malloy-targets
+    FILE_SET
+        HEADERS
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/malloy/core
+)

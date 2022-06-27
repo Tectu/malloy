@@ -238,7 +238,9 @@ namespace malloy::websocket
                 buff = &buff /* Capturing reference by value copies the object */,
                 done = std::forward<decltype(done)>(done)](const auto& on_done) mutable {
                     assert(buff != nullptr);
-                    m_ws.async_read(*buff, [me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
+                    m_ws.async_read(*buff, [this, me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
+
+                        m_logger->warn("ec = {}: {}", ec.value(), ec.message());
                         std::invoke(std::forward<decltype(done)>(done), ec, size);
                         on_done();
                     });
@@ -284,8 +286,7 @@ namespace malloy::websocket
         std::string m_agent_string;
         act_queue_t m_write_queue;
         act_queue_t m_read_queue;
-
-        std::atomic<state> m_state{state::inactive};
+        std::atomic<state> m_state{ state::inactive };
 
         connection(
             std::shared_ptr<spdlog::logger> logger, stream&& ws, std::string agent_str) :
@@ -299,7 +300,6 @@ namespace malloy::websocket
             if (!m_logger)
                 throw std::invalid_argument("no valid logger provided.");
         }
-
         
         void
         go_active()
@@ -310,7 +310,6 @@ namespace malloy::websocket
             m_read_queue.run();
             m_write_queue.run();
         }
-
 
         void
         setup_connection()
@@ -337,6 +336,8 @@ namespace malloy::websocket
         do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done)
         {
             m_logger->trace("do_disconnect");
+
+            m_logger->warn("state = {}", (int)m_state.load());
 
             // Update state
             m_state = state::closing;

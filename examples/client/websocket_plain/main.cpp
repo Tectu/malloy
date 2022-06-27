@@ -23,6 +23,8 @@ int main()
         8080,
         "/echo",
         [](malloy::error_code ec, auto conn) {
+
+
             conn->send(malloy::buffer("Hello from Malloy!"), [conn](auto ec, auto) {
                 if (ec) {
                     std::cerr << "Uh oh, we couldn't send something: " << ec.message();
@@ -33,7 +35,7 @@ int main()
                     });
                 });
         });
-
+#if 0
     c.ws_connect(
         "127.0.0.1",
         8080,
@@ -50,7 +52,7 @@ int main()
                 });
         }
     );
-
+#endif
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(15s);
 

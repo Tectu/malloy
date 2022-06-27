@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.23)
 
 # Project
 project(
@@ -45,6 +45,12 @@ if (MALLOY_BUILD_SHARED)
     set(MALLOY_LIBRARY_TYPE SHARED)
 else()
     set(MALLOY_LIBRARY_TYPE STATIC)
+endif()
+
+# Disable server specific features if server feature is disabled
+if (NOT MALLOY_FEATURE_SERVER)
+    set(MALLOY_FEATURE_APPFW OFF)
+    set(MALLOY_FEATURE_HTML OFF)
 endif()
 
 # Set dependencies accordingly
@@ -101,3 +107,17 @@ message("")
 if (MALLOY_EXPORT_SYMBOLS)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ${MALLOY_TMP_WINEXPORT_ALL}) # Reset global var
 endif()
+
+
+########################################################################################################################
+# CPack                                                                                                                #
+########################################################################################################################
+set(CPACK_PACKAGE_VENDOR "Joel Bodenmann")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A C++ library providing embeddable server & client components for both HTTP and WebSocket.")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/readme.md")
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
+include(CPack)

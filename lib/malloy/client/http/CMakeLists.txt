@@ -1,7 +1,11 @@
 target_sources(
     ${TARGET}
-    PRIVATE
-        connection.hpp
-        connection_plain.hpp
-        connection_tls.hpp
+    PUBLIC
+        FILE_SET
+            HEADERS
+            BASE_DIRS ${MALLOY_CLIENT_BASE_DIR}
+            FILES
+                connection.hpp
+                connection_plain.hpp
+                connection_tls.hpp
 )

@@ -53,7 +53,7 @@ Building (and using) this library requires:
   - GCC >= 10.3 (MinGW works!)
   - Clang >= 13
   - MSVC >= 19.29 (VS 2019)
-- CMake 3.17 or newer
+- CMake 3.23 or newer
 
 As of today, this library was tested successfully on:
 - Windows 10 (with both MSVC and MinGW)
