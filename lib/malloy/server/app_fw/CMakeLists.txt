@@ -1,3 +1,5 @@
+include(external.cmake)
+
 target_sources(
     ${TARGET}
     PUBLIC
@@ -15,4 +17,18 @@ target_sources(
         app.cpp
         page_content.cpp
         page_master.cpp
+)
+
+target_link_libraries(
+    ${TARGET}
+    PUBLIC
+        pantor::inja
+        nlohmann_json::nlohmann_json
+)
+
+install(
+    TARGETS
+        inja
+        nlohmann_json
+    EXPORT malloy-targets
 )

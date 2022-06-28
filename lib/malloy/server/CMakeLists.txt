@@ -43,8 +43,6 @@ target_link_libraries(
     ${TARGET}
     PUBLIC
         malloy-core
-        $<$<BOOL:${MALLOY_FEATURE_APPFW}>:pantor::inja>
-        $<$<BOOL:${MALLOY_FEATURE_APPFW}>:nlohmann_json::nlohmann_json>
 )
 
 
