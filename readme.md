@@ -241,25 +241,25 @@ Where `my_application` is your application (or library) target that should consu
 Various `cmake` options are available to control the build:
 
 ### Build
-| Option | Default | Description |
-| --- | --- | --- |
-| `MALLOY_BUILD_EXAMPLES` | `ON` | Whether to build examples. |
-| `MALLOY_BUILD_TESTS` | `ON` | Whether to build the test suite(s). |
-| `MALLOY_BUILD_SHARED` | `OFF` | Whether to build shared libraries. If set to `OFF`, static libraries will be built.  |
+| Option                  | Default | Description                                                                         |
+|-------------------------|---------|-------------------------------------------------------------------------------------|
+| `MALLOY_BUILD_EXAMPLES` | `ON`    | Whether to build examples.                                                          |
+| `MALLOY_BUILD_TESTS`    | `ON`    | Whether to build the test suite(s).                                                 |
+| `MALLOY_BUILD_SHARED`   | `OFF`   | Whether to build shared libraries. If set to `OFF`, static libraries will be built. |
 
 ### Features
-| Option                  | Default | Description |
-|-------------------------|-------| --- |
-| `MALLOY_FEATURE_CLIENT` | `ON`  | Enable client features. |
-| `MALLOY_FEATURE_SERVER` | `ON`  | Enable server features. |
-| `MALLOY_FEATURE_HTML`   | `ON`  | Whether to enable HTML support. |
-| `MALLOY_FEATURE_TLS`    | `OFF` | Whether to enable TLS support. |
-| `MALLOY_FEATURE_APPFW`  | `OFF` | Whether to enable the server-side application framework components. |
+| Option                  | Default | Description                                                         |
+|-------------------------|---------|---------------------------------------------------------------------|
+| `MALLOY_FEATURE_CLIENT` | `ON`    | Enable client features.                                             |
+| `MALLOY_FEATURE_SERVER` | `ON`    | Enable server features.                                             |
+| `MALLOY_FEATURE_HTML`   | `ON`    | Whether to enable HTML support.                                     |
+| `MALLOY_FEATURE_TLS`    | `OFF`   | Whether to enable TLS support.                                      |
+| `MALLOY_FEATURE_APPFW`  | `OFF`   | Whether to enable the server-side application framework components. |
 
 ### Dependencies
-| Option | Default | Description |
-| --- | --- | --- |
-| `MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD` | `ON` | Whether to use `FetchContent()` to pull in `spdlog`. If set to `OFF`, `find_package()` is used instead. |
-| `MALLOY_DEPENDENCY_FMT_DOWNLOAD` | `ON` | Same as above but for `fmt` |
-| `MALLOY_DEPENDENCY_JSON_DOWNLOAD` | `ON` | Same as above but for [nlohmann/json](https://github.com/nlohmann/json) |
-| `MALLOY_DEPENDENCY_INJA_DOWNLOAD` | `ON` | Same as above but for [pantor/inja](https://github.com/pantor/inja) |
+| Option                              | Default | Description                                                                                             |
+|-------------------------------------|---------|---------------------------------------------------------------------------------------------------------|
+| `MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD` | `ON`    | Whether to use `FetchContent()` to pull in `spdlog`. If set to `OFF`, `find_package()` is used instead. |
+| `MALLOY_DEPENDENCY_FMT_DOWNLOAD`    | `ON`    | Same as above but for `fmt`                                                                             |
+| `MALLOY_DEPENDENCY_JSON_DOWNLOAD`   | `ON`    | Same as above but for [nlohmann/json](https://github.com/nlohmann/json)                                 |
+| `MALLOY_DEPENDENCY_INJA_DOWNLOAD`   | `ON`    | Same as above but for [pantor/inja](https://github.com/pantor/inja)                                     |
