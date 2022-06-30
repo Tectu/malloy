@@ -5,7 +5,6 @@ project(
     malloy
     VERSION 0.4.0
     LANGUAGES
-        C
         CXX
     HOMEPAGE_URL "https://github.com/tectu/malloy"
 )
@@ -18,11 +17,8 @@ option(MALLOY_FEATURE_CLIENT "Whether to build the client"     ON)
 option(MALLOY_FEATURE_SERVER "Whether to build the server"     ON)
 option(MALLOY_FEATURE_HTML   "Whether to enable HTML features" ON)
 option(MALLOY_FEATURE_TLS    "Whether to enable TLS features"  OFF)
-option(MALLOY_FEATURE_APPFW  "Whether to enable the server-side application framework components" OFF)
 option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog" ON)
 option(MALLOY_DEPENDENCY_FMT_DOWNLOAD "Whether to automatically fetch fmt" ON)
-option(MALLOY_DEPENDENCY_JSON_DOWNLOAD "Whether to automatically fetch nlohmann/json" ON)
-option(MALLOY_DEPENDENCY_INJA_DOWNLOAD "Whether to automatically fetch pantor/inja" ON)
 
 # Settings
 set(MALLOY_WIN32_WINNT "0x0A00")
@@ -55,16 +51,8 @@ endif()
 
 # Set dependencies accordingly
 set(MALLOY_DEPENDENCY_OPENSSL OFF)
-set(MALLOY_DEPENDENCY_JSON OFF)
-set(MALLOY_DEPENDENCY_INJA OFF)
 if (MALLOY_FEATURE_TLS)
     set(MALLOY_DEPENDENCY_OPENSSL ON)
-endif()
-if (MALLOY_FEATURE_APPFW)
-    set(MALLOY_FEATURE_SERVER ON)
-    set(MALLOY_FEATURE_HTML ON)
-    set(MALLOY_DEPENDENCY_JSON ON)
-    set(MALLOY_DEPENDENCY_INJA ON)
 endif()
 
 # Dependency minimum versions
@@ -98,12 +86,9 @@ message("    Client        : " ${MALLOY_FEATURE_CLIENT})
 message("    Server        : " ${MALLOY_FEATURE_SERVER})
 message("    HTML          : " ${MALLOY_FEATURE_HTML})
 message("    TLS           : " ${MALLOY_FEATURE_TLS})
-message("    App Framework : " ${MALLOY_FEATURE_APPFW})
 message("")
 message("  Dependencies:")
 message("    OpenSSL       : " ${MALLOY_DEPENDENCY_OPENSSL})
-message("    JSON          : " ${MALLOY_DEPENDENCY_JSON})
-message("    inja          : " ${MALLOY_DEPENDENCY_INJA})
 message("-------------------------------")
 message("")
 

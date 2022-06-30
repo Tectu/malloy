@@ -68,8 +68,6 @@ Required:
 
 Optional:
 - OpenSSL
-- [nlohmann/json](https://github.com/nlohmann/json)
-- [pantor/inja](https://github.com/pantor/inja)
 
 # Examples
 A variety of examples can be found in the `/examples` directory. You should definitely check those out! What follows are snippets for a simple HTTP server and a simple HTTP client.
@@ -219,7 +217,6 @@ if(NOT malloy_POPULATED)
     set(MALLOY_FEATURE_CLIENT OFF CACHE INTERNAL "")
     set(MALLOY_FEATURE_SERVER ON CACHE INTERNAL "")
     set(MALLOY_FEATURE_TLS ON CACHE INTERNAL "")
-    set(MALLOY_FEATURE_APPFW ON CACHE INTERNAL "")
     
     add_subdirectory(${malloy_SOURCE_DIR} ${malloy_BINARY_DIR})
 endif()
@@ -254,12 +251,9 @@ Various `cmake` options are available to control the build:
 | `MALLOY_FEATURE_SERVER` | `ON`    | Enable server features.                                             |
 | `MALLOY_FEATURE_HTML`   | `ON`    | Whether to enable HTML support.                                     |
 | `MALLOY_FEATURE_TLS`    | `OFF`   | Whether to enable TLS support.                                      |
-| `MALLOY_FEATURE_APPFW`  | `OFF`   | Whether to enable the server-side application framework components. |
 
 ### Dependencies
 | Option                              | Default | Description                                                                                             |
 |-------------------------------------|---------|---------------------------------------------------------------------------------------------------------|
 | `MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD` | `ON`    | Whether to use `FetchContent()` to pull in `spdlog`. If set to `OFF`, `find_package()` is used instead. |
 | `MALLOY_DEPENDENCY_FMT_DOWNLOAD`    | `ON`    | Same as above but for `fmt`                                                                             |
-| `MALLOY_DEPENDENCY_JSON_DOWNLOAD`   | `ON`    | Same as above but for [nlohmann/json](https://github.com/nlohmann/json)                                 |
-| `MALLOY_DEPENDENCY_INJA_DOWNLOAD`   | `ON`    | Same as above but for [pantor/inja](https://github.com/pantor/inja)                                     |

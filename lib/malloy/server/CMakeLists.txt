@@ -17,9 +17,6 @@ malloy_target_common_setup(${TARGET})
 add_subdirectory(http)
 add_subdirectory(routing)
 add_subdirectory(websocket)
-if (MALLOY_FEATURE_APPFW)
-    add_subdirectory(app_fw)
-endif()
 add_subdirectory(auth)
 
 # Add sources
