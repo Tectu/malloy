@@ -9,7 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR})
 ########################################################################################################################
 find_package(
     Boost
-    1.74.0
+    ${MALLOY_DEPENDENCY_BOOST_VERSION_MIN}
     REQUIRED
 )
 

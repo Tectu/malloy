@@ -67,6 +67,9 @@ if (MALLOY_FEATURE_APPFW)
     set(MALLOY_DEPENDENCY_INJA ON)
 endif()
 
+# Dependency minimum versions
+set(MALLOY_DEPENDENCY_BOOST_VERSION_MIN 1.74.0)
+
 # Add the main library
 add_subdirectory(lib)
 

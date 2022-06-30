@@ -25,9 +25,10 @@ write_basic_package_version_file(
     VERSION ${PACKAGE_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
+configure_file(malloy-config.cmake.in malloy-config.cmake @ONLY)
 install(
     FILES
-        malloy-config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/malloy-config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/malloy-config-version.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/malloy
 )
