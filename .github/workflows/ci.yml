@@ -128,7 +128,7 @@ jobs:
 
       - name: Setup MacOS environment
         if: runner.os == 'MacOS'
-        run: export LDFLAGS=L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
+        run: export LDFLAGS=-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib    # Fix issue with LLVM installed via homebrew not picking up correct libc++
 
       - name: Configure
         run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }} -DMALLOY_FEATURE_APPFW=ON
