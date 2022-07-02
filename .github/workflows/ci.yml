@@ -58,6 +58,14 @@ jobs:
               packages: "openssl", # We have to install something
               os: windows-latest,
             },
+            {
+              name: "MacOS Clang",
+              os: macOS-latest,
+              cc: "/usr/local/opt/llvm/bin/clang",
+              cxx: "/usr/local/opt/llvm/bin/clang++",
+              tls: OFF,
+              packages: "spdlog llvm",
+            }
           ]
 
     continue-on-error: false
@@ -66,6 +74,8 @@ jobs:
       BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
       CC: ${{ matrix.toolchain.cc }}
       CXX: ${{ matrix.toolchain.cxx }}
+      if: runner.os == 'macOS'
+
 
     name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }}) (shared: ${{ matrix.shared }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
@@ -115,6 +125,10 @@ jobs:
       - name: Install msvc
         if: ${{ matrix.toolchain.cxx == 'cl.exe' }} # This is a bit of a hack
         uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Setup MacOS environment
+        if: runner.os == 'MacOS'
+        run: export LDFLAGS=L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib
 
       - name: Configure
         run: cmake -Bbuild -GNinja -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.toolchain.tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }} -DMALLOY_FEATURE_APPFW=ON
