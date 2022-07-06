@@ -239,8 +239,6 @@ namespace malloy::websocket
                 done = std::forward<decltype(done)>(done)](const auto& on_done) mutable {
                     assert(buff != nullptr);
                     m_ws.async_read(*buff, [this, me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
-
-                        m_logger->warn("ec = {}: {}", ec.value(), ec.message());
                         std::invoke(std::forward<decltype(done)>(done), ec, size);
                         on_done();
                     });
@@ -336,8 +334,6 @@ namespace malloy::websocket
         do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done)
         {
             m_logger->trace("do_disconnect");
-
-            m_logger->warn("state = {}", (int)m_state.load());
 
             // Update state
             m_state = state::closing;
