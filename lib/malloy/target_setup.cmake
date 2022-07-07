@@ -75,7 +75,8 @@ function(malloy_target_common_setup TARGET)
 
     set_target_properties(
         ${TARGET} 
-        PROPERTIES 
+        PROPERTIES
+            VERSION ${PROJECT_VERSION}
             RUNTIME_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR} 
             LIBRARY_OUTPUT_DIRECTORY ${MALLOY_BINARY_DIR}
     )
