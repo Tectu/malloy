@@ -39,12 +39,13 @@ routing_context::routing_context(config cfg) :
         // Create the context
         m_tls_ctx = tls::manager::make_context(cert_path, key_path);
 
-        return true;
+        return m_tls_ctx != nullptr;
     }
 
     bool routing_context::init_tls(const std::string& cert, const std::string& key)
     {
         m_tls_ctx = tls::manager::make_context(cert, key);
+
         return m_tls_ctx != nullptr;
     }
 #endif
