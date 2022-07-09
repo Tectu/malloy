@@ -62,7 +62,7 @@ namespace malloy::server
             std::string agent_string{"malloy"};
         };
 
-        routing_context(config cfg);
+        explicit routing_context(config cfg);
         routing_context(const routing_context& other) = delete;
         routing_context(routing_context&& other) noexcept = default;
         ~routing_context() = default;
