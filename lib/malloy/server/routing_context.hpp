@@ -82,6 +82,15 @@ namespace malloy::server
              */
             bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
 
+            /**
+             * Initialize the TLS context.
+             *
+             * @note This must be called after `init()` but before `start()` if TLS is to be used.
+             *
+             * @param cert The certificate file (contents).
+             * @param key The key file (contents).
+             * @return Whether the initialization was successful.
+             */
             bool init_tls(const std::string& cert, const std::string& key);
         #endif
 
