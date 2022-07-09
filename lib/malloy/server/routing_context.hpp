@@ -30,6 +30,7 @@ namespace malloy::server
     {
     public:
         using session = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
+
         /**
          * Controller configuration.
          */
@@ -140,6 +141,7 @@ namespace malloy::server
             return session{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
     };
+
     auto start(routing_context&&) -> routing_context::session;
 
 }
