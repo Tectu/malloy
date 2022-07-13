@@ -56,8 +56,9 @@ Building (and using) this library requires:
 - CMake 3.23 or newer
 
 As of today, this library was tested successfully on:
-- Windows 10 (with both MSVC and MinGW)
+- Windows (with both MSVC and MinGW)
 - Linux (Ubuntu, Debian, Fedora, ...)
+- MacOS
 - FreeBSD
 
 ## Dependencies
