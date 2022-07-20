@@ -30,6 +30,7 @@ namespace malloy::server
     {
     public:
         using session = malloy::detail::controller_run_result<std::shared_ptr<malloy::server::listener>>;
+
         /**
          * Controller configuration.
          */
@@ -61,7 +62,7 @@ namespace malloy::server
             std::string agent_string{"malloy"};
         };
 
-        routing_context(config cfg);
+        explicit routing_context(config cfg);
         routing_context(const routing_context& other) = delete;
         routing_context(routing_context&& other) noexcept = default;
         ~routing_context() = default;
@@ -81,6 +82,15 @@ namespace malloy::server
              */
             bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
 
+            /**
+             * Initialize the TLS context.
+             *
+             * @note This must be called after `init()` but before `start()` if TLS is to be used.
+             *
+             * @param cert The certificate file (contents).
+             * @param key The key file (contents).
+             * @return Whether the initialization was successful.
+             */
             bool init_tls(const std::string& cert, const std::string& key);
         #endif
 
@@ -140,6 +150,7 @@ namespace malloy::server
             return session{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
     };
+
     auto start(routing_context&&) -> routing_context::session;
 
 }

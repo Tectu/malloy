@@ -76,6 +76,11 @@ namespace malloy::client
              * @details Set as the User-Agent in http headers
              */
             std::string user_agent{"malloy"};
+
+            /**
+             * The maximum allowed response body size in bytes.
+             */
+            std::uint64_t body_limit = 100'000'000;
         };
 
         controller(config cfg);
@@ -235,7 +240,8 @@ namespace malloy::client
                     auto conn = std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
                         m_cfg.logger->clone(m_cfg.logger->name() + " | HTTPS connection"),
                         *m_ioc,
-                        *m_tls_ctx
+                        *m_tls_ctx,
+                        m_cfg.body_limit
                     );
 
                     // Set SNI hostname (many hosts need this to handshake successfully)
@@ -256,7 +262,9 @@ namespace malloy::client
 #endif
                 cb(std::make_shared<http::connection_plain<Body, Filter, std::decay_t<Callback>>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
-                    *m_ioc));
+                    *m_ioc,
+                    m_cfg.body_limit)
+                );
             }([this, prom = std::move(prom), req = std::move(req), filter = std::forward<Filter>(filter), cb = std::forward<Callback>(cb)](auto&& conn) mutable {
                 if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                     req.set(malloy::http::field::user_agent, m_cfg.user_agent);

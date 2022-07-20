@@ -28,13 +28,16 @@ namespace malloy::client::http
         using resp_t = typename Filter::response_type;
         using callback_t = Callback;
 
-        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx) :
+        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, const std::uint64_t body_limit) :
             m_logger(std::move(logger)),
             m_resolver(boost::asio::make_strand(io_ctx))
         {
             // Sanity check
             if (!m_logger)
                 throw std::invalid_argument("no valid logger provided.");
+
+            // Set body limit
+            m_parser.body_limit(body_limit);
         }
 
         // Start the asynchronous operation
