@@ -309,7 +309,10 @@ namespace malloy::websocket
         {
             m_logger->trace("go_active()");
 
+            // Update state
             m_state = state::active;
+
+            // Start/run action queues
             m_read_queue.run();
             m_write_queue.run();
         }
@@ -325,6 +328,7 @@ namespace malloy::websocket
                     isClient ? boost::beast::role_type::client : boost::beast::role_type::server)
             );
 
+            // Set agent string/field
             const auto agent_field = isClient ? malloy::http::field::user_agent : malloy::http::field::server;
             m_ws.set_option(
                 boost::beast::websocket::stream_base::decorator(
@@ -338,7 +342,7 @@ namespace malloy::websocket
         void
         do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done)
         {
-            m_logger->trace("do_disconnect");
+            m_logger->trace("do_disconnect()");
 
             // Update state
             m_state = state::closing;
