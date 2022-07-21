@@ -234,9 +234,14 @@ namespace malloy::websocket
             m_logger->trace("read()");
 
             m_read_queue.push(
-                [this, me = this->shared_from_this(),
-                buff = &buff /* Capturing reference by value copies the object */,
-                done = std::forward<decltype(done)>(done)](const auto& on_done) mutable {
+                [
+                    this,
+                    me = this->shared_from_this(),
+                    buff = &buff, // Capturing reference by value copies the object
+                    done = std::forward<decltype(done)>(done)
+                ]
+                (const auto& on_done) mutable
+                {
                     assert(buff != nullptr);
                     m_ws.async_read(*buff, [this, me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
                         std::invoke(std::forward<decltype(done)>(done), ec, size);
