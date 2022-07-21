@@ -187,6 +187,18 @@ namespace malloy::websocket
 			return std::visit([](auto& s) { return s.get_executor(); }, m_underlying_conn);
 		}
 
+        /**
+         * @brief Returns `true` if the stream is open.
+         * @details The stream is open after a successful handshake, and when no error has occurred.
+         *
+         * @return Whether the stream is open.
+         */
+        bool
+        is_open() const
+        {
+            return std::visit([](auto& s){ return s.is_open(); }, m_underlying_conn);
+        }
+
         /** 
          * @brief Whether the underlying stream is TLS or not 
          * @note Always false if MALLOY_FEATURE_TLS == 0
