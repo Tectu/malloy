@@ -25,12 +25,16 @@ namespace malloy::examples::ws
      * @param on_read Callback invoked on a message being read or an error occurring. Must be invocable with malloy::error_code, std::string
      */
     template<bool isClient>
-    void oneshot_read(const detail::ws_connection<isClient>& conn, std::invocable<malloy::error_code, std::string> auto&& on_read)
+    void
+    oneshot_read(const detail::ws_connection<isClient>& conn, std::invocable<malloy::error_code, std::string> auto&& on_read)
     {
         auto buffer = std::make_shared<boost::beast::flat_buffer>();
-        conn->read(*buffer, [buffer, on_read = std::forward<decltype(on_read)>(on_read)](auto ec, auto) {
-            on_read(ec, malloy::buffers_to_string(malloy::buffer(buffer->cdata(), buffer->size())));
-        });
+        conn->read(
+            *buffer,
+            [buffer, on_read = std::forward<decltype(on_read)>(on_read)](auto ec, auto) {
+                on_read(ec, malloy::buffers_to_string(malloy::buffer(buffer->cdata(), buffer->size())));
+            }
+        );
     }
 
     /**
@@ -45,7 +49,12 @@ namespace malloy::examples::ws
     void accept_and_send(const auto& req, detail::ws_connection<isClient> conn, const std::string& msg_data)
     {
         auto msg = std::make_shared<std::string>(msg_data); // Keep message memory alive
-        conn->accept(req, [msg, conn] { conn->send(malloy::buffer(*msg), [msg](auto, auto) {}); });
+        conn->accept(
+            req,
+            [msg, conn] {
+                conn->send(malloy::buffer(*msg), [msg](auto, auto){ });
+            }
+        );
     }
 
 
@@ -62,13 +71,18 @@ namespace malloy::examples::ws
         {
         }
 
-        void run(const malloy::http::request<>& req)
+        void
+        run(const malloy::http::request<>& req)
         {
             m_conn->accept(req, boost::beast::bind_front_handler(&ws_echo::do_read, this->shared_from_this()));
         }
 
     private:
-        void on_read(malloy::error_code ec, std::size_t)
+        conn_t m_conn;
+        boost::beast::flat_buffer m_buffer;
+
+        void
+        on_read(malloy::error_code ec, std::size_t)
         {
             if (ec) {
                 spdlog::error("oh no, I couldn't read: '{}'", ec.message());
@@ -81,7 +95,8 @@ namespace malloy::examples::ws
             );
         }
 
-        void on_write(malloy::error_code ec, std::size_t amount)
+        void
+        on_write(malloy::error_code ec, std::size_t amount)
         {
             if (ec)
                 spdlog::error("I failed to write: '{}'", ec.message());
@@ -92,12 +107,12 @@ namespace malloy::examples::ws
                 do_read();
             }
         }
-        void do_read() {
+
+        void
+        do_read()
+        {
             m_conn->read(m_buffer, boost::beast::bind_front_handler(&ws_echo::on_read, this->shared_from_this()));
         }
-
-        conn_t m_conn;
-        boost::beast::flat_buffer m_buffer;
     };
 
     using server_echo = ws_echo<false>;
@@ -121,26 +136,36 @@ namespace malloy::examples::ws
         }
 
         template<typename Req>
-        void run(const Req& request)
+        void
+        run(const Req& request)
         {
             m_conn->accept(request, malloy::bind_front_handler(&ws_timer::do_write, this->shared_from_this()));
         }
 
     private:
-        void do_read()
+        boost::beast::flat_buffer m_buffer;
+        detail::ws_connection<isClient> m_conn;
+        int m_wrote_secs{ 0 };
+        std::array<std::string, count> m_msg_store; // Keeps sent messages data alive
+
+        void
+        do_read()
         {
             m_conn->read(m_buffer, malloy::bind_front_handler(&ws_timer::on_read, this->shared_from_this()));
         }
 
-        void on_write(malloy::error_code ec, std::size_t bytes)
+        void
+        on_write(malloy::error_code ec, std::size_t bytes)
         {
             if (ec)
                 spdlog::error("Uh oh, I couldn't write: '{}'", ec.message());
+
             if (m_wrote_secs == count-1)
                 m_conn->disconnect(); // Kill the connection, we've finished our job
         }
 
-        void do_write()
+        void
+        do_write()
         {
             using namespace std::chrono_literals;
 
@@ -156,7 +181,8 @@ namespace malloy::examples::ws
             }
         }
 
-        void on_read(malloy::error_code ec, std::size_t bytes)
+        void
+        on_read(malloy::error_code ec, std::size_t bytes)
         {
             if (ec) {
                 spdlog::error("Uh oh, I couldn't read: '{}'", ec.message());
@@ -165,11 +191,6 @@ namespace malloy::examples::ws
 
             do_write();
         }
-
-        boost::beast::flat_buffer m_buffer;
-        detail::ws_connection<isClient> m_conn;
-        int m_wrote_secs{ 0 };
-        std::array<std::string, count> m_msg_store; // Keeps sent messages data alive
     };
 
     using server_timer = ws_timer<false>;
