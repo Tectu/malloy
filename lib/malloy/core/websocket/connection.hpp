@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.hpp"
 #include "../error.hpp"
 #include "../http/request.hpp"
 #include "../type_traits.hpp"
