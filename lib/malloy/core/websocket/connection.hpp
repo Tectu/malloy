@@ -54,6 +54,15 @@ namespace malloy::websocket
         };
 
         /**
+         * Destructor.
+         */
+        virtual
+        ~connection() noexcept
+        {
+            m_logger->trace("destructor()");
+        }
+
+        /**
          * See stream::set_binary(bool)
          */
         void set_binary(const bool enabled) { m_ws.set_binary(enabled); }
