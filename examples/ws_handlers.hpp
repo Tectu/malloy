@@ -84,6 +84,10 @@ namespace malloy::examples::ws
         void
         on_read(malloy::error_code ec, std::size_t)
         {
+            // The connection was closed by the client
+            if (ec == malloy::websocket::error::closed)
+                return;
+
             if (ec) {
                 spdlog::error("oh no, I couldn't read: '{}'", ec.message());
                 return;
