@@ -2,11 +2,11 @@
 
 #include "types.hpp"
 #include "../error.hpp"
-#include "../http/request.hpp"
 #include "../type_traits.hpp"
 #include "../utils.hpp"
+#include "../detail/action_queue.hpp"
+#include "../http/request.hpp"
 #include "../websocket/stream.hpp"
-#include "malloy/core/detail/action_queue.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>

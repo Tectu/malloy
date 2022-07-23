@@ -3,7 +3,7 @@
 #include <concepts> 
 #include <variant>
 
-#include "malloy/core/type_traits.hpp"
+#include "../../core/type_traits.hpp"
 
 namespace malloy::server::concepts
 {

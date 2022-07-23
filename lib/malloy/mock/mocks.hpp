@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include <malloy/http/request.hpp>
-
+#include "../core/http/request.hpp"
 
 namespace malloy::mock::http
 {

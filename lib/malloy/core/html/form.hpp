@@ -1,10 +1,10 @@
 #pragma once
 
+#include "../http/request.hpp"
+
 #include <optional>
 #include <string>
 #include <vector>
-
-#include "malloy/core/http/request.hpp"
 
 namespace malloy::html
 {

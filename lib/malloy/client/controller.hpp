@@ -1,15 +1,15 @@
 #pragma once
 
-#include "http/connection_plain.hpp"
 #include "type_traits.hpp"
+#include "http/connection_plain.hpp"
 #include "websocket/connection.hpp"
-#include "malloy/core/detail/controller_run_result.hpp"
-#include "malloy/core/controller.hpp"
+#include "../core/controller.hpp"
+#include "../core/error.hpp"
+#include "../core/detail/controller_run_result.hpp"
 #include "../core/http/request.hpp"
 #include "../core/http/response.hpp"
 #include "../core/http/type_traits.hpp"
-#include "../core/error.hpp"
-#include "malloy/core/http/utils.hpp"
+#include "../core/http/utils.hpp"
 #if MALLOY_FEATURE_TLS
     #include "http/connection_tls.hpp"
 

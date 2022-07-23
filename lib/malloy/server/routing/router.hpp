@@ -4,21 +4,21 @@
 #include "endpoint_http_regex.hpp"
 #include "endpoint_http_files.hpp"
 #include "endpoint_websocket.hpp"
-#include "malloy/core/http/utils.hpp"
 #include "type_traits.hpp"
 #include "../http/connection.hpp"
 #include "../http/connection_plain.hpp"
 #include "../http/connection_t.hpp"
 #include "../http/preflight_config.hpp"
 #include "../../core/type_traits.hpp"
+#include "../../core/detail/version_checks.hpp"
 #include "../../core/http/generator.hpp"
 #include "../../core/http/http.hpp"
 #include "../../core/http/request.hpp"
 #include "../../core/http/response.hpp"
+#include "../../core/http/utils.hpp"
 #if MALLOY_FEATURE_TLS
     #include "../http/connection_tls.hpp"
 #endif
-#include "malloy/core/detail/version_checks.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
