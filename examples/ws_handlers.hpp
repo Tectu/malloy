@@ -57,6 +57,33 @@ namespace malloy::examples::ws
         );
     }
 
+    template<bool isClient>
+    struct read_until_disconnect
+    {
+        using conn_t = std::shared_ptr<malloy::websocket::connection<isClient>>;
+
+        explicit
+        read_until_disconnect(conn_t conn) :
+            m_conn{ std::move(conn) }
+        {
+        }
+
+        void
+        run(const malloy::http::request<>& req)
+        {
+            m_conn->accept(req, boost::beast::bind_front_handler(&read_until_disconnect::do_read, this->shared_from_this()));
+        }
+    private:
+        conn_t conn;
+
+        void
+        on_read(malloy::error_code ec, std::size_t)
+        {
+            // The connection was closed by the client
+            if (ec == malloy::websocket::error::closed)
+                return;
+        }
+    };
 
     template<bool isClient>
     class ws_echo :
