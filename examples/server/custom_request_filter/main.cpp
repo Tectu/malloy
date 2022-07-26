@@ -3,10 +3,7 @@
 #include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
 
-namespace ms = malloy::server;
-namespace fs = std::filesystem;
-
-constexpr auto download_path = "./downloads";
+static const std::filesystem::path download_path = "./downloads";
 
 struct request_filter
 {
@@ -17,8 +14,8 @@ struct request_filter
 	{
 		auto path = std::filesystem::path{ download_path };
 		path += malloy::http::resource_string(header);
-		if (!fs::exists(path))
-			fs::create_directories(path.parent_path());
+		if (!std::filesystem::exists(path))
+			std::filesystem::create_directories(path.parent_path());
 
 		malloy::error_code ec;
 		file.open(path.string().c_str(), boost::beast::file_mode::write, ec);
@@ -28,17 +25,17 @@ struct request_filter
 
 };
 
-int main() {
-
-	ms::routing_context::config cfg;
+int
+main()
+{
+	malloy::server::routing_context::config cfg;
 	cfg.num_threads = 2;
-	cfg.interface = "0.0.0.0";
+	cfg.interface = "127.0.0.1";
 	cfg.port = 8080;
-	cfg.logger = spdlog::default_logger();
 	cfg.doc_root = "/";
-	ms::routing_context ctrl{cfg};
+    cfg.logger = spdlog::default_logger();
 
-	spdlog::set_level(spdlog::level::debug);
+	malloy::server::routing_context ctrl{cfg};
 
 	ctrl.router().add(
         malloy::http::method::post,
@@ -51,4 +48,5 @@ int main() {
 
     start(std::move(ctrl)).run();
 
+    return EXIT_SUCCESS;
 }
