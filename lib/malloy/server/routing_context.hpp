@@ -80,7 +80,8 @@ namespace malloy::server
              * @param key_path Path to the key file.
              * @return Whether the initialization was successful.
              */
-            bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
+            bool
+            init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
 
             /**
              * Initialize the TLS context.
@@ -91,7 +92,8 @@ namespace malloy::server
              * @param key The key file (contents).
              * @return Whether the initialization was successful.
              */
-            bool init_tls(const std::string& cert, const std::string& key);
+            bool
+            init_tls(const std::string& cert, const std::string& key);
         #endif
 
         /**
@@ -100,7 +102,9 @@ namespace malloy::server
          * @return The top-level router.
          */
         [[nodiscard]]
-        constexpr const malloy::server::router& router() const noexcept
+        constexpr
+        const malloy::server::router&
+        router() const noexcept
         {
             return m_router;
         }
@@ -111,7 +115,9 @@ namespace malloy::server
          * @return The top-level router.
          */
         [[nodiscard]]
-        constexpr class malloy::server::router& router() noexcept
+        constexpr
+        malloy::server::router&
+        router() noexcept
         {
             return m_router;
         }
