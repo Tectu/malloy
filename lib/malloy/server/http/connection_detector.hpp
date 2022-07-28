@@ -57,7 +57,7 @@ namespace malloy::server::http
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
-        malloy::tcp::stream m_stream;
+        malloy::tcp::stream<> m_stream;
         std::shared_ptr<boost::asio::ssl::context> m_ctx;
         boost::beast::flat_buffer m_buffer;
         std::shared_ptr<const std::filesystem::path> m_doc_root;

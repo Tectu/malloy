@@ -305,11 +305,11 @@ namespace malloy::client
                         auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
                             if constexpr (isSecure) {
-                                return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream>{
-                                    malloy::tcp::stream{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
+                                return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream<>>{
+                                    malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
                             } else
 #endif
-                                return malloy::websocket::stream{malloy::tcp::stream{boost::asio::make_strand(*m_ioc)}};
+                                return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
                         }(), m_cfg.user_agent);
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {

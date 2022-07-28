@@ -25,7 +25,7 @@ namespace malloy::client::http
 
         // Called by base class
         [[nodiscard]]
-        malloy::tcp::stream&
+        malloy::tcp::stream<>&
         stream()
         {
             return m_stream;
@@ -39,6 +39,6 @@ namespace malloy::client::http
         }
 
     private:
-        malloy::tcp::stream m_stream;
+        malloy::tcp::stream<> m_stream;
     };
 }
