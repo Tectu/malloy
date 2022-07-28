@@ -1,6 +1,7 @@
 #pragma once
 
 #include "connection.hpp"
+#include "../../core/tcp/stream.hpp"
 
 namespace malloy::client::http
 {
@@ -24,7 +25,7 @@ namespace malloy::client::http
 
         // Called by base class
         [[nodiscard]]
-        boost::beast::tcp_stream&
+        malloy::tcp::stream&
         stream()
         {
             return m_stream;
@@ -38,6 +39,6 @@ namespace malloy::client::http
         }
 
     private:
-        boost::beast::tcp_stream m_stream;
+        malloy::tcp::stream m_stream;
     };
 }

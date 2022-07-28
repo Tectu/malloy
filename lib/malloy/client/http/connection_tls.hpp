@@ -1,6 +1,7 @@
 #pragma once
 
 #include "connection.hpp"
+#include "../../core/tcp/stream.hpp"
 
 #include <boost/beast/ssl/ssl_stream.hpp>
 
@@ -31,7 +32,7 @@ namespace malloy::client::http
 
         // Called by base class
         [[nodiscard]]
-        boost::beast::ssl_stream<boost::beast::tcp_stream>&
+        boost::beast::ssl_stream<malloy::tcp::stream>&
         stream()
         {
             return m_stream;
@@ -51,7 +52,7 @@ namespace malloy::client::http
         }
 
     private:
-        boost::beast::ssl_stream<boost::beast::tcp_stream> m_stream;
+        boost::beast::ssl_stream<malloy::tcp::stream> m_stream;
 
         void
         on_handshake(const boost::beast::error_code ec)

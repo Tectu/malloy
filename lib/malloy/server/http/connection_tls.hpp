@@ -1,6 +1,7 @@
 #pragma once
 
 #include "connection.hpp"
+#include "../../core/tcp/stream.hpp"
 
 #include <boost/beast/ssl/ssl_stream.hpp>
 
@@ -38,14 +39,14 @@ namespace malloy::server::http
 
         // Called by the base class
         [[nodiscard]]
-        boost::beast::ssl_stream<boost::beast::tcp_stream>&
+        boost::beast::ssl_stream<malloy::tcp::stream>&
         stream()
         {
             return m_stream;
         }
 
         [[nodiscard]]
-        boost::beast::ssl_stream<boost::beast::tcp_stream>
+        boost::beast::ssl_stream<malloy::tcp::stream>
         release_stream()
         {
             return std::move(m_stream);
@@ -109,7 +110,7 @@ namespace malloy::server::http
 
     private:
         std::shared_ptr<boost::asio::ssl::context> m_ctx;   // Keep the context alive
-        boost::beast::ssl_stream<boost::beast::tcp_stream> m_stream;
+        boost::beast::ssl_stream<malloy::tcp::stream> m_stream;
     };
 
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../tcp/stream.hpp"
 #include "../type_traits.hpp"
 
 #include <boost/beast/core.hpp>
@@ -23,14 +24,14 @@ namespace malloy::websocket
 
 #if MALLOY_FEATURE_TLS
 		using tls_stream = boost::beast::websocket::stream<
-			boost::beast::ssl_stream<boost::beast::tcp_stream>
+			boost::beast::ssl_stream<malloy::tcp::stream>
 		>;
 #endif
 		using websocket_t = std::variant<
 #if MALLOY_FEATURE_TLS
 			tls_stream,
 #endif
-			boost::beast::websocket::stream<boost::beast::tcp_stream>
+			boost::beast::websocket::stream<malloy::tcp::stream>
 		>;
         template<typename T>
         concept rw_completion_token = boost::asio::completion_token_for<T, void(malloy::error_code, std::size_t)>;
@@ -48,28 +49,37 @@ namespace malloy::websocket
 	class stream {
 		using ws_t = detail::websocket_t;
 	public:
-		explicit stream(detail::websocket_t&& ws) : m_underlying_conn{ std::move(ws) }
+		explicit
+        stream(detail::websocket_t&& ws) :
+            m_underlying_conn{ std::move(ws) }
 		{
 		}
 
-		explicit stream(boost::beast::websocket::stream<boost::beast::tcp_stream>&& s) : m_underlying_conn{ std::move(s) }
+		explicit
+        stream(boost::beast::websocket::stream<malloy::tcp::stream>&& s) :
+            m_underlying_conn{ std::move(s) }
         {
         }
 
-        explicit stream(boost::beast::tcp_stream&& from) :
-            stream{boost::beast::websocket::stream<boost::beast::tcp_stream>{std::move(from)}}
+        explicit
+        stream(malloy::tcp::stream&& from) :
+            stream{boost::beast::websocket::stream<malloy::tcp::stream>{std::move(from)}}
         {
         }
 
 #if MALLOY_FEATURE_TLS
-		explicit stream(detail::tls_stream&& ws) : m_underlying_conn{std::move(ws)}
+		explicit
+        stream(detail::tls_stream&& ws) :
+            m_underlying_conn{std::move(ws)}
 		{
 		}
 
-        explicit stream(boost::beast::ssl_stream<boost::beast::tcp_stream>&& from) :
+        explicit
+        stream(boost::beast::ssl_stream<malloy::tcp::stream>&& from) :
             stream{malloy::websocket::detail::tls_stream{
                 boost::beast::websocket::stream<
-                    boost::beast::ssl_stream<boost::beast::tcp_stream>>{std::move(from)}}}
+                    boost::beast::ssl_stream<malloy::tcp::stream>
+                >{std::move(from)}}}
         {
         }
 #endif
