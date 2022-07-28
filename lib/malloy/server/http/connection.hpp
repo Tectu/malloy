@@ -31,8 +31,10 @@ namespace malloy::server::http
     /**
      * An HTTP server connection.
      *
-     * @note This uses CRTP to allow using the same code for different connection
-     *       types (eg. plain or TLS).
+     * @note This uses CRTP to allow using the same code for different connection types (eg. plain or TLS).
+     *
+     * @sa connection_plain
+     * @sa connection_tls
      */
     template<class Derived>
     class connection
@@ -83,7 +85,6 @@ namespace malloy::server::http
                 return body<Body>(std::forward<Callback>(done), [](auto) {});
             }
 
-
         private:
             request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent, boost::beast::flat_buffer buff) :
                 m_buffer{ std::move(buff) },
@@ -112,7 +113,6 @@ namespace malloy::server::http
             virtual void http(const path& root, const req_t& req, conn_t) = 0;
 
             virtual ~handler() = default;
-        
         };
 
         /**
@@ -183,7 +183,8 @@ namespace malloy::server::http
         }
 
         // ToDo: Should this be protected?
-        void do_read()
+        void
+        do_read()
         {
             m_logger->trace("do_read()");
 
@@ -212,7 +213,9 @@ namespace malloy::server::http
     protected:
         boost::beast::flat_buffer m_buffer;
 
-        void report_err(malloy::error_code ec, std::string_view context) {
+        void
+        report_err(malloy::error_code ec, std::string_view context)
+        {
             m_logger->error("{}: {} (code: {})", context, ec.message(), ec.value());
         }
 
@@ -224,9 +227,9 @@ namespace malloy::server::http
         std::shared_ptr<handler> m_router;
         std::shared_ptr<void> m_response;
 
-        // Pointer to allow handoff to generator since it cannot be copied or
-        // moved
+        // Pointer to allow handoff to generator since it cannot be copied or moved
         typename request_generator::h_parser_t m_parser;
+
         /**
          * Cast to derived class type.
          *
@@ -238,7 +241,8 @@ namespace malloy::server::http
             return static_cast<Derived&>(*this);
         }
 
-        void on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
+        void
+        on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
         {
             m_logger->trace("on_read(): bytes read: {}", bytes_transferred);
 
@@ -279,7 +283,8 @@ namespace malloy::server::http
             }
         }
 
-        void on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
+        void
+        on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
         {
             m_logger->trace("on_write(): bytes written: {}", bytes_transferred);
 
@@ -305,7 +310,8 @@ namespace malloy::server::http
         /**
          * Close the connection.
          */
-        void do_close()
+        void
+        do_close()
         {
             m_logger->trace("do_close()");
 

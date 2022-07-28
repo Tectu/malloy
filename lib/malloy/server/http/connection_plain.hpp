@@ -5,6 +5,9 @@
 namespace malloy::server::http
 {
 
+    /**
+     * A plain connection.
+     */
     class connection_plain :
         public connection<connection_plain>,
         public std::enable_shared_from_this<connection_plain>
