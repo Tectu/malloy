@@ -30,7 +30,8 @@ connection_detector::connection_detector(
         throw std::invalid_argument("no valid logger provided.");
 }
 
-void connection_detector::run()
+void
+connection_detector::run()
 {
     // Set the timeout.
     boost::beast::get_lowest_layer(m_stream).expires_after(std::chrono::seconds(30));
@@ -62,26 +63,31 @@ public:
     {
     }
 
-    void websocket(const std::filesystem::path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>& conn) override
+    void
+    websocket(const std::filesystem::path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>& conn) override
     {
         send_msg<true>(root, req, conn); 
     }
 
-    void http(const std::filesystem::path& root, const req_t& req, conn_t conn) override
+    void
+    http(const std::filesystem::path& root, const req_t& req, conn_t conn) override
     {
         send_msg<false>(root, req, conn); 
     }
 
 private:
     template<bool isWs>
-    void send_msg(const std::filesystem::path& root, const req_t& req, auto conn) {
+    void
+    send_msg(const std::filesystem::path& root, const req_t& req, auto conn)
+    {
         router_->handle_request<isWs, Derived>(root, req, conn); 
     }
 
     router_t router_;
 };
 
-void connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] bool result)
+void
+connection_detector::on_detect(boost::beast::error_code ec, const bool result)
 {
     if (ec) {
         m_logger->critical("connection type detection error: {}", ec.message());
@@ -95,22 +101,28 @@ void connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]
 #if MALLOY_FEATURE_TLS
         if (result && m_ctx) {
             // Launch TLS connection
-            cb(std::make_shared<connection_tls>(
-                m_logger,
-                m_stream.release_socket(),
-                m_ctx,
-                std::move(m_buffer),
-                m_doc_root,
-                std::make_shared<router_adaptor<connection_tls>>(m_router)));
+            cb(
+                std::make_shared<connection_tls>(
+                    m_logger,
+                    m_stream.release_socket(),
+                    m_ctx,
+                    std::move(m_buffer),
+                    m_doc_root,
+                    std::make_shared<router_adaptor<connection_tls>>(m_router)
+                )
+            );
         }
 #endif
 
-        cb(std::make_shared<connection_plain>(
-            m_logger,
-            m_stream.release_socket(),
-            std::move(m_buffer),
-            m_doc_root,
-            std::make_shared<router_adaptor<connection_plain>>(m_router)));
+        cb(
+            std::make_shared<connection_plain>(
+                m_logger,
+                m_stream.release_socket(),
+                std::move(m_buffer),
+                m_doc_root,
+                std::make_shared<router_adaptor<connection_plain>>(m_router)
+            )
+        );
     }([this](auto&& conn) {
         conn->cfg.agent_string = m_agent_string;
         conn->run();

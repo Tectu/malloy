@@ -53,7 +53,8 @@ namespace malloy::server::http
         /**
          * Launch the detector
          */
-        void run();
+        void
+        run();
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
@@ -64,7 +65,8 @@ namespace malloy::server::http
         std::shared_ptr<malloy::server::router> m_router;
         std::string m_agent_string;
 
-        void on_detect(boost::beast::error_code ec, bool result);
+        void
+        on_detect(boost::beast::error_code ec, bool result);
     };
 
 }
