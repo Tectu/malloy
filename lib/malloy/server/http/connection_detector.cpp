@@ -93,7 +93,7 @@ connection_detector::run()
 }
 
 void
-connection_detector::on_detect(boost::beast::error_code ec, const bool result)
+connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] bool result)
 {
     if (ec) {
         m_logger->critical("connection type detection error: {}", ec.message());
@@ -103,7 +103,7 @@ connection_detector::on_detect(boost::beast::error_code ec, const bool result)
     // ToDo: Check whether it's okay to fall back to a plain session if a handshake was detected
     //       Currently we'd do this if no TLS context was provided.
 
-    [result, this](auto&& cb) {
+    [&, this](auto&& cb) {
 #if MALLOY_FEATURE_TLS
         if (result && m_ctx) {
             // Launch TLS connection
