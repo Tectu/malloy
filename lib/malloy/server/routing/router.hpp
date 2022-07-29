@@ -469,6 +469,11 @@ namespace malloy::server
                 return;
             }
 
+            //
+            // At this point we know that this particular router is going to handle the request.
+            //
+
+            // Forward to appropriate handler.
             if constexpr (isWebsocket)
                 handle_ws_request<Derived>(std::move(req), connection);
             else
