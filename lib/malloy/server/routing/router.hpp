@@ -52,7 +52,7 @@ namespace malloy::server
             t.do_write(std::forward<Args>(args)...);
         };
 
-        /** 
+        /**
          * @brief Provides a default Filter to ease use of interface
          * @details A default type for Filter in route::add which allows request
          * filters to be opt-in rather than a required piece of boilerplate
@@ -76,18 +76,19 @@ namespace malloy::server
          * @param connection The connection.
          */
         template<typename Body>
-        void send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection, std::string_view server_str)
+        void
+        send_response(const boost::beast::http::request_header<>& req, malloy::http::response<Body>&& resp, http::connection_t connection, std::string_view server_str)
         {
             // Add more information to the response
             //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works
             resp.version(req.version());
-            if (!malloy::http::has_field(resp, malloy::http::field::server)) {
+            if (!malloy::http::has_field(resp, malloy::http::field::server))
                 resp.set(boost::beast::http::field::server, server_str);
-            }
             resp.prepare_payload();
 
-            std::visit([resp = std::move(resp)](auto& c) mutable {
-                c->do_write(std::move(resp));
+            std::visit(
+                [resp = std::move(resp)](auto& c) mutable {
+                    c->do_write(std::move(resp));
                 },
                 connection
             );
@@ -101,10 +102,18 @@ namespace malloy::server
      */
     class router final
     {
-        /// Create the lambda wrapped callback for the writer
-        auto make_endpt_writer_callback() {
+        /**
+         * Create the lambda wrapped callback for the writer
+         */
+        auto
+        make_endpt_writer_callback() {
             return [this]<typename R>(const auto& req, R&& resp, const auto& conn) {
-                std::visit([&, this]<typename Re>(Re&& resp) { detail::send_response(req, std::forward<Re>(resp), conn, m_server_str); }, std::forward<R>(resp));
+                std::visit(
+                    [&, this]<typename Re>(Re&& resp) {
+                        detail::send_response(req, std::forward<Re>(resp), conn, m_server_str);
+                    },
+                    std::forward<R>(resp)
+                );
             };
         }
 
@@ -112,7 +121,10 @@ namespace malloy::server
         {
         public:
             virtual ~abstract_req_validator() = default;
-            virtual auto process(const boost::beast::http::request_header<>&, const http::connection_t& conn) -> bool = 0;
+
+            virtual
+            bool
+            process(const boost::beast::http::request_header<>&, const http::connection_t& conn) = 0;
         };
 
         template<concepts::request_validator V, typename Writer>
@@ -122,20 +134,26 @@ namespace malloy::server
         public:
             Writer writer;
 
-            req_validator_impl(V validator, Writer writer_) : writer{std::move(writer_)}, validator_{std::move(validator)} {}
+            req_validator_impl(V validator, Writer writer_) :
+                writer{std::move(writer_)},
+                m_validator{std::move(validator)}
+            {
+            }
 
-            auto process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) -> bool override {
-                auto maybe_resp = std::invoke(validator_, h);
-                if (!maybe_resp) {
+            bool
+            process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) override
+            {
+                auto maybe_resp = std::invoke(m_validator, h);
+                if (!maybe_resp)
                     return false;
-                } else {
+                else {
                     writer(h, std::move(*maybe_resp), conn);
                     return true;
                 }
             }
 
         private:
-            V validator_;
+            V m_validator;
         };
 
         class policy_store
@@ -144,10 +162,12 @@ namespace malloy::server
             policy_store(std::string reg, std::unique_ptr<abstract_req_validator> validator) :
                 m_validator{std::move(validator)},
                 m_raw_reg{std::move(reg)}
-            {}
+            {
+            }
 
             [[nodiscard]]
-            bool process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) const
+            bool
+            process(const boost::beast::http::request_header<>& h, const http::connection_t& conn) const
             {
                 if (!matches(h.target()))
                     return false;
@@ -156,7 +176,8 @@ namespace malloy::server
             }
 
         private:
-            bool matches(std::string_view url) const
+            bool
+            matches(std::string_view url) const
             {
                 if (!m_compiled_reg)
                     compile_match_expr();
@@ -164,7 +185,8 @@ namespace malloy::server
                 return std::regex_match(surl, *m_compiled_reg);
             }
 
-            void compile_match_expr() const
+            void
+            compile_match_expr() const
             {
                 m_compiled_reg = std::regex{m_raw_reg};
             }
@@ -205,7 +227,8 @@ namespace malloy::server
          *
          * @param logger The logger instance to use.
          */
-        explicit router(std::shared_ptr<spdlog::logger> logger);
+        explicit
+        router(std::shared_ptr<spdlog::logger> logger);
 
         /**
          * Copy constructor.
@@ -228,7 +251,8 @@ namespace malloy::server
          * @param rhs The right-hand-side object to copy-assign from.
          * @return A reference to the assignee.
          */
-        router& operator=(const router& rhs) = delete;
+        router&
+        operator=(const router& rhs) = delete;
 
         /**
          * Move assignment operator.
@@ -236,14 +260,16 @@ namespace malloy::server
          * @param rhs The right-hand-side object to move-assign from.
          * @return A reference to the assignee.
          */
-        router& operator=(router&& rhs) noexcept = default;
+        router&
+        operator=(router&& rhs) noexcept = default;
 
         /**
          * Set the logger to use.
          *
          * @param logger The logger to use.
          */
-        void set_logger(std::shared_ptr<spdlog::logger> logger);
+        void
+        set_logger(std::shared_ptr<spdlog::logger> logger);
 
         /**
          * Add a sub-router for a specific resource.
@@ -252,8 +278,14 @@ namespace malloy::server
          * @param sub_router The sub-router.
          * @return Whether adding the sub-router was successful.
          */
-        bool add_subrouter(std::string resource, std::unique_ptr<router> sub_router);
-        bool add_subrouter(std::string resource, router&& sub_router);
+        bool
+        add_subrouter(std::string resource, std::unique_ptr<router> sub_router);
+
+        /**
+         * @copydoc add_subrouter
+         */
+        bool
+        add_subrouter(std::string resource, router&& sub_router);
 
         /**
          * Add an HTTP regex endpoint.
@@ -270,7 +302,8 @@ namespace malloy::server
         template<
             concepts::request_filter ExtraInfo,
             concepts::route_handler<typename ExtraInfo::request_type> Func>
-        bool add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
+        bool
+        add(const method_type method, const std::string_view target, Func&& handler, ExtraInfo&& extra)
         {
             using func_t = std::decay_t<Func>;
 
@@ -294,12 +327,14 @@ namespace malloy::server
         }
 
         template<concepts::route_handler<typename detail::default_route_filter::request_type> Func>
-        auto add(const method_type method, const std::string_view target, Func&& handler)
+        auto
+        add(const method_type method, const std::string_view target, Func&& handler)
         {
             return add(method, target, std::forward<Func>(handler), detail::default_route_filter{});
         }
 
-        bool add_preflight(std::string_view target, http::preflight_config cfg);
+        bool
+        add_preflight(std::string_view target, http::preflight_config cfg);
 
         /**
          * Add an HTTP file-servinc location.
@@ -311,7 +346,8 @@ namespace malloy::server
          * @return Whether adding the file serving was successful.
          */
         template<malloy::concepts::callable_string CacheControl>
-        bool add_file_serving(std::string resource, std::filesystem::path storage_base_path, const CacheControl& cc)
+        bool
+        add_file_serving(std::string resource, std::filesystem::path storage_base_path, const CacheControl& cc)
         {
             // Log
             if (m_logger)
@@ -335,7 +371,8 @@ namespace malloy::server
          * @param storage_base_path
          * @return Whether adding the file serving was successful.
          */
-        bool add_file_serving(std::string resource, std::filesystem::path storage_base_path)
+        bool
+        add_file_serving(std::string resource, std::filesystem::path storage_base_path)
         {
             return add_file_serving(
                 std::move(resource),
@@ -352,7 +389,8 @@ namespace malloy::server
          * @param status The HTTP status code to use. This must be a 3xx status code.
          * @return Whether adding the redirect was successful.
          */
-        bool add_redirect(malloy::http::status status, std::string&& resource_old, std::string&& resource_new);
+        bool
+        add_redirect(malloy::http::status status, std::string&& resource_old, std::string&& resource_new);
 
         /**
          * Add a websocket endpoint.
@@ -361,7 +399,8 @@ namespace malloy::server
          * @param handler The handler for incoming websocket requests.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
+        bool
+        add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler);
 
         /**
          * Add an access policy for a specific resource.
@@ -404,7 +443,8 @@ namespace malloy::server
         void handle_request(
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
-            Connection&& connection)
+            Connection&& connection
+        )
         {
             // Handle policy
             if constexpr (!isWebsocket) {
@@ -435,7 +475,9 @@ namespace malloy::server
                 handle_http_request<Derived>(doc_root, std::move(req), connection);
         }
 
-        constexpr std::string_view server_string() const
+        constexpr
+        std::string_view
+        server_string() const
         {
             return m_server_str;
         }
@@ -452,7 +494,8 @@ namespace malloy::server
 
         router(std::shared_ptr<spdlog::logger> logger, std::string_view m_server_str);
 
-        void set_server_string(std::string_view str);
+        void
+        set_server_string(std::string_view str);
 
         template<typename Derived>
         [[nodiscard]]
@@ -610,7 +653,8 @@ namespace malloy::server
          * @param ep The endpoint to add.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_http_endpoint(std::unique_ptr<endpoint_http>&& ep);
+        bool
+        add_http_endpoint(std::unique_ptr<endpoint_http>&& ep);
 
         /**
          * Adds a WebSocket endpoint.
@@ -620,7 +664,8 @@ namespace malloy::server
          * @param ep The endpoint to add.
          * @return Whether adding the endpoint was successful.
          */
-        bool add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep);
+        bool
+        add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep);
 
         /**
          * Adds a message to the log or throws an exception if no logger is available.
@@ -634,23 +679,28 @@ namespace malloy::server
          * @return
          */
         template<typename FormatString, typename... Args>
-        bool log_or_throw(const std::exception& exception, const spdlog::level::level_enum level, const FormatString& fmt, Args&&... args)
+        bool
+        log_or_throw(
+            const std::exception& exception,
+            const spdlog::level::level_enum level,
+            const FormatString& fmt, Args&&... args
+        )
         {
             if (m_logger) {
                 m_logger->log(level,
 #if MALLOY_DETAIL_HAS_FMT_8
-                              fmt::runtime(fmt)
+                      fmt::runtime(fmt)
 #else
-                              fmt
+                      fmt
 #endif
-                                  ,
-                              std::forward<Args>(args)...);
+                      ,
+                      std::forward<Args>(args)...
+                );
                 return false;
             }
 
-            else {
+            else
                 throw exception;
-            }
         }
     };
 

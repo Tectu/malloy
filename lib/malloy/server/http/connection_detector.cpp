@@ -13,7 +13,9 @@ using namespace malloy::server::http;
 /**
  * Router adaptor.
  *
- * @details This is needed to break the dependency cycle between connection and router
+ * @details This is needed to break the dependency cycle between connection and router.
+ *
+ * @sa connection
  */
 template<typename Derived>
 class router_adaptor :
@@ -22,7 +24,7 @@ class router_adaptor :
     using router_t = std::shared_ptr<malloy::server::router>;
 
 public:
-    using conn_t = const connection_t&;
+    using http_conn_t = const connection_t&;
     using req_t = std::shared_ptr<typename connection<Derived>::request_generator>;
 
     router_adaptor(router_t router) :
@@ -37,7 +39,7 @@ public:
     }
 
     void
-    http(const std::filesystem::path& root, const req_t& req, conn_t conn) override
+    http(const std::filesystem::path& root, const req_t& req, http_conn_t conn) override
     {
         send_msg<false>(root, req, conn);
     }
@@ -101,7 +103,7 @@ connection_detector::on_detect(boost::beast::error_code ec, const bool result)
     // ToDo: Check whether it's okay to fall back to a plain session if a handshake was detected
     //       Currently we'd do this if no TLS context was provided.
 
-    [&, this](auto&& cb) {
+    [result, this](auto&& cb) {
 #if MALLOY_FEATURE_TLS
         if (result && m_ctx) {
             // Launch TLS connection

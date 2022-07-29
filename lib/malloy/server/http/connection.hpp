@@ -58,7 +58,8 @@ namespace malloy::server::http
             header() const { return m_header; }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback, typename SetupCb>
-            auto body(Callback&& done, SetupCb&& setup)
+            auto
+            body(Callback&& done, SetupCb&& setup)
             {
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
@@ -69,20 +70,24 @@ namespace malloy::server::http
                 boost::beast::http::async_read(
                     m_parent->derived().m_stream, m_buffer, *parser,
                     [_ = m_parent,
-                     done = std::forward<Callback>(done),
-                     p = parser, this_ = this->shared_from_this(), this](const auto& ec, auto) {
+                        done = std::forward<Callback>(done),
+                        p = parser, this_ = this->shared_from_this(),
+                        this
+                    ](const auto& ec, auto) {
                         if (ec && m_parent->m_logger) {    // TODO: see #40
                             m_parent->m_logger->error("failed to read http request body: '{}'", ec.message());
                             return;
                         }
                         done(malloy::http::request<Body>{p->release()});
-                    });
+                    }
+                );
             }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
-            auto body(Callback&& done)
+            auto
+            body(Callback&& done)
             {
-                return body<Body>(std::forward<Callback>(done), [](auto) {});
+                return body<Body>(std::forward<Callback>(done), [](auto){});
             }
 
         private:
@@ -100,19 +105,29 @@ namespace malloy::server::http
             header_t m_header;
             std::shared_ptr<connection> m_parent;
         };
-        
+
+        /**
+         * @details This is needed to break the dependency cycle between connection and router.
+         */
+        // ToDo: Can the connections be moved? At least there is an inconsistency between WS and HTTP connection passing. Intentional?
         class handler
         {
         public:
             using request = malloy::http::request<>;
-            using conn_t = const connection_t&;
+            using http_conn_t = const connection_t&;
             using path = std::filesystem::path;
             using req_t = std::shared_ptr<request_generator>;
 
-            virtual void websocket(const path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>&) = 0;
-            virtual void http(const path& root, const req_t& req, conn_t) = 0;
+            virtual
+            ~handler() = default;
 
-            virtual ~handler() = default;
+            virtual
+            void
+            websocket(const path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>&) = 0;
+
+            virtual
+            void
+            http(const path& root, const req_t& req, http_conn_t) = 0;
         };
 
         /**
