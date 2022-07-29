@@ -42,6 +42,7 @@ namespace malloy::server
          * @param endpoint The enpoint to use.
          * @param router The router to use.
          * @param http_doc_root The path to the HTTP doc root.
+         * @param agent_string The HTTP agent string field value.
          */
         listener(
             std::shared_ptr<spdlog::logger> logger,
@@ -66,7 +67,8 @@ namespace malloy::server
         /**
          * Destructor
          */
-        virtual ~listener() = default;
+        virtual
+        ~listener() = default;
 
         /**
          * Copy assignment operator.
@@ -74,7 +76,8 @@ namespace malloy::server
          * @param rhs The object to copy-assign from.
          * @return A reference to the assigned object.
          */
-        listener& operator=(const listener& rhs) = delete;
+        listener&
+        operator=(const listener& rhs) = delete;
 
         /**
          * Move assignment operator.
@@ -82,12 +85,14 @@ namespace malloy::server
          * @param rhs The object to move-assign from.
          * @return A reference to the assigned object.
          */
-        listener& operator=(listener&& rhs) noexcept = delete;
+        listener&
+        operator=(listener&& rhs) noexcept = delete;
 
         /**
          * Start accepting incoming connections
          */
-        void run();
+        void
+        run();
 
         /**
          * Get the router.
@@ -95,7 +100,8 @@ namespace malloy::server
          * @return The router.
          */
         [[nodiscard]]
-        std::shared_ptr<malloy::server::router> router() const noexcept
+        std::shared_ptr<malloy::server::router>
+        router() const noexcept
         {
             return m_router;
         }
@@ -112,7 +118,8 @@ namespace malloy::server
         /**
          * Start accepting incoming requests.
          */
-        void do_accept();
+        void
+        do_accept();
 
         /**
          * Asynchronous acceptor handler.
@@ -120,7 +127,8 @@ namespace malloy::server
          * @param ec The error code.
          * @param socket The socket.
          */
-        void on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket);
+        void
+        on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket);
     };
 
 }

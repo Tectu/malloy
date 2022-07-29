@@ -60,7 +60,8 @@ listener::listener(
 }
 
 // Start accepting incoming connections
-void listener::run()
+void
+listener::run()
 {
     m_logger->trace("listener::run()");
 
@@ -78,7 +79,8 @@ void listener::run()
     );
 }
 
-void listener::do_accept()
+void
+listener::do_accept()
 {
     m_logger->trace("listener::do_accept()");
 
@@ -91,7 +93,8 @@ void listener::do_accept()
     );
 }
 
-void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
+void
+listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
 {
     m_logger->trace("listener::on_accept()");
 
