@@ -250,7 +250,8 @@ namespace malloy::server::http
          * @return Reference to the derived class type.
          */
         [[nodiscard]]
-        Derived& derived()
+        Derived&
+        derived()
         {
             return static_cast<Derived&>(*this);
         }
@@ -270,7 +271,9 @@ namespace malloy::server::http
                 return;
             }
 
+            // Get the header
             auto header = m_parser->get().base();
+
             // Parse the request into something more useful from hereon
             auto gen = std::shared_ptr<request_generator>{new request_generator{  std::move(m_parser), std::move(header), derived().shared_from_this(), std::move(m_buffer) }}; // Private ctor
 
@@ -286,8 +289,6 @@ namespace malloy::server::http
                     m_logger->clone("websocket_connection"),
                     malloy::websocket::stream{derived().release_stream()}, cfg.agent_string);
                 m_router->websocket(*m_doc_root, gen, ws_connection);
-
-
             }
 
             // This is an HTTP request
