@@ -182,7 +182,6 @@ namespace malloy::server::http
             );
         }
 
-        // ToDo: Should this be protected?
         void
         do_read()
         {
