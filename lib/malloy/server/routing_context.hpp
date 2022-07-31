@@ -131,7 +131,8 @@ namespace malloy::server
 
         [[nodiscard("ignoring result will cause the server to instantly stop")]]
         friend
-        session start(routing_context&& ctrl)
+        session
+        start(routing_context&& ctrl)
         {
             // Log
             ctrl.m_cfg.logger->debug("starting server.");
