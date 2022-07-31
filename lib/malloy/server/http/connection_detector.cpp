@@ -82,7 +82,7 @@ connection_detector::run()
     boost::beast::get_lowest_layer(m_stream).expires_after(std::chrono::seconds(30));
 
     // Detect a TLS handshake
-    async_detect_ssl(
+    boost::beast::async_detect_ssl(
         m_stream,
         m_buffer,
         boost::beast::bind_front_handler(
