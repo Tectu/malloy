@@ -68,10 +68,17 @@ namespace malloy::client
     class controller
     {
     public:
+        /**
+         * Session type.
+         */
         using session = malloy::detail::controller_run_result<std::shared_ptr<boost::asio::ssl::context>>;
-        struct config :
-            malloy::controller::config {
 
+        /**
+         * Configuration type.
+         */
+        struct config :
+            malloy::controller::config
+        {
             /**
              * @brief Agent string used for connections
              * @details Set as the User-Agent in http headers
@@ -84,7 +91,17 @@ namespace malloy::client
             std::uint64_t body_limit = 100'000'000;
         };
 
+        /**
+         * Constructor.
+         *
+         * @param cfg The configuration.
+         */
+        explicit
         controller(config cfg);
+
+        /**
+         * Destructor.
+         */
         ~controller() = default;
 
 #if MALLOY_FEATURE_TLS
