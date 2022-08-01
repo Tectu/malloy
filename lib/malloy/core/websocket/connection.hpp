@@ -65,12 +65,21 @@ namespace malloy::websocket
         /**
          * See stream::set_binary(bool)
          */
-        void set_binary(const bool enabled) { m_ws.set_binary(enabled); }
+        void
+        set_binary(const bool enabled)
+        {
+            m_ws.set_binary(enabled);
+        }
 
         /**
          * See stream::binary()
          */
-        [[nodiscard]] bool binary() { return m_ws.binary(); }
+        [[nodiscard]]
+        bool
+        binary()
+        {
+            return m_ws.binary();
+        }
 
         /**
          * @brief Construct a new connection object
@@ -104,7 +113,8 @@ namespace malloy::websocket
          */
         template<concepts::accept_handler Callback>
         void
-        connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
+        connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done)
+            requires(isClient)
         {
             m_logger->trace("connect()");
 
@@ -144,7 +154,8 @@ namespace malloy::websocket
          */
         template<class Body, class Fields, std::invocable<> Callback>
         void
-        accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done) requires(!isClient)
+        accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
+            requires(!isClient)
         {
             m_logger->trace("accept()");
 

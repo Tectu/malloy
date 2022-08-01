@@ -84,7 +84,7 @@ listener::do_accept()
 {
     m_logger->trace("listener::do_accept()");
 
-    // The new connection gets its own strand
+    // The new connection gets its own strand.
     m_acceptor.async_accept(
         boost::asio::make_strand(m_io_ctx),
         boost::beast::bind_front_handler(
