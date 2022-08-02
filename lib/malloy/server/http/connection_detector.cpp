@@ -17,6 +17,8 @@ using namespace malloy::server::http;
  *
  * @sa connection
  */
+// ToDo: Consider adding public interface(s) to the connection class to facilitate logging of requests and repsonses
+//       instead of passing the logger into here.
 template<typename Derived>
 class router_adaptor :
     public connection<Derived>::handler

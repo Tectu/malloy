@@ -337,7 +337,7 @@ namespace malloy::server::http
             derived().do_close();
 
             // At this point the connection is closed gracefully
-            m_logger->trace("closed HTTP connection gracefully.");
+            m_logger->info("HTTP connection closed gracefully");
         }
     };
 
