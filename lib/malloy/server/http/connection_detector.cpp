@@ -27,7 +27,14 @@ public:
     using http_conn_t = const connection_t&;
     using req_t = std::shared_ptr<typename connection<Derived>::request_generator>;
 
-    router_adaptor(router_t router) :
+    /**
+     * Constructor.
+     *
+     * @param logger The logger instance. This should be the same instance passed to the connection constructor.
+     * @param router The router.
+     */
+    router_adaptor(std::shared_ptr<spdlog::logger> logger, router_t router) :
+        m_logger{ std::move(logger) },
         m_router{ std::move(router) }
     {
     }
@@ -35,24 +42,29 @@ public:
     void
     websocket(const std::filesystem::path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>& conn) override
     {
-        send_msg<true>(root, req, conn);
+        m_logger->info("WS request: {}", req->header().target());
+
+        handle<true>(root, req, conn);
     }
 
     void
     http(const std::filesystem::path& root, const req_t& req, http_conn_t conn) override
     {
-        send_msg<false>(root, req, conn);
+        m_logger->info("HTTP request: {}", req->header().target());
+
+        handle<false>(root, req, conn);
     }
 
 private:
-    template<bool isWs>
-    void
-    send_msg(const std::filesystem::path& root, const req_t& req, auto conn)
-    {
-        m_router->handle_request<isWs, Derived>(root, req, conn);
-    }
-
+    std::shared_ptr<spdlog::logger> m_logger;   // This should be the same instance as the logger used by the connection
     router_t m_router;
+
+    template<bool isWebsocket>
+    void
+    handle(const std::filesystem::path& root, const req_t& req, auto conn)
+    {
+        m_router->handle_request<isWebsocket, Derived>(root, req, conn);
+    }
 };
 
 connection_detector::connection_detector(
@@ -114,7 +126,7 @@ connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] boo
                     m_ctx,
                     std::move(m_buffer),
                     m_doc_root,
-                    std::make_shared<router_adaptor<connection_tls>>(m_router)
+                    std::make_shared<router_adaptor<connection_tls>>(m_logger, m_router)
                 )
             );
         }
@@ -126,7 +138,7 @@ connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] boo
                 m_stream.release_socket(),
                 std::move(m_buffer),
                 m_doc_root,
-                std::make_shared<router_adaptor<connection_plain>>(m_router)
+                std::make_shared<router_adaptor<connection_plain>>(m_logger, m_router)
             )
         );
     }([this](auto&& conn) {
