@@ -1,3 +1,5 @@
+#include "../../example.hpp"
+
 #include <boost/beast/http/file_body.hpp>
 #include <malloy/core/http/request.hpp>
 #include <malloy/server/routing_context.hpp>
