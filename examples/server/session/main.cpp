@@ -15,11 +15,9 @@ int main()
 
     // Create malloy controller config
     malloy::server::routing_context::config cfg;
+    setup_example_config(cfg);
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
-    cfg.doc_root    = examples_doc_root;
-    cfg.num_threads = 5;
-    cfg.logger      = create_example_logger();
 
     // Create malloy controller
     malloy::server::routing_context c{cfg};

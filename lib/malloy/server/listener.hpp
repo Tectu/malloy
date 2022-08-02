@@ -37,6 +37,7 @@ namespace malloy::server
          * Constructor
          *
          * @param logger The logger instance to use.
+         * @param connection_logger The logger instance for connections.
          * @param ioc The I/O context to use.
          * @param tls_ctx The TLS context to use.
          * @param endpoint The enpoint to use.
@@ -46,6 +47,7 @@ namespace malloy::server
          */
         listener(
             std::shared_ptr<spdlog::logger> logger,
+            std::shared_ptr<spdlog::logger> connection_logger,
             boost::asio::io_context& ioc,
             std::shared_ptr<boost::asio::ssl::context> tls_ctx,
             const boost::asio::ip::tcp::endpoint& endpoint,
@@ -108,6 +110,7 @@ namespace malloy::server
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
+        std::shared_ptr<spdlog::logger> m_connection_logger;
         boost::asio::io_context& m_io_ctx;
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx;
         boost::asio::ip::tcp::acceptor m_acceptor;

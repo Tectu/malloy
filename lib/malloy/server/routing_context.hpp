@@ -38,6 +38,11 @@ namespace malloy::server
             malloy::controller::config
         {
             /**
+             * The logger instance for connection logging.
+             */
+            std::shared_ptr<spdlog::logger> connection_logger;
+
+            /**
              * The interface to bind to.
              */
             std::string interface = "127.0.0.1";
@@ -141,6 +146,7 @@ namespace malloy::server
             // Create the listener
             auto l = std::make_shared<malloy::server::listener>(
                 ctrl.m_cfg.logger->clone("listener"),
+                ctrl.m_cfg.connection_logger,
                 *ioc,
 #if MALLOY_FEATURE_TLS
                 std::move(ctrl.m_tls_ctx),
