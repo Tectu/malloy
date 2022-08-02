@@ -44,7 +44,10 @@ public:
     void
     websocket(const std::filesystem::path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>& conn) override
     {
-        m_logger->info("WS request: {}", req->header().target());
+        m_logger->info("WS request: {} {}",
+           boost::beast::http::to_string(req->header().method()),
+           req->header().target()
+       );
 
         handle<true>(root, req, conn);
     }
@@ -52,7 +55,10 @@ public:
     void
     http(const std::filesystem::path& root, const req_t& req, http_conn_t conn) override
     {
-        m_logger->info("HTTP request: {}", req->header().target());
+        m_logger->info("HTTP request: {} {}",
+           boost::beast::http::to_string(req->header().method()),
+           req->header().target()
+       );
 
         handle<false>(root, req, conn);
     }
