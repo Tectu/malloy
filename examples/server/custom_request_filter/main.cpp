@@ -1,3 +1,5 @@
+#include "../../example.hpp"
+
 #include <boost/beast/http/file_body.hpp>
 #include <malloy/core/http/request.hpp>
 #include <malloy/server/routing_context.hpp>
@@ -29,11 +31,10 @@ int
 main()
 {
 	malloy::server::routing_context::config cfg;
-	cfg.num_threads = 2;
+    setup_example_config(cfg);
 	cfg.interface = "127.0.0.1";
 	cfg.port = 8080;
 	cfg.doc_root = "/";
-    cfg.logger = spdlog::default_logger();
 
 	malloy::server::routing_context ctrl{cfg};
 

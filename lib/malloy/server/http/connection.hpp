@@ -279,15 +279,18 @@ namespace malloy::server::http
 
             // Check if this is a WS request
             if (boost::beast::websocket::is_upgrade(gen->header())) {
-                m_logger->debug("upgrading HTTP connection to WS connection.");
+                m_logger->info("upgrading HTTP connection to WS connection");
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
                 boost::beast::get_lowest_layer(derived().stream()).expires_never();
-
                 auto ws_connection = server::websocket::connection::make(
-                    m_logger->clone("websocket_connection"),
-                    malloy::websocket::stream{derived().release_stream()}, cfg.agent_string);
+                    m_logger,
+                    malloy::websocket::stream{derived().release_stream()},
+                    cfg.agent_string
+                );
+
+                // Hand over to router
                 m_router->websocket(*m_doc_root, gen, ws_connection);
             }
 
@@ -334,7 +337,7 @@ namespace malloy::server::http
             derived().do_close();
 
             // At this point the connection is closed gracefully
-            m_logger->trace("closed HTTP connection gracefully.");
+            m_logger->info("HTTP connection closed gracefully");
         }
     };
 

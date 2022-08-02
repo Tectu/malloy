@@ -85,7 +85,7 @@ TEST_SUITE("components - router")
         constexpr auto server_str = "hello";
         routing_context::config cfg;
         cfg.logger = spdlog::default_logger();
-        cfg.logger->set_level(spdlog::level::off);
+        cfg.connection_logger = spdlog::default_logger();
         cfg.agent_string = server_str;
         routing_context ctrl{cfg};
 
