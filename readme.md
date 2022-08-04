@@ -30,6 +30,7 @@ The following list provides an overview of the currently implemented features. S
         - HTTP basic auth
         - Custom access policies
       - Websocket endpoints (with auto-upgrade from HTTP)
+    - Connection logging
     - Request filters
 - WebSocket
   - Client
