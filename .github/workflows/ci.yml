@@ -70,8 +70,8 @@ jobs:
 
         # MacOS requires at least boost >= 1.78.0
         exclude:
-          - toolchain.os: macOS-12
-            boost_version: [1.74.0, 1.75.0, 1.76.0, 1.77.0]
+          - boost_version: [1.74.0, 1.75.0, 1.76.0, 1.77.0]
+            toolchain.os: macOS-12
 
     continue-on-error: false
     runs-on: ${{ matrix.toolchain.os }}
