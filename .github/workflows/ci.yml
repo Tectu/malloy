@@ -94,7 +94,9 @@ jobs:
 
       - name: Install packages (via apt)
         if: runner.os == 'Linux'
-        run: sudo apt install ${{ matrix.toolchain.packages }} -y
+        run: |
+          sudo apt update
+          sudo apt install ${{ matrix.toolchain.packages }} -y
 
       - name: Install packages (via homebrew)
         if: runner.os == 'macOS'
