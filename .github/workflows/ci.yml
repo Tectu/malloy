@@ -70,7 +70,7 @@ jobs:
 
         # MacOS requires at least boost >= 1.78.0
         exclude:
-          - os: macos
+          - os: macOS-12
             boost_version: [1.74.0, 1.75.0, 1.76.0, 1.77.0]
 
     continue-on-error: false
