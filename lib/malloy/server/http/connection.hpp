@@ -31,8 +31,10 @@ namespace malloy::server::http
     /**
      * An HTTP server connection.
      *
-     * @note This uses CRTP to allow using the same code for different connection
-     *       types (eg. plain or TLS).
+     * @note This uses CRTP to allow using the same code for different connection types (eg. plain or TLS).
+     *
+     * @sa connection_plain
+     * @sa connection_tls
      */
     template<class Derived>
     class connection
@@ -56,7 +58,8 @@ namespace malloy::server::http
             header() const { return m_header; }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback, typename SetupCb>
-            auto body(Callback&& done, SetupCb&& setup)
+            auto
+            body(Callback&& done, SetupCb&& setup)
             {
                 using namespace boost::beast::http;
                 using body_t = std::decay_t<Body>;
@@ -67,22 +70,25 @@ namespace malloy::server::http
                 boost::beast::http::async_read(
                     m_parent->derived().m_stream, m_buffer, *parser,
                     [_ = m_parent,
-                     done = std::forward<Callback>(done),
-                     p = parser, this_ = this->shared_from_this(), this](const auto& ec, auto) {
+                        done = std::forward<Callback>(done),
+                        p = parser, this_ = this->shared_from_this(),
+                        this
+                    ](const auto& ec, auto) {
                         if (ec && m_parent->m_logger) {    // TODO: see #40
                             m_parent->m_logger->error("failed to read http request body: '{}'", ec.message());
                             return;
                         }
                         done(malloy::http::request<Body>{p->release()});
-                    });
+                    }
+                );
             }
 
             template<typename Body, std::invocable<malloy::http::request<Body>&&> Callback>
-            auto body(Callback&& done)
+            auto
+            body(Callback&& done)
             {
-                return body<Body>(std::forward<Callback>(done), [](auto) {});
+                return body<Body>(std::forward<Callback>(done), [](auto){});
             }
-
 
         private:
             request_generator(h_parser_t hparser, header_t header, std::shared_ptr<connection> parent, boost::beast::flat_buffer buff) :
@@ -99,20 +105,29 @@ namespace malloy::server::http
             header_t m_header;
             std::shared_ptr<connection> m_parent;
         };
-        
+
+        /**
+         * @details This is needed to break the dependency cycle between connection and router.
+         */
+        // ToDo: Can the connections be moved? At least there is an inconsistency between WS and HTTP connection passing. Intentional?
         class handler
         {
         public:
             using request = malloy::http::request<>;
-            using conn_t = const connection_t&;
+            using http_conn_t = const connection_t&;
             using path = std::filesystem::path;
             using req_t = std::shared_ptr<request_generator>;
 
-            virtual void websocket(const path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>&) = 0;
-            virtual void http(const path& root, const req_t& req, conn_t) = 0;
+            virtual
+            ~handler() = default;
 
-            virtual ~handler() = default;
-        
+            virtual
+            void
+            websocket(const path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>&) = 0;
+
+            virtual
+            void
+            http(const path& root, const req_t& req, http_conn_t) = 0;
         };
 
         /**
@@ -182,8 +197,8 @@ namespace malloy::server::http
             );
         }
 
-        // ToDo: Should this be protected?
-        void do_read()
+        void
+        do_read()
         {
             m_logger->trace("do_read()");
 
@@ -212,7 +227,9 @@ namespace malloy::server::http
     protected:
         boost::beast::flat_buffer m_buffer;
 
-        void report_err(malloy::error_code ec, std::string_view context) {
+        void
+        report_err(malloy::error_code ec, std::string_view context)
+        {
             m_logger->error("{}: {} (code: {})", context, ec.message(), ec.value());
         }
 
@@ -224,21 +241,23 @@ namespace malloy::server::http
         std::shared_ptr<handler> m_router;
         std::shared_ptr<void> m_response;
 
-        // Pointer to allow handoff to generator since it cannot be copied or
-        // moved
+        // Pointer to allow handoff to generator since it cannot be copied or moved
         typename request_generator::h_parser_t m_parser;
+
         /**
          * Cast to derived class type.
          *
          * @return Reference to the derived class type.
          */
         [[nodiscard]]
-        Derived& derived()
+        Derived&
+        derived()
         {
             return static_cast<Derived&>(*this);
         }
 
-        void on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
+        void
+        on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
         {
             m_logger->trace("on_read(): bytes read: {}", bytes_transferred);
 
@@ -252,24 +271,27 @@ namespace malloy::server::http
                 return;
             }
 
+            // Get the header
             auto header = m_parser->get().base();
+
             // Parse the request into something more useful from hereon
             auto gen = std::shared_ptr<request_generator>{new request_generator{  std::move(m_parser), std::move(header), derived().shared_from_this(), std::move(m_buffer) }}; // Private ctor
 
             // Check if this is a WS request
             if (boost::beast::websocket::is_upgrade(gen->header())) {
-                m_logger->debug("upgrading HTTP connection to WS connection.");
+                m_logger->info("upgrading HTTP connection to WS connection");
 
                 // Create a websocket connection, transferring ownership
                 // of both the socket and the HTTP request.
                 boost::beast::get_lowest_layer(derived().stream()).expires_never();
-
                 auto ws_connection = server::websocket::connection::make(
-                    m_logger->clone("websocket_connection"),
-                    malloy::websocket::stream{derived().release_stream()}, cfg.agent_string);
+                    m_logger,
+                    malloy::websocket::stream{derived().release_stream()},
+                    cfg.agent_string
+                );
+
+                // Hand over to router
                 m_router->websocket(*m_doc_root, gen, ws_connection);
-
-
             }
 
             // This is an HTTP request
@@ -279,7 +301,8 @@ namespace malloy::server::http
             }
         }
 
-        void on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
+        void
+        on_write(bool close, boost::beast::error_code ec, std::size_t bytes_transferred)
         {
             m_logger->trace("on_write(): bytes written: {}", bytes_transferred);
 
@@ -305,7 +328,8 @@ namespace malloy::server::http
         /**
          * Close the connection.
          */
-        void do_close()
+        void
+        do_close()
         {
             m_logger->trace("do_close()");
 
@@ -313,7 +337,7 @@ namespace malloy::server::http
             derived().do_close();
 
             // At this point the connection is closed gracefully
-            m_logger->trace("closed HTTP connection gracefully.");
+            m_logger->info("HTTP connection closed gracefully");
         }
     };
 

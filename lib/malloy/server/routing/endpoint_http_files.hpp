@@ -2,8 +2,8 @@
 
 #include "endpoint_http.hpp"
 #include "../../core/http/request.hpp"
-#include "malloy/core/http/utils.hpp"
-#include "malloy/core/type_traits.hpp"
+#include "../../core/http/utils.hpp"
+#include "../../core/type_traits.hpp"
 
 #include <filesystem>
 

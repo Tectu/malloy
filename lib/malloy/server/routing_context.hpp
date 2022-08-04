@@ -1,9 +1,9 @@
 #pragma once
 
-#include "malloy/core/detail/controller_run_result.hpp"
-#include "malloy/server/listener.hpp"
-#include "malloy/server/routing/router.hpp"
-#include "malloy/core/controller.hpp"
+#include "../core/controller.hpp"
+#include "../core/detail/controller_run_result.hpp"
+#include "../server/listener.hpp"
+#include "../server/routing/router.hpp"
 
 #include <memory>
 #include <filesystem>
@@ -37,6 +37,11 @@ namespace malloy::server
         struct config :
             malloy::controller::config
         {
+            /**
+             * The logger instance for connection logging.
+             */
+            std::shared_ptr<spdlog::logger> connection_logger;
+
             /**
              * The interface to bind to.
              */
@@ -80,7 +85,8 @@ namespace malloy::server
              * @param key_path Path to the key file.
              * @return Whether the initialization was successful.
              */
-            bool init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
+            bool
+            init_tls(const std::filesystem::path& cert_path, const std::filesystem::path& key_path);
 
             /**
              * Initialize the TLS context.
@@ -91,7 +97,8 @@ namespace malloy::server
              * @param key The key file (contents).
              * @return Whether the initialization was successful.
              */
-            bool init_tls(const std::string& cert, const std::string& key);
+            bool
+            init_tls(const std::string& cert, const std::string& key);
         #endif
 
         /**
@@ -100,7 +107,9 @@ namespace malloy::server
          * @return The top-level router.
          */
         [[nodiscard]]
-        constexpr const malloy::server::router& router() const noexcept
+        constexpr
+        const malloy::server::router&
+        router() const noexcept
         {
             return m_router;
         }
@@ -111,7 +120,9 @@ namespace malloy::server
          * @return The top-level router.
          */
         [[nodiscard]]
-        constexpr class malloy::server::router& router() noexcept
+        constexpr
+        malloy::server::router&
+        router() noexcept
         {
             return m_router;
         }
@@ -125,7 +136,8 @@ namespace malloy::server
 
         [[nodiscard("ignoring result will cause the server to instantly stop")]]
         friend
-        session start(routing_context&& ctrl)
+        session
+        start(routing_context&& ctrl)
         {
             // Log
             ctrl.m_cfg.logger->debug("starting server.");
@@ -134,6 +146,7 @@ namespace malloy::server
             // Create the listener
             auto l = std::make_shared<malloy::server::listener>(
                 ctrl.m_cfg.logger->clone("listener"),
+                ctrl.m_cfg.connection_logger,
                 *ioc,
 #if MALLOY_FEATURE_TLS
                 std::move(ctrl.m_tls_ctx),

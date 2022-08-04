@@ -5,7 +5,8 @@ target_sources(
             HEADERS
             BASE_DIRS ${MALLOY_CORE_BASE_DIR}
             FILES
-                websocket.hpp
                 connection.hpp
                 stream.hpp
+                types.hpp
+                websocket.hpp
 )

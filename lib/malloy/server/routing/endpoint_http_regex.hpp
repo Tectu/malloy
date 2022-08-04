@@ -1,7 +1,6 @@
 #pragma once
 
 #include "endpoint_http.hpp"
-
 #include "type_traits.hpp"
 #include "../../core/http/response.hpp"
 #include "../../core/type_traits.hpp"

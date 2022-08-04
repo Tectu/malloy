@@ -38,6 +38,7 @@ namespace malloy::test
         ms::routing_context::config server_cfg{general_cfg};
         server_cfg.interface = "127.0.0.1";
         server_cfg.port = port;
+        server_cfg.connection_logger = spdlog::default_logger();
 
         ms::routing_context s_ctrl{server_cfg};
 

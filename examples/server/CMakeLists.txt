@@ -1,8 +1,8 @@
 add_subdirectory(basic)
+add_subdirectory(custom_request_filter)
 add_subdirectory(routing)
 add_subdirectory(session)
 add_subdirectory(websocket)
-add_subdirectory(custom-request-filter)
 
 if (MALLOY_FEATURE_HTML)
     add_subdirectory(html_form)

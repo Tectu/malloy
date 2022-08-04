@@ -6,6 +6,7 @@
 #endif
 
 #include <spdlog/logger.h>
+#include <spdlog/sinks/null_sink.h>
 
 #include <memory>
 
@@ -16,11 +17,15 @@ routing_context::routing_context(config cfg) :
     m_router{m_cfg.logger != nullptr ? m_cfg.logger->clone("router") : nullptr, m_cfg.agent_string}
 {
     m_cfg.validate();
+
+    // If no connection logger is provided, use the null logger.
+    if (!m_cfg.connection_logger)
+        m_cfg.connection_logger = spdlog::null_logger_mt("connection");
 }
 
-
 #if MALLOY_FEATURE_TLS
-    bool routing_context::init_tls(
+    bool
+    routing_context::init_tls(
         const std::filesystem::path& cert_path,
         const std::filesystem::path& key_path
     )
@@ -42,7 +47,8 @@ routing_context::routing_context(config cfg) :
         return m_tls_ctx != nullptr;
     }
 
-    bool routing_context::init_tls(const std::string& cert, const std::string& key)
+    bool
+    routing_context::init_tls(const std::string& cert, const std::string& key)
     {
         m_tls_ctx = tls::manager::make_context(cert, key);
 

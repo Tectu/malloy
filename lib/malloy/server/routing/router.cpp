@@ -17,7 +17,8 @@ router::router(std::shared_ptr<spdlog::logger> logger, std::string_view server_s
 {
 }
 
-void router::set_logger(std::shared_ptr<spdlog::logger> logger)
+void
+router::set_logger(std::shared_ptr<spdlog::logger> logger)
 {
     m_logger = std::move(logger);
     for (const auto&[_, sub] : m_sub_routers) {
@@ -26,7 +27,8 @@ void router::set_logger(std::shared_ptr<spdlog::logger> logger)
     }
 }
 
-bool router::add_http_endpoint(std::unique_ptr<endpoint_http>&& ep)
+bool
+router::add_http_endpoint(std::unique_ptr<endpoint_http>&& ep)
 {
     try {
         m_endpoints_http.emplace_back(std::move(ep));
@@ -39,7 +41,8 @@ bool router::add_http_endpoint(std::unique_ptr<endpoint_http>&& ep)
     return true;
 }
 
-bool router::add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep)
+bool
+router::add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep)
 {
     try {
         m_endpoints_websocket.emplace_back(std::move(ep));
@@ -52,7 +55,8 @@ bool router::add_websocket_endpoint(std::unique_ptr<endpoint_websocket>&& ep)
     return true;
 }
 
-bool router::add_subrouter(std::string resource, std::unique_ptr<router> sub_router)
+bool
+router::add_subrouter(std::string resource, std::unique_ptr<router> sub_router)
 {
     // Log
     if (m_logger)
@@ -88,12 +92,14 @@ bool router::add_subrouter(std::string resource, std::unique_ptr<router> sub_rou
     return true;
 }
 
-bool router::add_subrouter(std::string resource, router&& sub)
+bool
+router::add_subrouter(std::string resource, router&& sub)
 {
     return add_subrouter(std::move(resource), std::make_unique<router>(std::move(sub)));
 }
 
-void router::set_server_string(std::string_view str)
+void
+router::set_server_string(std::string_view str)
 {
     // Nothing to do if the string is the same
     if (str == m_server_str)
@@ -105,7 +111,8 @@ void router::set_server_string(std::string_view str)
         sub->set_server_string(str);
 }
 
-bool router::add_preflight(const std::string_view target, http::preflight_config cfg)
+bool
+router::add_preflight(const std::string_view target, http::preflight_config cfg)
 {
     return add(
         malloy::http::method::options,
@@ -141,7 +148,8 @@ bool router::add_preflight(const std::string_view target, http::preflight_config
     );
 }
 
-bool router::add_redirect(const malloy::http::status status, std::string&& resource_old, std::string&& resource_new)
+bool
+router::add_redirect(const malloy::http::status status, std::string&& resource_old, std::string&& resource_new)
 {
     // Log
     if (m_logger)
@@ -172,7 +180,8 @@ bool router::add_redirect(const malloy::http::status status, std::string&& resou
     return add_http_endpoint(std::move(ep));
 }
 
-bool router::add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler)
+bool
+router::add_websocket(std::string&& resource, typename websocket::connection::handler_t&& handler)
 {
     // Log
     if (m_logger)

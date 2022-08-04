@@ -1,8 +1,8 @@
 #pragma once
 
-#include "malloy/core/http/type_traits.hpp"
-#include "malloy/core/http/response.hpp"
-#include "malloy/core/http/generator.hpp"
+#include "../../core/http/type_traits.hpp"
+#include "../../core/http/response.hpp"
+#include "../../core/http/generator.hpp"
 
 #include <fmt/format.h>
 

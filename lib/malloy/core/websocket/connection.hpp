@@ -1,11 +1,12 @@
 #pragma once
 
+#include "types.hpp"
 #include "../error.hpp"
-#include "../http/request.hpp"
 #include "../type_traits.hpp"
 #include "../utils.hpp"
+#include "../detail/action_queue.hpp"
+#include "../http/request.hpp"
 #include "../websocket/stream.hpp"
-#include "malloy/core/detail/action_queue.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
@@ -53,14 +54,32 @@ namespace malloy::websocket
         };
 
         /**
+         * Destructor.
+         */
+        virtual
+        ~connection() noexcept
+        {
+            m_logger->trace("destructor()");
+        }
+
+        /**
          * See stream::set_binary(bool)
          */
-        void set_binary(const bool enabled) { m_ws.set_binary(enabled); }
+        void
+        set_binary(const bool enabled)
+        {
+            m_ws.set_binary(enabled);
+        }
 
         /**
          * See stream::binary()
          */
-        [[nodiscard]] bool binary() { return m_ws.binary(); }
+        [[nodiscard]]
+        bool
+        binary()
+        {
+            return m_ws.binary();
+        }
 
         /**
          * @brief Construct a new connection object
@@ -94,7 +113,8 @@ namespace malloy::websocket
          */
         template<concepts::accept_handler Callback>
         void
-        connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done) requires(isClient)
+        connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done)
+            requires(isClient)
         {
             m_logger->trace("connect()");
 
@@ -134,7 +154,8 @@ namespace malloy::websocket
          */
         template<class Body, class Fields, std::invocable<> Callback>
         void
-        accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done) requires(!isClient)
+        accept(const boost::beast::http::request<Body, Fields>& req, Callback&& done)
+            requires(!isClient)
         {
             m_logger->trace("accept()");
 
@@ -234,9 +255,14 @@ namespace malloy::websocket
             m_logger->trace("read()");
 
             m_read_queue.push(
-                [this, me = this->shared_from_this(),
-                buff = &buff /* Capturing reference by value copies the object */,
-                done = std::forward<decltype(done)>(done)](const auto& on_done) mutable {
+                [
+                    this,
+                    me = this->shared_from_this(),
+                    buff = &buff, // Capturing reference by value copies the object
+                    done = std::forward<decltype(done)>(done)
+                ]
+                (const auto& on_done) mutable
+                {
                     assert(buff != nullptr);
                     m_ws.async_read(*buff, [this, me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
                         std::invoke(std::forward<decltype(done)>(done), ec, size);
@@ -304,7 +330,10 @@ namespace malloy::websocket
         {
             m_logger->trace("go_active()");
 
+            // Update state
             m_state = state::active;
+
+            // Start/run action queues
             m_read_queue.run();
             m_write_queue.run();
         }
@@ -320,6 +349,7 @@ namespace malloy::websocket
                     isClient ? boost::beast::role_type::client : boost::beast::role_type::server)
             );
 
+            // Set agent string/field
             const auto agent_field = isClient ? malloy::http::field::user_agent : malloy::http::field::server;
             m_ws.set_option(
                 boost::beast::websocket::stream_base::decorator(
@@ -333,7 +363,7 @@ namespace malloy::websocket
         void
         do_disconnect(boost::beast::websocket::close_reason why, const std::invocable<> auto& on_done)
         {
-            m_logger->trace("do_disconnect");
+            m_logger->trace("do_disconnect()");
 
             // Update state
             m_state = state::closing;

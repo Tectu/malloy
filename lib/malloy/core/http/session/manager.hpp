@@ -1,8 +1,8 @@
 #pragma once
 
 #include "types.hpp"
-#include "malloy/core/http/response.hpp"
-#include "malloy/core/http/request.hpp"
+#include "../response.hpp"
+#include "../request.hpp"
 
 #include <chrono>
 #include <memory>

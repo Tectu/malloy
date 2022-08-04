@@ -1,7 +1,7 @@
 #pragma once
 
 #include "endpoint_http.hpp"
-#include "malloy/core/http/utils.hpp"
+#include "../../core/http/utils.hpp"
 
 namespace malloy::server
 {

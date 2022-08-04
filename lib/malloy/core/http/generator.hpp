@@ -1,14 +1,14 @@
 #pragma once
 
-#include <filesystem>
-#include <string_view>
-#include <variant>
-
 #include "response.hpp"
 #include "request.hpp"
 #include "type_traits.hpp"
 #include "types.hpp"
-#include "malloy/core/http/utils.hpp"
+#include "utils.hpp"
+
+#include <filesystem>
+#include <string_view>
+#include <variant>
 
 namespace malloy::http
 {

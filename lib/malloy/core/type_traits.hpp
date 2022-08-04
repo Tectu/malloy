@@ -4,6 +4,7 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/beast/core/buffer_traits.hpp>
+#include <boost/beast/http/type_traits.hpp>
 
 #include <concepts>
 #include <variant>

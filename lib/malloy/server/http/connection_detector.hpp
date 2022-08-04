@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../core/tcp/stream.hpp"
+
 #include <boost/beast/core.hpp>
 
 #include <filesystem>
@@ -51,18 +53,20 @@ namespace malloy::server::http
         /**
          * Launch the detector
          */
-        void run();
+        void
+        run();
 
     private:
         std::shared_ptr<spdlog::logger> m_logger;
-        boost::beast::tcp_stream m_stream;
+        malloy::tcp::stream<> m_stream;
         std::shared_ptr<boost::asio::ssl::context> m_ctx;
         boost::beast::flat_buffer m_buffer;
         std::shared_ptr<const std::filesystem::path> m_doc_root;
         std::shared_ptr<malloy::server::router> m_router;
         std::string m_agent_string;
 
-        void on_detect(boost::beast::error_code ec, bool result);
+        void
+        on_detect(boost::beast::error_code ec, bool result);
     };
 
 }

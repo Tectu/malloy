@@ -10,11 +10,9 @@ int main()
 {
     // Create malloy controller config
     malloy::server::routing_context::config cfg;
+    setup_example_config(cfg);
     cfg.interface   = "127.0.0.1";
     cfg.port        = 8080;
-    cfg.doc_root    = examples_doc_root;
-    cfg.num_threads = 5;
-    cfg.logger      = create_example_logger();
 
     // Create malloy controller
     malloy::server::routing_context c{cfg};
@@ -31,20 +29,17 @@ int main()
 
     // Add some routes
     auto& router = c.router();
-    { // TODO: Should the first two be done via optional capture groups?
+    {
         // Add a websocket endpoint
-        router.add_websocket("/", [](const malloy::http::request<>& req, auto writer){
-            malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /: {}", req.body()));
+        // This will simply echo back everything the client sends until the client closes the connection
+        router.add_websocket("/echo", [](const malloy::http::request<>& req, auto connection) {
+            std::make_shared<malloy::examples::ws::ws_echo<false>>(connection)->run(req);
         });
 
         // Add a websocket endpoint
-        router.add_websocket("/echo", [](const malloy::http::request<>& req, auto writer){
-            malloy::examples::ws::accept_and_send(req, writer, fmt::format("echo at /echo: {}", req.body()));
-        });
-
-        // Add a websocket endpoint
-        router.add_websocket("/timer", [](const malloy::http::request<>& req, auto writer){
-            std::make_shared<malloy::examples::ws::server_timer>(writer)->run(req);
+        // This will send a couple of messages to the client and then close the connection
+        router.add_websocket("/timer", [](const malloy::http::request<>& req, auto connection) {
+            std::make_shared<malloy::examples::ws::server_timer>(connection)->run(req);
         });
     }
 

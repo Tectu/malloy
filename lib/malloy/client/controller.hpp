@@ -1,15 +1,16 @@
 #pragma once
 
-#include "http/connection_plain.hpp"
 #include "type_traits.hpp"
+#include "http/connection_plain.hpp"
 #include "websocket/connection.hpp"
-#include "malloy/core/detail/controller_run_result.hpp"
-#include "malloy/core/controller.hpp"
+#include "../core/controller.hpp"
+#include "../core/error.hpp"
+#include "../core/detail/controller_run_result.hpp"
 #include "../core/http/request.hpp"
 #include "../core/http/response.hpp"
 #include "../core/http/type_traits.hpp"
-#include "../core/error.hpp"
-#include "malloy/core/http/utils.hpp"
+#include "../core/http/utils.hpp"
+#include "../core/tcp/stream.hpp"
 #if MALLOY_FEATURE_TLS
     #include "http/connection_tls.hpp"
 
@@ -67,10 +68,17 @@ namespace malloy::client
     class controller
     {
     public:
+        /**
+         * Session type.
+         */
         using session = malloy::detail::controller_run_result<std::shared_ptr<boost::asio::ssl::context>>;
-        struct config :
-            malloy::controller::config {
 
+        /**
+         * Configuration type.
+         */
+        struct config :
+            malloy::controller::config
+        {
             /**
              * @brief Agent string used for connections
              * @details Set as the User-Agent in http headers
@@ -83,7 +91,17 @@ namespace malloy::client
             std::uint64_t body_limit = 100'000'000;
         };
 
+        /**
+         * Constructor.
+         *
+         * @param cfg The configuration.
+         */
+        explicit
         controller(config cfg);
+
+        /**
+         * Destructor.
+         */
         ~controller() = default;
 
 #if MALLOY_FEATURE_TLS
@@ -304,11 +322,11 @@ namespace malloy::client
                         auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
                             if constexpr (isSecure) {
-                                return malloy::websocket::stream{boost::beast::ssl_stream<boost::beast::tcp_stream>{
-                                    boost::beast::tcp_stream{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
+                                return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream<>>{
+                                    malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
                             } else
 #endif
-                                return malloy::websocket::stream{boost::beast::tcp_stream{boost::asio::make_strand(*m_ioc)}};
+                                return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
                         }(), m_cfg.user_agent);
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {

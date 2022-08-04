@@ -1,7 +1,5 @@
 #pragma once
 
-#include <variant> 
-
 #include "connection.hpp"
 #include "connection_plain.hpp"
 #if MALLOY_FEATURE_TLS
@@ -10,6 +8,8 @@
 #ifdef MALLOY_INTERNAL_TESTING
     #include "mocks.hpp"
 #endif
+
+#include <variant>
 
 namespace malloy::server::http
 {

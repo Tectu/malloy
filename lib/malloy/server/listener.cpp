@@ -9,6 +9,7 @@ using namespace malloy::server;
 
 listener::listener(
     std::shared_ptr<spdlog::logger> logger,
+    std::shared_ptr<spdlog::logger> connection_logger,
     boost::asio::io_context& ioc,
     std::shared_ptr<boost::asio::ssl::context> tls_ctx,
     const boost::asio::ip::tcp::endpoint& endpoint,
@@ -17,6 +18,7 @@ listener::listener(
     std::string agent_string
 ) :
     m_logger(std::move(logger)),
+    m_connection_logger(std::move(connection_logger)),
     m_io_ctx(ioc),
     m_tls_ctx(std::move(tls_ctx)),
     m_acceptor(boost::asio::make_strand(ioc)),
@@ -29,6 +31,8 @@ listener::listener(
     // Sanity check on logger
     if (!m_logger)
         throw std::runtime_error("did not receive a valid logger instance.");
+    if (!m_connection_logger)
+        throw std::runtime_error("did not receive a valid connection logger instance.");
 
     // Open the acceptor
     m_acceptor.open(endpoint.protocol(), ec);
@@ -60,7 +64,8 @@ listener::listener(
 }
 
 // Start accepting incoming connections
-void listener::run()
+void
+listener::run()
 {
     m_logger->trace("listener::run()");
 
@@ -78,11 +83,12 @@ void listener::run()
     );
 }
 
-void listener::do_accept()
+void
+listener::do_accept()
 {
     m_logger->trace("listener::do_accept()");
 
-    // The new connection gets its own strand
+    // The new connection gets its own strand.
     m_acceptor.async_accept(
         boost::asio::make_strand(m_io_ctx),
         boost::beast::bind_front_handler(
@@ -91,7 +97,8 @@ void listener::do_accept()
     );
 }
 
-void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
+void
+listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::socket socket)
 {
     m_logger->trace("listener::on_accept()");
 
@@ -101,17 +108,20 @@ void listener::on_accept(boost::beast::error_code ec, boost::asio::ip::tcp::sock
         return;
     }
 
-    // Log
-    m_logger->info(
-        "accepting incoming connection from {}:{}",
-        socket.remote_endpoint().address().to_string(),
-        socket.remote_endpoint().port()
+    // Setup connection logger
+    auto connection_logger = m_connection_logger->clone(
+        fmt::format(
+            "{}:{}",
+            socket.remote_endpoint().address().to_string(),
+            socket.remote_endpoint().port()
+        )
     );
+    connection_logger->info("accepting incoming connection");
 
     // Create the http detector connection
     // This will automatically spawn the correct type of connection (eg. plain or TLS).
     auto connection = std::make_shared<http::connection_detector>(
-        m_logger->clone("http_connection"),
+        connection_logger,
         std::move(socket),
         m_tls_ctx,
         m_doc_root,

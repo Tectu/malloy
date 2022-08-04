@@ -1,5 +1,5 @@
 #include "manager.hpp"
-#include "malloy/core/utils.hpp"
+#include "../utils.hpp"
 
 #include <boost/asio/ssl/context.hpp>
 #include <openssl/ssl.h>
