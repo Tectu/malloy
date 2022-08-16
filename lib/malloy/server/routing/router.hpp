@@ -688,7 +688,8 @@ namespace malloy::server
         log_or_throw(
             const std::exception& exception,
             const spdlog::level::level_enum level,
-            const FormatString& fmt, Args&&... args
+            const FormatString& fmt,
+            Args&&... args
         )
         {
             if (m_logger) {
