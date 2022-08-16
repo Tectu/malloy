@@ -34,6 +34,7 @@ namespace malloy::server::http
      * @param fmt Format string.
      * @param args Arguments.
      */
+    // ToDo: Maybe move this function to the top-level `malloy` namespace?
     // ToDo: Move fmt in lambda capture?
     // ToDo: Move args in lambda capture?
     template<typename ...Args>
