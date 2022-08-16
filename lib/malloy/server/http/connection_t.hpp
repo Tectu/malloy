@@ -23,6 +23,11 @@ namespace malloy::server::http
 #endif 
     >;
 
+}
+
+namespace malloy
+{
+
     /**
      * Log to connection logger.
      *
@@ -34,13 +39,12 @@ namespace malloy::server::http
      * @param fmt Format string.
      * @param args Arguments.
      */
-    // ToDo: Maybe move this function to the top-level `malloy` namespace?
     // ToDo: Move fmt in lambda capture?
     // ToDo: Move args in lambda capture?
     template<typename ...Args>
     void
     log(
-        const connection_t& conn,
+        const server::http::connection_t& conn,
         spdlog::level::level_enum level,
         fmt::format_string<Args...> fmt,
         Args&&... args
@@ -57,4 +61,5 @@ namespace malloy::server::http
             conn
         );
     }
-}
+
+}   // namespace malloy

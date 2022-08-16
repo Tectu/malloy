@@ -52,7 +52,7 @@ public:
     void
     http(const std::filesystem::path& root, const req_t& req, http_conn_t conn) override
     {
-        log(
+        malloy::log(
             conn,
             spdlog::level::info,
             "HTTP request: {} {}",
