@@ -172,6 +172,14 @@ namespace malloy::server::http
                 throw std::runtime_error("did not receive a valid router instance.");
         }
 
+        /**
+         * Perform an asynchronous write.
+         *
+         * @tparam isRequest Whether the message is a request (or a response).
+         * @tparam Body The request body type.
+         * @tparam Fields The request fields type.
+         * @param msg The request.
+         */
         template<bool isRequest, class Body, class Fields>
         void
         do_write(boost::beast::http::message<isRequest, Body, Fields>&& msg)
