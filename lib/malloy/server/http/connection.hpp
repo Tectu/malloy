@@ -173,6 +173,20 @@ namespace malloy::server::http
         }
 
         /**
+         * Get the logger instance.
+         *
+         * @details This allows different components to log to the connection specific logger.
+         *
+         * @return The logger instance.
+         */
+        [[nodiscard]]
+        std::shared_ptr<spdlog::logger>
+        logger() const noexcept
+        {
+            return m_logger;
+        }
+
+        /**
          * Perform an asynchronous write.
          *
          * @tparam isRequest Whether the message is a request (or a response).

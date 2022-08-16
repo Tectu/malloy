@@ -55,10 +55,13 @@ public:
     void
     http(const std::filesystem::path& root, const req_t& req, http_conn_t conn) override
     {
-        m_logger->info("HTTP request: {} {}",
-           boost::beast::http::to_string(req->header().method()),
-           req->header().target()
-       );
+        log(
+            conn,
+            spdlog::level::info,
+            "HTTP request: {} {}",
+            boost::beast::http::to_string(req->header().method()),
+            req->header().target()
+        );
 
         handle<false>(root, req, conn);
     }
