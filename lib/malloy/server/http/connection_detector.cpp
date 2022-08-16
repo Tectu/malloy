@@ -17,8 +17,6 @@ using namespace malloy::server::http;
  *
  * @sa connection
  */
-// ToDo: Consider adding public interface(s) to the connection class to facilitate logging of requests and repsonses
-//       instead of passing the logger into here.
 template<typename Derived>
 class router_adaptor :
     public connection<Derived>::handler
@@ -32,11 +30,9 @@ public:
     /**
      * Constructor.
      *
-     * @param logger The logger instance. This should be the same instance passed to the connection constructor.
      * @param router The router.
      */
-    router_adaptor(std::shared_ptr<spdlog::logger> logger, router_t router) :
-        m_logger{ std::move(logger) },
+    router_adaptor(router_t router) :
         m_router{ std::move(router) }
     {
     }
@@ -44,10 +40,11 @@ public:
     void
     websocket(const std::filesystem::path& root, const req_t& req, const std::shared_ptr<malloy::server::websocket::connection>& conn) override
     {
-        m_logger->info("WS request: {} {}",
-           boost::beast::http::to_string(req->header().method()),
-           req->header().target()
-       );
+        conn->logger()->info(
+            "WS request: {} {}",
+            boost::beast::http::to_string(req->header().method()),
+            req->header().target()
+        );
 
         handle<true>(root, req, conn);
     }
@@ -67,7 +64,6 @@ public:
     }
 
 private:
-    std::shared_ptr<spdlog::logger> m_logger;   // This should be the same instance as the logger used by the connection
     router_t m_router;
 
     template<bool isWebsocket>
@@ -115,6 +111,7 @@ connection_detector::run()
     );
 }
 
+// ToDo: It might be okay to move the m_logger instance into the newly created connection.
 void
 connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] bool result)
 {
@@ -137,7 +134,7 @@ connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] boo
                     m_ctx,
                     std::move(m_buffer),
                     m_doc_root,
-                    std::make_shared<router_adaptor<connection_tls>>(m_logger, m_router)
+                    std::make_shared<router_adaptor<connection_tls>>(m_router)
                 )
             );
         }
@@ -149,7 +146,7 @@ connection_detector::on_detect(boost::beast::error_code ec, [[maybe_unused]] boo
                 m_stream.release_socket(),
                 std::move(m_buffer),
                 m_doc_root,
-                std::make_shared<router_adaptor<connection_plain>>(m_logger, m_router)
+                std::make_shared<router_adaptor<connection_plain>>(m_router)
             )
         );
     }([this](auto&& conn) {
