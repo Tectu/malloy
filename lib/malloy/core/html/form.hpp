@@ -48,6 +48,11 @@ namespace malloy::html
             value = data->content;
         }
 
+        /**
+         * Check whether this field holds any data.
+         *
+         * @return Whether this field holds any data.
+         */
         [[nodiscard]]
         bool
         has_data() const
@@ -55,6 +60,11 @@ namespace malloy::html
             return data.has_value();
         }
 
+        /**
+         * Get the HTML id.
+         *
+         * @return The HTML id.
+         */
         [[nodiscard]]
         std::string
         html_id() const
@@ -74,6 +84,9 @@ namespace malloy::html
     class form
     {
     public:
+        /**
+         * Encoding type.
+         */
         enum class encoding
         {
             url,
@@ -123,6 +136,11 @@ namespace malloy::html
             return m_action;
         }
 
+        /**
+         * Get encoding type.
+         *
+         * @return The encoding type.
+         */
         [[nodiscard]]
         encoding
         get_encoding() const noexcept
