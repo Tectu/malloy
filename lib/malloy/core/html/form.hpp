@@ -42,9 +42,7 @@ namespace malloy::html
             if (!data)
                 return;
 
-            if (type == "password" ||
-                type == "file"
-            )
+            if (type == "password" || type == "file")
                 return;
 
             value = data->content;
