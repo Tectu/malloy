@@ -157,7 +157,7 @@ namespace malloy::html
          * @return The parsed form data (if any).
          */
         std::optional<form_data>
-        parse(const malloy::http::request<>& req);
+        parse(const malloy::http::request<>& req) const;
 
     private:
         http::method m_method;
@@ -187,15 +187,15 @@ namespace malloy::html
 
         [[nodiscard]]
         std::optional<form_data>
-        parse_urlencoded(const malloy::http::request<>& req);
+        parse_urlencoded(const malloy::http::request<>& req) const;
 
         [[nodiscard]]
         std::optional<form_data>
-        parse_multipart(const malloy::http::request<>& req);
+        parse_multipart(const malloy::http::request<>& req) const;
 
         [[nodiscard]]
         std::optional<form_data>
-        parse_plain(const malloy::http::request<>& req);
+        parse_plain(const malloy::http::request<>& req) const;
     };
 
 }

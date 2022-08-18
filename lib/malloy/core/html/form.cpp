@@ -117,7 +117,7 @@ form::clear_values()
 }
 
 std::optional<form_data>
-form::parse(const malloy::http::request<>& req)
+form::parse(const malloy::http::request<>& req) const
 {
     switch (m_encoding) {
         case encoding::url:         return parse_urlencoded(req);
@@ -129,7 +129,7 @@ form::parse(const malloy::http::request<>& req)
 }
 
 std::optional<form_data>
-form::parse_urlencoded(const malloy::http::request<>& req)
+form::parse_urlencoded(const malloy::http::request<>& req) const
 {
     using namespace std::literals;
 
@@ -169,7 +169,7 @@ form::parse_urlencoded(const malloy::http::request<>& req)
 }
 
 std::optional<form_data>
-form::parse_multipart(const malloy::http::request<>& req)
+form::parse_multipart(const malloy::http::request<>& req) const
 {
     using namespace std::literals;
 
@@ -226,7 +226,7 @@ form::parse_multipart(const malloy::http::request<>& req)
 }
 
 std::optional<form_data>
-form::parse_plain(const malloy::http::request<>& req)
+form::parse_plain(const malloy::http::request<>& req) const
 {
     using namespace std::literals;
 
