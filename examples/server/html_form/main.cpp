@@ -116,12 +116,13 @@ int main()
         // POST form1
         router.add(method::post, "/form1", [&form1](const auto& req) {
             // Parse the form
-            if (!form1.parse(req))
+            const auto& data = form1.parse(req);
+            if (!data)
                 return generator::bad_request("invalid form data.");
 
             // Print the form data
             std::cout << "form1 data:\n";
-            std::cout << form1.dump() << "\n";
+            std::cout << data->dump() << "\n";
 
             // Redirect
             return generator::redirect(status::see_other, "/");
@@ -149,12 +150,13 @@ int main()
         // POST form1
         router.add(method::post, "/form2", [&form2](const auto& req) {
             // Parse the form
-            if (!form2.parse(req))
+            const auto& data = form2.parse(req);
+            if (!data)
                 return generator::bad_request("invalid form data.");
 
             // Print the form data
             std::cout << "form2 data:\n";
-            std::cout << form2.dump() << "\n";
+            std::cout << data->dump() << "\n";
 
             // Redirect
             return generator::redirect(status::see_other, "/");

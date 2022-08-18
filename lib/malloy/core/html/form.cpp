@@ -95,85 +95,18 @@ form::has_field(const std::string_view field_name) const
     return it != std::cend(m_fields);
 }
 
-bool
-form::has_data(const std::string_view field_name) const
-{
-    const auto& it = std::find_if(
-        std::cbegin(m_fields),
-        std::cend(m_fields),
-        [&field_name](const auto& ef) {
-            return ef.name == field_name;
-        }
-    );
-    if (it == std::cend(m_fields))
-        return false;
-
-    return it->has_data();
-}
-
-std::optional<form_field::parsed_data>
-form::data(const std::string& field_name) const
-{
-    // Check whether field exists
-    if (!has_field(field_name))
-        return std::nullopt;
-
-    // Retrieve field
-    const auto& it = std::find_if(
-        std::cbegin(m_fields),
-        std::cend(m_fields),
-        [&field_name](const auto& ef) {
-            return ef.name == field_name;
-        }
-    );
-    if (it == std::cend(m_fields))
-        return std::nullopt;
-
-    // Return field value
-    return it->data;
-}
-
-bool
-form::has_content(const std::string_view field_name) const
-{
-    // Check whether the field exists
-    if (!has_field(field_name))
-        return false;
-
-    // Retrieve field
-    const auto& field = field_from_name(field_name);
-
-    // Check if field has parsed data
-    if (!field.has_data())
-        return false;
-
-    // Check if field data has content
-    return !field.data->content.empty();
-}
-
-std::optional<std::string>
-form::content(const std::string_view field_name) const
-{
-    // Check whether the field exists
-    if (!has_field(field_name))
-        return std::nullopt;
-
-    // Retrieve field
-    const auto& field = field_from_name(field_name);
-
-    // Check if field has parsed data
-    if (!field.has_data())
-        return std::nullopt;
-
-    // Return content
-    return field.data->content;
-}
-
 void
-form::populate_values_from_parsed_data()
+form::populate_values_from_parsed_data(const form_data& data)
 {
-    for (auto& field : m_fields)
-        field.populate_value_from_parsed_data();
+    for (const auto& ffd : data.fields) {
+        // Find the corresponding field
+        if (!has_field(ffd.name))
+            continue;
+        auto& field = field_from_name(ffd.name);
+
+        // Set value
+        field.populate_value_from_parsed_data(ffd);
+    }
 }
 
 void
@@ -183,26 +116,7 @@ form::clear_values()
         field.value = { };
 }
 
-std::string
-form::dump() const
-{
-    std::ostringstream ss;
-
-    for (const form_field& field : m_fields) {
-        if (!field.has_data())
-            continue;
-
-        ss << field.name << ":\n";
-        ss << "  type     = " << field.data->type << "\n";
-        ss << "  filename = " << field.data->filename << "\n";
-        ss << "  content  = " << field.data->content << "\n";
-        ss << "\n";
-    }
-
-    return ss.str();
-}
-
-bool
+std::optional<form_data>
 form::parse(const malloy::http::request<>& req)
 {
     switch (m_encoding) {
@@ -211,10 +125,10 @@ form::parse(const malloy::http::request<>& req)
         case encoding::plain:       return parse_plain(req);
     }
 
-    return false;
+    return { };
 }
 
-bool
+std::optional<form_data>
 form::parse_urlencoded(const malloy::http::request<>& req)
 {
     using namespace std::literals;
@@ -222,6 +136,9 @@ form::parse_urlencoded(const malloy::http::request<>& req)
     // Sanity check encoding type
     if (m_encoding != encoding::url)
         throw std::logic_error("form encoding type does not match");
+
+    // Create the form data
+    form_data fd;
 
     try {
         // Split pairs
@@ -235,23 +152,23 @@ form::parse_urlencoded(const malloy::http::request<>& req)
             std::string value{ pair[1] };
             url_decode(value);
 
-            // Find field
-            form_field& field = field_from_name(pair[0]);
+            // Create field data
+            form_field_data ffd;
+            ffd.name = pair[0];
+            ffd.content = std::move(value);
 
-            // Store value
-            form_field::parsed_data data;
-            data.content = std::move(value);
-            field.data = std::move(data);
+            // Record
+            fd.fields.emplace_back(std::move(ffd));
         }
-
-        return true;
     }
     catch (const std::exception&) {
-        return false;
+        return { };
     }
+
+    return fd;
 }
 
-bool
+std::optional<form_data>
 form::parse_multipart(const malloy::http::request<>& req)
 {
     using namespace std::literals;
@@ -259,6 +176,9 @@ form::parse_multipart(const malloy::http::request<>& req)
     // Sanity check encoding type
     if (m_encoding != encoding::multipart)
         throw std::logic_error("form encoding type does not match");
+
+    // Create the form data
+    form_data fd;
 
     try {
         // Parse
@@ -284,30 +204,28 @@ form::parse_multipart(const malloy::http::request<>& req)
                 }
             }
             if (name.empty())
-                return false;  // According to the 'multipart/form-data' spec the 'name' field is required
+                return { };  // According to the 'multipart/form-data' spec the 'name' field is required
 
-            // Look for corresponding field
-            if (!has_field(name))
-                continue;
-            form_field& field = field_from_name(name);
+            // Create field data
+            form_field_data ffd;
+            ffd.name = name;
+            ffd.dispositions = part.disposition;
+            ffd.filename = filename;
+            ffd.type = part.type;
+            ffd.content = part.content;
 
-            // Fill field
-            form_field::parsed_data data;
-            data.dispositions = part.disposition;
-            data.filename = filename;
-            data.type = part.type;
-            data.content = part.content;
-            field.data = std::move(data);
+            // Record
+            fd.fields.emplace_back(std::move(ffd));
         }
     }
     catch (const std::exception&) {
-        return false;
+        return { };
     }
 
-    return true;
+    return fd;
 }
 
-bool
+std::optional<form_data>
 form::parse_plain(const malloy::http::request<>& req)
 {
     using namespace std::literals;
@@ -315,6 +233,9 @@ form::parse_plain(const malloy::http::request<>& req)
     // Sanity check encoding type
     if (m_encoding != encoding::plain)
         throw std::logic_error("form encoding type does not match");
+
+    // Create the form data
+    form_data fd;
 
     try {
         // Each field is encoded as: {key}={value}\r\n
@@ -326,18 +247,18 @@ form::parse_plain(const malloy::http::request<>& req)
             const std::string_view& name = pair[0];
             const std::string_view& value = pair[1];
 
-            // Find corresponding field
-            form_field& field = field_from_name(name);
+            // Create field data
+            form_field_data ffd;
+            ffd.name = name;
+            ffd.content = value;
 
-            // Store content
-            form_field::parsed_data data;
-            data.content = value;
-            field.data = std::move(data);
+            // Record
+            fd.fields.emplace_back(std::move(ffd));
         }
     }
     catch (const std::exception&) {
-        return false;
+        return { };
     }
 
-    return true;
+    return fd;
 }

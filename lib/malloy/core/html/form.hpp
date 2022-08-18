@@ -1,5 +1,7 @@
 #pragma once
 
+#include "form_data.hpp"
+#include "form_field.hpp"
 #include "../http/request.hpp"
 
 #include <optional>
@@ -8,70 +10,6 @@
 
 namespace malloy::html
 {
-
-    /**
-     * Class for representing a single field in a form.
-     */
-    struct form_field
-    {
-        struct parsed_data
-        {
-            std::string dispositions;
-            std::string filename;
-            std::string type;
-            std::string content;
-        };
-
-        std::string name;                   /// The field name.
-        std::string type;                   /// The HTML type (eg. 'text', 'file', ...).
-        std::string value;                  /// The value of the field (for rendering only).
-        std::string placeholder;            /// The placeholder.
-        std::string label;                  /// The label content.
-        bool required = false;              /// Whether a value is required.
-        std::optional<parsed_data> data;    /// Data after parsing.
-
-        /**
-         * Populate the `value` member from the parsed data `content` member.
-         *
-         * @note This will ignore/skip if the `type` is "password".
-         * @note This will ignore/skip if the `type` is "file".
-         */
-        void
-        populate_value_from_parsed_data()
-        {
-            if (!data)
-                return;
-
-            if (type == "password" || type == "file")
-                return;
-
-            value = data->content;
-        }
-
-        /**
-         * Check whether this field holds any data.
-         *
-         * @return Whether this field holds any data.
-         */
-        [[nodiscard]]
-        bool
-        has_data() const
-        {
-            return data.has_value();
-        }
-
-        /**
-         * Get the HTML id.
-         *
-         * @return The HTML id.
-         */
-        [[nodiscard]]
-        std::string
-        html_id() const
-        {
-            return "form-field-" + name;
-        }
-    };
 
     /**
      * Class for handling HTML forms.
@@ -110,7 +48,8 @@ namespace malloy::html
         /**
          * Destructor.
          */
-        virtual ~form() = default;
+        virtual
+        ~form() = default;
 
         /**
          * Get the method.
@@ -191,57 +130,19 @@ namespace malloy::html
         has_field(std::string_view field_name) const;
 
         /**
-         * Checks whether a field has parsed data.
-         *
-         * @param field_name The name of the field.
-         * @return Whether the field has parsed data.
-         */
-        [[nodiscard]]
-        bool
-        has_data(std::string_view field_name) const;
-
-        /**
-         * Get the parsed data of a specific field.
-         *
-         * @param field_name The name of the field.
-         * @return The corresponding data (if any).
-         */
-        [[nodiscard]]
-        std::optional<form_field::parsed_data>
-        data(const std::string& field_name) const;
-
-        /**
-         * Checks whether a particular field has parsed content.
-         *
-         * @param field_name The field name.
-         * @return Whether the field has parsed content.
-         */
-        [[nodiscard]]
-        bool
-        has_content(std::string_view field_name) const;
-
-        /**
-         * The the parsed data content of a specific field.
-         *
-         * @param field_name The name of the field.
-         * @return
-         */
-        [[nodiscard]]
-        std::optional<std::string>
-        content(std::string_view field_name) const;
-
-        /**
          * This will update each field's value member with the content member of
-         * the parsed data (if any).
+         * the parsed data;
          *
          * This function is useful to call if serving the same form back to the user after
          * parsing to pre-populate form fields so the user doesn't have to re-enter everything.
          *
          * @note This will skip/ignore any fields of HTML type 'password'.
          * @note This will skip/ignore any fields of HTML type 'file'.
+         *
+         * @param data The data.
          */
         void
-        populate_values_from_parsed_data();
+        populate_values_from_parsed_data(const form_data& data);
 
         /**
          * Clears the pre-population values of all fields.
@@ -250,21 +151,12 @@ namespace malloy::html
         clear_values();
 
         /**
-         * Dumps the key-value pairs as a readable string.
-         *
-         * @return Key-value pairs represented as a string
-         */
-        [[nodiscard]]
-        std::string
-        dump() const;
-
-        /**
-         * Parse a request into this form.
+         * Parse a request matching this form.
          *
          * @param req The request.
-         * @return Whether the parsing was successful.
+         * @return The parsed form data (if any).
          */
-        bool
+        std::optional<form_data>
         parse(const malloy::http::request<>& req);
 
     private:
@@ -294,15 +186,15 @@ namespace malloy::html
         field_from_name(std::string_view field_name) const;
 
         [[nodiscard]]
-        bool
+        std::optional<form_data>
         parse_urlencoded(const malloy::http::request<>& req);
 
         [[nodiscard]]
-        bool
+        std::optional<form_data>
         parse_multipart(const malloy::http::request<>& req);
 
         [[nodiscard]]
-        bool
+        std::optional<form_data>
         parse_plain(const malloy::http::request<>& req);
     };
 
