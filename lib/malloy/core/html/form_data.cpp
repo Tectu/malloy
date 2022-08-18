@@ -1,5 +1,6 @@
 #include "form_data.hpp"
 
+#include <algorithm>
 #include <sstream>
 
 using namespace malloy::html;
