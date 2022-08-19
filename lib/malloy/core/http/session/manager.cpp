@@ -16,7 +16,8 @@ manager::manager(std::shared_ptr<storage> storage) :
         throw std::invalid_argument("no valid storage provided.");
 }
 
-std::shared_ptr<session> manager::get(const request_header<>& hdr)
+std::shared_ptr<session>
+manager::get(const request_header<>& hdr)
 {
     // Sanity check
     if (!m_storage)
@@ -31,7 +32,8 @@ std::shared_ptr<session> manager::get(const request_header<>& hdr)
     return get(ses_id.value());
 }
 
-std::shared_ptr<session> manager::get(const id_type& ses_id)
+std::shared_ptr<session>
+manager::get(const id_type& ses_id)
 {
     // Acquire mutex
     std::lock_guard lock(m_lock);
@@ -40,7 +42,8 @@ std::shared_ptr<session> manager::get(const id_type& ses_id)
     return m_storage->get(ses_id);
 }
 
-std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
+std::shared_ptr<session>
+manager::start(const request<>& req, response<>& resp)
 {
     // Nothing to do if no storage was provided
     if (!m_storage)
@@ -53,9 +56,8 @@ std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
 
     // Get existing session (if any)
     const auto& ses_id = get_id(req);
-    if (ses_id.has_value()) {
+    if (ses_id.has_value())
         session = m_storage->get(ses_id.value());
-    }
 
     // Otherwise create a new one
     if (!session) {
@@ -76,7 +78,8 @@ std::shared_ptr<session> manager::start(const request<>& req, response<>& resp)
     return session;
 }
 
-void manager::destroy(const request<>& req, response<>& resp)
+void
+manager::destroy(const request<>& req, response<>& resp)
 {
     if (!m_storage)
         return;
@@ -97,7 +100,8 @@ void manager::destroy(const request<>& req, response<>& resp)
     resp.add_cookie(c);
 }
 
-std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
+std::size_t
+manager::destroy_expired(const std::chrono::seconds& max_lifetime)
 {
     if (!m_storage)
         return 0;
@@ -113,17 +117,20 @@ std::size_t manager::destroy_expired(const std::chrono::seconds& max_lifetime)
     return m_storage->destroy_expired(max_lifetime);
 }
 
-bool manager::is_valid(const malloy::http::request_header<>& hdr)
+bool
+manager::is_valid(const malloy::http::request_header<>& hdr)
 {
     return get(hdr) != nullptr;
 }
 
-bool manager::is_valid(const id_type& id)
+bool
+manager::is_valid(const id_type& id)
 {
     return get(id) != nullptr;
 }
 
-std::optional<id_type> manager::get_id(const request_header<>& hdr) const
+std::optional<id_type>
+manager::get_id(const request_header<>& hdr) const
 {
     // Get session cookie value
     const auto& ses_id = cookie_value(hdr, cookie_name);
@@ -133,7 +140,8 @@ std::optional<id_type> manager::get_id(const request_header<>& hdr) const
     return std::string{ ses_id.value() };
 }
 
-id_type manager::generate_id()
+id_type
+manager::generate_id()
 {
     /**
      * ToDo: This implementation is not good enough for production use!

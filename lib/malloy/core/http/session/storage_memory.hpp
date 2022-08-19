@@ -25,12 +25,14 @@ namespace malloy::http::sessions
             session_chrono<std::chrono::steady_clock>
         {
 
-            explicit record(id_type&& id) :
+            explicit
+            record(id_type&& id) :
                 session_chrono(std::move(id))
             {
             }
 
-            bool storage_set(const key_type& key, value_type value) override
+            bool
+            storage_set(const key_type& key, value_type value) override
             {
                 try {
                     m_data.insert_or_assign(key, value);
@@ -44,7 +46,8 @@ namespace malloy::http::sessions
             }
 
             [[nodiscard]]
-            std::optional<key_type> storage_get(const key_type& key) const override
+            std::optional<key_type>
+            storage_get(const key_type& key) const override
             {
                 const auto& it = m_data.find(key);
                 if (it != std::cend(m_data))
@@ -53,7 +56,8 @@ namespace malloy::http::sessions
             }
 
             [[nodiscard]]
-            bool storage_remove(const key_type& key) override
+            bool
+            storage_remove(const key_type& key) override
             {
                 return m_data.erase(key) > 0;
             }
@@ -64,7 +68,8 @@ namespace malloy::http::sessions
 
     public:
         [[nodiscard]]
-        std::shared_ptr<session> create(id_type id) override
+        std::shared_ptr<session>
+        create(id_type id) override
         {
             auto ses = std::make_shared<record>(
                 std::move(id)
@@ -76,7 +81,8 @@ namespace malloy::http::sessions
         }
 
         [[nodiscard]]
-        std::shared_ptr<session> get(const id_type& id) override
+        std::shared_ptr<session>
+        get(const id_type& id) override
         {
             if (!m_sessions.contains(id))
                 return { };
@@ -89,7 +95,8 @@ namespace malloy::http::sessions
             m_sessions.erase(id);
         }
 
-        std::size_t destroy_expired(const std::chrono::seconds& max_lifetime) override
+        std::size_t
+        destroy_expired(const std::chrono::seconds& max_lifetime) override
         {
             // ToDo: This can be upgraded to use std::erase_if() once C++20 support is good enough.
 

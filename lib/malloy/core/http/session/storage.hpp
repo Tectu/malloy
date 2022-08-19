@@ -22,7 +22,9 @@ namespace malloy::http::sessions
          * @return The created session.
          */
         [[nodiscard]]
-        virtual std::shared_ptr<session> create(id_type id) = 0;
+        virtual
+        std::shared_ptr<session>
+        create(id_type id) = 0;
 
         /**
          * Returns an existing session (if any)
@@ -31,14 +33,18 @@ namespace malloy::http::sessions
          * @return The session (if any).
          */
         [[nodiscard]]
-        virtual std::shared_ptr<session> get(const id_type& id) = 0;
+        virtual
+        std::shared_ptr<session>
+        get(const id_type& id) = 0;
 
         /**
          * Destroy an existing session.
          *
          * @param id The session ID.
          */
-        virtual void destroy(id_type id) = 0;
+        virtual
+        void
+        destroy(id_type id) = 0;
 
         /**
          * Destroy any session older than a specified value.
@@ -49,7 +55,9 @@ namespace malloy::http::sessions
          * @param max_lifetime The maximum lifetime of a session.
          * @return The number of sessions that were expired/destroyed.
          */
-        virtual std::size_t destroy_expired(const std::chrono::seconds& max_lifetime) = 0;
+        virtual
+        std::size_t
+        destroy_expired(const std::chrono::seconds& max_lifetime) = 0;
     };
 
 }

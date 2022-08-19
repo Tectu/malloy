@@ -32,7 +32,8 @@ namespace malloy::http::sessions
          *
          * @param id The session ID.
          */
-        explicit session(id_type&& id) :
+        explicit
+        session(id_type&& id) :
             m_id(std::move(id))
         {
         }
@@ -57,7 +58,8 @@ namespace malloy::http::sessions
          * @param other
          * @return
          */
-        session& operator=(const session& other) = delete;
+        session&
+        operator=(const session& other) = delete;
 
         /**
          * Move assignment operator.
@@ -65,7 +67,8 @@ namespace malloy::http::sessions
          * @param other
          * @return
          */
-        session& operator=(session&& other) noexcept = delete;
+        session&
+        operator=(session&& other) noexcept = delete;
 
         /**
          * Add or update a key-value pair.
@@ -77,7 +80,8 @@ namespace malloy::http::sessions
          * @param value The value.
          * @return Whether setting the value was successful.
          */
-        bool set(const key_type& key, value_type value)
+        bool
+        set(const key_type& key, value_type value)
         {
             if (key.empty() || value.empty())
                 return false;
@@ -93,7 +97,8 @@ namespace malloy::http::sessions
          * @return The value corresponding to the specified key (if any).
          */
         [[nodiscard]]
-        std::optional<key_type> get(const key_type& key)
+        std::optional<key_type>
+        get(const key_type& key)
         {
             if (key.empty())
                 return std::nullopt;
@@ -116,7 +121,8 @@ namespace malloy::http::sessions
          */
         [[nodiscard]]
         virtual
-        bool remove(const key_type& key)
+        bool
+        remove(const key_type& key)
         {
             if (key.empty())
                 return false;
@@ -131,7 +137,8 @@ namespace malloy::http::sessions
          * @return The session ID.
          */
         [[nodiscard]]
-        id_type id() const noexcept
+        id_type
+        id() const noexcept
         {
             return m_id;
         }
@@ -143,7 +150,8 @@ namespace malloy::http::sessions
          * @return The session cookie.
          */
         [[nodiscard]]
-        cookie generate_cookie(std::string cookie_name) const
+        cookie
+        generate_cookie(std::string cookie_name) const
         {
             return cookie {
                 .name = std::move(cookie_name),
@@ -170,7 +178,8 @@ namespace malloy::http::sessions
          * @return Whether setting the value was successful.
          */
         virtual
-        bool storage_set(const key_type& key, value_type value) = 0;
+        bool
+        storage_set(const key_type& key, value_type value) = 0;
 
         /**
          * Get the value of a particular key.
@@ -180,7 +189,8 @@ namespace malloy::http::sessions
          */
         [[nodiscard]]
         virtual
-        std::optional<key_type> storage_get(const key_type& key) const = 0;
+        std::optional<key_type>
+        storage_get(const key_type& key) const = 0;
 
         /**
          * Remove a key-value pair.
@@ -190,7 +200,8 @@ namespace malloy::http::sessions
          */
         [[nodiscard]]
         virtual
-        bool storage_remove(const key_type& key) = 0;
+        bool
+        storage_remove(const key_type& key) = 0;
 
         /**
          * Update the access time.
@@ -198,7 +209,8 @@ namespace malloy::http::sessions
          * This should usually update the access time to the current time.
          */
         virtual
-        void update_access_time() = 0;
+        void
+        update_access_time() = 0;
 
     private:
         id_type m_id;
@@ -221,7 +233,8 @@ namespace malloy::http::sessions
          *
          * @param id The session ID.
          */
-        explicit session_chrono(id_type&& id) :
+        explicit
+        session_chrono(id_type&& id) :
             session(std::move(id))
         {
             m_access_time = Clock::now();
@@ -232,7 +245,8 @@ namespace malloy::http::sessions
          *
          * @return The access time.
          */
-        time_point_t access_time() const noexcept
+        time_point_t
+        access_time() const noexcept
         {
             return m_access_time;
         }
@@ -246,7 +260,9 @@ namespace malloy::http::sessions
          */
         template<typename Rep, typename Period>
         [[nodiscard]]
-        constexpr bool access_time_older_than(const std::chrono::duration<Rep, Period>& max_lifetime) const
+        constexpr
+        bool
+        access_time_older_than(const std::chrono::duration<Rep, Period>& max_lifetime) const
         {
             return (Clock::now() - m_access_time) > max_lifetime;
         }
@@ -255,7 +271,8 @@ namespace malloy::http::sessions
         /**
          * @copydoc session::update_access_time()
          */
-        void update_access_time() override
+        void
+        update_access_time() override
         {
             m_access_time = Clock::now();
         }
