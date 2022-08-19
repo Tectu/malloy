@@ -189,7 +189,7 @@ namespace malloy::http::sessions
          */
         [[nodiscard]]
         virtual
-        std::optional<key_type>
+        std::optional<value_type>
         storage_get(const key_type& key) const = 0;
 
         /**
