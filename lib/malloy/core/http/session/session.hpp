@@ -39,6 +39,12 @@ namespace malloy::http::sessions
         }
 
         /**
+         * Destructor.
+         */
+        virtual
+        ~session() = default;
+
+        /**
          * Copy constructor.
          *
          * @param other
