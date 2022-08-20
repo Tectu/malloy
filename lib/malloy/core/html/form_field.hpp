@@ -43,7 +43,7 @@ namespace malloy::html
          * @note This will ignore/skip if the `type` is "file".
          */
         void
-        populate_value_from_parsed_data(const form_field_data& data)
+        populate(const form_field_data& data)
         {
             if (data.type == "password" || data.type == "file")
                 return;

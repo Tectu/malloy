@@ -96,7 +96,7 @@ form::has_field(const std::string_view field_name) const
 }
 
 void
-form::populate_values_from_parsed_data(const form_data& data)
+form::populate(const form_data& data)
 {
     for (const auto& ffd : data.fields) {
         // Find the corresponding field
@@ -105,7 +105,7 @@ form::populate_values_from_parsed_data(const form_data& data)
         auto& field = field_from_name(ffd.name);
 
         // Set value
-        field.populate_value_from_parsed_data(ffd);
+        field.populate(ffd);
     }
 }
 

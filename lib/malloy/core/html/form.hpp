@@ -142,7 +142,7 @@ namespace malloy::html
          * @param data The data.
          */
         void
-        populate_values_from_parsed_data(const form_data& data);
+        populate(const form_data& data);
 
         /**
          * Clears the pre-population values of all fields.
