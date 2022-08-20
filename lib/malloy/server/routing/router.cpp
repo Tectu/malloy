@@ -114,6 +114,11 @@ router::set_server_string(std::string_view str)
 bool
 router::add_preflight(const std::string_view target, http::preflight_config cfg)
 {
+    // Log
+    if (m_logger)
+        m_logger->trace("adding preflight: {}", target);
+
+    // Add
     return add(
         malloy::http::method::options,
         target,

@@ -414,6 +414,9 @@ namespace malloy::server
         void
         add_policy(const std::string& resource, Policy&& policy)
         {
+            if (m_logger)
+                m_logger->trace("adding policy: {}", resource);
+
             using policy_t = std::decay_t<Policy>;
             auto writer = [this](const auto& header, auto&& resp, auto&& conn) { detail::send_response(header, std::forward<decltype(resp)>(resp), std::forward<decltype(conn)>(conn), m_server_str); };
 
