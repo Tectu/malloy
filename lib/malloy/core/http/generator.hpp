@@ -40,7 +40,8 @@ namespace malloy::http
         /**
          * Destructor
          */
-        virtual ~generator() = default;
+        virtual
+        ~generator() = default;
 
         // Operators
         generator& operator=(const generator& rhs) = delete;
@@ -50,7 +51,9 @@ namespace malloy::http
          * Construct a 200 response.
          */
         [[nodiscard]]
-        static response<> ok();
+        static
+        response<>
+        ok();
 
         /**
          * Construct a 3xx response.
@@ -60,7 +63,9 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<> redirect(status code, std::string_view location);
+        static
+        response<>
+        redirect(status code, std::string_view location);
 
         /**
          * Construct a 400 error.
@@ -69,7 +74,9 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<> bad_request(std::string_view reason);
+        static
+        response<>
+        bad_request(std::string_view reason);
 
         /**
          * Construct a 404 error.
@@ -78,7 +85,9 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<> not_found(std::string_view resource);
+        static
+        response<>
+        not_found(std::string_view resource);
 
         /**
          * Construct a 500 error.
@@ -87,7 +96,9 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static response<> server_error(std::string_view what);
+        static
+        response<>
+        server_error(std::string_view what);
 
         /**
          * Construct a file response.
@@ -98,7 +109,10 @@ namespace malloy::http
          */
         template<malloy::http::concepts::body Body>
         [[nodiscard]]
-        static auto file(const request<Body>& req, const std::filesystem::path& storage_base_path) -> file_response {
+        static
+        file_response
+        file(const request<Body>& req, const std::filesystem::path& storage_base_path)
+        {
 	        return file(storage_base_path, malloy::http::resource_string(req));
         }
 
@@ -110,7 +124,9 @@ namespace malloy::http
          * @return The response.
          */
         [[nodiscard]]
-        static auto file(const std::filesystem::path& storage_path, std::string_view rel_path) -> file_response;
+        static
+        file_response
+        file(const std::filesystem::path& storage_path, std::string_view rel_path);
     };
 
 }
