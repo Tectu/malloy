@@ -153,11 +153,16 @@ namespace malloy::html
         /**
          * Parse a request matching this form.
          *
+         * @details When @p check_required_fields is set to `true`, this function will verify that each form field
+         *          marked as 'required' is actually present and has a non-empty content. If any of the required fields
+         *          is not present or does have an empty content, `std::nullopt` is returned.
+         *
          * @param req The request.
+         * @param check_required_fields Whether to check for the presence of all fields marked 'required'.
          * @return The parsed form data (if any).
          */
         std::optional<form_data>
-        parse(const malloy::http::request<>& req) const;
+        parse(const malloy::http::request<>& req, bool check_required_fields = true) const;
 
     private:
         http::method m_method;

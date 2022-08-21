@@ -117,15 +117,50 @@ form::clear_values()
 }
 
 std::optional<form_data>
-form::parse(const malloy::http::request<>& req) const
+form::parse(
+    const malloy::http::request<>& req,
+    const bool check_required_fields
+) const
 {
+    // Parse data
+    std::optional<form_data> data;
     switch (m_encoding) {
-        case encoding::url:         return parse_urlencoded(req);
-        case encoding::multipart:   return parse_multipart(req);
-        case encoding::plain:       return parse_plain(req);
+        case encoding::url:         data = parse_urlencoded(req);   break;
+        case encoding::multipart:   data = parse_multipart(req);    break;
+        case encoding::plain:       data = parse_plain(req);        break;
     }
 
-    return { };
+    // If no data was parsed, we're most certainly done here.
+    if (!data)
+        return { };
+
+    // Check whether all form fields marked as "required" are present (if supposed to)
+    if (check_required_fields) {
+        for (const form_field& ff : m_fields) {
+            // Nothing to do here if the field is not marked as "required"
+            if (!ff.required)
+                continue;
+
+            // Find the corresponding form_field_data
+            const auto& it = std::find_if(
+                std::cbegin(data->fields),
+                std::cend(data->fields),
+                [&ff](const form_field_data& ffd) {
+                    return ff.name == ffd.name;
+                }
+            );
+
+            // Check if we found the corresponding form_field_data
+            if (it == std::cend(data->fields))
+                return { };
+
+            // Check for non-empty content
+            if (it->content.empty())
+                return { };
+        }
+    }
+
+    return data;
 }
 
 std::optional<form_data>
