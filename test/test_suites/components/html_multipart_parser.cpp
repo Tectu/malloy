@@ -17,6 +17,20 @@ TEST_SUITE("components - html - multipart parser")
         CHECK_EQ(p.content, expected_content);
     };
 
+    TEST_CASE("empty body 1")
+    {
+        constexpr const char* boundary{ "---------------------------735323031399963166993862150" };
+
+        const auto& parts = html::multipart_parser::parse({ }, boundary);
+        CHECK_EQ(parts.size(), 0);
+    }
+
+    TEST_CASE("empty body 2")
+    {
+        const auto& parts = html::multipart_parser::parse({ }, { });
+        CHECK_EQ(parts.size(), 0);
+    }
+
     TEST_CASE("regular 1")
     {
         constexpr const char* boundary{ "---------------------------735323031399963166993862150" };
