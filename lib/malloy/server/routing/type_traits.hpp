@@ -11,6 +11,7 @@ namespace malloy::server::concepts
     {
         template<typename T>
         concept route_handler_retr = malloy::concepts::is_container_of<T, malloy::http::response, std::variant> || malloy::concepts::is<T, malloy::http::response>;
+
         template<typename Func, typename... Args>
         concept route_handler_helper = std::invocable<Func, Args...> && requires(Func f, Args... args) {
             { std::invoke(f, args...) } -> route_handler_retr;
