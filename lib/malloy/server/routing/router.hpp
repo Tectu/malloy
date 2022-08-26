@@ -423,6 +423,29 @@ namespace malloy::server
             m_policies.emplace_back(resource, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
         }
 
+        // ToDo: return bool?
+        template<typename Resource>
+        void
+        add_rest(Resource&& res)
+        {
+            if (res.list) {
+                add(
+                    malloy::http::method::get,
+                    // ToDo: optionally capture ?limit=(\d+)&offset=(\d+)
+                    "^/" + res.name + "$",
+                    // ToDo: Add some reusable wrapper magic
+                    // ToDo: capture using std::forward instead?
+                    [handler = std::move(res.list)](const auto& req) {
+                        (void)req;
+
+                        auto msg = handler(100, 0);
+
+                        return msg.to_http_response();
+                    }
+                );
+            }
+        }
+
         /**
          * Handle a request.
          *

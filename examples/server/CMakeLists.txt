@@ -1,5 +1,6 @@
 add_subdirectory(basic)
 add_subdirectory(custom_request_filter)
+add_subdirectory(rest)
 add_subdirectory(routing)
 add_subdirectory(session)
 add_subdirectory(websocket)
