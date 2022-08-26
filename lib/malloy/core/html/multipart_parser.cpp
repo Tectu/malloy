@@ -44,6 +44,10 @@ multipart_parser::parse(const std::string_view body, const std::string& boundary
 {
     std::vector<part> parts;
 
+    // Sanity check
+    if (body.empty() || boundary.empty())
+        return { };
+
     // Prepare boundary lines
     const std::string boundary_line      = "--" + boundary + "\r\n";
     const std::string boundary_line_last = "--" + boundary + "--";
@@ -94,6 +98,10 @@ std::optional<multipart_parser::part>
 multipart_parser::parse_part(const std::string_view part_raw)
 {
     struct part p;
+
+    // Sanity check
+    if (part_raw.empty())
+        return { };
 
     // Line-by-line
     std::string_view::size_type char_counter = 0;

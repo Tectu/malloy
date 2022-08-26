@@ -47,7 +47,6 @@ endif()
 
 # Disable server specific features if server feature is disabled
 if (NOT MALLOY_FEATURE_SERVER)
-    set(MALLOY_FEATURE_APPFW OFF)
     set(MALLOY_FEATURE_HTML OFF)
 endif()
 
