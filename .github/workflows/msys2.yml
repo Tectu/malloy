@@ -67,7 +67,7 @@ jobs:
           rm -rf boost_*/* download.tar.bz2 download.tar
 
       - name: Configure
-        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=ON -DMALLOY_BUILD_SHARED=${{ matrix.shared }} -DMALLOY_FEATURE_APPFW=ON
+        run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_DEPENDENCY_SPDLOG_DOWNLOAD=ON -DMALLOY_BUILD_SHARED=${{ matrix.shared }}
 
       - name: Build
         run: cmake --build build
