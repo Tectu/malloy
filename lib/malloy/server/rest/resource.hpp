@@ -52,13 +52,14 @@ namespace malloy::server::rest
         HandlerModify&& modify
     )
     {
-        resource<Object, HandlerList, HandlerImmutable, HandlerCreate, HandlerRemove, HandlerModify> r;
-        r.name = std::move(name);
-        r.list= std::move(list);
-        r.get = std::move(get);
-        r.create = std::move(create);
-        r.remove = std::move(remove);
-        r.modify = std::move(modify);
+        resource<Object, HandlerList, HandlerImmutable, HandlerCreate, HandlerRemove, HandlerModify> r{
+            std::move(name),
+            std::move(list),
+            std::move(get),
+            std::move(create),
+            std::move(remove),
+            std::move(modify)
+        };
 
         return r;
     }

@@ -428,7 +428,7 @@ namespace malloy::server
         void
         add_rest(Resource&& res)
         {
-            if (res.list) {
+            //if (res.list) {
                 add(
                     malloy::http::method::get,
                     // ToDo: optionally capture ?limit=(\d+)&offset=(\d+)
@@ -443,7 +443,22 @@ namespace malloy::server
                         return msg.to_http_response();
                     }
                 );
-            }
+            //}
+
+            // if (res.get) {
+                add(
+                    malloy::http::method::get,
+                    // ToDo: support non-digit id captures?  -> Use object::id_type
+                    "^/" + res.name + "/(\\d+)$",
+                    [handler = std::move(res.get)](const auto& req) {
+                        (void)req;
+
+                        auto msg = handler(0);
+
+                        return msg.to_http_response();
+                    }
+                );
+            //}
         }
 
         /**

@@ -32,6 +32,8 @@ int main()
     // Create malloy controller
     malloy::server::routing_context c{cfg};
 
+    auto logger = cfg.logger;
+
     {
         using namespace malloy::server;
 
@@ -40,12 +42,14 @@ int main()
             "employees",
 
             // Get all
-            [](const std::size_t limit, const std::size_t offset) {
+            [logger](const std::size_t limit, const std::size_t offset) {
+                logger->warn("GetAll {} {}", limit, offset);
                 return rest::success{ };
             },
 
             // Get
-            [](const std::size_t id) {
+            [logger](const std::size_t id) {
+                logger->warn("GET {}", id);
                 return rest::success{ };
             },
 
