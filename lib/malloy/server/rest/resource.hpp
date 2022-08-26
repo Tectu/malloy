@@ -1,13 +1,13 @@
 #pragma once
 
-#include "concepts.hpp"
+#include "../../core/rest/concepts.hpp"
 
 #include <string>
 
 namespace malloy::server::rest
 {
+    using namespace malloy::rest;
 
-    // ToDo: Rename to resource_endpoint
     template<
         object Object,
         handler_list HandlerList,

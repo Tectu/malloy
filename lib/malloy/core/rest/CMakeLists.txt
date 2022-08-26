@@ -3,9 +3,9 @@ target_sources(
     PUBLIC
         FILE_SET
             HEADERS
-            BASE_DIRS ${MALLOY_SERVER_BASE_DIR}
+            BASE_DIRS ${MALLOY_CORE_BASE_DIR}
             FILES
-                resource.hpp
+                concepts.hpp
+                message.hpp
                 rest.hpp
-
 )

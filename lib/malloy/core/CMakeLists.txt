@@ -19,6 +19,9 @@ if (MALLOY_FEATURE_HTML)
 endif()
 add_subdirectory(http)
 add_subdirectory(tcp)
+if (MALLOY_FEATURE_REST)
+    add_subdirectory(rest)
+endif()
 if (MALLOY_FEATURE_TLS)
     add_subdirectory(tls)
 endif()
@@ -80,6 +83,13 @@ if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
     install(
         TARGETS
             spdlog
+        EXPORT malloy-targets
+    )
+endif()
+if (MALLOY_DEPENDENCY_JSON AND MALLOY_DEPENDENCY_JSON_DOWNLOAD)
+    install(
+        TARGETS
+            nlohmann_json
         EXPORT malloy-targets
     )
 endif()

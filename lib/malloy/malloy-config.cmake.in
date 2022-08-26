@@ -1,12 +1,16 @@
 include(CMakeFindDependencyMacro)
 
 # Capture dependency configurations
+set(MALLOY_DEPENDENCY_JSON @MALLOY_DEPENDENCY_JSON@)
 set(MALLOY_DEPENDENCY_OPENSSL @MALLOY_DEPENDENCY_OPENSSL@)
 
 # Include dependencies
 find_dependency(Boost @MALLOY_DEPENDENCY_BOOST_VERSION_MIN@ REQUIRED)
 find_dependency(fmt REQUIRED)
 find_dependency(spdlog REQUIRED)
+if (MALLOY_DEPENDENCY_JSON)
+    find_package(nlohmann_json REQUIRED)
+endif()
 if (MALLOY_DEPENDENCY_OPENSSL)
     find_dependency(OpenSSL REQUIRED)
 endif()

@@ -35,42 +35,40 @@ int main()
     auto logger = cfg.logger;
 
     {
-        using namespace malloy::server;
+        using namespace malloy;
 
+        c.router().add_rest(
+            server::rest::make_resource<employee>(
+                "employees",
 
-        auto r = rest::make_resource<employee>(
-            "employees",
+                // Get all
+                [logger](const std::size_t limit, const std::size_t offset) {
+                    logger->warn("GetAll {} {}", limit, offset);
+                    return rest::success{ };
+                },
 
-            // Get all
-            [logger](const std::size_t limit, const std::size_t offset) {
-                logger->warn("GetAll {} {}", limit, offset);
-                return rest::success{ };
-            },
+                // Get
+                [logger](const std::size_t id) {
+                    logger->warn("GET {}", id);
+                    return rest::success{ };
+                },
 
-            // Get
-            [logger](const std::size_t id) {
-                logger->warn("GET {}", id);
-                return rest::success{ };
-            },
+                // Create
+                [](const std::size_t id, employee&& obj) {
+                    return rest::success{ };
+                },
 
-            // Create
-            [](const std::size_t id, employee&& obj) {
-                return rest::success{ };
-            },
+                // Remove
+                [](const std::size_t id, employee&& obj) {
+                    return rest::success{ };
+                },
 
-            // Remove
-            [](const std::size_t id, employee&& obj) {
-                return rest::success{ };
-            },
-
-            // Modify
-            [](const std::size_t id, employee&& obj) {
-                return rest::success{ };
-            }
+                // Modify
+                [](const std::size_t id, employee&& obj) {
+                    return rest::success{ };
+                }
+            )
         );
-
-
-        c.router().add_rest(std::move(r));
     }
 
     // Start

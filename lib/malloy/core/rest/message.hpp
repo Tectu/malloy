@@ -1,15 +1,16 @@
 #pragma once
 
-#include "3rdparty/nlohmann/json.hpp"
 #include "concepts.hpp"
-#include "../../core/http/response.hpp"
-#include "../../core/http/types.hpp"
+#include "../http/response.hpp"
+#include "../http/types.hpp"
+#include "../http/generator.hpp"
+
+#include <nlohmann/json.hpp>
 
 #include <limits>
 #include <string>
 
-// ToDo: Move to core
-namespace malloy::server::rest
+namespace malloy::rest
 {
 
     /**
@@ -40,7 +41,22 @@ namespace malloy::server::rest
 
         [[nodiscard]]
         malloy::http::response<>
-        to_http_response() const;
+        to_http_response() const
+        {
+            malloy::http::response resp{ m_http_status };
+
+            try {
+                resp.body() = "ToDo: Serialize JSON";
+            }
+            catch (const std::exception& e) {
+                return malloy::http::generator::server_error("Exception during response assembly.");
+            }
+
+            // ToDo: Probably not necessary as router does that when sending
+            resp.prepare_payload();
+
+            return resp;
+        }
 
     protected:
         malloy::http::status m_http_status{ malloy::http::status::not_implemented };  // ToDo: Sane default?

@@ -62,6 +62,22 @@ endif()
 
 
 ########################################################################################################################
+# nlohmann::json
+########################################################################################################################
+if (MALLOY_DEPENDENCY_JSON)
+    if (MALLOY_DEPENDENCY_JSON_DOWNLOAD)
+        FetchContent_Declare(
+            json
+            URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+        )
+        FetchContent_MakeAvailable(json)
+    else()
+        find_package(nlohmann_json REQUIRED)
+    endif()
+endif()
+
+
+########################################################################################################################
 # OpenSSL
 ########################################################################################################################
 if (MALLOY_DEPENDENCY_OPENSSL)

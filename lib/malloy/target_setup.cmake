@@ -39,6 +39,7 @@ function(malloy_target_common_setup TARGET)
             SPDLOG_FMT_EXTERNAL
             $<$<BOOL:${MALLOY_BUILD_SHARED}>:FMT_SHARED>
             $<$<BOOL:${MALLOY_FEATURE_HTML}>:MALLOY_FEATURE_HTML>
+            $<$<BOOL:${MALLOY_FEATURE_REST}>:MALLOY_FEATURE_REST>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:MALLOY_FEATURE_TLS>
             $<$<BOOL:${WIN32}>:UNICODE>
             $<$<BOOL:${WIN32}>:_UNICODE>
@@ -65,6 +66,7 @@ function(malloy_target_common_setup TARGET)
             spdlog::spdlog
             Boost::headers
             fmt::fmt
+            $<$<BOOL:${MALLOY_FEATURE_REST}>:nlohmann_json::nlohmann_json>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::Crypto>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:OpenSSL::SSL>
             $<$<AND:$<BOOL:${MALLOY_FEATURE_TLS}>,$<BOOL:${WIN32}>>:crypt32>        # ToDo: This is only needed when MALLOY_FEATURE_CLIENT is ON

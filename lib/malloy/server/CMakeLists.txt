@@ -15,7 +15,9 @@ malloy_target_common_setup(${TARGET})
 
 # Add subdirectories
 add_subdirectory(http)
-add_subdirectory(rest)
+if (MALLOY_FEATURE_REST)
+    add_subdirectory(rest)
+endif()
 add_subdirectory(routing)
 add_subdirectory(websocket)
 add_subdirectory(auth)

@@ -1,12 +1,11 @@
 #pragma once
 
-#include "3rdparty/nlohmann/json_fwd.hpp"
+#include <nlohmann/json_fwd.hpp>
 
 #include <concepts>
 
 // ToDo: Maybe add ::concepts namespace?
-// ToDo: Move to core (malloy::rest::concepts)
-namespace malloy::server::rest
+namespace malloy::rest
 {
     struct message;
 

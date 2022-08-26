@@ -16,6 +16,9 @@
 #include "../../core/http/request.hpp"
 #include "../../core/http/response.hpp"
 #include "../../core/http/utils.hpp"
+#if MALLOY_FEATURE_REST
+    #include "../rest/resource.hpp"
+#endif
 #if MALLOY_FEATURE_TLS
     #include "../http/connection_tls.hpp"
 #endif
@@ -423,6 +426,8 @@ namespace malloy::server
             m_policies.emplace_back(resource, std::make_unique<req_validator_impl<policy_t, decltype(writer)>>(std::forward<Policy>(policy), std::move(writer)));
         }
 
+#if MALLOY_FEATURE_REST
+        // ToDo: Allow capturing more stuff (custom queries by the application)
         // ToDo: return bool?
         template<typename Resource>
         void
@@ -450,16 +455,25 @@ namespace malloy::server
                     malloy::http::method::get,
                     // ToDo: support non-digit id captures?  -> Use object::id_type
                     "^/" + res.name + "/(\\d+)$",
-                    [handler = std::move(res.get)](const auto& req) {
+                    [handler = std::move(res.get)](const auto& req, const auto& captures) {
                         (void)req;
 
-                        auto msg = handler(0);
+                        std::size_t id;
+                        try {
+                            id = std::stol(captures.at(0));
+                        }
+                        catch (...) {
+                            return malloy::http::generator::bad_request("invalid request");
+                        }
+
+                        auto msg = handler(id);      // ToDo: Cast to Object::id_type
 
                         return msg.to_http_response();
                     }
                 );
             //}
         }
+#endif
 
         /**
          * Handle a request.
