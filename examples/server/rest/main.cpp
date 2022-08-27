@@ -13,13 +13,40 @@ struct employee
 {
     using id_type = std::size_t;
 
+    std::string name;
+
     [[nodiscard]]
     nlohmann::json
     to_json() const
     {
-        return { };
+        nlohmann::json j;
+
+        j["name"] = name;
+
+        return j;
+    }
+
+    bool
+    from_json(nlohmann::json&& j)
+    {
+        name = j["name"];
+
+        return true;
+    }
+
+    [[nodiscard]]
+    std::string
+    dump()
+    {
+        std::stringstream ss;
+
+        ss << "name: " << name << "\n";
+
+        return ss.str();
     }
 };
+
+std::vector<employee> employees;
 
 int main()
 {
@@ -50,21 +77,32 @@ int main()
                 // Get
                 [logger](const std::size_t id) {
                     logger->warn("GET {}", id);
-                    return rest::success{ };
+
+                    employee e;
+
+                    return rest::success{ e };
                 },
 
                 // Create
-                [](const std::size_t id, employee&& obj) {
+                [logger](const std::size_t id) {
+                    logger->warn("POST {}", id);
+
                     return rest::success{ };
                 },
 
                 // Remove
-                [](const std::size_t id, employee&& obj) {
+                [logger](const std::size_t id) {
+                    logger->warn("DELETE {}", id);
+
                     return rest::success{ };
                 },
 
                 // Modify
-                [](const std::size_t id, employee&& obj) {
+                [logger](const std::size_t id, employee&& obj) {
+                    logger->warn("PATCH {}", id);
+
+                    logger->warn("\n{}\n", obj.dump());
+
                     return rest::success{ };
                 }
             )

@@ -18,6 +18,7 @@
 #include "../../core/http/utils.hpp"
 #if MALLOY_FEATURE_REST
     #include "../rest/resource.hpp"
+    #include "../../core/rest/message.hpp"
 #endif
 #if MALLOY_FEATURE_TLS
     #include "../http/connection_tls.hpp"
@@ -429,7 +430,10 @@ namespace malloy::server
 #if MALLOY_FEATURE_REST
         // ToDo: Allow capturing more stuff (custom queries by the application)
         // ToDo: return bool?
+        // ToDo: support non-digit id captures?  -> Use object::id_type
+        // ToDo: Resource concept
         template<typename Resource>
+            //requires(std::derived_from<Resource, malloy::server::rest::resource>)
         void
         add_rest(Resource&& res)
         {
@@ -453,7 +457,6 @@ namespace malloy::server
             // if (res.get) {
                 add(
                     malloy::http::method::get,
-                    // ToDo: support non-digit id captures?  -> Use object::id_type
                     "^/" + res.name + "/(\\d+)$",
                     [handler = std::move(res.get)](const auto& req, const auto& captures) {
                         (void)req;
@@ -472,6 +475,76 @@ namespace malloy::server
                     }
                 );
             //}
+
+            // if (res.create) {
+                add(
+                    malloy::http::method::post,
+                    "^/" + res.name + "/(\\d+)$",
+                    [handler = std::move(res.create)](const auto& req, const auto& captures) {
+                        (void)req;
+
+                        try {
+                            // Extract resource ID
+                            const std::size_t id = std::stol(captures.at(0));
+
+                            return handler(id).to_http_response();
+                        }
+                        catch (...) {
+                            return malloy::http::generator::bad_request("invalid request");
+                        }
+                    }
+                );
+            // }
+
+            // if (res.remove) {
+                add(
+                    malloy::http::method::delete_,
+                    "^/" + res.name + "/(\\d+)$",
+                    [handler = std::move(res.remove)](const auto& req, const auto& captures) {
+                        (void)req;
+
+                        try {
+                            // Extract resource ID
+                            const std::size_t id = std::stol(captures.at(0));
+
+                            return handler(id).to_http_response();
+                        }
+                        catch (...) {
+                            return malloy::http::generator::bad_request("invalid request");
+                        }
+                    }
+                );
+            // }
+
+            // if (res.modify) {
+                add(
+                    malloy::http::method::patch,
+                    "^/" + res.name + "/(\\d+)$",
+                    [handler = std::move(res.modify)](const auto& req, const auto& captures) {
+                        try {
+                            // Extract resource ID
+                            const std::size_t id = std::stol(captures.at(0));
+
+                            // Parse request
+                            auto obj = malloy::rest::request::from_http_request<typename Resource::object_type>(req);
+                            if (!obj)
+                                return malloy::http::generator::bad_request("invalid request");
+
+                            /*
+                            // Parse object
+                            typename Resource::object_type obj;
+                            if (!obj.from_json(json))
+                                return malloy::http::generator::bad_request("invalid body");
+                            */
+
+                            return handler(id, std::move(obj.value())).to_http_response();
+                        }
+                        catch (...) {
+                            return malloy::http::generator::bad_request("invalid request");
+                        }
+                    }
+                );
+            // }
         }
 #endif
 

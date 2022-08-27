@@ -7,7 +7,7 @@
 // ToDo: Maybe add ::concepts namespace?
 namespace malloy::rest
 {
-    struct message;
+    struct response;
 
     /**
      * Ensures that T has an inner type member 'id_type'
@@ -22,13 +22,19 @@ namespace malloy::rest
         { t.to_json() } -> std::same_as<nlohmann::json>;
     };
 
+    template<typename T>
+    concept has_from_json = requires(T t, nlohmann::json&& j) {
+        { t.from_json(std::move(j)) } -> std::same_as<bool>;
+    };
+
     // ToDo: Rename to resource
     // ToDo: Ensure that we can convert a T::id_type to an std::string somehow
     // ToDo: For JSON stuff maybe use std::is_convertible instead of exact type?
     template<typename T>
     concept object =
         has_id_type<T> &&
-        has_to_json<T>;
+        has_to_json<T> &&
+        has_from_json<T>;
 
     /**
      * Handler to list existing resources (with pagination support).
@@ -37,7 +43,20 @@ namespace malloy::rest
     concept handler_list =
         std::invocable<Func, std::size_t, std::size_t>
         && requires(Func f, std::size_t limit, std::size_t offset) {
-            { std::invoke(f, limit, offset) } -> std::derived_from<message>;
+            { std::invoke(f, limit, offset) } -> std::derived_from<response>;
+    };
+
+    /**
+     * Handler which only identifies a resource.
+     */
+    template<typename Func, typename Object>
+    concept handler_identity =
+        std::invocable<Func, typename Object::id_type>
+        && requires(Object) {
+            object<Object>;
+        }
+        && requires(Func f, const typename Object::id_type& id) {
+            { std::invoke(f, id) } -> std::derived_from<response>;
     };
 
     /**
@@ -50,7 +69,7 @@ namespace malloy::rest
             object<Object>;
         }
         && requires(Func f, const typename Object::id_type& id) {
-            { std::invoke(f, id) } -> std::derived_from<message>;
+            { std::invoke(f, id) } -> std::derived_from<response>;
     };
 
     /**
@@ -63,7 +82,7 @@ namespace malloy::rest
             object<Object>;
         }
         && requires(Func f, const typename Object::id_type& id, Object&& obj) {
-            { std::invoke(f, id, std::forward<Object>(obj)) } -> std::derived_from<message>;
+            { std::invoke(f, id, std::forward<Object>(obj)) } -> std::derived_from<response>;
     };
 
 }

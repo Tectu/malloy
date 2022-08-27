@@ -12,12 +12,14 @@ namespace malloy::server::rest
         object Object,
         handler_list HandlerList,
         handler_immutable<Object> HandlerImmutable,
-        handler_mutable<Object> HandlerCreate,
-        handler_mutable<Object> HandlerRemove,
+        handler_identity<Object> HandlerCreate,
+        handler_identity<Object> HandlerRemove,
         handler_mutable<Object> HandlerModify
     >
     struct resource
     {
+        using object_type = Object;
+
         std::string name;
 
         HandlerList      list;          // GET{limit, offset}
@@ -31,8 +33,8 @@ namespace malloy::server::rest
         object Object,
         handler_list HandlerList,
         handler_immutable<Object> HandlerImmutable,
-        handler_mutable<Object> HandlerCreate,
-        handler_mutable<Object> HandlerRemove,
+        handler_identity<Object> HandlerCreate,
+        handler_identity<Object> HandlerRemove,
         handler_mutable<Object> HandlerModify
     >
     resource<
