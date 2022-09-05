@@ -67,6 +67,7 @@ endif()
 
 # Add tests (if supposed to)
 if (MALLOY_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(test)
 endif()
 

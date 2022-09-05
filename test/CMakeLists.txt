@@ -28,7 +28,6 @@ target_link_libraries(
 ###
 # CTest
 ###
-enable_testing()
 
 add_test(
     NAME doctest
