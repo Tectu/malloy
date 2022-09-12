@@ -84,8 +84,8 @@ int main()
                 },
 
                 // Create
-                [logger](const std::size_t id) {
-                    logger->warn("POST {}", id);
+                [logger]() {
+                    logger->warn("POST");
 
                     return rest::success{ };
                 },

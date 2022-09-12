@@ -85,4 +85,11 @@ namespace malloy::rest
             { std::invoke(f, id, std::forward<Object>(obj)) } -> std::derived_from<response>;
     };
 
+    template<typename Func>
+    concept handler_create =
+        std::invocable<Func>
+        && requires(Func f) {
+            { std::invoke(f) } -> std::derived_from<response>;
+    };
+
 }

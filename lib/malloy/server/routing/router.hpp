@@ -479,15 +479,12 @@ namespace malloy::server
             // if (res.create) {
                 add(
                     malloy::http::method::post,
-                    "^/" + res.name + "/(\\d+)$",
-                    [handler = std::move(res.create)](const auto& req, const auto& captures) {
+                    "^/" + res.name + "$",
+                    [handler = std::move(res.create)](const auto& req) {
                         (void)req;
 
                         try {
-                            // Extract resource ID
-                            const std::size_t id = std::stol(captures.at(0));
-
-                            return handler(id).to_http_response();
+                            return handler().to_http_response();
                         }
                         catch (...) {
                             return malloy::http::generator::bad_request("invalid request");

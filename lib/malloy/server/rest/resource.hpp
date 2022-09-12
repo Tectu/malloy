@@ -12,7 +12,7 @@ namespace malloy::server::rest
         object Object,
         handler_list HandlerList,
         handler_immutable<Object> HandlerImmutable,
-        handler_identity<Object> HandlerCreate,
+        handler_create HandlerCreate,
         handler_identity<Object> HandlerRemove,
         handler_mutable<Object> HandlerModify
     >
@@ -33,7 +33,7 @@ namespace malloy::server::rest
         object Object,
         handler_list HandlerList,
         handler_immutable<Object> HandlerImmutable,
-        handler_identity<Object> HandlerCreate,
+        handler_create HandlerCreate,
         handler_identity<Object> HandlerRemove,
         handler_mutable<Object> HandlerModify
     >
