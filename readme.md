@@ -1,4 +1,14 @@
-![](./doc/logo.svg)
+<p align="center">
+  <img height="180" src="https://raw.githubusercontent.com/Tectu/malloy/feature/readme/doc/logo.svg"/>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg" alt="standard"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="license"/>
+  <a href="https://repology.org/project/malloy/versions">
+    <img src="https://repology.org/badge/tiny-repos/malloy.svg" alt="Packaging status">
+  </a>
+</p>
 
 # Packages
 [![Packaging status](https://repology.org/badge/vertical-allrepos/malloy.svg)](https://repology.org/project/malloy/versions)
@@ -194,7 +204,13 @@ doxygen ./Doxyfile
 The generated output(s) may be found under `/docs/doxygen`. Simply open `/docs/doxygen/html/index.html` in the web browser of your choosing.
 
 # Integration
-Malloy is designed to be an embeddable component for other C++ applications.
+Malloy is designed to be an embeddable component for other C++ applications. As this is a CMake based project there are various ways to integrate this library
+into another project:
+- Via CMake's `FetchContent()`.
+- Building the library locally, installing it on the system and using CMake's `find_package()`.
+- Installing the corresponding [package for your OS/environment](https://repology.org/project/malloy/versions) and using CMake's `find_package()`.
+
+## FetchContent()
 The easiest way to integrate Malloy is via CMake's `FetchContent()` infrastructure:
 ```cmake
 FetchContent_Declare(
