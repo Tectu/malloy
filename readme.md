@@ -1,5 +1,5 @@
 <p align="center">
-  <img height="180" src="https://raw.githubusercontent.com/Tectu/malloy/feature/readme/doc/logo.svg"/>
+  <img height="180" src="https://raw.githubusercontent.com/Tectu/malloy/main/doc/logo.svg"/>
 </p>
 
 <p align="center">
