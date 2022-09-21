@@ -136,6 +136,7 @@ namespace malloy::rest
     struct success :
         response
     {
+        // ToDo: Move obj?
         explicit
         success(Object obj = { }) :
             m_obj{ obj }
@@ -165,6 +166,22 @@ namespace malloy::rest
 
     private:
         Object m_obj;
+    };
+
+    // ToDo: Add location header
+    template<object Object = empty_object>
+    struct created :
+        success<Object>
+    {
+        explicit
+        created(Object obj = { }) :
+            success<Object>( std::move(obj) )
+        {
+            // Note: this-> is required here because the name lookup there doesn't include base classes that depend
+            //       on template parameters.
+            this->m_http_status = malloy::http::status::created;
+            this->m_api_error_code = 0;
+        }
     };
 
 }

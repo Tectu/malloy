@@ -8,11 +8,13 @@
 
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 
 struct employee
 {
     using id_type = std::size_t;
 
+    id_type id;
     std::string name;
 
     [[nodiscard]]
@@ -21,6 +23,7 @@ struct employee
     {
         nlohmann::json j;
 
+        j["id"] = id;
         j["name"] = name;
 
         return j;
@@ -29,6 +32,7 @@ struct employee
     bool
     from_json(nlohmann::json&& j)
     {
+        id = j["id"];
         name = j["name"];
 
         return true;
@@ -40,15 +44,29 @@ struct employee
     {
         std::stringstream ss;
 
+        ss << "id  : " << id << "\n";
         ss << "name: " << name << "\n";
 
         return ss.str();
     }
 };
 
-std::vector<employee> employees;
+// Note: As the HTTP request handlers are asynchronous and we support multiple I/O threads at once, access to this
+//       collection would need to be synchronized. We refrain from this here for the sake of simplicity.
+std::unordered_map<std::size_t, employee> employees;     // <id, employee>
 
-int main()
+[[nodiscard]]
+static
+std::size_t
+generate_id()
+{
+    static std::size_t i = 0;
+
+    return i++;
+}
+
+int
+main()
 {
     // Create malloy controller config
     malloy::server::routing_context::config cfg;
@@ -68,13 +86,13 @@ int main()
             server::rest::make_resource<employee>(
                 "employees",
 
-                // Get all
+                // GET (all)
                 [logger](const std::size_t limit, const std::size_t offset) {
                     logger->warn("GetAll {} {}", limit, offset);
                     return rest::success{ };
                 },
 
-                // Get
+                // GET
                 [logger](const std::size_t id) {
                     logger->warn("GET {}", id);
 
@@ -83,21 +101,27 @@ int main()
                     return rest::success{ e };
                 },
 
-                // Create
+                // POST
                 [logger]() {
                     logger->warn("POST");
 
-                    return rest::success{ };
+                    const auto id = generate_id();
+
+                    employee e;
+
+                    employees.try_emplace(id, e);
+
+                    return rest::created{ e };
                 },
 
-                // Remove
+                // DELETE
                 [logger](const std::size_t id) {
                     logger->warn("DELETE {}", id);
 
                     return rest::success{ };
                 },
 
-                // Modify
+                // PATCH
                 [logger](const std::size_t id, employee&& obj) {
                     logger->warn("PATCH {}", id);
 
