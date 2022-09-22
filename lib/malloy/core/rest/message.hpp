@@ -159,13 +159,51 @@ namespace malloy::rest
         data_from_json(nlohmann::json&& j) override
         {
             if constexpr (std::same_as<Object, empty_object>)
-                return { };
+                return true;
             else
                 return m_obj.from_json(std::move(j));
         }
 
     private:
         Object m_obj;
+    };
+
+    template<object Object>
+    struct success_collection :
+        response
+    {
+        // ToDo: Maybe provide view (eg. std::span) instead? Probably not due to lifetime management of the handler.
+        explicit
+        success_collection(std::vector<Object>&& objs) :
+            m_objs{ std::move(objs) }
+        {
+            m_http_status = malloy::http::status::ok;
+            m_api_error_code = 0;
+        }
+
+    protected:
+        nlohmann::json
+        data_to_json() const override
+        {
+            auto j_array = nlohmann::json::array();
+            //j_array.reserve(m_objs.size());
+            for (const auto& obj : m_objs)
+                j_array.emplace_back(obj.to_json());
+
+            return j_array;
+        }
+
+        bool
+        data_from_json(nlohmann::json&& j) override
+        {
+            // ToDo
+            (void)j;
+
+            return false;
+        }
+
+    private:
+        std::vector<Object> m_objs;
     };
 
     // ToDo: Add location header

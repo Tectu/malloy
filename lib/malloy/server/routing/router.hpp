@@ -441,13 +441,27 @@ namespace malloy::server
                 add(
                     malloy::http::method::get,
                     // ToDo: optionally capture ?limit=(\d+)&offset=(\d+)
-                    "^/" + res.name + "$",
+                    "^/" + res.name + "\\?limit=(\\d+)&offset=(\\d+)$",
                     // ToDo: Add some reusable wrapper magic
                     // ToDo: capture using std::forward instead?
-                    [handler = std::move(res.list)](const auto& req) {
+                    [handler = std::move(res.list)](const auto& req, const auto& captures) {
                         (void)req;
 
-                        auto msg = handler(100, 0);
+                        // Check limit & offset
+                        if (captures.size() != 2)
+                            return malloy::http::generator::bad_request("invalid request");
+
+                        std::size_t limit;
+                        std::size_t offset;
+                        try {
+                            limit  = static_cast<std::size_t>(std::stoul(captures[0]));
+                            offset = static_cast<std::size_t>(std::stoul(captures[1]));
+                        }
+                        catch (...) {
+                            return malloy::http::generator::bad_request("invalid request");
+                        }
+
+                        auto msg = handler(limit, offset);
 
                         return msg.to_http_response();
                     }
