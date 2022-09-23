@@ -178,7 +178,14 @@ namespace malloy::rest
     void
     field_from_json(const nlohmann::json& j, Field& field)      // ToDo: Move from json?
     {
-        if (j.contains<const char*>(field.name()))
+        if (!j.contains<const char*>(field.name()))
+            return;
+
+        if (j.is_null()) {
+            if constexpr (Field::is_optional())
+                field.data.reset();
+        }
+        else
             field.data = j[field.name()];
     }
 

@@ -102,6 +102,8 @@ struct employees
         std::vector<employee> ret;
         ret.reserve(limit);
 
+        std::lock_guard lock(m_mtx);
+
         for (std::size_t i = 0; i < limit; i++) {
             const std::size_t index = i + offset;
             if (index >= m_employees.size())
@@ -129,7 +131,7 @@ struct employees
         ) > 0;
     }
 
-    bool
+    std::optional<employee>
     modify(const std::size_t id, employee&& e_mod)
     {
         std::lock_guard lock(m_mtx);
@@ -142,12 +144,15 @@ struct employees
             }
         );
         if (it == std::end(m_employees))
-            return false;
+            return { };
 
         // ToDo: Merge appropriately: Need to find a way to only assign values contained in e_mod but also being able to reset them?
         *it = std::move(e_mod);
 
-        return true;
+        // Keep ID
+        it->id = id;
+
+        return *it;
     }
 
 private:
@@ -204,7 +209,11 @@ main()
                     if (!e)
                         return rest::success{ };   // ToDo
 
-                    return rest::success{ *e };
+                    logger->warn("\n{}\n", e->dump());
+
+                    auto e2 = db.add();
+
+                    return rest::success{ e2 };
                 },
 
                 // POST
@@ -228,15 +237,16 @@ main()
                 },
 
                 // PATCH
-                [logger, &db](const std::size_t id, employee&& obj) {
+                [logger, &db](const std::size_t id, employee&& obj) -> rest::response {
                     logger->warn("PATCH {}", id);
 
                     logger->warn("\n{}\n", obj.dump());
 
-                    if (!db.modify(id, std::move(obj)))
+                    auto e = db.modify(id, std::move(obj));
+                    if (!e)
                         return rest::success{ };    // ToDo
 
-                    return rest::success{ };
+                    return rest::success{ *e };
                 }
             )
         );
