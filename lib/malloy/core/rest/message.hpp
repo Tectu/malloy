@@ -132,6 +132,35 @@ namespace malloy::rest
         std::string   m_api_error_msg;
     };
 
+    /**
+     * Response handle.
+     *
+     * @details This is a type erasure wrapper which allows users to submit their handlers without having to return heap
+     *          allocated objects. Instead, the user returns a stack allocated object and we wrap it in a unique_ptr here.
+     *          We need a heap allocated object to make the runtime polymorphism work but we want to take most of the
+     *          burden away from the user.
+     */
+    struct response_handle
+    {
+        std::unique_ptr<response> resp_ptr;
+
+        template<typename T>
+        response_handle(T&& resp) :
+            resp_ptr{ std::make_unique<std::remove_cvref_t<T>>( std::forward<T>(resp) )}
+        {
+        }
+
+        [[nodiscard]]
+        malloy::http::response<>
+        to_http_response()
+        {
+            if (!resp_ptr)
+                return { };     // ToDo: Do something reasonable here
+
+            return resp_ptr->to_http_response();
+        }
+    };
+
     template<object Object = empty_object>
     struct success :
         response

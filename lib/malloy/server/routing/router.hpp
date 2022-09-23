@@ -461,9 +461,7 @@ namespace malloy::server
                             return malloy::http::generator::bad_request("invalid request");
                         }
 
-                        auto msg = handler(limit, offset);
-
-                        return msg.to_http_response();
+                        return handler(limit, offset).to_http_response();
                     }
                 );
             //}
@@ -483,9 +481,8 @@ namespace malloy::server
                             return malloy::http::generator::bad_request("invalid request");
                         }
 
-                        auto msg = handler(id);      // ToDo: Cast to Object::id_type
-
-                        return msg.to_http_response();
+                        // ToDo: Cast to Object::id_type
+                        return handler(id).to_http_response();
                     }
                 );
             //}

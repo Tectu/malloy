@@ -193,7 +193,7 @@ main()
                 "employees",
 
                 // GET (all)
-                [logger, &db](const std::size_t limit, const std::size_t offset) {
+                [logger, &db](const std::size_t limit, const std::size_t offset) -> rest::response_handle {
                     logger->warn("GetAll {} {}", limit, offset);
 
                     auto es = db.get(limit, offset);
@@ -202,7 +202,7 @@ main()
                 },
 
                 // GET
-                [logger, &db](const std::size_t id) -> rest::response {
+                [logger, &db](const std::size_t id) -> rest::response_handle {
                     logger->warn("GET {}", id);
 
                     auto e = db.get(id);
@@ -211,13 +211,11 @@ main()
 
                     logger->warn("\n{}\n", e->dump());
 
-                    auto e2 = db.add();
-
-                    return rest::success{ e2 };
+                    return rest::success<employee>{ *e };
                 },
 
                 // POST
-                [logger, &db]() {
+                [logger, &db]() -> rest::response_handle {
                     logger->warn("POST");
 
                     auto e = db.add();
@@ -226,7 +224,7 @@ main()
                 },
 
                 // DELETE
-                [logger, &db](const std::size_t id) {
+                [logger, &db](const std::size_t id) -> rest::response_handle {
                     logger->warn("DELETE {}", id);
 
                     const bool success = db.remove(id);
@@ -237,7 +235,7 @@ main()
                 },
 
                 // PATCH
-                [logger, &db](const std::size_t id, employee&& obj) -> rest::response {
+                [logger, &db](const std::size_t id, employee&& obj) -> rest::response_handle {
                     logger->warn("PATCH {}", id);
 
                     logger->warn("\n{}\n", obj.dump());

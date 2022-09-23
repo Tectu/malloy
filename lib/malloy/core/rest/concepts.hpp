@@ -7,7 +7,7 @@
 // ToDo: Maybe add ::concepts namespace?
 namespace malloy::rest
 {
-    struct response;
+    struct response_handle;
 
     /**
      * Ensures that T has an inner type member 'id_type'
@@ -43,7 +43,7 @@ namespace malloy::rest
     concept handler_list =
         std::invocable<Func, std::size_t, std::size_t>
         && requires(Func f, std::size_t limit, std::size_t offset) {
-            { std::invoke(f, limit, offset) } -> std::derived_from<response>;
+            { std::invoke(f, limit, offset) } -> std::same_as<response_handle>;
     };
 
     /**
@@ -56,7 +56,7 @@ namespace malloy::rest
             object<Object>;
         }
         && requires(Func f, const typename Object::id_type& id) {
-            { std::invoke(f, id) } -> std::derived_from<response>;
+            { std::invoke(f, id) } -> std::same_as<response_handle>;
     };
 
     /**
@@ -69,7 +69,7 @@ namespace malloy::rest
             object<Object>;
         }
         && requires(Func f, const typename Object::id_type& id) {
-            { std::invoke(f, id) } -> std::derived_from<response>;
+            { std::invoke(f, id) } -> std::same_as<response_handle>;
     };
 
     /**
@@ -82,14 +82,14 @@ namespace malloy::rest
             object<Object>;
         }
         && requires(Func f, const typename Object::id_type& id, Object&& obj) {
-            { std::invoke(f, id, std::forward<Object>(obj)) } -> std::derived_from<response>;
+            { std::invoke(f, id, std::forward<Object>(obj)) } -> std::same_as<response_handle>;
     };
 
     template<typename Func>
     concept handler_create =
         std::invocable<Func>
         && requires(Func f) {
-            { std::invoke(f) } -> std::derived_from<response>;
+            { std::invoke(f) } -> std::same_as<response_handle>;
     };
 
 }
