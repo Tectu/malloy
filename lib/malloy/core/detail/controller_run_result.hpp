@@ -54,7 +54,7 @@ namespace malloy::detail
             m_ctrl{std::move(ctrl)}
         {
             // Create the I/O context threads
-            m_io_threads.reserve(cfg.num_threads - 1);
+            m_io_threads.reserve(cfg.num_threads);
             for (std::size_t i = 0; i < cfg.num_threads; i++) {
                 m_io_threads.emplace_back(
                     [m_io_ctx = m_io_ctx.get()] { // We cannot capture `this` as we may be moved from before this executes
