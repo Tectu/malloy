@@ -60,114 +60,6 @@ struct employee
     }
 };
 
-struct employees
-{
-    [[nodiscard]]
-    employee
-    add()
-    {
-        std::lock_guard lock(m_mtx);
-
-        employee e;
-        e.id = generate_id();
-
-        m_employees.emplace_back(e);
-
-        return e;
-    }
-
-    [[nodiscard]]
-    std::optional<employee>
-    get(const std::size_t id)
-    {
-        std::lock_guard lock(m_mtx);
-
-        const auto& it = std::find_if(
-            std::cbegin(m_employees),
-            std::cend(m_employees),
-            [id](const auto& e) {
-                return e.id == id;
-            }
-        );
-        if (it == std::cend(m_employees))
-            return { };
-
-        return *it;
-    }
-
-    [[nodiscard]]
-    std::vector<employee>
-    get(const std::size_t limit, const std::size_t offset)
-    {
-        std::vector<employee> ret;
-        ret.reserve(limit);
-
-        std::lock_guard lock(m_mtx);
-
-        for (std::size_t i = 0; i < limit; i++) {
-            const std::size_t index = i + offset;
-            if (index >= m_employees.size())
-                break;
-
-            ret.emplace_back(m_employees[index]);
-        }
-
-        return ret;
-    }
-
-    [[nodiscard]]
-    bool
-    remove(const std::size_t id)
-    {
-        std::lock_guard lock(m_mtx);
-
-        return (
-            std::erase_if(
-                m_employees,
-                [id](const auto& e) {
-                    return e.id == id;
-                }
-            )
-        ) > 0;
-    }
-
-    std::optional<employee>
-    modify(const std::size_t id, employee&& e_mod)
-    {
-        std::lock_guard lock(m_mtx);
-
-        auto it = std::find_if(
-            std::begin(m_employees),
-            std::end(m_employees),
-            [id](const employee& e) {
-                return e.id == id;
-            }
-        );
-        if (it == std::end(m_employees))
-            return { };
-
-        // ToDo: Merge appropriately: Need to find a way to only assign values contained in e_mod but also being able to reset them?
-        *it = std::move(e_mod);
-
-        // Keep ID
-        it->id = id;
-
-        return *it;
-    }
-
-private:
-    std::vector<employee> m_employees;
-    std::mutex m_mtx;
-    std::size_t m_id_counter = 0;
-
-    [[nodiscard]]
-    std::size_t
-    generate_id()
-    {
-        return m_id_counter++;
-    }
-};
-
 int
 main()
 {
@@ -181,7 +73,7 @@ main()
     malloy::server::routing_context c{cfg};
 
     // Employees "database"
-    employees db;
+    malloy::server::rest::store::in_memory<employee> db;
 
     auto logger = cfg.logger;
 
@@ -194,8 +86,6 @@ main()
 
                 // GET (all)
                 [logger, &db](const std::size_t limit, const std::size_t offset) -> rest::response_handle {
-                    logger->warn("GetAll {} {}", limit, offset);
-
                     auto es = db.get(limit, offset);
 
                     return rest::success_collection{ std::move(es) };
@@ -203,21 +93,15 @@ main()
 
                 // GET
                 [logger, &db](const std::size_t id) -> rest::response_handle {
-                    logger->warn("GET {}", id);
-
                     auto e = db.get(id);
                     if (!e)
                         return rest::success{ };   // ToDo
-
-                    logger->warn("\n{}\n", e->dump());
 
                     return rest::success<employee>{ *e };
                 },
 
                 // POST
                 [logger, &db]() -> rest::response_handle {
-                    logger->warn("POST");
-
                     auto e = db.add();
 
                     return rest::created{ e };
@@ -225,8 +109,6 @@ main()
 
                 // DELETE
                 [logger, &db](const std::size_t id) -> rest::response_handle {
-                    logger->warn("DELETE {}", id);
-
                     const bool success = db.remove(id);
                     if (!success)
                         return rest::success{ };   // ToDo
@@ -236,10 +118,6 @@ main()
 
                 // PATCH
                 [logger, &db](const std::size_t id, employee&& obj) -> rest::response_handle {
-                    logger->warn("PATCH {}", id);
-
-                    logger->warn("\n{}\n", obj.dump());
-
                     auto e = db.modify(id, std::move(obj));
                     if (!e)
                         return rest::success{ };    // ToDo

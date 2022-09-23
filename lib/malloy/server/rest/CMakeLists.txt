@@ -7,5 +7,6 @@ target_sources(
             FILES
                 resource.hpp
                 rest.hpp
+                store.hpp
 
 )
