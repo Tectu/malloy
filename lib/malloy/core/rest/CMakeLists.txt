@@ -7,5 +7,6 @@ target_sources(
             FILES
                 concepts.hpp
                 message.hpp
+                object.hpp
                 rest.hpp
 )

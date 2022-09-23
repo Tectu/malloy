@@ -4,6 +4,7 @@
 
 #include "concepts.hpp"
 #include "message.hpp"
+#include "object.hpp"
 
 // ToDo: Doxygen
 namespace malloy::rest

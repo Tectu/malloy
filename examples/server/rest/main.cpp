@@ -15,8 +15,10 @@ struct employee
 {
     using id_type = std::size_t;
 
-    id_type id = std::numeric_limits<id_type>::max();
-    std::string name;
+    malloy::rest::field<id_type, "id"> id{ std::numeric_limits<id_type>::max() };
+    malloy::rest::field<std::string, "username"> username;
+    malloy::rest::field<std::string, "firstname", malloy::rest::field_flags::optional> firstname;
+    malloy::rest::field<std::string, "lastname", malloy::rest::field_flags::optional> lastname;
 
     [[nodiscard]]
     nlohmann::json
@@ -24,8 +26,10 @@ struct employee
     {
         nlohmann::json j;
 
-        j["id"] = id;
-        j["name"] = name;
+        field_to_json(j, id);
+        field_to_json(j, username);
+        field_to_json(j, firstname);
+        field_to_json(j, lastname);
 
         return j;
     }
@@ -33,8 +37,10 @@ struct employee
     bool
     from_json(nlohmann::json&& j)
     {
-        id = j["id"];
-        name = j["name"];
+        field_from_json(j, id);
+        field_from_json(j, username);
+        field_from_json(j, firstname);
+        field_from_json(j, lastname);
 
         return true;
     }
@@ -45,8 +51,10 @@ struct employee
     {
         std::stringstream ss;
 
-        ss << "id  : " << id << "\n";
-        ss << "name: " << name << "\n";
+        ss << "id       : " << id.value_or(0) << "\n";
+        ss << "username : " << username.value_or("") << "\n";
+        ss << "firstname: " << firstname.value_or("") << "\n";
+        ss << "lastname : " << lastname.value_or("") << "\n";
 
         return ss.str();
     }
@@ -119,6 +127,27 @@ struct employees
                 }
             )
         ) > 0;
+    }
+
+    bool
+    modify(const std::size_t id, employee&& e_mod)
+    {
+        std::lock_guard lock(m_mtx);
+
+        auto it = std::find_if(
+            std::begin(m_employees),
+            std::end(m_employees),
+            [id](const employee& e) {
+                return e.id == id;
+            }
+        );
+        if (it == std::end(m_employees))
+            return false;
+
+        // ToDo: Merge appropriately: Need to find a way to only assign values contained in e_mod but also being able to reset them?
+        *it = std::move(e_mod);
+
+        return true;
     }
 
 private:
@@ -203,6 +232,9 @@ main()
                     logger->warn("PATCH {}", id);
 
                     logger->warn("\n{}\n", obj.dump());
+
+                    if (!db.modify(id, std::move(obj)))
+                        return rest::success{ };    // ToDo
 
                     return rest::success{ };
                 }
