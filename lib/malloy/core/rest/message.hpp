@@ -127,9 +127,9 @@ namespace malloy::rest
         }
 
     protected:
-        malloy::http::status m_http_status{ malloy::http::status::not_implemented };  // ToDo: Sane default?
+        malloy::http::status m_http_status{ malloy::http::status::not_implemented };
         std::uint32_t m_api_error_code = std::numeric_limits<std::uint16_t>::max();
-        std::string   m_api_error_msg;
+        std::string   m_api_error_msg;      // ToDo: Consider using string_literal or provide look-up factory
     };
 
     /**
@@ -233,6 +233,18 @@ namespace malloy::rest
 
     private:
         std::vector<Object> m_objs;
+    };
+
+    struct failure :
+        response
+    {
+        explicit
+        failure(const std::uint32_t api_error_code, std::string&& api_error_msg = { })
+        {
+            m_http_status = malloy::http::status::ok;
+            m_api_error_code = api_error_code;
+            m_api_error_msg = std::move(api_error_msg);
+        }
     };
 
     // ToDo: Add location header

@@ -97,7 +97,7 @@ main()
                     if (!e)
                         return rest::success{ };   // ToDo
 
-                    return rest::success<employee>{ *e };
+                    return rest::success{ *e };
                 },
 
                 // POST
