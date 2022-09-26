@@ -97,14 +97,14 @@ main()
                     if (!e)
                         return rest::success{ };   // ToDo
 
-                    return rest::success{ *e };
+                    return rest::success{ std::move(*e) };
                 },
 
                 // POST
                 [logger, &db]() -> rest::response_handle {
                     auto e = db.add();
 
-                    return rest::created{ e };
+                    return rest::created{ std::move(e) };
                 },
 
                 // DELETE
@@ -122,7 +122,7 @@ main()
                     if (!e)
                         return rest::success{ };    // ToDo
 
-                    return rest::success{ *e };
+                    return rest::success{ std::move(*e) };
                 }
             )
         );

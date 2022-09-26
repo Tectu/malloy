@@ -145,6 +145,7 @@ namespace malloy::rest
         std::unique_ptr<response> resp_ptr;
 
         template<typename T>
+            requires std::derived_from<T, response>
         response_handle(T&& resp) :
             resp_ptr{ std::make_unique<std::remove_cvref_t<T>>( std::forward<T>(resp) )}
         {
