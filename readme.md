@@ -14,7 +14,7 @@
 [![Packaging status](https://repology.org/badge/vertical-allrepos/malloy.svg)](https://repology.org/project/malloy/versions)
 
 # Overview
-Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [boost.beast](https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/index.html).
+Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [boost](https://boost.org).
 
 The main use case for this library is a C++ project which needs to embedd an HTTP and/or WebSocket server and/or client.
 
