@@ -10,7 +10,7 @@ form_renderer_basic::render(const form& f) const
 {
     std::stringstream ss;
 
-    ss << "<form method=\"" << boost::beast::http::to_string(f.method()) << "\" action=\"" << f.action() << "\" enctype=\"" << f.encoding_string() << "\">\n";
+    ss << "<form method=\"" << boost::beast::http::to_string(f.method()) << "\" action=\"" << f.action() << "\" enctype=\"" << f.encoding_to_string() << "\">\n";
     for (const form_field& field : f.fields()) {
         if (field.type == "submit") {
             ss << "  <button type=\"submit\">" + field.name + "</button>";

@@ -53,14 +53,36 @@ form::field_from_name(const std::string_view field_name) const
 }
 
 // ToDo: This should be handled by malloy's core MIME-type system.
-std::string
-form::encoding_string() const
+std::string_view
+form::encoding_to_string(const enum encoding enc)
 {
-    switch (m_encoding) {
-        case encoding::url:         return "application/x-www-form-urlencoded";
-        case encoding::multipart:   return "multipart/form-data";
-        case encoding::plain:       return "text/plain";
+    using namespace std::literals;
+
+    switch (enc) {
+        case encoding::url:         return "application/x-www-form-urlencoded"sv;
+        case encoding::multipart:   return "multipart/form-data"sv;
+        case encoding::plain:       return "text/plain"sv;
     }
+
+    return { };
+}
+
+// ToDo: This should be handled by malloy's core MIME-type system.
+std::optional<form::encoding>
+form::encoding_from_string(const std::string_view str)
+{
+    // URL
+    if (str == "application/x-www-form-urlencoded")
+        return encoding::url;
+
+    // Multipart
+    // ToDo: Also check for existing & valid boundary?
+    if (str.find("multipart/form-data") != std::string_view::npos)
+        return encoding::multipart;
+
+    // Plain
+    if (str == "text/plain")
+        return encoding::plain;
 
     return { };
 }
@@ -116,10 +138,23 @@ form::clear_values()
         field.value = { };
 }
 
+#include <spdlog/spdlog.h>
 std::optional<form_data>
 form::parse(const malloy::http::request<>& req) const
 {
-    switch (m_encoding) {
+    // Look-up Content-Type field
+    const std::string_view& content_type = req.base()[malloy::http::field::content_type];
+    spdlog::warn("ct: {}", content_type);
+    if (content_type.empty())
+        return { };
+
+    // Parse content-type encoding
+    const auto enc = encoding_from_string(content_type);
+    if (!enc)
+        return { };
+
+    // Parse
+    switch (*enc) {
         case encoding::url:         return parse_urlencoded(req);
         case encoding::multipart:   return parse_multipart(req);
         case encoding::plain:       return parse_plain(req);
