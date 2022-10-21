@@ -166,10 +166,6 @@ form::parse_urlencoded(const malloy::http::request<>& req) const
 {
     using namespace std::literals;
 
-    // Sanity check encoding type
-    if (m_encoding != encoding::url)
-        throw std::logic_error("form encoding type does not match");
-
     // Create the form data
     form_data fd;
 
@@ -205,10 +201,6 @@ std::optional<form_data>
 form::parse_multipart(const malloy::http::request<>& req) const
 {
     using namespace std::literals;
-
-    // Sanity check encoding type
-    if (m_encoding != encoding::multipart)
-        throw std::logic_error("form encoding type does not match");
 
     // Create the form data
     form_data fd;
@@ -262,10 +254,6 @@ std::optional<form_data>
 form::parse_plain(const malloy::http::request<>& req) const
 {
     using namespace std::literals;
-
-    // Sanity check encoding type
-    if (m_encoding != encoding::plain)
-        throw std::logic_error("form encoding type does not match");
 
     // Create the form data
     form_data fd;
