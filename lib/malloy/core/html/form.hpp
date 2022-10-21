@@ -183,8 +183,11 @@ namespace malloy::html
          * @param req The request.
          * @return The parsed form data (if any).
          */
+        // ToDo: Move this outside of this class
+        [[nodiscard]]
+        static
         std::optional<form_data>
-        parse(const malloy::http::request<>& req) const;
+        parse(const malloy::http::request<>& req);
 
     private:
         http::method m_method;
@@ -213,16 +216,19 @@ namespace malloy::html
         field_from_name(std::string_view field_name) const;
 
         [[nodiscard]]
+        static
         std::optional<form_data>
-        parse_urlencoded(const malloy::http::request<>& req) const;
+        parse_urlencoded(const malloy::http::request<>& req);
 
         [[nodiscard]]
+        static
         std::optional<form_data>
-        parse_multipart(const malloy::http::request<>& req) const;
+        parse_multipart(const malloy::http::request<>& req);
 
         [[nodiscard]]
+        static
         std::optional<form_data>
-        parse_plain(const malloy::http::request<>& req) const;
+        parse_plain(const malloy::http::request<>& req);
     };
 
 }

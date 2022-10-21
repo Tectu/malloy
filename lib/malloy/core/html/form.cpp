@@ -139,7 +139,7 @@ form::clear_values()
 }
 
 std::optional<form_data>
-form::parse(const malloy::http::request<>& req) const
+form::parse(const malloy::http::request<>& req)
 {
     // Look-up Content-Type field
     const std::string_view& content_type = req.base()[malloy::http::field::content_type];
@@ -162,7 +162,7 @@ form::parse(const malloy::http::request<>& req) const
 }
 
 std::optional<form_data>
-form::parse_urlencoded(const malloy::http::request<>& req) const
+form::parse_urlencoded(const malloy::http::request<>& req)
 {
     using namespace std::literals;
 
@@ -198,7 +198,7 @@ form::parse_urlencoded(const malloy::http::request<>& req) const
 }
 
 std::optional<form_data>
-form::parse_multipart(const malloy::http::request<>& req) const
+form::parse_multipart(const malloy::http::request<>& req)
 {
     using namespace std::literals;
 
@@ -251,7 +251,7 @@ form::parse_multipart(const malloy::http::request<>& req) const
 }
 
 std::optional<form_data>
-form::parse_plain(const malloy::http::request<>& req) const
+form::parse_plain(const malloy::http::request<>& req)
 {
     using namespace std::literals;
 
