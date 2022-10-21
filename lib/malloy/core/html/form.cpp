@@ -138,13 +138,11 @@ form::clear_values()
         field.value = { };
 }
 
-#include <spdlog/spdlog.h>
 std::optional<form_data>
 form::parse(const malloy::http::request<>& req) const
 {
     // Look-up Content-Type field
     const std::string_view& content_type = req.base()[malloy::http::field::content_type];
-    spdlog::warn("ct: {}", content_type);
     if (content_type.empty())
         return { };
 
