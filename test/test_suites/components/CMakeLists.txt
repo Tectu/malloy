@@ -5,6 +5,7 @@ target_sources(
         response.cpp
         router.cpp
         endpoints.cpp
+        html_form.cpp
         html_multipart_parser.cpp
         request.cpp
         websockets.cpp

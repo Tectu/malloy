@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg" alt="standard"/>
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="license"/>
+  <img src="https://img.shields.io/badge/License-BSD-blue.svg" alt="license"/>
   <a href="https://repology.org/project/malloy/versions">
     <img src="https://repology.org/badge/tiny-repos/malloy.svg" alt="Packaging status">
   </a>
@@ -14,7 +14,7 @@
 [![Packaging status](https://repology.org/badge/vertical-allrepos/malloy.svg)](https://repology.org/project/malloy/versions)
 
 # Overview
-Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [boost.beast](https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/index.html).
+Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [boost](https://boost.org).
 
 The main use case for this library is a C++ project which needs to embedd an HTTP and/or WebSocket server and/or client.
 
@@ -59,7 +59,7 @@ The following list provides an overview of the currently implemented features. S
     - Rendering
 
 # Licensing
-This library is MIT licensed. Dependencies ship with their own licensing models.
+This library is BSD-3-Clause licensed. Dependencies ship with their own licensing models.
 
 # Requirements
 Building (and using) this library requires:

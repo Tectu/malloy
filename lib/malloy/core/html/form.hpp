@@ -93,8 +93,33 @@ namespace malloy::html
          * @return The MIME type (eg. "application/x-www-form-urlencoded").
          */
         [[nodiscard]]
-        std::string
-        encoding_string() const;
+        static
+        std::string_view
+        encoding_to_string(encoding enc);
+
+        /**
+         * Returns the MIME type corresponding to the encoding type.
+         *
+         * @return The MIME type (eg. "application/x-www-form-urlencoded").
+         */
+        [[nodiscard]]
+        std::string_view
+        encoding_to_string() const
+        {
+            return encoding_to_string(m_encoding);
+        }
+
+        /**
+         * Returns the econding type corresponding to the provided MIME type/
+         *
+         * @param str The MIME type (eg. "application/x-www-form-urlencoded").
+         *
+         * @return The corresponding encoding type (if any)
+         */
+        [[nodiscard]]
+        static
+        std::optional<encoding>
+        encoding_from_string(std::string_view str);
 
         /**
          * Get the form fields.
@@ -153,11 +178,16 @@ namespace malloy::html
         /**
          * Parse a request matching this form.
          *
+         * @note If the request doesn't provide the corresponding Content-Type field parsing will not be attempted.
+         *
          * @param req The request.
          * @return The parsed form data (if any).
          */
+        // ToDo: Move this outside of this class
+        [[nodiscard]]
+        static
         std::optional<form_data>
-        parse(const malloy::http::request<>& req) const;
+        parse(const malloy::http::request<>& req);
 
     private:
         http::method m_method;
@@ -186,16 +216,19 @@ namespace malloy::html
         field_from_name(std::string_view field_name) const;
 
         [[nodiscard]]
+        static
         std::optional<form_data>
-        parse_urlencoded(const malloy::http::request<>& req) const;
+        parse_urlencoded(const malloy::http::request<>& req);
 
         [[nodiscard]]
+        static
         std::optional<form_data>
-        parse_multipart(const malloy::http::request<>& req) const;
+        parse_multipart(const malloy::http::request<>& req);
 
         [[nodiscard]]
+        static
         std::optional<form_data>
-        parse_plain(const malloy::http::request<>& req) const;
+        parse_plain(const malloy::http::request<>& req);
     };
 
 }
