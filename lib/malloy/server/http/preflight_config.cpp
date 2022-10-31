@@ -15,7 +15,7 @@ void preflight_config::setup_response(
             methods_string += ", ";
     }
 
-    //resp.set(boost::beast::http::field::content_type, "text/html");
+    //resp.set(malloy::http::field::content_type, "text/html");
     resp.base().set("Access-Control-Allow-Origin", origin);
     resp.base().set("Access-Control-Allow-Methods", methods_string);
     //resp.base().set("Access-Control-Allow-Headers", "Content-Type");

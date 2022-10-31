@@ -120,7 +120,7 @@ namespace malloy::server::http::auth
         not_authed_resp()
         {
             response_type resp{malloy::http::status::unauthorized};
-            resp.set(boost::beast::http::field::www_authenticate, m_www_auth);
+            resp.set(malloy::http::field::www_authenticate, m_www_auth);
             resp.prepare_payload();
             return resp;
         }

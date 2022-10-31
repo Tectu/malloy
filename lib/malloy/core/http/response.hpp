@@ -107,7 +107,7 @@ namespace malloy::http
          */
         void add_cookie(const cookie& c)
         {
-            msg_t::insert(boost::beast::http::field::set_cookie, c.to_string());
+            msg_t::insert(malloy::http::field::set_cookie, c.to_string());
         }
     };
 

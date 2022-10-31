@@ -83,7 +83,7 @@ namespace malloy::server
             //resp.keep_alive(req.keep_alive); // TODO: Is this needed?, if so its a spanner in the works
             resp.version(req.version());
             if (!malloy::http::has_field(resp, malloy::http::field::server))
-                resp.set(boost::beast::http::field::server, server_str);
+                resp.set(malloy::http::field::server, server_str);
             resp.prepare_payload();
 
             std::visit(

@@ -45,7 +45,7 @@ namespace malloy::server
 
                     // Create response
                     auto resp = malloy::http::generator::file(req_clone, base_path);
-                    std::visit([this]<typename Resp>(Resp& resp){ resp.set(boost::beast::http::field::cache_control, cache_control); }, resp);  // Add Cache-Control header
+                    std::visit([this]<typename Resp>(Resp& resp){ resp.set(malloy::http::field::cache_control, cache_control); }, resp);  // Add Cache-Control header
 
                     // Send
                     writer(req, std::move(resp), conn);

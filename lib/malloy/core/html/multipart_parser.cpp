@@ -14,7 +14,7 @@ multipart_parser::parse(const malloy::http::request<>& req)
     std::string boundary;
     {
         // Get Content-Type header
-        const std::string_view& content_type = req.at(boost::beast::http::field::content_type);
+        const std::string_view& content_type = req.at(malloy::http::field::content_type);
         const auto &content_type_parts = malloy::http::split_header_value(content_type);
 
         // Look for boundary
