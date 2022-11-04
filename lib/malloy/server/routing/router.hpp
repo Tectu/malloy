@@ -307,22 +307,23 @@ namespace malloy::server
         {
             using func_t = std::decay_t<Func>;
 
-            constexpr bool uses_captures =
-                std::invocable<func_t, const request_type&,
-                               const std::vector<std::string>&>;
+            constexpr bool uses_captures = std::invocable<func_t, const request_type&, const std::vector<std::string>&>;
 
             if constexpr (uses_captures) {
                 return add_regex_endpoint<
-                    uses_captures,
-                    std::invoke_result_t<func_t, const request_type&,
-                                         const std::vector<std::string>&>>(
-                    method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra));
+                        uses_captures,
+                        std::invoke_result_t<func_t, const request_type&, const std::vector<std::string>&>
+                    >(
+                        method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra)
+                    );
             }
             else {
                 return add_regex_endpoint<
-                    uses_captures,
-                    std::invoke_result_t<func_t, const request_type&>>(
-                    method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra));
+                        uses_captures,
+                        std::invoke_result_t<func_t, const request_type&>
+                    >(
+                        method, target, std::forward<Func>(handler), std::forward<ExtraInfo>(extra)
+                    );
             }
         }
 
