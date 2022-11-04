@@ -10,11 +10,15 @@ namespace malloy::server::concepts
     namespace detail
     {
         template<typename T>
-        concept route_handler_retr = malloy::concepts::is_container_of<T, malloy::http::response, std::variant> || malloy::concepts::is<T, malloy::http::response>;
+        concept route_handler_retr =
+            malloy::concepts::is_container_of<T, malloy::http::response, std::variant> ||
+            malloy::concepts::is<T, malloy::http::response>;
 
         template<typename Func, typename... Args>
-        concept route_handler_helper = std::invocable<Func, Args...> && requires(Func f, Args... args) {
-            { std::invoke(f, args...) } -> route_handler_retr;
+        concept route_handler_helper =
+            std::invocable<Func, Args...> &&
+            requires(Func f, Args... args) {
+                { std::invoke(f, args...) } -> route_handler_retr;
         };
     }
 
@@ -27,7 +31,9 @@ namespace malloy::server::concepts
     concept websocket_handler = std::invocable <Func, const malloy::http::request_header<>&, const std::shared_ptr<websocket::connection>&>;
 
     template<typename H>
-    concept request_filter = std::move_constructible<H> && requires(const H& f, const typename H::request_type::header_type& h, typename H::request_type::body_type::value_type& v)
+    concept request_filter =
+        std::move_constructible<H> &&
+        requires(const H& f, const typename H::request_type::header_type& h, typename H::request_type::body_type::value_type& v)
     {
         { f.setup_body(h, v) };
     };
