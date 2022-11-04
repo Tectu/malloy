@@ -25,7 +25,8 @@ namespace malloy::concepts
         {
             template<typename... Ts>
             void operator()(const T<Ts...>&) const
-            {}
+            {
+            }
         };
 
     }   // namespace detail
@@ -76,7 +77,8 @@ namespace malloy::concepts
         {
             template<sats_pred<Cond>... Ts>
             void operator()(const A<Ts...>&) const
-            {}
+            {
+            }
         };
         /**
          * @brief Predicate which is always true no matter the type passed to it
@@ -107,7 +109,8 @@ namespace malloy::concepts
         struct is_a
         {
             template<typename T>
-            struct type {
+            struct type
+            {
                 static constexpr bool value = is<T, A>;
             };
         };

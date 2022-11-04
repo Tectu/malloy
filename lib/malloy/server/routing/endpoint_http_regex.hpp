@@ -11,9 +11,12 @@
 
 namespace malloy::server
 {
-    struct resource_matcher {
+    struct resource_matcher
+    {
         [[nodiscard]]
-        virtual bool matches_resource(const boost::beast::http::request_header<>& req) const = 0;
+        virtual
+        bool
+        matches_resource(const boost::beast::http::request_header<>& req) const = 0;
     };
 
     template<typename Response, concepts::request_filter Handler, bool WantsCapture>
@@ -23,12 +26,13 @@ namespace malloy::server
     public:
         template<typename Derived>
         using req_gen_t = std::shared_ptr<typename http::connection<Derived>::request_generator>;
+
         template<typename Req>
         using handler_t = std::conditional_t<
             WantsCapture,
-            std::function<Response(const Req&,
-                const std::vector<std::string>&)>,
-            std::function<Response(const Req&)>>;
+            std::function<Response(const Req&, const std::vector<std::string>&)>,
+            std::function<Response(const Req&)>
+        >;
 
 
         Handler filter;
@@ -37,14 +41,16 @@ namespace malloy::server
         std::function<void(const boost::beast::http::request_header<>&, Response&&, const http::connection_t&)> writer;
 
         [[nodiscard]]
-        bool matches_resource(const req_header_t& req) const override
+        bool
+        matches_resource(const req_header_t& req) const override
         {
 
             return std::regex_match(req.target().begin(), req.target().end(), resource_base);
         }
 
         [[nodiscard]]
-        bool matches(const req_header_t& req) const override
+        bool
+        matches(const req_header_t& req) const override
         {
             // Resource
             if (!matches_resource(req))
@@ -55,22 +61,26 @@ namespace malloy::server
         }
 
 
-        [[nodiscard]] handle_retr
-            handle(const req_t& gens, const http::connection_t& conn) const override
+        [[nodiscard]]
+        handle_retr
+        handle(const req_t& gens, const http::connection_t& conn) const override
         {
             if (handler) {
-                std::visit([this, conn]<typename Generator>(Generator && gen) {
-                    this->visit_bodies(std::forward<Generator>(gen), conn);
-                },
-                    gens);
+                std::visit(
+                    [this, conn]<typename Generator>(Generator && gen) {
+                        this->visit_bodies(std::forward<Generator>(gen), conn);
+                    },
+                    gens
+                );
+
                 return std::nullopt;
             }
-            else {
+            else
                 return malloy::http::generator::server_error("no valid handler available.");
-            }
         }
     private:
-        void handle_req(const auto& req, const http::connection_t& conn) const
+        void
+        handle_req(const auto& req, const http::connection_t& conn) const
         {
             if constexpr (WantsCapture) {
                 std::smatch url_matches;
@@ -91,12 +101,12 @@ namespace malloy::server
 
                 writer(req, handler(req, matches), conn);
             }
-            else {
+            else
                 writer(req, handler(req), conn);
-            }
         }
 
-        void visit_bodies(const auto& gen, const http::connection_t& conn) const
+        void
+        visit_bodies(const auto& gen, const http::connection_t& conn) const
         {
             using body_t = typename Handler::request_type::body_type;
             gen->template body<body_t>(
