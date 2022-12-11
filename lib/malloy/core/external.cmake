@@ -21,7 +21,7 @@ if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
     FetchContent_Declare(
         fmt 
         GIT_REPOSITORY https://github.com/fmtlib/fmt
-        GIT_TAG 8.0.1 # Supported by spdlog 1.9.0
+        GIT_TAG 9.1.0 # Supported by spdlog 1.11.0
     )
     FetchContent_GetProperties(fmt)
     if (NOT fmt_POPULATED) 
