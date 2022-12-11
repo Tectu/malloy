@@ -42,6 +42,28 @@ namespace malloy::http
         /**
          * Constructor.
          *
+         * @param header The header.
+         */
+        explicit
+        response(const boost::beast::http::response_header<Fields>& header) :
+            msg_t{ header }
+        {
+        }
+
+        /**
+         * Constructor.
+         *
+         * @param header The header.
+         */
+        explicit
+        response(boost::beast::http::response_header<Fields>&& header) :
+            msg_t{ std::move(header) }
+        {
+        }
+
+        /**
+         * Constructor.
+         *
          * @param status_ The HTTP status to use.
          */
         explicit
