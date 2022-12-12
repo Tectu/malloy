@@ -158,6 +158,8 @@ namespace malloy
      * @param path The file path.
      * @return The corresponding MIME-TYPE.
      */
+    // ToDo: This is still a left-over from the very first day that malloy was started as a PoC. This needs some
+    //       serious overhaul. See issue #4.
     [[nodiscard]]
     static
     inline
@@ -167,10 +169,23 @@ namespace malloy
         // Extract file extension
         const std::filesystem::path& ext = path.extension();
 
+        if (ext == ".7z")   return "application/x-7z-compressed";
+        if (ext == ".bin")  return "application/octet-stream";
+        if (ext == ".bmp")  return "image/bmp";
+        if (ext == ".bz")   return "application/x-bzip";
+        if (ext == ".bz2")  return "application/x-bzip2";
+        if (ext == ".css")  return "text/css";
+        if (ext == ".csv")  return "text/csv";
+        if (ext == ".gif")  return "image/gif";
+        if (ext == ".gz")   return "application/gzip";
+        if (ext == ".ico")  return "image/vnd.microsoft.icon";
         if (ext == ".htm")  return "text/html";
         if (ext == ".html") return "text/html";
+        if (ext == ".mp3")  return "audio/mpeg";
+        if (ext == ".mp4")  return "video/mp4";
+        if (ext == ".mpeg") return "video/mpeg";
+        if (ext == ".rar")  return "application/vnd.rar";
         if (ext == ".php")  return "text/html";
-        if (ext == ".css")  return "text/css";
         if (ext == ".txt")  return "text/plain";
         if (ext == ".js")   return "application/javascript";
         if (ext == ".json") return "application/json";
@@ -181,13 +196,11 @@ namespace malloy
         if (ext == ".jpe")  return "image/jpeg";
         if (ext == ".jpeg") return "image/jpeg";
         if (ext == ".jpg")  return "image/jpeg";
-        if (ext == ".gif")  return "image/gif";
-        if (ext == ".bmp")  return "image/bmp";
-        if (ext == ".ico")  return "image/vnd.microsoft.icon";
         if (ext == ".tiff") return "image/tiff";
         if (ext == ".tif")  return "image/tiff";
         if (ext == ".svg")  return "image/svg+xml";
         if (ext == ".svgz") return "image/svg+xml";
+        if (ext == ".zip")  return "application/zip";
 
         return "application/text";
     }
