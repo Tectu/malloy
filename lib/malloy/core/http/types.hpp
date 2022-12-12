@@ -23,13 +23,24 @@ namespace malloy::http
     using status = boost::beast::http::status;
 
     /**
-     * The HTTP fields.
+     * The HTTP field.
      */
     using field = boost::beast::http::field;
 
     /**
+     * The HTTP fields
+     */
+    using fields = boost::beast::http::fields;
+
+    /**
      * HTTP request header.
      */
-    template<typename Fields = boost::beast::http::fields>
+    template<typename Fields = fields>
     using request_header = boost::beast::http::request_header<Fields>;
+
+    /**
+     * HTTP response header.
+     */
+    template<typename Fields = fields>
+    using response_header = boost::beast::http::response_header<Fields>;
 }
