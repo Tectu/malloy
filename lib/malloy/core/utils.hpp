@@ -202,7 +202,8 @@ namespace malloy
         if (ext == ".svgz") return "image/svg+xml";
         if (ext == ".zip")  return "application/zip";
 
-        return "application/text";
+        // Recommended fall-back
+        return "application/octet-stream";
     }
 
 }
