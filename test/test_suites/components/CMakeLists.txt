@@ -2,6 +2,7 @@ target_sources(
     ${TARGET}
     PRIVATE
         http_generator.cpp
+        http_sessions_storage_memory.cpp
         response.cpp
         router.cpp
         endpoints.cpp
