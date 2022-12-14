@@ -108,7 +108,6 @@ int main()
             // Respond
             auto resp = generator::ok();
             resp.body() = body;
-            resp.prepare_payload();
 
             return resp;
         });
@@ -142,7 +141,6 @@ int main()
             // Respond
             auto resp = generator::ok();
             resp.body() = body;
-            resp.prepare_payload();
 
             return resp;
         });

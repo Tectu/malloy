@@ -22,7 +22,6 @@ generator::redirect(const status code, const std::string_view location)
 
     response resp{ code };
     resp.set(field::location, location);
-    resp.prepare_payload();
 
     return resp;
 }
@@ -33,7 +32,6 @@ generator::bad_request(std::string_view reason)
     response res(status::bad_request);
     res.set(field::content_type, "text/html");
     res.body() = reason;
-    res.prepare_payload();
 
     return res;
 }
@@ -44,7 +42,6 @@ generator::not_found(std::string_view resource)
     response res(status::not_found);
     res.set(field::content_type, "text/html");
     res.body() = "The resource '" + std::string(resource) + "' was not found.";
-    res.prepare_payload();
 
     return res;
 }
@@ -55,7 +52,6 @@ generator::server_error(std::string_view what)
     response res(status::internal_server_error);
     res.set(field::content_type, "text/html");
     res.body() = "An error occurred: '" + std::string(what) + "'";
-    res.prepare_payload();
 
     return res;
 }

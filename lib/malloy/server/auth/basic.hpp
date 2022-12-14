@@ -121,7 +121,7 @@ namespace malloy::server::http::auth
         {
             response_type resp{malloy::http::status::unauthorized};
             resp.set(malloy::http::field::www_authenticate, m_www_auth);
-            resp.prepare_payload();
+
             return resp;
         }
 
