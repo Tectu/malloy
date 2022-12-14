@@ -16,11 +16,8 @@ generator::ok()
 response<>
 generator::redirect(const status code, const std::string_view location)
 {
-    const int& icode = static_cast<int>(code);
-    if (icode < 300 || icode >= 400)
-        return generator::server_error("invalid redirection status code.");
-
-    response resp{ code };
+    response resp;
+    resp.set_status(code);
     resp.set(field::location, location);
 
     return resp;
