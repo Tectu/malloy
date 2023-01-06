@@ -18,6 +18,12 @@ Malloy is a small, embeddable HTTP & WebSocket server & client built on top of [
 
 The main use case for this library is a C++ project which needs to embedd an HTTP and/or WebSocket server and/or client.
 
+This library is being used successfully on:
+- Windows (with both MSVC and MinGW)
+- Linux (Ubuntu, Debian, Fedora, ...)
+- MacOS
+- FreeBSD
+
 # Features
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
@@ -68,12 +74,6 @@ Building (and using) this library requires:
   - Clang >= 13
   - MSVC >= 19.29 (VS 2019)
 - CMake 3.23 or newer
-
-As of today, this library was tested successfully on:
-- Windows (with both MSVC and MinGW)
-- Linux (Ubuntu, Debian, Fedora, ...)
-- MacOS
-- FreeBSD
 
 ## Dependencies
 Required:
