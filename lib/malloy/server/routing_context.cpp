@@ -30,7 +30,7 @@ routing_context::routing_context(config cfg) :
         const std::filesystem::path& key_path
     )
     {
-        // Sanity check cert
+        // Sanity check cert_path
         if (!std::filesystem::is_regular_file(cert_path)) {
             m_cfg.logger->critical("could not create TLS context: invalid certificate file path: {}", cert_path.string());
             return false;
@@ -39,6 +39,7 @@ routing_context::routing_context(config cfg) :
         // Sanity check key_path
         if (!std::filesystem::is_regular_file(key_path)) {
             m_cfg.logger->critical("could not create TLS context: invalid key file path: {}", key_path.string());
+            return false;
         }
 
         // Create the context
