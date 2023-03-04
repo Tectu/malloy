@@ -30,9 +30,9 @@ listener::listener(
 
     // Sanity check on logger
     if (!m_logger)
-        throw std::runtime_error("did not receive a valid logger instance.");
+        throw std::invalid_argument("did not receive a valid logger instance.");
     if (!m_connection_logger)
-        throw std::runtime_error("did not receive a valid connection logger instance.");
+        throw std::invalid_argument("did not receive a valid connection logger instance.");
 
     // Open the acceptor
     m_acceptor.open(endpoint.protocol(), ec);
