@@ -35,7 +35,7 @@ function(malloy_target_common_setup TARGET)
     target_compile_definitions(
         ${TARGET}
         PUBLIC
-            BOOST_BEAST_USE_STD_STRING_VIEW
+            $<$<VERSION_LESS:${Boost_VERSION},1.81.0>:BOOST_BEAST_USE_STD_STRING_VIEW>
             SPDLOG_FMT_EXTERNAL
             $<$<BOOL:${MALLOY_BUILD_SHARED}>:FMT_SHARED>
             $<$<BOOL:${MALLOY_FEATURE_HTML}>:MALLOY_FEATURE_HTML>
