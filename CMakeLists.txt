@@ -55,7 +55,7 @@ if (MALLOY_FEATURE_TLS)
 endif()
 
 # Dependency minimum versions
-set(MALLOY_DEPENDENCY_BOOST_VERSION_MIN 1.74.0)
+set(MALLOY_DEPENDENCY_BOOST_VERSION_MIN 1.79.0)
 
 # Add the main library
 add_subdirectory(lib)
