@@ -25,7 +25,7 @@ namespace
         std::shared_ptr<malloy::client::websocket::connection> conn
     )
     {
-        CHECK(!ec);
+        REQUIRE(!ec);
         REQUIRE(conn);
 
         conn->set_binary(BinaryMode);
@@ -50,6 +50,8 @@ namespace
         std::shared_ptr<malloy::server::websocket::connection> conn
     )
     {
+        REQUIRE(conn);
+
         conn->set_binary(BinaryMode);
 
         conn->accept(req, [conn]() mutable {
