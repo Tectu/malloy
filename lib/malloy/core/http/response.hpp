@@ -89,7 +89,8 @@ namespace malloy::http
         /**
          * Destructor.
          */
-        virtual ~response() = default;
+        virtual
+        ~response() = default;
 
         /**
          * Copy assignment operator.
@@ -97,7 +98,8 @@ namespace malloy::http
          * @param rhs The object to copy-assign from.
          * @return A reference to the assignee.
          */
-        response& operator=(const response& rhs) = default;
+        response&
+        operator=(const response& rhs) = default;
 
         /**
          * Move assignment operator.
@@ -105,14 +107,16 @@ namespace malloy::http
          * @param rhs The object to move-assign from.
          * @return A reference to the assignee.
          */
-        response& operator=(response&& rhs) noexcept = default;
+        response&
+        operator=(response&& rhs) noexcept = default;
 
         /**
          * Set the HTTP status code.
          *
          * @param status The HTTP status code.
          */
-        void set_status(http::status status) { msg_t::result(status); }
+        void
+        set_status(http::status status) { msg_t::result(status); }
 
         /**
          * Retrieve the HTTP status.
@@ -120,14 +124,16 @@ namespace malloy::http
          * @return The HTTP status
          */
         [[nodiscard]]
-        http::status status() const { return msg_t::result(); }
+        http::status
+        status() const { return msg_t::result(); }
 
         /**
          * Adds a cookie.
          *
          * @param c The cookie.
          */
-        void add_cookie(const cookie& c)
+        void
+        add_cookie(const cookie& c)
         {
             msg_t::insert(malloy::http::field::set_cookie, c.to_string());
         }

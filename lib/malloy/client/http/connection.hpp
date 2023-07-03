@@ -204,9 +204,9 @@ namespace malloy::client::http
             boost::beast::get_lowest_layer(derived().stream()).socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
             // not_connected happens sometimes so don't bother reporting it.
-            if (ec && ec != boost::beast::errc::not_connected) {
+            if (ec && ec != boost::beast::errc::not_connected)
                 m_logger->error("shutdown: {}", ec.message());
-            }
+
             m_err_channel.set_value(ec); // Set it even if its not an error, to signify that we are done
 
         }

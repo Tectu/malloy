@@ -86,7 +86,8 @@ namespace malloy::http
         /**
          * Destructor.
          */
-        virtual ~request() = default;
+        virtual
+        ~request() = default;
 
         /**
          * Copy assignment operator.
@@ -94,7 +95,8 @@ namespace malloy::http
          * @param rhs The object to copy-assign from.
          * @return A reference to the assignee.
          */
-        request& operator=(const request& rhs) = default;
+        request&
+        operator=(const request& rhs) = default;
 
         /**
          * Move assignment operator.
@@ -102,7 +104,8 @@ namespace malloy::http
          * @param rhs The object to move-assign from.
          * @return A reference to the assignee.
          */
-        request& operator=(request&& rhs) noexcept = default;
+        request&
+        operator=(request&& rhs) noexcept = default;
 
         /**
          * Retrieve the port.
@@ -110,7 +113,11 @@ namespace malloy::http
          * @return The port.
          */
         [[nodiscard]]
-        std::uint16_t port() const noexcept { return m_port; }
+        std::uint16_t
+        port() const noexcept
+        {
+            return m_port;
+        }
 
         /**
          * Returns the request's cookies.
@@ -118,7 +125,11 @@ namespace malloy::http
          * @return The cookies.
          */
         [[nodiscard]]
-        std::unordered_map<std::string, std::string> cookies() const noexcept { return m_cookies; }
+        std::unordered_map<std::string, std::string>
+        cookies() const noexcept
+        {
+            return m_cookies;
+        }
 
         /**
          * Checks whether a particular cookie is present.
@@ -126,7 +137,8 @@ namespace malloy::http
          * @return Whether the specified cookie is present.
          */
         [[nodiscard]]
-        bool has_cookie(const std::string& name) const
+        bool
+        has_cookie(const std::string& name) const
         {
             return m_cookies.contains(name);
         }
@@ -134,7 +146,8 @@ namespace malloy::http
         /**
          * Gets the value of a cookie.
          */
-        [[nodiscard]] std::string_view
+        [[nodiscard]]
+        std::string_view
         cookie(const std::string_view& name) const
         {
             const auto& it = std::find_if(
