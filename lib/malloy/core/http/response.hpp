@@ -140,3 +140,21 @@ namespace malloy::http
     };
 
 }
+
+#include <sstream>
+
+namespace malloy
+{
+
+    template<typename Body, typename Fields>
+    [[nodiscard]]
+    std::string
+    to_string(const http::response<Body, Fields>& r)
+    {
+        std::ostringstream ss;
+        ss << r;
+
+        return ss.str();
+    }
+
+}
