@@ -170,3 +170,20 @@ namespace malloy::http
     };
 }
 
+#include <sstream>
+
+namespace malloy
+{
+
+    template<typename Body>
+    [[nodiscard]]
+    std::string
+    to_string(const http::request<Body>& r)
+    {
+        std::ostringstream ss;
+        ss << r;
+
+        return ss.str();
+    }
+
+}
