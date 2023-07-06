@@ -102,6 +102,8 @@ namespace malloy::client::http
         void
         on_resolve(const boost::beast::error_code& ec, boost::asio::ip::tcp::resolver::results_type results)
         {
+            m_logger->trace("on_resolve()");
+
             if (ec) {
                 m_logger->error("on_resolve: {}", ec.message());
                 m_err_channel.set_value(ec);
@@ -124,6 +126,8 @@ namespace malloy::client::http
         void
         on_connect(const boost::beast::error_code& ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type)
         {
+            m_logger->trace("on_connect()");
+
             if (ec) {
                 m_logger->error("on_connect: {}", ec.message());
                 m_err_channel.set_value(ec);
