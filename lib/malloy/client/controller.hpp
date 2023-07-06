@@ -284,9 +284,8 @@ namespace malloy::client
                     m_cfg.body_limit)
                 );
             }([this, prom = std::move(prom), req = std::move(req), filter = std::forward<Filter>(filter), cb = std::forward<Callback>(cb)](auto&& conn) mutable {
-                if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
+                if (!malloy::http::has_field(req, malloy::http::field::user_agent))
                     req.set(malloy::http::field::user_agent, m_cfg.user_agent);
-                }
 
                 // Run
                 conn->run(
@@ -326,7 +325,7 @@ namespace malloy::client
                                     malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
                             } else
 #endif
-                                return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
+                            return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
                         }(), m_cfg.user_agent);
 
                         conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
