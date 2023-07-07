@@ -160,7 +160,6 @@ namespace malloy::client::http
                     derived().shared_from_this()
                 )
             );
-
        }
 
         void
@@ -212,7 +211,6 @@ namespace malloy::client::http
                 m_logger->error("shutdown: {}", ec.message());
 
             m_err_channel.set_value(ec); // Set it even if its not an error, to signify that we are done
-
         }
     };
 
