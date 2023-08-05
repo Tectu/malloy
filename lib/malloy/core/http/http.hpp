@@ -11,7 +11,6 @@ namespace malloy::http
 {
 }
 
-
 namespace malloy
 {
 
