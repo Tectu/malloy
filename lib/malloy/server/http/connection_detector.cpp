@@ -42,7 +42,7 @@ public:
     {
         conn->logger()->info(
             "WS request: {} {}",
-            boost::beast::http::to_string(req->header().method()),
+            req->header().method_string(),
             req->header().target()
         );
 
@@ -56,7 +56,7 @@ public:
             conn,
             spdlog::level::info,
             "HTTP request: {} {}",
-            boost::beast::http::to_string(req->header().method()),
+            req->header().method_string(),
             req->header().target()
         );
 
