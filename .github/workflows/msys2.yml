@@ -38,9 +38,9 @@ jobs:
             mingw-w64-x86_64-cmake 
             p7zip
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: cache boost
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-boost
         with:
           path: ${{ env.BOOST_ROOT }}

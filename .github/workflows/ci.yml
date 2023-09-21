@@ -70,10 +70,10 @@ jobs:
     name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }}) (shared: ${{ matrix.shared }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: cache boost
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: cache-boost
         with:
           path: ${{ env.BOOST_ROOT }}
