@@ -42,8 +42,8 @@ public:
     {
         conn->logger()->info(
             "WS request: {} {}",
-            req->header().method_string(),
-            req->header().target()
+            std::string_view{req->header().method_string()},
+            std::string_view{req->header().target()}
         );
 
         handle<true>(root, req, conn);
@@ -56,8 +56,8 @@ public:
             conn,
             spdlog::level::info,
             "HTTP request: {} {}",
-            req->header().method_string(),
-            req->header().target()
+            std::string_view{req->header().method_string()},
+            std::string_view{req->header().target()}
         );
 
         handle<false>(root, req, conn);

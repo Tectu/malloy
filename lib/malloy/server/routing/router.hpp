@@ -534,8 +534,9 @@ namespace malloy::server
             // Log
             if (m_logger) {
                 m_logger->trace("handling HTTP request: {} {}",
-                                req->header().method_string(),
-                                req->header().target());
+                    std::string_view{req->header().method_string()},
+                    std::string_view{req->header().target()}
+                );
             }
 
             const auto& header = req->header();
@@ -576,8 +577,9 @@ namespace malloy::server
         {
             const auto res_string = malloy::http::resource_string(gen->header());
             m_logger->trace("handling WS request: {} {}",
-                            gen->header().method_string(),
-                            res_string);
+                std::string_view{gen->header().method_string()},
+                res_string
+            );
 
             // Check routes
             for (const auto& ep : m_endpoints_websocket) {
