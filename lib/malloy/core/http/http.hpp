@@ -22,7 +22,7 @@ namespace malloy
      */
     [[nodiscard]]
     inline
-    std::string
+    std::string_view
     to_string(const malloy::http::method method)
     {
         return boost::beast::http::to_string(method);
