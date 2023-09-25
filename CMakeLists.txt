@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.23)
 # Project
 project(
     malloy
-    VERSION 0.6.2
+    VERSION 0.7.0
     LANGUAGES
         CXX
     HOMEPAGE_URL "https://github.com/tectu/malloy"
