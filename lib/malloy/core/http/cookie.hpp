@@ -15,6 +15,7 @@ namespace malloy::http
      * @note Implementation based on: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
      * @note If both `Max-Age` and `Expires` are set the client is supposed to give `Max-Age` priority/precedence.
      */
+    // ToDo: This is only for Set-Cookie - make that more clear.
     class cookie
     {
     public:
@@ -45,6 +46,7 @@ namespace malloy::http
      *
      * According to RFC6265 a client must delete a cookie if receiving a Set-Cookie header with an 'Expires` value in the past.
      */
+    // ToDo: This is only for Set-Cookie - make that more clear.
     class cookie_clear :
         public cookie
     {
