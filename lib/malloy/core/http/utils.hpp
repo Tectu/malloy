@@ -59,7 +59,7 @@ namespace malloy::http
     std::vector<std::string_view>
     split_header_value(std::string_view field_value)
     {
-        using namespace std::literals;
+        using namespace std::string_view_literals;
 
         return malloy::split(field_value, "; "sv);
     }
