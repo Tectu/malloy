@@ -4,7 +4,8 @@
 
 using namespace malloy::http;
 
-std::string cookie::to_string() const
+std::string
+cookie::to_string() const
 {
     std::ostringstream ss;
 

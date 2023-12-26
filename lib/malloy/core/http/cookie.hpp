@@ -36,7 +36,8 @@ namespace malloy::http
         same_site_t same_site           = same_site_t::strict;
 
         [[nodiscard]]
-        std::string to_string() const;
+        std::string
+        to_string() const;
     };
 
     /**
