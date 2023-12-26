@@ -73,26 +73,34 @@ namespace malloy::http
      * @param cookie_name The cookie name.
      * @return The cookie value (if any).
      */
+    // ToDo: This implementation could use some love. It's comparably inefficient as we're splitting first on each
+    //       cookie value separation ("; ") and then on each value-pair separator ("="). A more elegant implementation
+    //       would just continuously advance through the string.
     template<bool isReq, typename Fields>
     [[nodiscard]]
     std::optional<std::string_view>
     cookie_value(const boost::beast::http::header<isReq, Fields>& header, const std::string_view cookie_name)
     {
-        const auto& [begin, end] = header.equal_range(field::cookie);
-        for (auto it = begin; it != end; it++) {
-            const auto& str = it->value();
+        using namespace std::string_view_literals;
 
-            const auto& sep_pos = it->value().find('=');
-            if (sep_pos == std::string::npos)
+        // Get cookie field
+        const auto& it = header.find(field::cookie);
+        if (it == header.cend())
+            return std::nullopt;
+
+        // Split pairs
+        const auto& pairs = split_header_value(it->value());
+
+        // Check each pair
+        for (const std::string_view& pair : pairs) {
+            // Split
+            const auto& parts = malloy::split(pair, "="sv);
+            if (parts.size() != 2)
                 continue;
 
-            const std::string_view key{ str.substr(0, sep_pos) };
-            const std::string_view value{ str.substr(sep_pos+1) };
-
-            if (key != cookie_name)
-                continue;
-
-            return value;
+            // Check cookie name
+            if (parts[0] == cookie_name)
+                return parts[1];
         }
 
         return std::nullopt;

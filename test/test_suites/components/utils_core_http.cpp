@@ -39,3 +39,70 @@ TEST_SUITE("components - utils - core - http")
         }
     }
 }
+
+TEST_SUITE("components - core - utils - http - cookies")
+{
+
+    TEST_CASE("cookie_value()")
+    {
+        using namespace std::string_view_literals;
+
+        // ToDo: Don't use req.insert() - Use malloy provided infrastructure to set cookies instead.
+
+        malloy::http::request req;
+
+        SUBCASE("none")
+        {
+            CHECK_EQ(cookie_value(req, "foo"), std::nullopt);
+        }
+
+        SUBCASE("one")
+        {
+            std::string_view cookie_str = "foo=bar"sv;
+
+            SUBCASE("exists")
+            {
+                req.insert(malloy::http::field::cookie, cookie_str);
+                auto o = cookie_value(req, "foo");
+                REQUIRE(o.has_value());
+                CHECK_EQ(*o, "bar");
+            }
+
+            SUBCASE("non-exist")
+            {
+                auto o = cookie_value(req, "nope");
+                CHECK_FALSE(o.has_value());
+
+                req.insert(malloy::http::field::cookie, cookie_str);
+
+                o = cookie_value(req, "nope");
+                CHECK_FALSE(o.has_value());
+            }
+        }
+
+        SUBCASE("multiple")
+        {
+            std::string_view cookie_str = "foo=bar; one=two; something=else";
+
+            SUBCASE("exists")
+            {
+                req.insert(malloy::http::field::cookie, cookie_str);
+                auto o = cookie_value(req, "foo");
+                REQUIRE(o.has_value());
+                CHECK_EQ(*o, "bar");
+            }
+
+            SUBCASE("non-exist")
+            {
+                auto o = cookie_value(req, "nope");
+                CHECK_FALSE(o.has_value());
+
+                req.insert(malloy::http::field::cookie, cookie_str);
+
+                o = cookie_value(req, "nope");
+                CHECK_FALSE(o.has_value());
+            }
+        }
+    }
+
+}
