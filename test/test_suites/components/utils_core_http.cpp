@@ -16,6 +16,20 @@ TEST_SUITE("components - utils - core - http")
 
         SUBCASE("regular 1")
         {
+            const auto& output = http::split_header_value("foo");
+            REQUIRE_EQ(output.size(), 1);
+            CHECK_EQ(output[0], "foo");
+        }
+
+        SUBCASE("regular 2")
+        {
+            const auto& output = http::split_header_value("foo; ");
+            REQUIRE_EQ(output.size(), 1);
+            CHECK_EQ(output[0], "foo");
+        }
+
+        SUBCASE("regular 3")
+        {
             const std::string input{ "multipart/form-data; boundary=----WebKitFormBoundarynBjZTMv9eqwyCWhj" };
 
             const auto& output = http::split_header_value(input);
