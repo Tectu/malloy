@@ -130,8 +130,6 @@ namespace malloy::http
         /**
          * Adds a cookie.
          *
-         * @note This adds to the `Set-Cookie` field.
-         *
          * @param c The cookie.
          */
         void
