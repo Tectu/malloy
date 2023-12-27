@@ -444,7 +444,8 @@ namespace malloy::server
             bool isWebsocket = false,
             typename Derived,
             typename Connection>
-        void handle_request(
+        void
+        handle_request(
             const std::filesystem::path& doc_root,
             const req_generator<Derived>& req,
             Connection&& connection
@@ -525,7 +526,8 @@ namespace malloy::server
          * @param connection The HTTP connection.
          */
         template<typename Derived>
-        void handle_http_request(
+        void
+        handle_http_request(
             const std::filesystem::path&,
             const req_generator<Derived>& req,
             const http::connection_t& connection
@@ -570,7 +572,8 @@ namespace malloy::server
          * @param connection The WebSocket connection.
          */
         template<typename Derived>
-        void handle_ws_request(
+        void
+        handle_ws_request(
             const req_generator<Derived>& gen,
             const std::shared_ptr<websocket::connection>& connection
         )

@@ -1,11 +1,8 @@
 #pragma once
 
-#include "cookie.hpp"
 #include "types.hpp"
 
 #include <boost/beast/http/string_body.hpp>
-
-#include <unordered_map>
 
 namespace malloy::http
 {
@@ -51,22 +48,6 @@ namespace malloy::http
 
             // Underlying
             msg_t::operator=(std::move(raw));
-
-            // Cookies
-            {
-                const auto &[begin, end] = msg_t::base().equal_range(field::cookie);
-                for (auto it = begin; it != end; it++) {
-                    const auto &str = it->value();
-
-                    const auto &sep_pos = it->value().find('=');
-                    if (sep_pos == std::string::npos)
-                        continue;
-
-                    std::string key{str.substr(0, sep_pos)};
-                    std::string value{str.substr(sep_pos + 1)};
-                    m_cookies.insert_or_assign(std::move(key), std::move(value));
-                }
-            }
         }
 
         /**
@@ -119,54 +100,8 @@ namespace malloy::http
             return m_port;
         }
 
-        /**
-         * Returns the request's cookies.
-         *
-         * @return The cookies.
-         */
-        [[nodiscard]]
-        std::unordered_map<std::string, std::string>
-        cookies() const noexcept
-        {
-            return m_cookies;
-        }
-
-        /**
-         * Checks whether a particular cookie is present.
-         *
-         * @return Whether the specified cookie is present.
-         */
-        [[nodiscard]]
-        bool
-        has_cookie(const std::string& name) const
-        {
-            return m_cookies.contains(name);
-        }
-
-        /**
-         * Gets the value of a cookie.
-         */
-        [[nodiscard]]
-        std::string_view
-        cookie(const std::string_view& name) const
-        {
-            const auto& it = std::find_if(
-                std::cbegin(m_cookies),
-                std::cend(m_cookies),
-                [&name](const auto& pair) {
-                    return pair.first == name;
-                }
-            );
-
-            if (it == std::cend(m_cookies))
-                return { };
-
-            return it->second;
-        }
-
     private:
         std::uint16_t m_port = 0;
-        std::unordered_map<std::string, std::string> m_cookies;
     };
 }
 
