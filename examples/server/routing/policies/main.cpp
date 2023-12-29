@@ -118,7 +118,7 @@ int main()
             // Serve files
             sub_router->add_file_serving("/files", cfg.doc_root);
         }
-        router.add_policy("/admin/.+", policy);
+        router.add_policy("/admin(/.+)?", policy);
         router.add_subrouter("/admin", std::move(sub_router));
     }
 
