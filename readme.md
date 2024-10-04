@@ -70,9 +70,6 @@ This library is BSD-3-Clause licensed. Dependencies ship with their own licensin
 # Requirements
 Building (and using) this library requires:
 - A C++20 capable compiler
-  - GCC >= 10.3 (MinGW works!)
-  - Clang >= 13
-  - MSVC >= 19.29 (VS 2019)
 - CMake 3.23 or newer
 
 ## Dependencies
