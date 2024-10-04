@@ -51,7 +51,7 @@ jobs:
               os: ubuntu-latest,
             },
             {
-              name: "VS2019",
+              name: "VS2022",
               cxx: "cl.exe",
               cc: "cl.exe",
               tls: OFF,
