@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        boost_version: [1.79.0, 1.80.0, 1.81.0, 1.82.0, 1.83.0, 1.84.0]
+        boost_version: [1.81.0, 1.82.0, 1.83.0, 1.84.0, 1.85.0, 1.86.0]
         shared: [ON, OFF]
         toolchain:
           [
