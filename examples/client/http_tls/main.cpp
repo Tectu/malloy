@@ -22,14 +22,12 @@ int main()
     // Start
     [[maybe_unused]] auto session = start(c);
 
-    malloy::http::request req(
+    // Make request
+    auto stop_token = c.http_request(
         malloy::http::method::get,
-        "www.google.com",
-        443,
-        "/"
-    );
-    auto stop_token = c.https_request(req, [](auto&& resp) mutable {
-        std::cout << resp << std::endl;
+        "https://www.google.com",
+        [](auto&& resp) mutable {
+            std::cout << resp << std::endl;
     });
     const auto ec = stop_token.get();
     if (ec) {

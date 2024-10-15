@@ -9,6 +9,7 @@
 #include "../core/http/request.hpp"
 #include "../core/http/response.hpp"
 #include "../core/http/type_traits.hpp"
+#include "../core/http/url.hpp"
 #include "../core/http/utils.hpp"
 #include "../core/tcp/stream.hpp"
 #if MALLOY_FEATURE_TLS
@@ -135,6 +136,39 @@ namespace malloy::client
         http_request(malloy::http::request<ReqBody> req, Callback&& done, Filter filter = {}) -> std::future<malloy::error_code>
         {
             return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
+        }
+
+        template<
+            malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
+            typename Callback,
+            concepts::response_filter Filter = detail::default_resp_filter
+        >
+        requires concepts::http_callback<Callback, Filter>
+        [[nodiscard]]
+        std::future<malloy::error_code>
+        http_request(
+            const malloy::http::method method_,
+            const std::string_view url,
+            Callback&& done,
+            Filter filter = {}
+        ){
+            // Build request
+            auto req = malloy::http::build_request<ReqBody>(method_, url);
+            if (!req) {
+                malloy::error_code ec;
+                ec.assign(0, boost::beast::generic_category());
+                std::promise<malloy::error_code> p;
+                p.set_value(std::forward<malloy::error_code>(ec));
+                return p.get_future();
+            }
+
+            // Make request
+#if MALLOY_FEATURE_TLS
+            if (req->use_tls())
+                return make_http_connection<true>(std::move(*req), std::forward<Callback>(done), std::move(filter));
+            else
+#endif
+                return make_http_connection<false>(std::move(*req), std::forward<Callback>(done), std::move(filter));
         }
 
 #if MALLOY_FEATURE_TLS
