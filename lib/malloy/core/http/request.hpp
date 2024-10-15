@@ -113,6 +113,7 @@ namespace malloy::http
          * @return The port.
          */
         [[nodiscard]]
+        constexpr
         std::uint16_t
         port() const noexcept
         {
