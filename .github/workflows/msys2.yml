@@ -20,7 +20,7 @@ jobs:
 
     runs-on: windows-latest
     env:
-      BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
+      Boost_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
 
     name: "msys2/mingw (boost v${{ matrix.boost_version }}) (tls: ${{ matrix.malloy_tls }}) (shared: ${{ matrix.shared }})"
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v3
         id: cache-boost
         with:
-          path: ${{ env.BOOST_ROOT }}
+          path: ${{ env.Boost_ROOT }}
           key: boost-${{ matrix.boost_version }}
       - name: Setup boost env
         run: |
@@ -56,14 +56,14 @@ jobs:
           # This sed magic does two things:
           # 1. Replaces backslashes with forward slashes
           # 2. Replaces windows drive paths (e.g. D:) with msys paths (e.g. /d)
-          BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g' | sed 's/\([A-Z]\):/\/\L\1/g')
-          echo "BOOST_ROOT=$BOOST_ROOT" >> $GITHUB_ENV
-          echo "BOOST ROOT: ${BOOST_ROOT}"
-          mkdir -p $BOOST_ROOT
-          curl --progress-bar --location --output $BOOST_ROOT/download.tar.bz2 $BOOST_URL
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar.bz2 -y -bd
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar -y -bd
-          cd $BOOST_ROOT && cp -r boost_*/* .
+          Boost_ROOT=$(echo $Boost_ROOT | sed 's/\\/\//g' | sed 's/\([A-Z]\):/\/\L\1/g')
+          echo "Boost_ROOT=$Boost_ROOT" >> $GITHUB_ENV
+          echo "BOOST ROOT: ${Boost_ROOT}"
+          mkdir -p $Boost_ROOT
+          curl --progress-bar --location --output $Boost_ROOT/download.tar.bz2 $BOOST_URL
+          7z -o$Boost_ROOT x $Boost_ROOT/download.tar.bz2 -y -bd
+          7z -o$Boost_ROOT x $Boost_ROOT/download.tar -y -bd
+          cd $Boost_ROOT && cp -r boost_*/* .
           rm -rf boost_*/* download.tar.bz2 download.tar
 
       - name: Configure

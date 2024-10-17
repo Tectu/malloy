@@ -63,7 +63,7 @@ jobs:
     continue-on-error: false
     runs-on: ${{ matrix.toolchain.os }}
     env:
-      BOOST_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
+      Boost_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
       CC: ${{ matrix.toolchain.cc }}
       CXX: ${{ matrix.toolchain.cxx }}
 
@@ -76,7 +76,7 @@ jobs:
         uses: actions/cache@v3
         id: cache-boost
         with:
-          path: ${{ env.BOOST_ROOT }}
+          path: ${{ env.Boost_ROOT }}
           key: boost-${{ matrix.boost_version }}
 
       - name: Install Ninja
@@ -107,13 +107,13 @@ jobs:
         run: |
           if [ "$OS" == "Windows_NT" ]; then
             # fix up paths to be forward slashes consistently
-            BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
+            Boost_ROOT=$(echo $Boost_ROOT | sed 's/\\/\//g')
           fi
-          mkdir -p $BOOST_ROOT
-          curl --progress-bar --location --output $BOOST_ROOT/download.tar.bz2 $BOOST_URL
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar.bz2 -y -bd
-          7z -o$BOOST_ROOT x $BOOST_ROOT/download.tar -y -bd
-          cd $BOOST_ROOT && cp -r boost_*/* .
+          mkdir -p $Boost_ROOT
+          curl --progress-bar --location --output $Boost_ROOT/download.tar.bz2 $BOOST_URL
+          7z -o$Boost_ROOT x $Boost_ROOT/download.tar.bz2 -y -bd
+          7z -o$Boost_ROOT x $Boost_ROOT/download.tar -y -bd
+          cd $Boost_ROOT && cp -r boost_*/* .
           rm -rf boost_*/* download.tar.bz2 download.tar
         shell: bash
 
