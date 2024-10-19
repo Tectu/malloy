@@ -31,7 +31,7 @@ int main()
     });
     const auto ec = stop_token.get();
     if (ec) {
-        spdlog::error(ec.message());
+        spdlog::error("error: {}", ec.message());
         return EXIT_FAILURE;
     }
 

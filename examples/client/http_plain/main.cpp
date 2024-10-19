@@ -26,10 +26,9 @@ int main()
     });
     const auto ec = stop_token.get();
     if (ec) {
-        spdlog::error(ec.message());
+        spdlog::error("errror: {}", ec.message());
         return EXIT_FAILURE;
     }
-
 
     return EXIT_SUCCESS;
 }
