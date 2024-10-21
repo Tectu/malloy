@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/checkout@v4
       - name: cache boost
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-boost
         with:
           path: ${{ env.Boost_ROOT }}
