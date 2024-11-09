@@ -1,3 +1,5 @@
+#pragma once
+
 #include <boost/url/parse.hpp>
 #include <boost/url/url.hpp>
 
