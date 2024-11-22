@@ -7,9 +7,11 @@
 #include "../../core/http/type_traits.hpp"
 
 #include <boost/asio/strand.hpp>
+#include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <spdlog/logger.h>
 
+#include <coroutine>
 #include <future>
 #include <optional>
 
@@ -30,7 +32,8 @@ namespace malloy::client::http
 
         connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, const std::uint64_t body_limit) :
             m_logger(std::move(logger)),
-            m_resolver(boost::asio::make_strand(io_ctx))
+            m_resolver(boost::asio::make_strand(io_ctx)),
+            m_io_ctx(io_ctx)
         {
             // Sanity check
             if (!m_logger)
@@ -85,6 +88,7 @@ namespace malloy::client::http
 
     private:
         boost::asio::ip::tcp::resolver m_resolver;
+        boost::asio::io_context& m_io_ctx;
         boost::beast::flat_buffer m_buffer; // (Must persist between reads)
         boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
         malloy::http::request<ReqBody> m_req;
@@ -160,50 +164,57 @@ namespace malloy::client::http
                     derived().shared_from_this()
                 )
             );
-       }
+        }
 
+        // Shim to call on_read_header_coro() from old callback/CPS system
         void
         on_read_header(malloy::error_code ec, std::size_t)
         {
+            m_logger->error("on_read_header");
+
+            boost::asio::co_spawn(
+                m_io_ctx,
+                on_read_header_coro(ec),
+                [](std::exception_ptr e) {
+                    if (e)
+                        std::rethrow_exception(e);
+                }
+            );
+        }
+
+        boost::asio::awaitable<void>
+        on_read_header_coro(malloy::error_code ec)
+        {
+            auto me = derived().shared_from_this();
+
+            m_logger->error("on_read_header_coro");
             if (ec) {
                 m_logger->error("on_read_header: '{}'", ec.message());
                 m_err_channel.set_value(ec);
-                return;
+                co_return;
             }
 
             // Pick a body and parse it from the stream
             auto bodies = m_req_filter.body_for(m_parser.get().base());
-            std::visit([this](auto&& body) {
-                using body_t = std::decay_t<decltype(body)>;
+            co_await std::visit([this](auto&& body) -> boost::asio::awaitable<void> {
+                    m_logger->error("lambda");
+                    using body_t = std::decay_t<decltype(body)>;
 
-                auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));
-                m_req_filter.setup_body(parser->get().base(), parser->get().body());
+                    auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));
+                    m_req_filter.setup_body(parser->get().base(), parser->get().body());
 
-                boost::beast::http::async_read(
-                    derived().stream(),
-                    m_buffer,
-                    *parser,
-                    [this, parser, me = derived().shared_from_this()](auto ec, auto) {
-                        if (ec) {
-                            m_logger->error("on_read(): {}", ec.message());
-                            m_err_channel.set_value(ec);
-                            return;
-                        }
+                    co_await boost::beast::http::async_read(
+                        derived().stream(),
+                        m_buffer,
+                        *parser,
+                        boost::asio::use_awaitable);
 
-                        // Notify via callback
-                        (*m_cb)(malloy::http::response<body_t>{parser->release()});
-                        on_read();
-                    });
+                    (*m_cb)(malloy::http::response<body_t>{parser->release()});
                 },
                 std::move(bodies)
             );
-        }
 
-        void
-        on_read()
-        {
             // Gracefully close the socket
-            malloy::error_code ec;
             boost::beast::get_lowest_layer(derived().stream()).socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
             // not_connected happens sometimes so don't bother reporting it.
