@@ -97,8 +97,9 @@ namespace malloy::client::http
         Filter m_req_filter;
 
         [[nodiscard]]
+        constexpr
         Derived&
-        derived()
+        derived() noexcept
         {
             return static_cast<Derived&>(*this);
         }
@@ -170,8 +171,6 @@ namespace malloy::client::http
         void
         on_read_header(malloy::error_code ec, std::size_t)
         {
-            m_logger->error("on_read_header");
-
             boost::asio::co_spawn(
                 m_io_ctx,
                 on_read_header_coro(ec),
@@ -187,7 +186,6 @@ namespace malloy::client::http
         {
             auto me = derived().shared_from_this();
 
-            m_logger->error("on_read_header_coro");
             if (ec) {
                 m_logger->error("on_read_header: '{}'", ec.message());
                 m_err_channel.set_value(ec);
@@ -197,7 +195,6 @@ namespace malloy::client::http
             // Pick a body and parse it from the stream
             auto bodies = m_req_filter.body_for(m_parser.get().base());
             co_await std::visit([this](auto&& body) -> boost::asio::awaitable<void> {
-                    m_logger->error("lambda");
                     using body_t = std::decay_t<decltype(body)>;
 
                     auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));
