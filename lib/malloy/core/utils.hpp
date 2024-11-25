@@ -54,8 +54,8 @@ namespace malloy
     [[nodiscard]]
     static
     inline
-    uint8_t
-    hex2dec(uint8_t c)
+    std::uint8_t
+    hex2dec(std::uint8_t c)
     {
         if (c >= '0' && c <= '9')
             c -= '0';

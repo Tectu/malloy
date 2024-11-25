@@ -32,7 +32,8 @@ namespace malloy::detail
         {
             if (!logger)
                 throw std::logic_error{"invalid config: logger is null"};
-            else if (num_threads == 0)
+
+            if (num_threads == 0)
                 throw std::logic_error{"invalid config: cannot have 0 threads"};
         };
     };
