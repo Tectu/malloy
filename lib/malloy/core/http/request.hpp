@@ -30,8 +30,8 @@ namespace malloy::http
          * @param port The port at which the host serves requests.
          * @param target_ The target.
          */
-        request(http::method method_, std::string_view host, const std::uint16_t port, std::string_view target_)
-            : m_port(port)
+        request(http::method method_, std::string_view host, const std::uint16_t port, std::string_view target_) :
+            m_port(port)
         {
             msg_t::version(11);
             msg_t::method(method_);
@@ -54,7 +54,7 @@ namespace malloy::http
 
             // Cookies
             {
-                const auto &[begin, end] = msg_t::base().equal_range(field::cookie);
+                const auto& [begin, end] = msg_t::base().equal_range(field::cookie);
                 for (auto it = begin; it != end; it++) {
                     const auto &str = it->value();
 
