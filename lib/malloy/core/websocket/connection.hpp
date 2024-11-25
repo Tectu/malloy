@@ -142,14 +142,20 @@ namespace malloy::websocket
                 // Make the connection on the IP address we get from a lookup
                 sock.async_connect(
                     target,
-                    [this, me, target, done = std::forward<Callback>(done), resource](auto ec, auto ep) mutable {
+                    [this, me, target, done = std::forward<Callback>(done), resource](auto ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) mutable {
                         if (ec) {
                             done(ec);
-                        } else {
-                        me->on_connect(ec, ep, resource, [this, done = std::forward<Callback>(done)](auto ec) mutable {
-                            go_active();
-                            std::invoke(std::forward<decltype(done)>(done), ec);
-                                });
+                        }
+                        else {
+                            me->on_connect(
+                                ec,
+                                ep,
+                                resource,
+                                [this, done = std::forward<Callback>(done)](auto ec) mutable {
+                                    go_active();
+                                    std::invoke(std::forward<decltype(done)>(done), ec);
+                                }
+                            );
                         }
                     });
             });

@@ -210,34 +210,20 @@ into another project:
 ## FetchContent()
 The easiest way to integrate Malloy is via CMake's `FetchContent()` infrastructure:
 ```cmake
+# Change various malloy cmake options
+set(MALLOY_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(MALLOY_BUILD_TESTS    OFF CACHE INTERNAL "")
+set(MALLOY_BUILD_SHARED   ON  CACHE INTERNAL "")
+set(MALLOY_FEATURE_CLIENT OFF CACHE INTERNAL "")
+set(MALLOY_FEATURE_SERVER ON  CACHE INTERNAL "")
+set(MALLOY_FEATURE_TLS    ON  CACHE INTERNAL "")
+
 FetchContent_Declare(
     malloy
     GIT_REPOSITORY https://github.com/tectu/malloy
     GIT_TAG        main
 )
 FetchContent_MakeAvailable(malloy)
-```
-If you like to modify set some of Malloy's CMake variables, the `FetchContent_MakeAvailable()` call can be replaced accordingly:
-```cmake
-FetchContent_Declare(
-    malloy
-    GIT_REPOSITORY https://github.com/tectu/malloy
-    GIT_TAG        main
-)
-FetchContent_GetProperties(malloy)
-if(NOT malloy_POPULATED)
-    FetchContent_Populate(malloy)
-    
-    # Change various malloy cmake options
-    set(MALLOY_BUILD_EXAMPLES OFF CACHE INTERNAL "")
-    set(MALLOY_BUILD_TESTS OFF CACHE INTERNAL "")
-    set(MALLOY_BUILD_SHARED ON CACHE INTERNAL "")
-    set(MALLOY_FEATURE_CLIENT OFF CACHE INTERNAL "")
-    set(MALLOY_FEATURE_SERVER ON CACHE INTERNAL "")
-    set(MALLOY_FEATURE_TLS ON CACHE INTERNAL "")
-    
-    add_subdirectory(${malloy_SOURCE_DIR} ${malloy_BINARY_DIR})
-endif()
 ```
 You may replace `GIT_TAG` with a commit hash or a release tag such as `1.0.0`.
 

@@ -37,9 +37,7 @@ namespace malloy
             return { };
 
         // Read contents
-        const std::size_t& size = std::filesystem::file_size(path);
-        std::string content(size, '\0');
-        file.read(content.data(), size);
+        std::string content{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 
         // Close the file
         file.close();
