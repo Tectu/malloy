@@ -25,17 +25,17 @@ namespace malloy::client::http
 
         // Called by base class
         [[nodiscard]]
+        constexpr
         malloy::tcp::stream<>&
-        stream()
+        stream() noexcept
         {
             return m_stream;
         }
 
-        void
+        boost::asio::awaitable<void>
         hook_connected()
         {
-            // Send the HTTP request to the remote host
-            parent_t::send_request();
+            co_return;
         }
 
     private:

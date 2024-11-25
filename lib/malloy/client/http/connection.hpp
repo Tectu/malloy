@@ -15,6 +15,10 @@
 #include <future>
 #include <optional>
 
+
+
+#include <iostream>
+
 namespace malloy::client::http
 {
 
@@ -32,7 +36,6 @@ namespace malloy::client::http
 
         connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, const std::uint64_t body_limit) :
             m_logger(std::move(logger)),
-            m_resolver(boost::asio::make_strand(io_ctx)),
             m_io_ctx(io_ctx)
         {
             // Sanity check
@@ -53,128 +56,10 @@ namespace malloy::client::http
             Filter&& filter
         )
         {
-            m_req_filter = std::move(filter);
-            m_req = std::move(req);
-            m_err_channel = std::move(err_channel);
-            m_cb.emplace(std::move(cb));
-
-            // Look up the domain name
-            m_resolver.async_resolve(
-                m_req.base()[malloy::http::field::host],
-                port,
-                boost::beast::bind_front_handler(
-                    &connection::on_resolve,
-                    derived().shared_from_this()
-                )
-            );
-        }
-
-    protected:
-        std::shared_ptr<spdlog::logger> m_logger;
-
-        void
-        send_request()
-        {
-            // Send the HTTP request to the remote host
-            boost::beast::http::async_write(
-                derived().stream(),
-                m_req,
-                boost::beast::bind_front_handler(
-                    &connection::on_write,
-                    derived().shared_from_this()
-                )
-            );
-        }
-
-    private:
-        boost::asio::ip::tcp::resolver m_resolver;
-        boost::asio::io_context& m_io_ctx;
-        boost::beast::flat_buffer m_buffer; // (Must persist between reads)
-        boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
-        malloy::http::request<ReqBody> m_req;
-        std::promise<malloy::error_code> m_err_channel;
-        std::optional<callback_t> m_cb;
-        Filter m_req_filter;
-
-        [[nodiscard]]
-        constexpr
-        Derived&
-        derived() noexcept
-        {
-            return static_cast<Derived&>(*this);
-        }
-
-        void
-        on_resolve(const boost::beast::error_code& ec, boost::asio::ip::tcp::resolver::results_type results)
-        {
-            m_logger->trace("on_resolve()");
-
-            if (ec) {
-                m_logger->error("on_resolve: {}", ec.message());
-                m_err_channel.set_value(ec);
-                return;
-            }
-
-            // Set a timeout on the operation
-            boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
-
-            // Make the connection on the IP address we get from a lookup
-            boost::beast::get_lowest_layer(derived().stream()).async_connect(
-                results,
-                boost::beast::bind_front_handler(
-                    &connection::on_connect,
-                    derived().shared_from_this()
-                )
-            );
-        }
-
-        void
-        on_connect(const boost::beast::error_code& ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type)
-        {
-            m_logger->trace("on_connect()");
-
-            if (ec) {
-                m_logger->error("on_connect: {}", ec.message());
-                m_err_channel.set_value(ec);
-                return;
-            }
-
-            // Set a timeout on the operation
-            boost::beast::get_lowest_layer(derived().stream()).expires_after(std::chrono::seconds(30));
-
-            // Call hook
-            derived().hook_connected();
-        }
-
-        void
-        on_write(const boost::beast::error_code& ec, [[maybe_unused]] const std::size_t bytes_transferred)
-        {
-            if (ec) {
-                m_logger->error("on_write: {}", ec.message());
-                m_err_channel.set_value(ec);
-                return;
-            }
-
-            // Receive the HTTP response
-            boost::beast::http::async_read_header(
-                derived().stream(),
-                m_buffer,
-                m_parser,
-                malloy::bind_front_handler(
-                    &connection::on_read_header,
-                    derived().shared_from_this()
-                )
-            );
-        }
-
-        // Shim to call on_read_header_coro() from old callback/CPS system
-        void
-        on_read_header(malloy::error_code ec, std::size_t)
-        {
             boost::asio::co_spawn(
                 m_io_ctx,
-                on_read_header_coro(ec),
-                [](std::exception_ptr e) {
+                run_coro(std::string(port), std::move(req), std::move(err_channel), std::move(cb), std::move(filter)),
+                [me = derived().shared_from_this()](std::exception_ptr e) {
                     if (e)
                         std::rethrow_exception(e);
                 }
@@ -182,18 +67,62 @@ namespace malloy::client::http
         }
 
         boost::asio::awaitable<void>
-        on_read_header_coro(malloy::error_code ec)
+        run_coro(
+            std::string port,   // ToDo
+            malloy::http::request<ReqBody> req,
+            std::promise<malloy::error_code> err_channel,
+            callback_t&& cb,
+            Filter&& filter
+        )
         {
-            auto me = derived().shared_from_this();
+            namespace http = boost::beast::http;
 
-            if (ec) {
-                m_logger->error("on_read_header: '{}'", ec.message());
-                m_err_channel.set_value(ec);
-                co_return;
-            }
+            auto executor = co_await boost::asio::this_coro::executor;
+            auto resolver = boost::asio::ip::tcp::resolver{ executor };
+            //auto stream   = boost::beast::tcp_stream{ executor };
+
+            // Look up the domain name
+            auto const results = co_await resolver.async_resolve(req.base()[malloy::http::field::host], port);
+
+            // Set the timeout.
+            derived().stream().expires_after(std::chrono::seconds(30));
+
+            // Make the connection on the IP address we get from a lookup
+            co_await derived().stream().async_connect(results);
+
+            // Call "connected" hook
+            co_await derived().hook_connected();
+
+            // Set the timeout.
+            derived().stream().expires_after(std::chrono::seconds(30));
+
+            // Send the HTTP request to the remote host
+            co_await http::async_write(derived().stream(), req);
+
+            // This buffer is used for reading and must be persisted
+            //boost::beast::flat_buffer buffer;
+
+            // Declare a container to hold the response
+            //http::response<http::dynamic_body> res;
+
+            // Receive the HTTP response
+            //co_await http::async_read(derived().stream(), buffer, res);
+
+#if 0
+            (void)cb;
+            (void)filter;
+
+            // Write the message to standard out
+            std::cout << res << std::endl;
+#else
+            // ToDo
+            m_req_filter = std::move(filter);
+            //m_req = std::move(req);
+            m_cb.emplace(std::move(cb));
 
             // Pick a body and parse it from the stream
-            auto bodies = m_req_filter.body_for(m_parser.get().base());
+            // ToDo: Have a look at using boost::beast::http::response<boost::beast::http::dynamic_body> instead!
+            auto bodies = filter.body_for(m_parser.get().base());
             co_await std::visit([this](auto&& body) -> boost::asio::awaitable<void> {
                     using body_t = std::decay_t<decltype(body)>;
 
@@ -210,15 +139,40 @@ namespace malloy::client::http
                 },
                 std::move(bodies)
             );
+#endif
 
             // Gracefully close the socket
-            boost::beast::get_lowest_layer(derived().stream()).socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+            boost::beast::error_code ec;
+            derived().stream().socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
 
-            // not_connected happens sometimes so don't bother reporting it.
+            // not_connected happens sometimes
+            // so don't bother reporting it.
+            //
             if (ec && ec != boost::beast::errc::not_connected)
                 m_logger->error("shutdown: {}", ec.message());
 
-            m_err_channel.set_value(ec); // Set it even if its not an error, to signify that we are done
+            // If we get here then the connection is closed gracefully
+
+            // Set error channel it even if it's not an error, to signify that we are done
+            err_channel.set_value(ec);
+        }
+
+    protected:
+        std::shared_ptr<spdlog::logger> m_logger;
+
+    private:
+        boost::asio::io_context& m_io_ctx;
+        boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
+        std::optional<callback_t> m_cb;         // ToDo: Get rid of this, no longer required
+        Filter m_req_filter;                    // ToDo: Get rid of this, no longer required
+        boost::beast::flat_buffer m_buffer;     // ToDo: Get rid of this, no longer required
+
+        [[nodiscard]]
+        constexpr
+        Derived&
+        derived() noexcept
+        {
+            return static_cast<Derived&>(*this);
         }
     };
 
