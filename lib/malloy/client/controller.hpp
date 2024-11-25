@@ -289,11 +289,11 @@ namespace malloy::client
 
                 // Run
                 conn->run(
-                    std::to_string(req.port()).c_str(),
                     req,
                     std::move(prom),
                     std::forward<Callback>(cb),
-                    std::forward<Filter>(filter));
+                    std::forward<Filter>(filter)
+                );
             });
 
             return err_channel;

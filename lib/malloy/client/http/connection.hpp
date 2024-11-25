@@ -43,7 +43,6 @@ namespace malloy::client::http
         // Start the asynchronous operation
         void
         run(
-            char const* port,
             malloy::http::request<ReqBody> req,
             std::promise<malloy::error_code> err_channel,
             callback_t&& cb,
@@ -58,7 +57,7 @@ namespace malloy::client::http
             // Look up the domain name
             m_resolver.async_resolve(
                 m_req.base()[malloy::http::field::host],
-                port,
+                std::to_string(m_req.port()),
                 boost::beast::bind_front_handler(
                     &connection::on_resolve,
                     derived().shared_from_this()
