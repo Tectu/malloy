@@ -288,12 +288,14 @@ namespace malloy::client
                     req.set(malloy::http::field::user_agent, m_cfg.user_agent);
 
                 // Run
-                conn->run(
-                    std::to_string(req.port()).c_str(),
-                    req,
-                    std::move(prom),
-                    std::forward<Callback>(cb),
-                    std::forward<Filter>(filter));
+                boost::asio::co_spawn(
+                    *m_ioc,
+                    conn->run(std::move(req), std::move(prom), std::forward<Callback>(cb), std::forward<Filter>(filter)),
+                    [conn](std::exception_ptr e) {      // ToDo: Do we need to capture conn to keep it alive here?!
+                        if (e)
+                            std::rethrow_exception(e);
+                    }
+                );
             });
 
             return err_channel;

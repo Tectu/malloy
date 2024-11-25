@@ -38,33 +38,16 @@ namespace malloy::client::http
             return m_stream;
         }
 
-        void
+        // ToDo: Return error code!
+        boost::asio::awaitable<void>
         hook_connected()
         {
             // Perform the TLS handshake
-            m_stream.async_handshake(
-                boost::asio::ssl::stream_base::client,
-                boost::beast::bind_front_handler(
-                    &connection_tls::on_handshake,
-                    this->shared_from_this()
-                )
-            );
+            parent_t::set_stream_timeout(std::chrono::seconds(3));  // ToDo: Do not hard-code!
+            co_await m_stream.async_handshake(boost::asio::ssl::stream_base::client);
         }
 
     private:
         boost::beast::ssl_stream<malloy::tcp::stream<>> m_stream;
-
-        void
-        on_handshake(const boost::beast::error_code ec)
-        {
-            if (ec)
-                return parent_t::m_logger->error("on_handshake(): {}", ec.message());
-
-            // Set a timeout on the operation
-            boost::beast::get_lowest_layer(m_stream).expires_after(std::chrono::seconds(30));
-
-            // Send the HTTP request to the remote host
-            parent_t::send_request();
-        }
     };
 }
