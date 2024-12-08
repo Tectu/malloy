@@ -37,9 +37,7 @@ namespace malloy
             return { };
 
         // Read contents
-        const std::size_t& size = std::filesystem::file_size(path);
-        std::string content(size, '\0');
-        file.read(content.data(), size);
+        std::string content{std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 
         // Close the file
         file.close();
@@ -56,8 +54,8 @@ namespace malloy
     [[nodiscard]]
     static
     inline
-    uint8_t
-    hex2dec(uint8_t c)
+    std::uint8_t
+    hex2dec(std::uint8_t c)
     {
         if (c >= '0' && c <= '9')
             c -= '0';

@@ -90,65 +90,107 @@ namespace malloy::websocket
 		auto
         async_write(const Buff& buffers, Callback&& done)
 		{
-			return std::visit([&buffers, done = std::forward<Callback>(done)](auto& stream) mutable { return stream.async_write(buffers, std::forward<Callback>(done)); }, m_underlying_conn);
+			return std::visit(
+                [&buffers, done = std::forward<Callback>(done)](auto& stream) mutable {
+                    return stream.async_write(buffers, std::forward<Callback>(done));
+                },
+                m_underlying_conn
+            );
 		}
 
 		template<concepts::const_buffer_sequence Buff>
 		auto
         write(const Buff& buffers) -> std::size_t
 		{
-			return std::visit([&buffers](auto& stream) mutable { return stream.write(buffers); }, m_underlying_conn);
+			return std::visit(
+                [&buffers](auto& stream) mutable {
+                    return stream.write(buffers);
+                },
+                m_underlying_conn
+            );
 		}
 
 		template<concepts::dynamic_buffer Buff, detail::rw_completion_token Callback>
 		auto
         async_read(Buff& buff, Callback&& done)
 		{
-			return std::visit([&buff, done = std::forward<Callback>(done)](auto& s) mutable { return s.async_read(buff, std::forward<Callback>(done)); }, m_underlying_conn);
+			return std::visit(
+                [&buff, done = std::forward<Callback>(done)](auto& s) mutable {
+                    return s.async_read(buff, std::forward<Callback>(done));
+                },
+                m_underlying_conn
+            );
 		}
 
 		template<concepts::dynamic_buffer Buff>
 		auto
         read(Buff& buff, boost::beast::error_code& ec) -> std::size_t
 		{
-			return std::visit([&buff, &ec](auto& s) mutable { return s.read(buff, ec); }, m_underlying_conn);
+			return std::visit(
+                [&buff, &ec](auto& s) mutable {
+                    return s.read(buff, ec);
+                },
+                m_underlying_conn
+            );
 		}
 
         template<boost::asio::completion_token_for<void(malloy::error_code)> CompletionToken>
 		auto
-        async_close(boost::beast::websocket::close_reason why, CompletionToken&& done) {
-            return std::visit([why, done = std::forward<CompletionToken>(done)](auto& s) mutable {
+        async_close(boost::beast::websocket::close_reason why, CompletionToken&& done)
+        {
+            return std::visit(
+                [why, done = std::forward<CompletionToken>(done)](auto& s) mutable {
                     return s.async_close(why, std::forward<CompletionToken>(done));
-            }, m_underlying_conn);
+                },
+                m_underlying_conn
+            );
 		}
 
 		void
         set_option(auto&& opt)
 		{
-			std::visit([opt = std::forward<decltype(opt)>(opt)](auto& s) mutable { s.set_option(std::forward<decltype(opt)>(opt));  }, m_underlying_conn);
+			std::visit(
+                [opt = std::forward<decltype(opt)>(opt)](auto& s) mutable {
+                    s.set_option(std::forward<decltype(opt)>(opt));
+                },
+                m_underlying_conn
+            );
 		}
 
 		template<typename Body, typename Fields, boost::asio::completion_token_for<void(malloy::error_code)> CompletionHandler>
 		auto
         async_accept(const boost::beast::http::request<Body, Fields>& req, CompletionHandler&& done)
 		{
-			return std::visit([req, done = std::forward<decltype(done)>(done)](auto& s) mutable { return s.async_accept(req, std::forward<decltype(done)>(done)); }, m_underlying_conn);
+			return std::visit(
+                [req, done = std::forward<decltype(done)>(done)](auto& s) mutable {
+                    return s.async_accept(req, std::forward<decltype(done)>(done));
+                },
+                m_underlying_conn
+            );
 		}
 
 		template<typename Body, typename Fields>
 		auto
         accept(const boost::beast::http::request<Body, Fields>& req) -> boost::beast::error_code
 		{
-			return std::visit([req](auto& s) { return s.accept(req); }, m_underlying_conn);
+			return std::visit(
+                [req](auto& s) {
+                    return s.accept(req);
+                },
+                m_underlying_conn
+            );
 		}
 
 		template<boost::asio::completion_token_for<void(malloy::error_code)> Callback>
 		auto
         async_handshake(std::string host, std::string target, Callback&& done)
 		{
-			return std::visit([host = std::move(host), target = std::move(target), done = std::forward<Callback>(done)](auto& s) mutable {
-				return s.async_handshake(host, target, std::forward<Callback>(done));
-			}, m_underlying_conn);
+			return std::visit(
+                [host = std::move(host), target = std::move(target), done = std::forward<Callback>(done)](auto& s) mutable {
+				    return s.async_handshake(host, target, std::forward<Callback>(done));
+			    },
+                m_underlying_conn
+            );
 		}
 
         /**
@@ -161,7 +203,8 @@ namespace malloy::websocket
         void
         set_binary(const bool enabled)
         {
-            std::visit([enabled](auto& s) mutable {
+            std::visit(
+                [enabled](auto& s) mutable {
                     s.binary(enabled);
                 },
                 m_underlying_conn
@@ -178,7 +221,8 @@ namespace malloy::websocket
         bool
         binary() const
         {
-		    return std::visit([](auto& s) {
+		    return std::visit(
+                [](auto& s) {
 		            return s.binary();
 		        },
                 m_underlying_conn
@@ -199,7 +243,12 @@ namespace malloy::websocket
 		void
         get_lowest_layer(Func&& visitor)
 		{
-			std::visit([visitor = std::forward<Func>(visitor)](auto& s) mutable { visitor(boost::beast::get_lowest_layer(s)); }, m_underlying_conn);
+			std::visit(
+                [visitor = std::forward<Func>(visitor)](auto& s) mutable {
+                    visitor(boost::beast::get_lowest_layer(s));
+                },
+                m_underlying_conn
+            );
 		}
 
         /**
@@ -210,7 +259,12 @@ namespace malloy::websocket
 		auto
         get_executor()
 		{
-			return std::visit([](auto& s) { return s.get_executor(); }, m_underlying_conn);
+			return std::visit(
+                [](auto& s) {
+                    return s.get_executor();
+                },
+                m_underlying_conn
+            );
 		}
 
         /**
@@ -222,7 +276,12 @@ namespace malloy::websocket
         bool
         is_open() const
         {
-            return std::visit([](auto& s){ return s.is_open(); }, m_underlying_conn);
+            return std::visit(
+                [](auto& s){
+                    return s.is_open();
+                },
+                m_underlying_conn
+            );
         }
 
         /** 
