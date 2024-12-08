@@ -80,19 +80,19 @@ TEST_SUITE("controller - roundtrips")
             "/"
         };
         auto stop_tkn = cli_ctrl.http_request(req, [&](auto&& resp){
-            CHECK(resp[malloy::http::field::server] == serve_agent_str);
+            CHECK_EQ(resp[malloy::http::field::server], serve_agent_str);
         });
 
         ms::routing_context serve_ctrl{serve_cfg};
 
         serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req){
-            CHECK(req[malloy::http::field::user_agent] == cli_agent_str);
+            CHECK_EQ(req[malloy::http::field::user_agent], cli_agent_str);
             return malloy::http::generator::ok();
         });
 
         auto serve_session = start(std::move(serve_ctrl));
         start(cli_ctrl).run();
 
-        CHECK(!stop_tkn.get());
+        CHECK_FALSE(stop_tkn.get());
     }
 }
