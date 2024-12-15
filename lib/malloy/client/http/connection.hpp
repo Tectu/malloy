@@ -91,7 +91,8 @@ namespace malloy::client::http
                         derived().stream(),
                         buffer,
                         *parser,
-                        boost::asio::use_awaitable);
+                        boost::asio::use_awaitable
+                    );
 
                     (*m_cb)(malloy::http::response<body_t>{parser->release()});
                 },
