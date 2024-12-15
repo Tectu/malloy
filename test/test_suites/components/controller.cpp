@@ -55,10 +55,10 @@ TEST_SUITE("controller - roundtrips")
 
     TEST_CASE("Server and client set agent strings based on user_agent")
     {
-        constexpr auto cli_agent_str = "test-cli";
-        constexpr auto serve_agent_str = "test-serve";
-        constexpr auto addr = "127.0.0.1";
-        constexpr uint16_t port = 55123;
+        constexpr std::string_view cli_agent_str = "test-cli";
+        constexpr std::string_view serve_agent_str = "test-serve";
+        constexpr std::string_view addr = "127.0.0.1";
+        constexpr std::uint16_t port = 55123;
 
         malloy::controller::config general_cfg;
         general_cfg.logger = spdlog::default_logger();
@@ -79,13 +79,13 @@ TEST_SUITE("controller - roundtrips")
             port,
             "/"
         };
-        auto stop_tkn = cli_ctrl.http_request(req, [&](auto&& resp){
+        auto stop_tkn = cli_ctrl.http_request(req, [serve_agent_str](auto&& resp){
             CHECK_EQ(resp[malloy::http::field::server], serve_agent_str);
         });
 
         ms::routing_context serve_ctrl{serve_cfg};
 
-        serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req){
+        serve_ctrl.router().add(malloy::http::method::get, "/", [cli_agent_str](auto&& req){
             CHECK_EQ(req[malloy::http::field::user_agent], cli_agent_str);
             return malloy::http::generator::ok();
         });
