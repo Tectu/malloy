@@ -32,6 +32,7 @@ public:
      *
      * @param router The router.
      */
+    explicit
     router_adaptor(router_t router) :
         m_router{ std::move(router) }
     {
