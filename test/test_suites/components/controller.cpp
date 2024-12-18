@@ -53,10 +53,13 @@ TEST_SUITE("controller - roundtrips")
         }
     }
 
+    // Note: These would technically belong into the TEST_CASE() below. However, for a currently unknown reason, these strings don't survive
+    //       until the callbacks are invoked. This should certainly be investigated.
+    constexpr auto cli_agent_str = "test-cli";
+    constexpr auto serve_agent_str = "test-serve";
+
     TEST_CASE("Server and client set agent strings based on user_agent")
     {
-        constexpr auto cli_agent_str = "test-cli";
-        constexpr auto serve_agent_str = "test-serve";
         constexpr auto addr = "127.0.0.1";
         constexpr uint16_t port = 55123;
 
