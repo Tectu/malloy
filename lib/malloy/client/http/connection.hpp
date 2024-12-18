@@ -66,9 +66,6 @@ namespace malloy::client::http
             set_stream_timeout(std::chrono::seconds(30));   // ToDo: Don't hard-code
             co_await boost::beast::http::async_write(derived().stream(), req);
 
-            // ToDo
-            m_cb.emplace(std::move(cb));
-
             // Pick a body and parse it from the stream
             // ToDo: Have a look at using boost::beast::http::response<boost::beast::http::dynamic_body> instead!
             //       This would probably involve something like:
@@ -79,7 +76,7 @@ namespace malloy::client::http
             //
             auto bodies = filter.body_for(m_parser.get().base());
             co_await std::visit(
-                [filter = std::move(filter), this](auto&& body) -> boost::asio::awaitable<void> {
+                [filter = std::move(filter), &cb, this](auto&& body) -> boost::asio::awaitable<void> {
                     using body_t = std::decay_t<decltype(body)>;
 
                     auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));
@@ -94,7 +91,7 @@ namespace malloy::client::http
                         boost::asio::use_awaitable
                     );
 
-                    (*m_cb)(malloy::http::response<body_t>{parser->release()});
+                    cb(malloy::http::response<body_t>{parser->release()});
                 },
                 std::move(bodies)
             );
@@ -133,7 +130,6 @@ namespace malloy::client::http
     private:
         boost::asio::io_context& m_io_ctx;
         boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
-        std::optional<Callback> m_cb;         // ToDo: Get rid of this, no longer required
 
         [[nodiscard]]
         constexpr
