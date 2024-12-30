@@ -18,22 +18,17 @@ find_package(
 # fmt
 ########################################################################################################################
 if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
+    set(MALLOY_TMP_VAR1 ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS ${MALLOY_BUILD_SHARED}) # fmt has no specific shared option
+
     FetchContent_Declare(
         fmt 
         GIT_REPOSITORY  https://github.com/fmtlib/fmt
         GIT_TAG         10.1.1
     )
-    FetchContent_GetProperties(fmt)
-    if (NOT fmt_POPULATED) 
-        FetchContent_Populate(fmt)
-        set(MALLOY_TMP_VAR1 ${BUILD_SHARED_LIBS})
-        set(BUILD_SHARED_LIBS ${MALLOY_BUILD_SHARED}) # fmt has no specific shared option
+    FetchContent_MakeAvailable(fmt)
 
-        add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR})
-
-        set(BUILD_SHARED_LIBS ${MALLOY_TMP_VAR1})
-
-    endif()
+    set(BUILD_SHARED_LIBS ${MALLOY_TMP_VAR1})
 else()
     find_package(fmt REQUIRED)
 endif()
@@ -43,19 +38,15 @@ endif()
 # spdlog
 ########################################################################################################################
 if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
+    set(SPDLOG_BUILD_SHARED ${MALLOY_BUILD_SHARED} CACHE INTERNAL "")
+    set(SPDLOG_FMT_EXTERNAL ON CACHE INTERNAL "")
+
     FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog
         GIT_TAG        v1.x
     )
-    FetchContent_GetProperties(spdlog)
-    if (NOT spdlog_POPULATED) 
-        FetchContent_Populate(spdlog)
-        set(SPDLOG_BUILD_SHARED ${MALLOY_BUILD_SHARED} CACHE INTERNAL "")
-        set(SPDLOG_FMT_EXTERNAL ON CACHE INTERNAL "")
-
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
-    endif()
+    FetchContent_MakeAvailable(spdlog)
 else()
     find_package(spdlog REQUIRED)
 endif()
