@@ -107,11 +107,10 @@ namespace malloy::server
          * @return The top-level router.
          */
         [[nodiscard]]
-        constexpr
         const malloy::server::router&
         router() const noexcept
         {
-            return m_router;
+            return *m_router;
         }
 
         /**
@@ -120,16 +119,15 @@ namespace malloy::server
          * @return The top-level router.
          */
         [[nodiscard]]
-        constexpr
         malloy::server::router&
         router() noexcept
         {
-            return m_router;
+            return *m_router;
         }
 
     private:
         config m_cfg;
-        malloy::server::router m_router;
+        std::unique_ptr<malloy::server::router> m_router;
         #if MALLOY_FEATURE_TLS
             std::unique_ptr<boost::asio::ssl::context> m_tls_ctx;
         #endif
@@ -154,7 +152,7 @@ namespace malloy::server
                 nullptr,
 #endif
                 boost::asio::ip::tcp::endpoint{boost::asio::ip::make_address(ctrl.m_cfg.interface), ctrl.m_cfg.port},
-                std::make_shared<class router>(std::move(ctrl.m_router)),
+                std::move(ctrl.m_router),
                 std::make_shared<std::filesystem::path>(ctrl.m_cfg.doc_root),
                 ctrl.m_cfg.agent_string);
 
