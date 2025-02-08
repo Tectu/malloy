@@ -39,7 +39,6 @@ namespace malloy::client::http
             m_parser.body_limit(body_limit);
         }
 
-        // ToDo: Remove port parameter, we can get that from the req
         // ToDo: Return something like std::expected<http::response, error_code> instead
         boost::asio::awaitable<void>
         run(
