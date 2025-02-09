@@ -28,6 +28,7 @@ This library is being used successfully on:
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
 - High-level controller to setup I/O context, SSL context, worker threads and more
+- URL parsing support
 - HTTP
   - Plain or TLS (SSL) connections
   - Cookies
@@ -35,6 +36,7 @@ The following list provides an overview of the currently implemented features. S
   - Upgrading connections to WebSocket
   - Client
     - Response filters
+    - File downloads directly to disk
   - Server
     - Routing
       - Simple handlers (useful for building REST APIs)
