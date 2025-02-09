@@ -154,6 +154,10 @@ namespace malloy::client
          *
          * @detail This will either issue a plain (unencrypted) or TLS request based on the scheme in the URL (http:// vs. https://).
          *
+         * @note Parsing the URL from string can be expensive. If you need to issue the same request repeatedly, consider manually building
+         *       the HTTP request using malloy::http::build_request() and then using either the http_request() overload or the https_request()
+         *       functions accepting a pre-parsed HTTP request as a parameter.
+         *
          * @param method_ The HTTP method/verb.
          * @param url The URL.
          * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter.
