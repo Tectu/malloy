@@ -156,24 +156,18 @@ int main()
     // Start
     [[maybe_unused]] auto session = start(c);
 
-    // Create HTTP request
-    malloy::http::request req(
+    // Make request
+    auto stop_token = c.http_request(
         malloy::http::method::get,
-        "www.google.com",
-        80,
-        "/"
-    );
-    
-    // Make HTTP request
-    auto stop_token = c.http_request(req, [](auto&& resp) mutable {
-        std::cout << resp << std::endl;
+        "http://www.google.com",
+        [](auto&& resp) mutable {
+            std::cout << resp << std::endl;
     });
     const auto ec = stop_token.get();
     if (ec) {
-        spdlog::error(ec.message());
+        spdlog::error("error: {}", ec.message());
         return EXIT_FAILURE;
     }
-
 
     return EXIT_SUCCESS;
 }

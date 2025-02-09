@@ -11,6 +11,8 @@ find_package(
     Boost
     ${MALLOY_DEPENDENCY_BOOST_VERSION_MIN}
     REQUIRED
+    COMPONENTS
+        url
 )
 
 
