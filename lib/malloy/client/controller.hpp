@@ -149,6 +149,16 @@ namespace malloy::client
             return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
         }
 
+        /**
+         * Perform an HTTP request.
+         *
+         * @detail This will either issue a plain (unencrypted) or TLS request based on the scheme in the URL (http:// vs. https://).
+         *
+         * @param method_ The HTTP method/verb.
+         * @param url The URL.
+         * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter.
+         * @param filter Filter to use when parsing the response. Must satisfy response_filter @ref client_concepts.
+         */
         template<
             malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
             typename Callback,
