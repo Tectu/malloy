@@ -133,6 +133,7 @@ namespace malloy
      *
      * @param str The string to decode.
      */
+    // ToDo: Consider using Boost.URL instead
     static
     inline
     void
