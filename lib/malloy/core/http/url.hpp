@@ -7,6 +7,7 @@
 #include "types.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace malloy::http
