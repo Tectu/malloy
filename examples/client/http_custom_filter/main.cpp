@@ -44,21 +44,16 @@ main()
     // Start
     [[maybe_unused]] auto session = start(ctrl);
 
-	// Create request
-	malloy::http::request req{
-		malloy::http::method::get,
-		"www.google.com",
-		80,
-		"/"
-	};
-
-	// Perform request
-	auto stop_token = ctrl.http_request(req, [](auto&& req) mutable {
-		if constexpr (std::same_as<std::decay_t<decltype(req)>, malloy::http::response<boost::beast::http::string_body>>)
-			std::cout << req << '\n';
-		else
-			std::cout << "Downloaded webpage to: " << download_path << '\n';
-		},
+	// Make request
+	auto stop_token = ctrl.http_request(
+        malloy::http::method::get,
+        "http://www.google.com",
+        [](auto&& resp) mutable {
+            if constexpr (std::same_as<std::decay_t<decltype(resp)>, malloy::http::response<boost::beast::http::string_body>>)
+                std::cout << resp << std::endl;
+            else
+                std::cout << "Downloaded webpage to: " << download_path << std::endl;
+            },
         response_filter{ }
     );
 

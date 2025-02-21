@@ -8,8 +8,8 @@ int main()
 {
     // Create the controller config
     malloy::client::controller::config cfg;
-    cfg.num_threads = 1;
     cfg.logger      = create_example_logger();
+    cfg.num_threads = 1;
 
     // Create the controller
     malloy::client::controller c{cfg};
