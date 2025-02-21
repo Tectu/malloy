@@ -3,11 +3,16 @@ cmake_minimum_required(VERSION 3.23)
 # Project
 project(
     malloy
-    VERSION 0.8.0
+    VERSION 0.9.0
     LANGUAGES
         CXX
     HOMEPAGE_URL "https://github.com/tectu/malloy"
 )
+
+# Policies
+if (POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 
 # Options
 option(MALLOY_BUILD_SHARED   "Whether to build as a shared library" OFF)

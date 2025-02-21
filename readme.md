@@ -28,6 +28,7 @@ This library is being used successfully on:
 The following list provides an overview of the currently implemented features. Some of these are optional and can be enabled/disabled.
 
 - High-level controller to setup I/O context, SSL context, worker threads and more
+- URL parsing support
 - HTTP
   - Plain or TLS (SSL) connections
   - Cookies
@@ -35,6 +36,7 @@ The following list provides an overview of the currently implemented features. S
   - Upgrading connections to WebSocket
   - Client
     - Response filters
+    - File downloads directly to disk
   - Server
     - Routing
       - Simple handlers (useful for building REST APIs)
@@ -156,24 +158,18 @@ int main()
     // Start
     [[maybe_unused]] auto session = start(c);
 
-    // Create HTTP request
-    malloy::http::request req(
+    // Make request
+    auto stop_token = c.http_request(
         malloy::http::method::get,
-        "www.google.com",
-        80,
-        "/"
-    );
-    
-    // Make HTTP request
-    auto stop_token = c.http_request(req, [](auto&& resp) mutable {
-        std::cout << resp << std::endl;
+        "http://www.google.com",
+        [](auto&& resp) mutable {
+            std::cout << resp << std::endl;
     });
     const auto ec = stop_token.get();
     if (ec) {
-        spdlog::error(ec.message());
+        spdlog::error("error: {}", ec.message());
         return EXIT_FAILURE;
     }
-
 
     return EXIT_SUCCESS;
 }

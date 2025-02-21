@@ -9,6 +9,7 @@
 #include "../core/http/request.hpp"
 #include "../core/http/response.hpp"
 #include "../core/http/type_traits.hpp"
+#include "../core/http/url.hpp"
 #include "../core/http/utils.hpp"
 #include "../core/tcp/stream.hpp"
 #if MALLOY_FEATURE_TLS
@@ -146,6 +147,58 @@ namespace malloy::client
         )
         {
             return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
+        }
+
+        /**
+         * Perform an HTTP request.
+         *
+         * @detail This will either issue a plain (unencrypted) or TLS request based on the scheme in the URL (http:// vs. https://).
+         *
+         * @note Parsing the URL from string can be expensive. If you need to issue the same request repeatedly, consider manually building
+         *       the HTTP request using malloy::http::build_request() and then using either the http_request() overload or the https_request()
+         *       functions accepting a pre-parsed HTTP request as a parameter.
+         *
+         * @param method_ The HTTP method/verb.
+         * @param url The URL.
+         * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter.
+         * @param filter Filter to use when parsing the response. Must satisfy response_filter @ref client_concepts.
+         *
+         * @sa http_request()
+         * @sa https_request()
+         */
+        template<
+            malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
+            typename Callback,
+            concepts::response_filter Filter = detail::default_resp_filter
+        >
+        requires concepts::http_callback<Callback, Filter>
+        [[nodiscard]]
+        std::future<malloy::error_code>
+        http_request(
+            const malloy::http::method method_,
+            const std::string_view url,
+            Callback&& done,
+            Filter filter = {}
+        ){
+            // Build request
+            auto req = malloy::http::build_request<ReqBody>(method_, url);
+            if (!req) {
+                // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
+
+                malloy::error_code ec;
+                ec.assign(0, boost::beast::generic_category());
+                std::promise<malloy::error_code> p;
+                p.set_value(std::forward<malloy::error_code>(ec));
+                return p.get_future();
+            }
+
+            // Make request
+#if MALLOY_FEATURE_TLS
+            if (req->use_tls())
+                return make_http_connection<true>(std::move(*req), std::forward<Callback>(done), std::move(filter));
+            else
+#endif
+                return make_http_connection<false>(std::move(*req), std::forward<Callback>(done), std::move(filter));
         }
 
 #if MALLOY_FEATURE_TLS

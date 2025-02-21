@@ -15,9 +15,16 @@ target_sources(
 				response.hpp
 				type_traits.hpp
 				types.hpp
+				url.hpp
 				utils.hpp
 
 	PRIVATE
 		cookie.cpp
 		generator.cpp
+)
+
+target_link_libraries(
+    ${TARGET}
+    PUBLIC
+        Boost::url
 )

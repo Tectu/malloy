@@ -108,6 +108,31 @@ namespace malloy::http
         operator=(request&& rhs) noexcept = default;
 
         /**
+         * Set whether this request requires using TLS encryption.
+         *
+         * @return Whether this request requires TLS encryption.
+         */
+        constexpr
+        void
+        use_tls(const bool enabled) noexcept
+        {
+            m_use_tls = enabled;
+        }
+
+        /**
+         * Whether this request requires using TLS encryption.
+         *
+         * @return Whether this request requires using TLS encryption.
+         */
+        [[nodiscard]]
+        constexpr
+        bool
+        use_tls() const noexcept
+        {
+            return m_use_tls;
+        }
+
+        /**
          * Retrieve the port.
          *
          * @return The port.
@@ -166,6 +191,7 @@ namespace malloy::http
         }
 
     private:
+        bool m_use_tls = false;
         std::uint16_t m_port = 0;
         std::unordered_map<std::string, std::string> m_cookies;
     };

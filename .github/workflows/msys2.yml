@@ -47,7 +47,7 @@ jobs:
           key: boost-${{ matrix.boost_version }}
       - name: Setup boost env
         run: |
-          BOOST_URL="https://boostorg.jfrog.io/artifactory/main/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
+          BOOST_URL="https://archives.boost.io/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
           echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
 
       - name: Install Boost
