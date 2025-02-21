@@ -39,15 +39,20 @@ namespace malloy::client::http
             m_parser.body_limit(body_limit);
         }
 
+        // Note: We pass by copy as we need to make sure that these members stay alive until the coroutine co_returns.
+        //       The consuming application passes in the callback and filter via malloy::client::controller::http_request(). If those callables
+        //       are for example a lambda, they are being destroyed once the http_request() function returns. http_request() will actually return
+        //       before the execution of this run() function completed.
         // ToDo: Return something like std::expected<http::response, error_code> instead
         boost::asio::awaitable<void>
         run(
             malloy::http::request<ReqBody> req,
             std::promise<malloy::error_code> err_channel,
-            Callback&& cb,
-            Filter&& filter
+            Callback cb,
+            Filter filter
         )
         {
+            // Get the executor
             auto executor = co_await boost::asio::this_coro::executor;
 
             // Look up the domain name
@@ -75,7 +80,7 @@ namespace malloy::client::http
             //
             auto bodies = filter.body_for(m_parser.get().base());
             co_await std::visit(
-                [filter = std::move(filter), &cb, this](auto&& body) -> boost::asio::awaitable<void> {
+                [&filter, &cb, this](auto&& body) -> boost::asio::awaitable<void> {
                     using body_t = std::decay_t<decltype(body)>;
 
                     auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));
