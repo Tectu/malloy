@@ -23,7 +23,12 @@ namespace malloy::client::http
      *
      * @tparam Derived The type inheriting from this class.
      */
-    template<class Derived, malloy::http::concepts::body ReqBody, concepts::response_filter Filter, typename Callback>
+    template<
+        class Derived,
+        malloy::http::concepts::body ReqBody,
+        concepts::response_filter Filter,
+        typename Callback
+    >
     class connection
     {
     public:
