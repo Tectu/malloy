@@ -371,8 +371,10 @@ namespace malloy::client
                 // Run
                 boost::asio::co_spawn(
                     *m_ioc,
-                    conn->run(std::move(req), std::move(prom), std::forward<Callback>(cb), std::forward<Filter>(filter)),
-                    [conn](std::exception_ptr e) {      // ToDo: Do we need to capture conn to keep it alive here?!
+                    conn->run(std::move(req), std::forward<Callback>(cb), std::forward<Filter>(filter)),
+                    [conn, prom = std::move(prom)](std::exception_ptr e, malloy::error_code ec) mutable {      // ToDo: Do we need to capture conn to keep it alive here?!
+                        prom.set_value(ec);
+
                         if (e)
                             std::rethrow_exception(e);
                     }

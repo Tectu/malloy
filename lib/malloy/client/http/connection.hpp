@@ -44,10 +44,9 @@ namespace malloy::client::http
         //       are for example a lambda, they are being destroyed once the http_request() function returns. http_request() will actually return
         //       before the execution of this run() function completed.
         // ToDo: Return something like std::expected<http::response, error_code> instead
-        boost::asio::awaitable<void>
+        boost::asio::awaitable<malloy::error_code>
         run(
             malloy::http::request<ReqBody> req,
-            std::promise<malloy::error_code> err_channel,
             Callback cb,
             Filter filter
         )
@@ -114,8 +113,7 @@ namespace malloy::client::http
 
             // If we get here then the connection is closed gracefully
 
-            // Set error channel it even if it's not an error, to signify that we are done
-            err_channel.set_value(ec);
+            co_return ec;
         }
 
     protected:
