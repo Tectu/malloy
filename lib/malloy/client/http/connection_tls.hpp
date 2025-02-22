@@ -43,7 +43,7 @@ namespace malloy::client::http
         hook_connected()
         {
             // Perform the TLS handshake
-            parent_t::set_stream_timeout(std::chrono::seconds(3));  // ToDo: Do not hard-code!
+            parent_t::set_stream_timeout(std::chrono::seconds(30));  // ToDo: Do not hard-code!
             co_await m_stream.async_handshake(boost::asio::ssl::stream_base::client);
         }
 
