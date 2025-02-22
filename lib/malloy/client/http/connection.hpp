@@ -32,9 +32,8 @@ namespace malloy::client::http
     class connection
     {
     public:
-        connection(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, const std::uint64_t body_limit) :
-            m_logger(std::move(logger)),
-            m_io_ctx(io_ctx)
+        connection(std::shared_ptr<spdlog::logger> logger, const std::uint64_t body_limit) :
+            m_logger(std::move(logger))
         {
             // Sanity check
             if (!m_logger)
@@ -135,7 +134,6 @@ namespace malloy::client::http
         }
 
     private:
-        boost::asio::io_context& m_io_ctx;
         boost::beast::http::response_parser<boost::beast::http::empty_body> m_parser;
 
         [[nodiscard]]

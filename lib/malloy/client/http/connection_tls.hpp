@@ -25,7 +25,7 @@ namespace malloy::client::http
             boost::asio::ssl::context& tls_ctx,
             const std::uint64_t body_limit
         ) :
-            parent_t(std::move(logger), io_ctx, body_limit),
+            parent_t(std::move(logger), body_limit),
             m_stream(boost::asio::make_strand(io_ctx), tls_ctx)
         {
         }

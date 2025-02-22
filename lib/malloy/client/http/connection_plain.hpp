@@ -18,7 +18,7 @@ namespace malloy::client::http
 
     public:
         connection_plain(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, const std::uint64_t body_limit) :
-            parent_t(std::move(logger), io_ctx, body_limit),
+            parent_t(std::move(logger), body_limit),
             m_stream(boost::asio::make_strand(io_ctx))
         {
         }
