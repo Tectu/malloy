@@ -319,6 +319,7 @@ namespace malloy::client
                 throw std::logic_error("TLS context not initialized.");
         }
 
+        // ToDo: Change this so it returns an awaitable
         template<
             bool isHttps,
             malloy::http::concepts::body Body,
@@ -330,55 +331,81 @@ namespace malloy::client
         {
             std::promise<malloy::error_code> prom;
             auto err_channel = prom.get_future();
-            [req, this](auto&& cb) {        // ToDo: Don't capture req by value
+
+            // Set User-Agent header if not already set
+            if (!malloy::http::has_field(req, malloy::http::field::user_agent))
+                req.set(malloy::http::field::user_agent, m_cfg.user_agent);
+
 #if MALLOY_FEATURE_TLS
-                if constexpr (isHttps) {
-                    // Create connection
-                    auto conn = std::make_shared<http::connection_tls<Body, Filter, std::decay_t<Callback>>>(
-                        m_cfg.logger->clone(m_cfg.logger->name() + " | HTTPS connection"),
-                        *m_ioc,
-                        *m_tls_ctx,
-                        m_cfg.body_limit
-                    );
-
-                    // Set SNI hostname (many hosts need this to handshake successfully)
-                    // Note: We copy the returned std::string_view into an std::string as the underlying OpenSSL API expects C-strings.
-                    const std::string hostname{ req.base()[malloy::http::field::host] };
-                    if (!SSL_set_tlsext_host_name(conn->stream().native_handle(), hostname.c_str())) {
-                        // ToDo: Improve error handling
-                        m_cfg.logger->error("could not set SNI hostname.");
-                        boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
-                        throw boost::system::system_error{ec};
-                    }
-
-                    // Run
-                    cb(std::move(conn));
-
-                    return;
-                }
-#endif
-                cb(std::make_shared<http::connection_plain<Body, Filter, std::decay_t<Callback>>>(
-                    m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+            if constexpr (isHttps) {
+                // Create connection
+                auto conn = std::make_shared<http::connection_tls<Body, Filter>>(
+                    m_cfg.logger->clone(m_cfg.logger->name() + " | HTTPS connection"),
                     *m_ioc,
-                    m_cfg.body_limit)
+                    *m_tls_ctx,
+                    m_cfg.body_limit
                 );
-            }
 
-            ([this, prom = std::move(prom), req = std::move(req), filter = std::forward<Filter>(filter), cb = std::forward<Callback>(cb)](auto&& conn) mutable {
-                if (!malloy::http::has_field(req, malloy::http::field::user_agent))
-                    req.set(malloy::http::field::user_agent, m_cfg.user_agent);
+                // Set SNI hostname (many hosts need this to handshake successfully)
+                // Note: We copy the returned std::string_view into an std::string as the underlying OpenSSL API expects C-strings.
+                // ToDo: Can we move this to connection_tls.hpp?
+                const std::string hostname{ req.base()[malloy::http::field::host] };
+                if (!SSL_set_tlsext_host_name(conn->stream().native_handle(), hostname.c_str())) {
+                        // ToDo: Improve error handling
+                    m_cfg.logger->error("could not set SNI hostname.");
+                    boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+                    throw boost::system::system_error{ec};
+                }
 
                 // Run
-                conn->run(
-                    req,
-                    std::move(prom),
-                    std::forward<Callback>(cb),
-                    std::forward<Filter>(filter)
+                boost::asio::co_spawn(
+                    *m_ioc,
+                    conn->run(std::move(req), std::forward<Filter>(filter)),
+                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
+                        prom.set_value(req_result.error_code);
+
+                        if (e)
+                            std::rethrow_exception(e);
+
+                        cb(std::move(req_result.response));
+                    }
                 );
-            });
+            }
+            else {
+#endif
+                auto conn = std::make_shared<http::connection_plain<Body, Filter>>(
+                    m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
+                    *m_ioc,
+                    m_cfg.body_limit
+                );
+
+                // Run
+                boost::asio::co_spawn(
+                    *m_ioc,
+                    conn->run(std::move(req), std::forward<Filter>(filter)),
+                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
+                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
+                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
+                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
+
+                        // Handle exceptions
+                        if (e)
+                            std::rethrow_exception(e);
+
+                        // Invoke callback
+                        // Note: Do this BEFORE we set the error code promise (if there's no error)
+                        if (!req_result.error_code)
+                            cb(std::move(req_result.response));
+
+                        // Set error_code promise
+                        prom.set_value(req_result.error_code);
+                    }
+                );
+#if MALLOY_FEATURE_TLS
+            }
+#endif
 
             return err_channel;
-
         }
 
         template<bool isSecure>

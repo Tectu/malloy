@@ -8,4 +8,5 @@ target_sources(
                 connection.hpp
                 connection_plain.hpp
                 connection_tls.hpp
+                request_result.hpp
 )

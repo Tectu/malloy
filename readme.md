@@ -76,7 +76,7 @@ Building (and using) this library requires:
 
 ## Dependencies
 Required:
-- [Boost](https://www.boost.org/) 1.81.0 or newer (older versions may work but are no longer actively tested)
+- [Boost](https://www.boost.org/) 1.86.0 or newer (older versions may work but are no longer actively tested)
 - [spdlog](https://github.com/gabime/spdlog) 1.8.3 or newer
 - [fmt](https://github.com/fmtlib/fmt) 7.1.3 or newer (must be compatible with spdlog version)
 

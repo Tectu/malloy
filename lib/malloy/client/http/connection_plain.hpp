@@ -18,24 +18,24 @@ namespace malloy::client::http
 
     public:
         connection_plain(std::shared_ptr<spdlog::logger> logger, boost::asio::io_context& io_ctx, const std::uint64_t body_limit) :
-            parent_t(std::move(logger), io_ctx, body_limit),
-            m_stream(boost::asio::make_strand(io_ctx))
+            parent_t(std::move(logger), body_limit),
+            m_stream(boost::asio::make_strand(io_ctx))      // ToDo: make_strand() necessary since we're using coroutines?
         {
         }
 
         // Called by base class
         [[nodiscard]]
+        constexpr
         malloy::tcp::stream<>&
-        stream()
+        stream() noexcept
         {
             return m_stream;
         }
 
-        void
+        boost::asio::awaitable<void>
         hook_connected()
         {
-            // Send the HTTP request to the remote host
-            parent_t::send_request();
+            co_return;
         }
 
     private:
