@@ -1,3 +1,4 @@
+add_subdirectory(client)
 add_subdirectory(core)
 
 target_sources(
