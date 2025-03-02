@@ -38,6 +38,7 @@ namespace malloy::client::http
             return m_stream;
         }
 
+        // Called by base class
         // ToDo: Return error code!
         boost::asio::awaitable<void>
         hook_connected()

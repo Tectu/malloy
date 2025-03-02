@@ -32,6 +32,7 @@ namespace malloy::client::http
             return m_stream;
         }
 
+        // Called by base class
         boost::asio::awaitable<void>
         hook_connected()
         {
