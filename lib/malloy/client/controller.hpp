@@ -197,15 +197,15 @@ namespace malloy::client
             if (req->use_tls())
                 return co_spawn<Callback, Filter>(
                     std::forward<Callback>(done),
-                    [req, filter, this]() mutable {  // ToDo: move?
-                        return this->make_http_connection<true>(std::move(*req), std::move(filter));
+                    [req = std::move(*req), filter = std::forward<Filter>(filter), this]() mutable {
+                        return this->make_http_connection<true>(std::move(req), std::move(filter));
                     }
                 );
             else
                 return co_spawn<Callback, Filter>(
                     std::forward<Callback>(done),
-                    [req, filter, this]() mutable {  // ToDo: move?
-                        return this->make_http_connection<false>(std::move(*req), std::move(filter));
+                    [req = std::move(*req), filter = std::forward<Filter>(filter), this]() mutable {
+                        return this->make_http_connection<false>(std::move(req), std::move(filter));
                     }
                 );
 #endif
@@ -233,7 +233,7 @@ namespace malloy::client
         {
             return co_spawn<Callback, Filter>(
                 std::forward<Callback>(done),
-                [req, filter, this]() mutable {  // ToDo: move?
+                [req = std::move(req), filter = std::forward<Filter>(filter), this]() mutable {
                     return this->make_http_connection<true>(std::move(req), std::move(filter));
                 }
             );
@@ -409,7 +409,7 @@ namespace malloy::client
                     throw boost::system::system_error{ec};
                 }
 
-                const auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
+                auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
                 co_return foo;
             }
             else {
@@ -420,7 +420,7 @@ namespace malloy::client
                     m_cfg.body_limit
                 );
 
-                const auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
+                auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
                 co_return foo;
 #if MALLOY_FEATURE_TLS
             }
