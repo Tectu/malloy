@@ -362,12 +362,21 @@ namespace malloy::client
                     *m_ioc,
                     conn->run(std::move(req), std::forward<Filter>(filter)),
                     [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
-                        prom.set_value(req_result.error_code);
+                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
+                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
+                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
 
+                        // Handle exceptions
                         if (e)
                             std::rethrow_exception(e);
 
-                        cb(std::move(req_result.response));
+                        // Invoke callback
+                        // Note: Do this BEFORE we set the error code promise (if there's no error)
+                        if (!req_result.error_code)
+                            cb(std::move(req_result.response));
+
+                        // Set error_code promise
+                        prom.set_value(req_result.error_code);
                     }
                 );
             }
