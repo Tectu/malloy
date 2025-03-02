@@ -48,6 +48,22 @@ namespace malloy::client::http
             co_await m_stream.async_handshake(boost::asio::ssl::stream_base::client);
         }
 
+        /**
+         * Set the hostname.
+         *
+         * @details This is used for SNI (Server Name Indication).
+         */
+        malloy::error_code
+        set_hostname(const std::string_view hostname)
+        {
+            // Note: We copy the std::string_view into an std::string as the underlying OpenSSL API expects C-strings.
+            const std::string str{ hostname };
+            if (!SSL_set_tlsext_host_name(m_stream.native_handle(), str.c_str()))
+                return {static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+
+            return { };
+        }
+
     private:
         boost::beast::ssl_stream<malloy::tcp::stream<>> m_stream;
     };

@@ -347,14 +347,9 @@ namespace malloy::client
                 );
 
                 // Set SNI hostname (many hosts need this to handshake successfully)
-                // Note: We copy the returned std::string_view into an std::string as the underlying OpenSSL API expects C-strings.
-                // ToDo: Can we move this to connection_tls.hpp?
-                const std::string hostname{ req.base()[malloy::http::field::host] };
-                if (!SSL_set_tlsext_host_name(conn->stream().native_handle(), hostname.c_str())) {
-                    m_cfg.logger->error("could not set SNI hostname.");
-                    malloy::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+                auto ec = conn->set_hostname(req.base()[malloy::http::field::host]);
+                if (ec) {
                     prom.set_value(ec);
-
                     return err_channel;
                 }
 
