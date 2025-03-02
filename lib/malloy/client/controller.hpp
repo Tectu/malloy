@@ -146,7 +146,12 @@ namespace malloy::client
             Filter filter = {}
         )
         {
-            return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
+            return co_spawn<Callback, Filter>(
+                std::forward<Callback>(done),
+                [req = std::move(req), filter = std::forward<Filter>(filter), this]() mutable {
+                    return this->make_http_connection<true>(std::move(req), std::move(filter));
+                }
+            );
         }
 
         /**
