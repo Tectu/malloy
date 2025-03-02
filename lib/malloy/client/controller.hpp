@@ -351,10 +351,11 @@ namespace malloy::client
                 // ToDo: Can we move this to connection_tls.hpp?
                 const std::string hostname{ req.base()[malloy::http::field::host] };
                 if (!SSL_set_tlsext_host_name(conn->stream().native_handle(), hostname.c_str())) {
-                        // ToDo: Improve error handling
                     m_cfg.logger->error("could not set SNI hostname.");
-                    boost::system::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
-                    throw boost::system::system_error{ec};
+                    malloy::error_code ec{static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+                    prom.set_value(ec);
+
+                    return err_channel;
                 }
 
                 // Run
