@@ -195,10 +195,20 @@ namespace malloy::client
             // Make request
 #if MALLOY_FEATURE_TLS
             if (req->use_tls())
-                return make_http_connection<true>(std::move(*req), std::forward<Callback>(done), std::move(filter));
+                return co_spawn<Callback, Filter>(
+                    std::forward<Callback>(done),
+                    [req, filter, this]() mutable {  // ToDo: move?
+                        return this->make_http_connection<true>(std::move(*req), std::move(filter));
+                    }
+                );
             else
+                return co_spawn<Callback, Filter>(
+                    std::forward<Callback>(done),
+                    [req, filter, this]() mutable {  // ToDo: move?
+                        return this->make_http_connection<false>(std::move(*req), std::move(filter));
+                    }
+                );
 #endif
-                return make_http_connection<false>(std::move(*req), std::forward<Callback>(done), std::move(filter));
         }
 
 #if MALLOY_FEATURE_TLS
@@ -221,7 +231,12 @@ namespace malloy::client
             Filter filter = {}
         )
         {
-            return make_http_connection<true>(std::move(req), std::forward<Callback>(done), std::move(filter));
+            return co_spawn<Callback, Filter>(
+                std::forward<Callback>(done),
+                [req, filter, this]() mutable {  // ToDo: move?
+                    return this->make_http_connection<true>(std::move(req), std::move(filter));
+                }
+            );
         }
 
         /**
@@ -319,19 +334,56 @@ namespace malloy::client
                 throw std::logic_error("TLS context not initialized.");
         }
 
-        // ToDo: Change this so it returns an awaitable
+        /**
+         * Spawns a coroutine to make an HTTP request.
+         */
         template<
-            bool isHttps,
-            malloy::http::concepts::body Body,
             typename Callback,
-            typename Filter
+            typename Filter,
+            typename CoroFunction, typename... CoroFunctionArgs
         >
+        [[nodiscard]]
         std::future<malloy::error_code>
-        make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter)
+        co_spawn(Callback&& cb, CoroFunction&& coro_func, CoroFunctionArgs&& ...coro_args)
         {
             std::promise<malloy::error_code> prom;
             auto err_channel = prom.get_future();
 
+            // Run
+            boost::asio::co_spawn(
+                *m_ioc,
+                std::bind(std::forward<CoroFunction>(coro_func), std::forward<CoroFunctionArgs>(coro_args)...),
+                [prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
+                    // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
+                    //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
+                    //       expects that the callback gets executed before the error code promise is set (if there is no error).
+
+                    // Handle exceptions
+                    if (e)
+                        std::rethrow_exception(e);
+
+                    // Invoke callback
+                    // Note: Do this BEFORE we set the error code promise (if there's no error)
+                    if (!req_result.error_code)
+                        cb(std::move(req_result.response));
+
+                    // Set error_code promise
+                    prom.set_value(req_result.error_code);
+                }
+            );
+
+            return err_channel;
+        }
+
+        // ToDo: Change this so it returns an awaitable
+        template<
+            bool isHttps,
+            malloy::http::concepts::body Body,
+            typename Filter
+        >
+        boost::asio::awaitable< http::request_result<Filter> >
+        make_http_connection(malloy::http::request<Body>&& req, Filter&& filter)
+        {
             // Set User-Agent header if not already set
             if (!malloy::http::has_field(req, malloy::http::field::user_agent))
                 req.set(malloy::http::field::user_agent, m_cfg.user_agent);
@@ -357,28 +409,8 @@ namespace malloy::client
                     throw boost::system::system_error{ec};
                 }
 
-                // Run
-                boost::asio::co_spawn(
-                    *m_ioc,
-                    conn->run(std::move(req), std::forward<Filter>(filter)),
-                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
-                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
-                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
-                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
-
-                        // Handle exceptions
-                        if (e)
-                            std::rethrow_exception(e);
-
-                        // Invoke callback
-                        // Note: Do this BEFORE we set the error code promise (if there's no error)
-                        if (!req_result.error_code)
-                            cb(std::move(req_result.response));
-
-                        // Set error_code promise
-                        prom.set_value(req_result.error_code);
-                    }
-                );
+                const auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
+                co_return foo;
             }
             else {
 #endif
@@ -388,33 +420,11 @@ namespace malloy::client
                     m_cfg.body_limit
                 );
 
-                // Run
-                boost::asio::co_spawn(
-                    *m_ioc,
-                    conn->run(std::move(req), std::forward<Filter>(filter)),
-                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
-                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
-                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
-                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
-
-                        // Handle exceptions
-                        if (e)
-                            std::rethrow_exception(e);
-
-                        // Invoke callback
-                        // Note: Do this BEFORE we set the error code promise (if there's no error)
-                        if (!req_result.error_code)
-                            cb(std::move(req_result.response));
-
-                        // Set error_code promise
-                        prom.set_value(req_result.error_code);
-                    }
-                );
+                const auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
+                co_return foo;
 #if MALLOY_FEATURE_TLS
             }
 #endif
-
-            return err_channel;
         }
 
         template<bool isSecure>
