@@ -2,7 +2,8 @@
 
 using namespace malloy::server::http;
 
-void preflight_config::setup_response(
+void
+preflight_config::setup_response(
     malloy::http::response<>& resp,
     const std::span<malloy::http::method> methods
 ) const

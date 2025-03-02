@@ -19,9 +19,11 @@ namespace malloy::server::http
          * @param resp The response to setup.
          * @param methods List of method strings supported.
          */
-        void setup_response(
+        // ToDo: Add template for response body
+        void
+        setup_response(
             malloy::http::response<>& resp,
-            const std::span<malloy::http::method> methods
+            std::span<malloy::http::method> methods
         ) const;
     };
 

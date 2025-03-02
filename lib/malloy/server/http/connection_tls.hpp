@@ -53,7 +53,8 @@ namespace malloy::server::http
         }
 
         // Start the asynchronous operation
-        void run()
+        void
+        run()
         {
             auto self = shared_from_this();
 
@@ -76,7 +77,8 @@ namespace malloy::server::http
             });
         }
 
-        void on_handshake(boost::beast::error_code ec, const std::size_t bytes_used)
+        void
+        on_handshake(boost::beast::error_code ec, const std::size_t bytes_used)
         {
             if (ec) {
                 // ToDO
@@ -89,7 +91,8 @@ namespace malloy::server::http
             do_read();
         }
 
-        void do_close()
+        void
+        do_close()
         {
             // Set the timeout.
             boost::beast::get_lowest_layer(m_stream).expires_after(std::chrono::seconds(30));
@@ -103,7 +106,8 @@ namespace malloy::server::http
             );
         }
 
-        void on_shutdown([[maybe_unused]] boost::beast::error_code ec)
+        void
+        on_shutdown([[maybe_unused]] boost::beast::error_code ec)
         {
             // At this point the connection is closed gracefully
         }

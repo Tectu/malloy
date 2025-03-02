@@ -76,7 +76,8 @@ listener::run()
         m_acceptor.get_executor(),
         boost::beast::bind_front_handler(
             &listener::do_accept,
-            this->shared_from_this())
+            this->shared_from_this()
+        )
     );
 }
 
