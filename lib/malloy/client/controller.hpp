@@ -414,8 +414,7 @@ namespace malloy::client
                     throw boost::system::system_error{ec};
                 }
 
-                auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
-                co_return foo;
+                co_return co_await conn->run(std::move(req), std::forward<Filter>(filter));
             }
             else {
 #endif
@@ -425,8 +424,7 @@ namespace malloy::client
                     m_cfg.body_limit
                 );
 
-                auto foo = co_await conn->run(std::move(req), std::forward<Filter>(filter));
-                co_return foo;
+                co_return co_await conn->run(std::move(req), std::forward<Filter>(filter));
 #if MALLOY_FEATURE_TLS
             }
 #endif
