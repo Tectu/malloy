@@ -71,10 +71,7 @@ listener::run()
 
     // ToDo: This can most likely be replaced to a call to this->do_accept()
 
-    // We need to be executing within a strand to perform async operations
-    // on the I/O objects in this connection. Although not strictly necessary
-    // for single-threaded contexts, this example code is written to be
-    // thread-safe by default.
+    // We need to be executing within a strand to perform async operations on the I/O objects in this connection.
     boost::asio::dispatch(
         m_acceptor.get_executor(),
         boost::beast::bind_front_handler(
