@@ -51,15 +51,24 @@ namespace malloy::client::http
         /**
          * Set the hostname.
          *
-         * @details This is used for SNI (Server Name Indication).
+         * @details This is used/needed for:
+         *   - SNI (Server Name Indication) on the server side
+         *   - Hostname certificate verification on the client side
          */
         malloy::error_code
         set_hostname(const std::string_view hostname)
         {
             // Note: We copy the std::string_view into an std::string as the underlying OpenSSL API expects C-strings.
             const std::string str{ hostname };
+
+            // Specify SNI hostname (This is used by many hosts to figure out to which host we actually want to talk to)
             if (!SSL_set_tlsext_host_name(m_stream.native_handle(), str.c_str()))
                 return {static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+
+            // Specify the expected hostname for the peer certificate verification
+            if (!SSL_set1_host(m_stream.native_handle(), str.c_str())) {
+                return {static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()};
+            }
 
             return { };
         }
