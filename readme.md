@@ -77,8 +77,7 @@ Building (and using) this library requires:
 ## Dependencies
 Required:
 - [Boost](https://www.boost.org/) 1.86.0 or newer (older versions may work but are no longer actively tested)
-- [spdlog](https://github.com/gabime/spdlog) 1.8.3 or newer
-- [fmt](https://github.com/fmtlib/fmt) 7.1.3 or newer (must be compatible with spdlog version)
+- [spdlog](https://github.com/gabime/spdlog)
 
 Optional:
 - OpenSSL
@@ -256,4 +255,3 @@ Various `cmake` options are available to control the build:
 | Option                              | Default | Description                                                                                             |
 |-------------------------------------|---------|---------------------------------------------------------------------------------------------------------|
 | `MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD` | `ON`    | Whether to use `FetchContent()` to pull in `spdlog`. If set to `OFF`, `find_package()` is used instead. |
-| `MALLOY_DEPENDENCY_FMT_DOWNLOAD`    | `ON`    | Same as above but for `fmt`                                                                             |

@@ -10,7 +10,6 @@
 #include "../http/connection_t.hpp"
 #include "../http/preflight_config.hpp"
 #include "../../core/type_traits.hpp"
-#include "../../core/detail/version_checks.hpp"
 #include "../../core/http/generator.hpp"
 #include "../../core/http/http.hpp"
 #include "../../core/http/request.hpp"
@@ -707,15 +706,7 @@ namespace malloy::server
         )
         {
             if (m_logger) {
-                m_logger->log(level,
-#if MALLOY_DETAIL_HAS_FMT_8
-                      fmt::runtime(fmt)
-#else
-                      fmt
-#endif
-                      ,
-                      std::forward<Args>(args)...
-                );
+                m_logger->log(level, fmt::runtime(fmt), std::forward<Args>(args)...);
                 return false;
             }
 

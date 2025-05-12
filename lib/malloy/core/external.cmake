@@ -17,31 +17,10 @@ find_package(
 
 
 ########################################################################################################################
-# fmt
-########################################################################################################################
-if (MALLOY_DEPENDENCY_FMT_DOWNLOAD)
-    set(MALLOY_TMP_VAR1 ${BUILD_SHARED_LIBS})
-    set(BUILD_SHARED_LIBS ${MALLOY_BUILD_SHARED}) # fmt has no specific shared option
-
-    FetchContent_Declare(
-        fmt 
-        GIT_REPOSITORY  https://github.com/fmtlib/fmt
-        GIT_TAG         10.1.1
-    )
-    FetchContent_MakeAvailable(fmt)
-
-    set(BUILD_SHARED_LIBS ${MALLOY_TMP_VAR1})
-else()
-    find_package(fmt REQUIRED)
-endif()
-
-
-########################################################################################################################
 # spdlog
 ########################################################################################################################
 if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
     set(SPDLOG_BUILD_SHARED ${MALLOY_BUILD_SHARED} CACHE INTERNAL "")
-    set(SPDLOG_FMT_EXTERNAL ON CACHE INTERNAL "")
 
     FetchContent_Declare(
         spdlog
