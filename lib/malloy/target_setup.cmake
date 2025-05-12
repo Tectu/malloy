@@ -35,7 +35,6 @@ function(malloy_target_common_setup TARGET)
     target_compile_definitions(
         ${TARGET}
         PUBLIC
-            $<$<VERSION_LESS:${Boost_VERSION},1.81.0>:BOOST_BEAST_USE_STD_STRING_VIEW>
             $<$<BOOL:${MALLOY_FEATURE_HTML}>:MALLOY_FEATURE_HTML>
             $<$<BOOL:${MALLOY_FEATURE_TLS}>:MALLOY_FEATURE_TLS>
             $<$<BOOL:${WIN32}>:UNICODE>
