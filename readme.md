@@ -174,9 +174,6 @@ int main()
 }
 ```
 
-# Motivation
-This started off with the intention of creating a more complex, real-world example of how to use `boost.beast`.
-
 # Security
 This is a work in progress and should generally be perceived as unfit for any production use.
 
