@@ -160,6 +160,7 @@ namespace malloy::server
 
             // Run the listener
             l->run();
+
             return session{ctrl.m_cfg, std::move(l), std::move(ioc)};
         }
     };
