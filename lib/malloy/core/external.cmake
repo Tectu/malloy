@@ -19,18 +19,10 @@ find_package(
 ########################################################################################################################
 # spdlog
 ########################################################################################################################
-if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
-    set(SPDLOG_BUILD_SHARED ${MALLOY_BUILD_SHARED} CACHE INTERNAL "")
-
-    FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog
-        GIT_TAG        v1.x
-    )
-    FetchContent_MakeAvailable(spdlog)
-else()
-    find_package(spdlog REQUIRED)
-endif()
+find_package(
+    spdlog
+    REQUIRED
+)
 
 
 ########################################################################################################################

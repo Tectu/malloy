@@ -22,7 +22,6 @@ option(MALLOY_FEATURE_CLIENT "Whether to build the client"     ON)
 option(MALLOY_FEATURE_SERVER "Whether to build the server"     ON)
 option(MALLOY_FEATURE_HTML   "Whether to enable HTML features" ON)
 option(MALLOY_FEATURE_TLS    "Whether to enable TLS features"  OFF)
-option(MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD "Whether to automatically fetch spdlog" ON)
 
 # Settings
 set(MALLOY_WIN32_WINNT "0x0A00")

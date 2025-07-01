@@ -70,10 +70,3 @@ install(
         HEADERS
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/malloy/core
 )
-if (MALLOY_DEPENDENCY_SPDLOG_DOWNLOAD)
-    install(
-        TARGETS
-            spdlog
-        EXPORT malloy-targets
-    )
-endif()
