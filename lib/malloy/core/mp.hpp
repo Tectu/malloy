@@ -6,8 +6,6 @@
 #include <variant>
 #include <type_traits>
 
-// ToDo: Should we move this to a different namespace? There are type_traits/concepts all over the place.
-
 /**
  * @namespace malloy::mp
  * @brief Namespace for metaprogramming utils
