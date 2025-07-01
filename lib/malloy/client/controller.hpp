@@ -333,8 +333,9 @@ namespace malloy::client
             auto err_channel = prom.get_future();
 
             // Set User-Agent header if not already set
-            if (!malloy::http::has_field(req, malloy::http::field::user_agent))
+            if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                 req.set(malloy::http::field::user_agent, m_cfg.user_agent);
+            }
 
 #if MALLOY_FEATURE_TLS
             if constexpr (isHttps) {
