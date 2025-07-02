@@ -1,4 +1,4 @@
-name: CI
+name: CI (linux, windows)
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
               name: "Ubuntu GCC TLS",
               cxx: "g++",
               cc: "gcc",
-              packages: "libssl-dev",
+              packages: "libspdlog-dev libssl-dev",
               tls: ON,
               os: ubuntu-latest,
             },
@@ -30,7 +30,7 @@ jobs:
               name: "Ubuntu GCC",
               cxx: "g++",
               cc: "gcc",
-              packages: "",
+              packages: "libspdlog-dev",
               tls: OFF,
               os: ubuntu-latest,
             },
@@ -38,7 +38,7 @@ jobs:
               name: "Ubuntu Clang TLS",
               cxx: "clang++",
               cc: "clang",
-              packages: "libssl-dev",
+              packages: "libspdlog-dev libssl-dev",
               tls: ON,
               os: ubuntu-latest,
             },
@@ -46,18 +46,19 @@ jobs:
               name: "Ubuntu Clang",
               cxx: "clang++",
               cc: "clang",
-              packages: "",
+              packages: "libspdlog-dev",
               tls: OFF,
               os: ubuntu-latest,
             },
-            {
-              name: "VS2022",
-              cxx: "cl.exe",
-              cc: "cl.exe",
-              tls: OFF,
-              packages: "openssl", # We have to install something
-              os: windows-latest,
-            },
+            # ToDo
+            #{
+            #  name: "VS2022",
+            #  cxx: "cl.exe",
+            #  cc: "cl.exe",
+            #  tls: OFF,
+            #  packages: "libspdlog-dev openssl", # We have to install something
+            #  os: windows-latest,
+            #},
           ]
 
     continue-on-error: false
@@ -68,16 +69,8 @@ jobs:
       CXX: ${{ matrix.toolchain.cxx }}
 
     name: "${{ matrix.toolchain.name }} (boost v${{ matrix.boost_version }}) (shared: ${{ matrix.shared }})"
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - uses: actions/checkout@v4
-
-      - name: cache boost
-        uses: actions/cache@v4
-        id: cache-boost
-        with:
-          path: ${{ env.Boost_ROOT }}
-          key: boost-${{ matrix.boost_version }}
 
       - name: Install Ninja
         uses: seanmiddleditch/gha-setup-ninja@master
@@ -103,18 +96,21 @@ jobs:
         run: brew install ${{ matrix.toolchain.packages }}
 
       - name: Install Boost
-        if: steps.cache-boost.outputs.cache-hit != 'true'
         run: |
           if [ "$OS" == "Windows_NT" ]; then
             # fix up paths to be forward slashes consistently
             Boost_ROOT=$(echo $Boost_ROOT | sed 's/\\/\//g')
           fi
+          echo "BOOST URL: ${BOOST_URL}"
+          echo "BOOST ROOT: ${Boost_ROOT}"
           mkdir -p $Boost_ROOT
-          curl --progress-bar --location --output $Boost_ROOT/download.tar.bz2 $BOOST_URL
-          7z -o$Boost_ROOT x $Boost_ROOT/download.tar.bz2 -y -bd
-          7z -o$Boost_ROOT x $Boost_ROOT/download.tar -y -bd
-          cd $Boost_ROOT && cp -r boost_*/* .
+          cd $Boost_ROOT
+          curl --progress-bar --location --output download.tar.bz2 $BOOST_URL
+          tar -xf download.tar.bz2
+          cp -r boost_*/* .
           rm -rf boost_*/* download.tar.bz2 download.tar
+          ./bootstrap.sh --with-toolset=${{ matrix.toolchain.cc }} --prefix=${Boost_ROOT}
+          ./b2 --toolset=${{ matrix.toolchain.cc }} --with-url install
         shell: bash
 
       - name: Install msvc

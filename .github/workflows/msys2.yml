@@ -1,4 +1,4 @@
-name: MSYS2 CI
+name: CI (msys2)
 
 on:
   push:
@@ -14,16 +14,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        boost_version: [1.86.0, 1.87.0, 1.88.0]
-        shared: [OFF]
+        shared: [ON, OFF]
         malloy_tls: [ON, OFF]
 
     runs-on: windows-latest
-    env:
-      Boost_ROOT: ${{github.workspace}}/3rdparty/boost-${{ matrix.boost_version }}
 
-    name: "msys2/mingw (boost v${{ matrix.boost_version }}) (tls: ${{ matrix.malloy_tls }}) (shared: ${{ matrix.shared }})"
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    name: "msys2/mingw (tls: ${{ matrix.malloy_tls }}) (shared: ${{ matrix.shared }})"
     defaults:
       run:
         shell: msys2 {0}
@@ -35,36 +31,11 @@ jobs:
           install: >-
             base-devel
             mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-boost
             mingw-w64-x86_64-cmake 
-            p7zip
+            mingw-w64-x86_64-spdlog
 
       - uses: actions/checkout@v4
-      - name: cache boost
-        uses: actions/cache@v4
-        id: cache-boost
-        with:
-          path: ${{ env.Boost_ROOT }}
-          key: boost-${{ matrix.boost_version }}
-      - name: Setup boost env
-        run: |
-          BOOST_URL="https://archives.boost.io/release/${{ matrix.boost_version }}/source/boost_$(echo ${{ matrix.boost_version }} | sed 's/\./_/g').tar.bz2"
-          echo "BOOST_URL=$BOOST_URL" >> $GITHUB_ENV
-
-      - name: Install Boost
-        if: steps.cache-boost.outputs.cache-hit != 'true'
-        run: |
-          # This sed magic does two things:
-          # 1. Replaces backslashes with forward slashes
-          # 2. Replaces windows drive paths (e.g. D:) with msys paths (e.g. /d)
-          Boost_ROOT=$(echo $Boost_ROOT | sed 's/\\/\//g' | sed 's/\([A-Z]\):/\/\L\1/g')
-          echo "Boost_ROOT=$Boost_ROOT" >> $GITHUB_ENV
-          echo "BOOST ROOT: ${Boost_ROOT}"
-          mkdir -p $Boost_ROOT
-          curl --progress-bar --location --output $Boost_ROOT/download.tar.bz2 $BOOST_URL
-          7z -o$Boost_ROOT x $Boost_ROOT/download.tar.bz2 -y -bd
-          7z -o$Boost_ROOT x $Boost_ROOT/download.tar -y -bd
-          cd $Boost_ROOT && cp -r boost_*/* .
-          rm -rf boost_*/* download.tar.bz2 download.tar
 
       - name: Configure
         run: cmake -Bbuild -G"MSYS Makefiles" -DMALLOY_BUILD_EXAMPLES=ON -DMALLOY_BUILD_TESTS=ON -DMALLOY_FEATURE_TLS=${{ matrix.malloy_tls }} -DMALLOY_BUILD_SHARED=${{ matrix.shared }}
