@@ -2,7 +2,7 @@ function(malloy_target_common_setup TARGET)
     target_compile_features(
         ${TARGET}
         PUBLIC
-            cxx_std_20
+            cxx_std_23
     )
 
     target_compile_options(
