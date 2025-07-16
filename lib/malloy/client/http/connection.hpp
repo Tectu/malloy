@@ -126,13 +126,7 @@ namespace malloy::client::http
 
             // If we get here then the connection is closed gracefully
 
-            // Prepare the result
-            // ToDo: Optimize this by in-place construction or something like that?
-            request_result<Filter> result;
-            result.error_code = std::move(ec);
-            result.response = std::move(resp);
-
-            co_return result;
+            co_return std::move(resp);  // ToDo: Move correct?
         }
 
     protected:

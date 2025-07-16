@@ -19,6 +19,7 @@
 #endif
 
 #include <boost/asio/strand.hpp>
+#include <boost/asio/use_future.hpp>
 #include <spdlog/logger.h>
 
 #include <filesystem>
@@ -355,28 +356,20 @@ namespace malloy::client
                 }
 
                 // Run
-                // ToDo: We could use boost::asio::use_future here?!
-                boost::asio::co_spawn(
+                auto req_result_future = boost::asio::co_spawn(
                     *m_ioc,
                     conn->run(std::move(req), std::forward<Filter>(filter)),
-                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
-                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
-                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
-                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
-
-                        // Handle exceptions
-                        if (e)
-                            std::rethrow_exception(e);
-
-                        // Invoke callback
-                        // Note: Do this BEFORE we set the error code promise (if there's no error)
-                        if (!req_result.error_code)
-                            cb(std::move(req_result.response));
-
-                        // Set error_code promise
-                        prom.set_value(req_result.error_code);
-                    }
+                    boost::asio::use_future
                 );
+                auto req_result = req_result_future.get();
+
+                // Invoke callback
+                if (req_result) {
+                    cb(std::move(*req_result));
+                    prom.set_value({});
+                }
+                else
+                    prom.set_value(req_result.error());
             }
             else {
 #endif
@@ -387,27 +380,20 @@ namespace malloy::client
                 );
 
                 // Run
-                boost::asio::co_spawn(
+                auto req_result_future = boost::asio::co_spawn(
                     *m_ioc,
                     conn->run(std::move(req), std::forward<Filter>(filter)),
-                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
-                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
-                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
-                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
-
-                        // Handle exceptions
-                        if (e)
-                            std::rethrow_exception(e);
-
-                        // Invoke callback
-                        // Note: Do this BEFORE we set the error code promise (if there's no error)
-                        if (!req_result.error_code)
-                            cb(std::move(req_result.response));
-
-                        // Set error_code promise
-                        prom.set_value(req_result.error_code);
-                    }
+                    boost::asio::use_future
                 );
+                auto req_result = req_result_future.get();
+
+                // Invoke callback
+                if (req_result) {
+                    cb(std::move(*req_result));
+                    prom.set_value({});
+                }
+                else
+                    prom.set_value(req_result.error());
 #if MALLOY_FEATURE_TLS
             }
 #endif
