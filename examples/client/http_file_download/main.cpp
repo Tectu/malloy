@@ -1,42 +1,50 @@
+#include "../../example.hpp"
+
 #include <malloy/core/http/filters/file.hpp>
 #include <malloy/client/controller.hpp>
-#include <spdlog/spdlog.h>
+
+#include <iostream>
 
 void
 log_error(malloy::error_code ec)
 {
-	if (ec)
-		spdlog::error(ec.message());
+    if (ec)
+        spdlog::error(ec.message());
 }
 
-int
-main()
+boost::asio::awaitable<void>
+example()
 {
-    // Create controller configuration
-	malloy::client::controller::config cfg;
-	cfg.logger      = spdlog::default_logger();
-	cfg.num_threads = 1;
+    // Create the controller config
+    malloy::client::controller::config cfg;
+    cfg.logger      = create_example_logger();
+    cfg.num_threads = 1;
 
-	// Create controller
-	malloy::client::controller ctrl{cfg};
+    // Create the controller
+    malloy::client::controller c{cfg};
 
     // Start
-    [[maybe_unused]] auto session = start(ctrl);
+    [[maybe_unused]] auto session = start(c);
 
-	// Make request (with file response filter)
-	auto stop_token = ctrl.http_request(
+    // Make request (with file response filter)
+    auto resp = co_await c.http_request(
         malloy::http::method::get,
         "http://www.google.com",
-        [](auto&&) {},
-		malloy::http::filters::file_response::open("./google.com.html", log_error, boost::beast::file_mode::write)
+        malloy::http::filters::file_response::open("./google.com.html", log_error, boost::beast::file_mode::write)
+    );
+    if (!resp)
+        spdlog::error("error: {}", resp.error().message());
+}
+
+int main()
+{
+    boost::asio::io_context ioc;
+
+    boost::asio::co_spawn(
+        ioc,
+        example(),
+        boost::asio::use_future
     );
 
-	// Wait for completion and check for errors
-	const auto ec = stop_token.get();
-	if (ec) {
-		spdlog::error(ec.message());
-		return EXIT_FAILURE;
-	}
-
-	return EXIT_SUCCESS;
+    ioc.run();
 }

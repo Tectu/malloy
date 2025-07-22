@@ -2,6 +2,7 @@
 
 #include "type_traits.hpp"
 #include "http/connection_plain.hpp"
+#include "http/request_result.hpp"
 #include "websocket/connection.hpp"
 #include "../core/controller.hpp"
 #include "../core/error.hpp"
@@ -169,18 +170,18 @@ namespace malloy::client
          */
         template<
             malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
-            typename Callback,
             concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        boost::asio::awaitable< http::request_result<Filter> >
         http_request(
             const malloy::http::method method_,
             const std::string_view url,
-            Callback&& done,
             Filter filter = {}
         ){
+            std::promise<malloy::error_code> prom;
+            auto err_channel = prom.get_future();
+
             // Build request
             auto req = malloy::http::build_request<ReqBody>(method_, url);
             if (!req) {
@@ -188,18 +189,19 @@ namespace malloy::client
 
                 malloy::error_code ec;
                 ec.assign(0, boost::beast::generic_category());
-                std::promise<malloy::error_code> p;
-                p.set_value(std::forward<malloy::error_code>(ec));
-                return p.get_future();
+                co_return std::unexpected(ec);
             }
 
             // Make request
 #if MALLOY_FEATURE_TLS
             if (req->use_tls())
-                return make_http_connection<true>(std::move(*req), std::forward<Callback>(done), std::move(filter));
+                co_return co_await make_http_connection<true>(std::move(*req), std::move(filter));
             else
 #endif
-                return make_http_connection<false>(std::move(*req), std::forward<Callback>(done), std::move(filter));
+                co_return co_await make_http_connection<false>(std::move(*req), std::move(filter));
+
+            // We should never end up here
+            std::unreachable();
         }
 
 #if MALLOY_FEATURE_TLS
@@ -320,19 +322,14 @@ namespace malloy::client
                 throw std::logic_error("TLS context not initialized.");
         }
 
-        // ToDo: Change this so it returns an awaitable
         template<
             bool isHttps,
             malloy::http::concepts::body Body,
-            typename Callback,
             typename Filter
         >
-        std::future<malloy::error_code>
-        make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter)
+        boost::asio::awaitable< http::request_result<Filter> >
+        make_http_connection(malloy::http::request<Body>&& req, Filter&& filter)    // ToDo: rvalue refs okay given that this is a coroutine?
         {
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-
             // Set User-Agent header if not already set
             if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                 req.set(malloy::http::field::user_agent, m_cfg.user_agent);
@@ -350,29 +347,15 @@ namespace malloy::client
 
                 // Set SNI hostname (many hosts need this to handshake successfully)
                 auto ec = conn->set_hostname(req.base()[malloy::http::field::host]);
-                if (ec) {
-                    prom.set_value(ec);
-                    return err_channel;
-                }
+                if (ec)
+                    co_return std::unexpected(ec);
 
                 // Run
-                auto req_result_future = boost::asio::co_spawn(
-                    *m_ioc,
-                    conn->run(std::move(req), std::forward<Filter>(filter)),
-                    boost::asio::use_future
-                );
-                auto req_result = req_result_future.get();
-
-                // Invoke callback
-                if (req_result) {
-                    cb(std::move(*req_result));
-                    prom.set_value({});
-                }
-                else
-                    prom.set_value(req_result.error());
+                co_return co_await conn->run(std::move(req), std::forward<Filter>(filter));
             }
             else {
 #endif
+                // Create connection
                 auto conn = std::make_shared<http::connection_plain<Body, Filter>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                     *m_ioc,
@@ -380,25 +363,13 @@ namespace malloy::client
                 );
 
                 // Run
-                auto req_result_future = boost::asio::co_spawn(
-                    *m_ioc,
-                    conn->run(std::move(req), std::forward<Filter>(filter)),
-                    boost::asio::use_future
-                );
-                auto req_result = req_result_future.get();
-
-                // Invoke callback
-                if (req_result) {
-                    cb(std::move(*req_result));
-                    prom.set_value({});
-                }
-                else
-                    prom.set_value(req_result.error());
+                co_return co_await conn->run(std::move(req), std::forward<Filter>(filter));
 #if MALLOY_FEATURE_TLS
             }
 #endif
 
-            return err_channel;
+            // We should never get here
+            std::unreachable();
         }
 
         template<bool isSecure>

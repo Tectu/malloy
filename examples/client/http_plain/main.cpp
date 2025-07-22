@@ -4,7 +4,8 @@
 
 #include <iostream>
 
-int main()
+boost::asio::awaitable<void>
+example()
 {
     // Create the controller config
     malloy::client::controller::config cfg;
@@ -18,17 +19,25 @@ int main()
     [[maybe_unused]] auto session = start(c);
 
     // Make request
-    auto stop_token = c.http_request(
+    auto resp = co_await c.http_request(
         malloy::http::method::get,
-        "http://www.google.com",
-        [](auto&& resp) mutable {
-            std::cout << resp << std::endl;
-    });
-    const auto ec = stop_token.get();
-    if (ec) {
-        spdlog::error("error: {}", ec.message());
-        return EXIT_FAILURE;
-    }
+        "http://www.google.com"
+    );
+    if (!resp)
+        spdlog::error("error: {}", resp.error().message());
 
-    return EXIT_SUCCESS;
+    std::cout << *resp << std::endl;
+}
+
+int main()
+{
+    boost::asio::io_context ioc;
+
+    boost::asio::co_spawn(
+        ioc,
+        example(),
+        boost::asio::use_future
+    );
+
+    ioc.run();
 }
