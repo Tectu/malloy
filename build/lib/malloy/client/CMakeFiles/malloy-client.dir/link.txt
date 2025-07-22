@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmalloy-client.a "CMakeFiles/malloy-client.dir/controller.cpp.o"
-/usr/bin/ranlib libmalloy-client.a

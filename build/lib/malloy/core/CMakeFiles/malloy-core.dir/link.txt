@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmalloy-core.a "CMakeFiles/malloy-core.dir/html/form.cpp.o" "CMakeFiles/malloy-core.dir/html/form_data.cpp.o" "CMakeFiles/malloy-core.dir/html/form_renderer.cpp.o" "CMakeFiles/malloy-core.dir/html/multipart_parser.cpp.o" "CMakeFiles/malloy-core.dir/http/session/manager.cpp.o" "CMakeFiles/malloy-core.dir/http/cookie.cpp.o" "CMakeFiles/malloy-core.dir/http/generator.cpp.o"
-/usr/bin/ranlib libmalloy-core.a

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libmalloy-server.a "CMakeFiles/malloy-server.dir/http/connection_detector.cpp.o" "CMakeFiles/malloy-server.dir/http/preflight_config.cpp.o" "CMakeFiles/malloy-server.dir/routing/router.cpp.o" "CMakeFiles/malloy-server.dir/routing_context.cpp.o" "CMakeFiles/malloy-server.dir/listener.cpp.o"
-/usr/bin/ranlib libmalloy-server.a

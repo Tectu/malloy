@@ -92,3 +92,30 @@ modules.xml
 .idea/sonarlint
 
 # End of https://www.toptal.com/developers/gitignore/api/clion+all
+
+
+# CMake build folders
+/build/
+/out/
+/bin/
+/lib/
+/CMakeFiles/
+/Makefile
+/CMakeCache.txt
+/*.cmake
+compile_commands.json
+
+# Compiled objects
+*.o
+*.obj
+*.so
+*.a
+*.dll
+*.exe
+
+# Logs
+*.log
+
+# Generated protobuf, etc.
+*.pb.cc
+*.pb.h

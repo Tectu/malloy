@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/malloy-example-server-basic.dir/link.d "CMakeFiles/malloy-example-server-basic.dir/main.cpp.o" -o ../../../bin/malloy-example-server-basic  ../../../lib/malloy/server/libmalloy-server.a /usr/local/lib/libspdlog.a ../../../lib/malloy/core/libmalloy-core.a /usr/local/lib/libspdlog.a /usr/local/lib/libboost_url.a
