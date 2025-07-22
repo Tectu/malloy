@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "../bin/malloy-tests"
+  "../bin/malloy-tests.pdb"
+  "CMakeFiles/malloy-tests.dir/link.d"
+  "CMakeFiles/malloy-tests.dir/test_main.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_main.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/client/no_server.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/client/no_server.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/controller.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/controller.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/core/url/build_request.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/core/url/build_request.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/endpoints.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/endpoints.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/html_form.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/html_form.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/html_multipart_parser.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/html_multipart_parser.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/http_generator.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/http_generator.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/http_sessions_storage_memory.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/http_sessions_storage_memory.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/request.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/request.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/response.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/response.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/router.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/router.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/stream.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/stream.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/utils_core.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/utils_core.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/utils_core_http.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/utils_core_http.cpp.o.d"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/websockets.cpp.o"
+  "CMakeFiles/malloy-tests.dir/test_suites/components/websockets.cpp.o.d"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/malloy-tests.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
