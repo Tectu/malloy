@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/C%2B%2B-20-blue.svg" alt="standard"/>
+  <img src="https://img.shields.io/badge/C%2B%2B-23-blue.svg" alt="standard"/>
   <img src="https://img.shields.io/badge/License-BSD-blue.svg" alt="license"/>
   <a href="https://repology.org/project/malloy/versions">
     <img src="https://repology.org/badge/tiny-repos/malloy.svg" alt="Packaging status">
@@ -71,7 +71,7 @@ This library is BSD-3-Clause licensed. Dependencies ship with their own licensin
 
 # Requirements
 Building (and using) this library requires:
-- A C++20 capable compiler
+- A C++23 capable compiler
 - CMake 3.23 or newer
 
 ## Dependencies
