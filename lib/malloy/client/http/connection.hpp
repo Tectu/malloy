@@ -2,6 +2,7 @@
 
 #include "request_result.hpp"
 #include "../type_traits.hpp"
+#include "../../core/awaitable.hpp"
 #include "../../core/mp.hpp"
 #include "../../core/type_traits.hpp"
 #include "../../core/http/request.hpp"
@@ -49,7 +50,7 @@ namespace malloy::client::http
         //       are for example a lambda, they are being destroyed once the http_request() function returns. http_request() will actually return
         //       before the execution of this run() function completed.
         // ToDo: Don't deal with ec1, ec2, ec3 and so on. Reuse the same ec instance each time.
-        boost::asio::awaitable< request_result<Filter> >
+        awaitable< request_result<Filter> >
         run(
             malloy::http::request<ReqBody> req,
             Filter filter
@@ -92,7 +93,7 @@ namespace malloy::client::http
             //
             auto bodies = filter.body_for(m_parser.get().base());
             auto resp = co_await std::visit(
-                [&filter, this](auto&& body) -> boost::asio::awaitable< malloy::mp::filter_resp_t<Filter> > {
+                [&filter, this](auto&& body) -> awaitable< malloy::mp::filter_resp_t<Filter> > {
                     using body_t = std::decay_t<decltype(body)>;
 
                     auto parser = std::make_shared<boost::beast::http::response_parser<body_t>>(std::move(m_parser));

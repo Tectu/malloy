@@ -33,6 +33,7 @@ target_sources(
             HEADERS
             BASE_DIRS ${MALLOY_CORE_BASE_DIR}
             FILES
+                awaitable.hpp
                 controller.hpp
                 error.hpp
                 mp.hpp

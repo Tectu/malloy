@@ -204,6 +204,35 @@ namespace malloy::client
             std::unreachable();
         }
 
+        /**
+         * Convenience overload for GET requests.
+         *
+         * @param url 
+         * @param done callback on completion
+         * @param filter 
+         */
+        template<
+            malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
+            typename Callback,
+            concepts::response_filter Filter = detail::default_resp_filter
+        >
+        requires concepts::http_callback<Callback, Filter>
+        [[nodiscard]]
+        std::future<malloy::error_code>
+        http_request(
+            const std::string_view url,
+            Callback&& done,
+            Filter filter = {}
+        )
+        {
+            return http_request<ReqBody>(
+                malloy::http::method::get,
+                url,
+                std::forward<Callback>(done),
+                std::move(filter)
+            );
+        }
+
 #if MALLOY_FEATURE_TLS
         /**
          * Same as http_request() but encrypted with TLS.

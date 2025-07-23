@@ -1,6 +1,7 @@
 #pragma once
 
 #include "connection.hpp"
+#include "../../core/awaitable.hpp"
 #include "../../core/tcp/stream.hpp"
 
 #include <boost/beast/ssl/ssl_stream.hpp>
@@ -40,7 +41,7 @@ namespace malloy::client::http
 
         // Called by base class
         // ToDo: Return error code!
-        boost::asio::awaitable<void>
+        awaitable<void>
         hook_connected()
         {
             // Perform the TLS handshake
