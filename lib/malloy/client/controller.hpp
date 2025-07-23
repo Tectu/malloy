@@ -173,7 +173,7 @@ namespace malloy::client
             concepts::response_filter Filter = detail::default_resp_filter
         >
         [[nodiscard]]
-        boost::asio::awaitable< http::request_result<Filter> >
+        awaitable< http::request_result<Filter> >
         http_request(
             const malloy::http::method method_,
             const std::string_view url,
@@ -356,7 +356,7 @@ namespace malloy::client
             malloy::http::concepts::body Body,
             typename Filter
         >
-        boost::asio::awaitable< http::request_result<Filter> >
+        awaitable< http::request_result<Filter> >
         make_http_connection(malloy::http::request<Body>&& req, Filter&& filter)    // ToDo: rvalue refs okay given that this is a coroutine?
         {
             // Set User-Agent header if not already set

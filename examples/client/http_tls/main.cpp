@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-boost::asio::awaitable<void>
+malloy::awaitable<void>
 example()
 {
     // Create the controller config

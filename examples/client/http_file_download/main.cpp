@@ -12,7 +12,7 @@ log_error(malloy::error_code ec)
         spdlog::error(ec.message());
 }
 
-boost::asio::awaitable<void>
+malloy::awaitable<void>
 example()
 {
     // Create the controller config
