@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include <boost/asio/error.hpp>
 malloy::awaitable<void>
 example()
 {
@@ -22,8 +23,8 @@ example()
     auto resp = co_await c.http_request("http://www.google.com");
     if (!resp)
         spdlog::error("error: {}", resp.error().message());
-
-    std::cout << *resp << std::endl;
+    else
+        std::cout << *resp << std::endl;
 }
 
 int main()

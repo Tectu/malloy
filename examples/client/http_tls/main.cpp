@@ -28,8 +28,8 @@ example()
     auto resp = co_await c.http_request("https://www.google.com");
     if (!resp)
         spdlog::error("error: {}", resp.error().message());
-
-    std::cout << *resp << std::endl;
+    else
+        std::cout << *resp << std::endl;
 }
 
 int main()
