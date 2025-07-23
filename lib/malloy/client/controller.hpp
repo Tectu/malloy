@@ -347,7 +347,7 @@ namespace malloy::client
             typename Filter
         >
         awaitable< http::request_result<Filter> >
-        make_http_connection(malloy::http::request<Body>&& req, Filter&& filter)    // ToDo: rvalue refs okay given that this is a coroutine?
+        make_http_connection(malloy::http::request<Body> req, Filter filter)
         {
             // Set User-Agent header if not already set
             if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
