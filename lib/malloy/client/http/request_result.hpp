@@ -6,8 +6,6 @@
 
 #include <expected>
 
-// ToDo: This file is no longer necessary, move the type declaration to somewhere else
-
 namespace malloy::client::http
 {
 
