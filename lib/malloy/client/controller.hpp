@@ -2,6 +2,7 @@
 
 #include "type_traits.hpp"
 #include "http/connection_plain.hpp"
+#include "http/request_result.hpp"
 #include "websocket/connection.hpp"
 #include "../core/controller.hpp"
 #include "../core/error.hpp"
@@ -19,6 +20,7 @@
 #endif
 
 #include <boost/asio/strand.hpp>
+#include <boost/asio/use_future.hpp>
 #include <spdlog/logger.h>
 
 #include <filesystem>
@@ -124,29 +126,25 @@ namespace malloy::client
          * Perform a plain (unencrypted) HTTP request.
          *
          * @param req The HTTP request.
-         * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter
          * @param filter Filter to use when parsing the response. Must satisfy
          * response_filter @ref client_concepts
          *
-         * @return A future for reporting errors. Will be filled with a falsy
-         * error_code on success.
+         * @return Request result (response or error_code)
          *
          * @sa https_request()
          */
         template<
             malloy::http::concepts::body ReqBody,
-            typename Callback, concepts::response_filter Filter = detail::default_resp_filter
+            concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        awaitable< http::request_result<Filter> >
         http_request(
             malloy::http::request<ReqBody> req,
-            Callback&& done,
             Filter filter = {}
         )
         {
-            return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
+            return make_http_connection<false>(std::move(req), std::move(filter));
         }
 
         /**
@@ -160,7 +158,6 @@ namespace malloy::client
          *
          * @param method_ The HTTP method/verb.
          * @param url The URL.
-         * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter.
          * @param filter Filter to use when parsing the response. Must satisfy response_filter @ref client_concepts.
          *
          * @sa http_request()
@@ -168,18 +165,18 @@ namespace malloy::client
          */
         template<
             malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
-            typename Callback,
             concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        awaitable< http::request_result<Filter> >
         http_request(
             const malloy::http::method method_,
             const std::string_view url,
-            Callback&& done,
             Filter filter = {}
         ){
+            std::promise<malloy::error_code> prom;
+            auto err_channel = prom.get_future();
+
             // Build request
             auto req = malloy::http::build_request<ReqBody>(method_, url);
             if (!req) {
@@ -187,45 +184,44 @@ namespace malloy::client
 
                 malloy::error_code ec;
                 ec.assign(0, boost::beast::generic_category());
-                std::promise<malloy::error_code> p;
-                p.set_value(std::forward<malloy::error_code>(ec));
-                return p.get_future();
+                co_return std::unexpected(ec);
             }
 
             // Make request
 #if MALLOY_FEATURE_TLS
             if (req->use_tls())
-                return make_http_connection<true>(std::move(*req), std::forward<Callback>(done), std::move(filter));
+                co_return co_await make_http_connection<true>(std::move(*req), std::move(filter));
             else
 #endif
-                return make_http_connection<false>(std::move(*req), std::forward<Callback>(done), std::move(filter));
+                co_return co_await make_http_connection<false>(std::move(*req), std::move(filter));
+
+            // We should never end up here
+            std::unreachable();
         }
 
         /**
-         * Convenience overload for GET requests.
+         * Convenience overload for HTTP GET requests.
          *
          * @param url 
-         * @param done callback on completion
-         * @param filter 
+         * @param filter
+         *
+         * @sa http_request()
+         * @sa https_request()
          */
         template<
             malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
-            typename Callback,
             concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        awaitable< http::request_result<Filter> >
         http_request(
             const std::string_view url,
-            Callback&& done,
             Filter filter = {}
         )
         {
             return http_request<ReqBody>(
                 malloy::http::method::get,
                 url,
-                std::forward<Callback>(done),
                 std::move(filter)
             );
         }
@@ -238,19 +234,16 @@ namespace malloy::client
          */
         template<
             malloy::http::concepts::body ReqBody,
-            typename Callback,
             concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        awaitable< http::request_result<Filter> >
         https_request(
             malloy::http::request<ReqBody> req,
-            Callback&& done,
             Filter filter = {}
         )
         {
-            return make_http_connection<true>(std::move(req), std::forward<Callback>(done), std::move(filter));
+            return make_http_connection<true>(std::move(req), std::move(filter));
         }
 
         /**
@@ -348,19 +341,14 @@ namespace malloy::client
                 throw std::logic_error("TLS context not initialized.");
         }
 
-        // ToDo: Change this so it returns an awaitable
         template<
             bool isHttps,
             malloy::http::concepts::body Body,
-            typename Callback,
             typename Filter
         >
-        std::future<malloy::error_code>
-        make_http_connection(malloy::http::request<Body>&& req, Callback&& cb, Filter&& filter)
+        awaitable< http::request_result<Filter> >
+        make_http_connection(malloy::http::request<Body>&& req, Filter&& filter)    // ToDo: rvalue refs okay given that this is a coroutine?
         {
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-
             // Set User-Agent header if not already set
             if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                 req.set(malloy::http::field::user_agent, m_cfg.user_agent);
@@ -378,36 +366,15 @@ namespace malloy::client
 
                 // Set SNI hostname (many hosts need this to handshake successfully)
                 auto ec = conn->set_hostname(req.base()[malloy::http::field::host]);
-                if (ec) {
-                    prom.set_value(ec);
-                    return err_channel;
-                }
+                if (ec)
+                    co_return std::unexpected(ec);
 
                 // Run
-                boost::asio::co_spawn(
-                    *m_ioc,
-                    conn->run(std::move(req), std::forward<Filter>(filter)),
-                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
-                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
-                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
-                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
-
-                        // Handle exceptions
-                        if (e)
-                            std::rethrow_exception(e);
-
-                        // Invoke callback
-                        // Note: Do this BEFORE we set the error code promise (if there's no error)
-                        if (!req_result.error_code)
-                            cb(std::move(req_result.response));
-
-                        // Set error_code promise
-                        prom.set_value(req_result.error_code);
-                    }
-                );
+                co_return co_await conn->run(std::move(req), std::forward<Filter>(filter));
             }
             else {
 #endif
+                // Create connection
                 auto conn = std::make_shared<http::connection_plain<Body, Filter>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTP connection"),
                     *m_ioc,
@@ -415,32 +382,13 @@ namespace malloy::client
                 );
 
                 // Run
-                boost::asio::co_spawn(
-                    *m_ioc,
-                    conn->run(std::move(req), std::forward<Filter>(filter)),
-                    [conn, prom = std::move(prom), cb = std::move(cb)](std::exception_ptr e, http::request_result<Filter> req_result) mutable {    // ToDo: Do we need to capture conn to keep it alive here?!
-                        // Note: The order here is important. We need to invoke the callback before we set the promise. Otherwise, a consumer calling get() on the
-                        //       promise will get the promise before the consumer callback gets executed. This leads to synchronization problems. The consumer
-                        //       expects that the callback gets executed before the error code promise is set (if there is no error).
-
-                        // Handle exceptions
-                        if (e)
-                            std::rethrow_exception(e);
-
-                        // Invoke callback
-                        // Note: Do this BEFORE we set the error code promise (if there's no error)
-                        if (!req_result.error_code)
-                            cb(std::move(req_result.response));
-
-                        // Set error_code promise
-                        prom.set_value(req_result.error_code);
-                    }
-                );
+                co_return co_await conn->run(std::move(req), std::forward<Filter>(filter));
 #if MALLOY_FEATURE_TLS
             }
 #endif
 
-            return err_channel;
+            // We should never get here
+            std::unreachable();
         }
 
         template<bool isSecure>

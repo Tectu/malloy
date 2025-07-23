@@ -18,14 +18,16 @@ example()
     // Start
     [[maybe_unused]] auto session = start(c);
 
-    // Initialize TLS context
-    if (!c.init_tls()) {
-        spdlog::error("initializing TLS context failed.");
-        co_return;
-    }
+    // Assemble request
+    malloy::http::request<> req(
+        malloy::http::method::get,
+        "www.google.com",
+        80,
+        "/"
+    );
 
     // Make request
-    auto resp = co_await c.http_request("https://www.google.com");
+    auto resp = co_await c.http_request(req);
     if (!resp)
         spdlog::error("error: {}", resp.error().message());
 

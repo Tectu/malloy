@@ -67,14 +67,14 @@ namespace malloy::client::http
                 boost::asio::as_tuple(boost::asio::use_awaitable)
             );
             if (ec1)
-                co_return request_result<Filter>{ ec1 };
+                co_return std::unexpected(ec1);
 
             // Make the connection on the IP address we get from a lookup
             malloy::error_code ec2;
             set_stream_timeout(std::chrono::seconds(30));   // ToDo: Don't hard-code
             co_await boost::beast::get_lowest_layer(derived().stream()).async_connect(results, boost::asio::redirect_error(boost::asio::use_awaitable, ec2));
             if (ec2)
-                co_return request_result<Filter>{ ec2 };
+                co_return std::unexpected(ec2);
 
             // Call "connected" hook
             co_await derived().hook_connected();
@@ -127,13 +127,7 @@ namespace malloy::client::http
 
             // If we get here then the connection is closed gracefully
 
-            // Prepare the result
-            // ToDo: Optimize this by in-place construction or something like that?
-            request_result<Filter> result;
-            result.error_code = std::move(ec);
-            result.response = std::move(resp);
-
-            co_return result;
+            co_return std::move(resp);  // ToDo: Move correct?
         }
 
     protected:
