@@ -1,3 +1,4 @@
+add_subdirectory(http_assembled_request)
 add_subdirectory(http_custom_filter)
 add_subdirectory(http_file_download)
 add_subdirectory(http_plain)

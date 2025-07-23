@@ -126,29 +126,25 @@ namespace malloy::client
          * Perform a plain (unencrypted) HTTP request.
          *
          * @param req The HTTP request.
-         * @param done Callback invoked on completion. Must satisfy http_callback (@ref client_concepts) with Filter
          * @param filter Filter to use when parsing the response. Must satisfy
          * response_filter @ref client_concepts
          *
-         * @return A future for reporting errors. Will be filled with a falsy
-         * error_code on success.
+         * @return Request result (response or error_code)
          *
          * @sa https_request()
          */
         template<
             malloy::http::concepts::body ReqBody,
-            typename Callback, concepts::response_filter Filter = detail::default_resp_filter
+            concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        awaitable< http::request_result<Filter> >
         http_request(
             malloy::http::request<ReqBody> req,
-            Callback&& done,
             Filter filter = {}
         )
         {
-            return make_http_connection<false>(std::move(req), std::forward<Callback>(done), std::move(filter));
+            return make_http_connection<false>(std::move(req), std::move(filter));
         }
 
         /**
@@ -238,19 +234,16 @@ namespace malloy::client
          */
         template<
             malloy::http::concepts::body ReqBody,
-            typename Callback,
             concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        awaitable< http::request_result<Filter> >
         https_request(
             malloy::http::request<ReqBody> req,
-            Callback&& done,
             Filter filter = {}
         )
         {
-            return make_http_connection<true>(std::move(req), std::forward<Callback>(done), std::move(filter));
+            return make_http_connection<true>(std::move(req), std::move(filter));
         }
 
         /**
