@@ -25,10 +25,7 @@ example()
     }
 
     // Make request
-    auto resp = co_await c.http_request(
-        malloy::http::method::get,
-        "https://www.google.com"
-    );
+    auto resp = co_await c.http_request("https://www.google.com");
     if (!resp)
         spdlog::error("error: {}", resp.error().message());
 
