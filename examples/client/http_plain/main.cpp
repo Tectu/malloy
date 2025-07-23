@@ -19,10 +19,7 @@ example()
     [[maybe_unused]] auto session = start(c);
 
     // Make request
-    auto resp = co_await c.http_request(
-        malloy::http::method::get,
-        "http://www.google.com"
-    );
+    auto resp = co_await c.http_request("http://www.google.com");
     if (!resp)
         spdlog::error("error: {}", resp.error().message());
 

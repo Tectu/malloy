@@ -207,30 +207,25 @@ namespace malloy::client
          * Convenience overload for HTTP GET requests.
          *
          * @param url 
-         * @param done callback on completion
-         * @param filter 
+         * @param filter
          *
          * @sa http_request()
          * @sa https_request()
          */
         template<
             malloy::http::concepts::body ReqBody = boost::beast::http::string_body,
-            typename Callback,
             concepts::response_filter Filter = detail::default_resp_filter
         >
-        requires concepts::http_callback<Callback, Filter>
         [[nodiscard]]
-        std::future<malloy::error_code>
+        awaitable< http::request_result<Filter> >
         http_request(
             const std::string_view url,
-            Callback&& done,
             Filter filter = {}
         )
         {
             return http_request<ReqBody>(
                 malloy::http::method::get,
                 url,
-                std::forward<Callback>(done),
                 std::move(filter)
             );
         }

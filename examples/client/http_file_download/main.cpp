@@ -28,7 +28,6 @@ example()
 
     // Make request (with file response filter)
     auto resp = co_await c.http_request(
-        malloy::http::method::get,
         "http://www.google.com",
         malloy::http::filters::file_response::open("./google.com.html", log_error, boost::beast::file_mode::write)
     );
