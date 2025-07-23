@@ -48,7 +48,7 @@ namespace malloy::test
         setup_server(s_ctrl);
         setup_client(c_ctrl);
 
-        auto s_session = start(std::move(s_ctrl));
-        start(c_ctrl).run();
+        auto server_session = start(std::move(s_ctrl));
+        auto client_session = start(c_ctrl);
     }
 }

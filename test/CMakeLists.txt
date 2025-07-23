@@ -12,6 +12,7 @@ add_subdirectory(test_suites)
 target_sources(
     ${TARGET}
     PRIVATE
+        coroutine_executor.hpp
         test_main.cpp
         test.hpp
         mocks.hpp

@@ -1,4 +1,5 @@
 #include "../../test.hpp"
+#include "../../coroutine_executor.hpp"
 
 #include <malloy/server/routing_context.hpp>
 #include <malloy/server/routing/router.hpp>
@@ -60,42 +61,44 @@ TEST_SUITE("controller - roundtrips")
 
     TEST_CASE("Server and client set agent strings based on user_agent")
     {
-        constexpr auto addr = "127.0.0.1";
-        constexpr uint16_t port = 55123;
+        co_spawn([]() -> malloy::awaitable<void> {
+            constexpr auto addr = "127.0.0.1";
+            constexpr uint16_t port = 55123;
 
-        malloy::controller::config general_cfg;
-        general_cfg.logger = spdlog::default_logger();
+            malloy::controller::config general_cfg;
+            general_cfg.logger = spdlog::default_logger();
 
-        mc::controller::config cli_cfg{general_cfg};
-        ms::routing_context::config serve_cfg{general_cfg};
+            mc::controller::config cli_cfg{general_cfg};
+            ms::routing_context::config serve_cfg{general_cfg};
 
-        cli_cfg.user_agent = cli_agent_str;
-        serve_cfg.agent_string = serve_agent_str;
-        serve_cfg.interface = addr;
-        serve_cfg.port = port;
+            cli_cfg.user_agent = cli_agent_str;
+            serve_cfg.agent_string = serve_agent_str;
+            serve_cfg.interface = addr;
+            serve_cfg.port = port;
 
-        mc::controller cli_ctrl{cli_cfg};
+            mc::controller cli_ctrl{cli_cfg};
 
-        malloy::http::request<> req{
-            malloy::http::method::get,
-            addr,
-            port,
-            "/"
-        };
-        auto stop_tkn = cli_ctrl.http_request(req, [&](auto&& resp){
-            CHECK_EQ(resp[malloy::http::field::server], serve_agent_str);
+            malloy::http::request<> req{
+                malloy::http::method::get,
+                addr,
+                port,
+                "/"
+            };
+            auto resp_aw = cli_ctrl.http_request(req);
+
+            ms::routing_context serve_ctrl{serve_cfg};
+
+            serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req) {
+                CHECK_EQ(req[malloy::http::field::user_agent], cli_agent_str);
+                return malloy::http::generator::ok();
+            });
+
+            auto server_session = start(std::move(serve_ctrl));
+            auto client_session = start(cli_ctrl);
+
+            auto resp = co_await std::move(resp_aw);
+            REQUIRE(resp);
+            CHECK_EQ((*resp)[malloy::http::field::server], serve_agent_str);
         });
-
-        ms::routing_context serve_ctrl{serve_cfg};
-
-        serve_ctrl.router().add(malloy::http::method::get, "/", [&](auto&& req){
-            CHECK_EQ(req[malloy::http::field::user_agent], cli_agent_str);
-            return malloy::http::generator::ok();
-        });
-
-        auto serve_session = start(std::move(serve_ctrl));
-        start(cli_ctrl).run();
-
-        CHECK_FALSE(stop_tkn.get());
     }
 }
