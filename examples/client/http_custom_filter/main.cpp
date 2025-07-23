@@ -12,6 +12,7 @@ struct response_filter
 	using header_type = boost::beast::http::response_header<>;
 	using value_type = std::variant<std::string, boost::beast::http::file_body::value_type>;
 
+    [[nodiscard]]
     std::variant<boost::beast::http::string_body, boost::beast::http::file_body>
     body_for(const header_type& header) const
     {
@@ -30,8 +31,8 @@ struct response_filter
 	}
 };
 
-int
-main()
+malloy::awaitable<void>
+example()
 {
     // Create controller configuration
 	malloy::client::controller::config cfg;
@@ -45,24 +46,35 @@ main()
     [[maybe_unused]] auto session = start(ctrl);
 
 	// Make request
-	auto stop_token = ctrl.http_request(
+	auto resp = co_await ctrl.http_request(
         malloy::http::method::get,
         "http://www.google.com",
-        [](auto&& resp) mutable {
-            if constexpr (std::same_as<std::decay_t<decltype(resp)>, malloy::http::response<boost::beast::http::string_body>>)
-                std::cout << resp << std::endl;
-            else
-                std::cout << "Downloaded webpage to: " << download_path << std::endl;
-            },
         response_filter{ }
     );
+    if (!resp)
+		spdlog::error("error: {}", resp.error().message());
 
-	// Wait for completion and check for errors
-	const auto ec = stop_token.get();
-	if (ec) {
-		spdlog::error("error: {}", ec.message());
-		return EXIT_FAILURE;
-	}
-
-	return EXIT_SUCCESS;
+    // Show result
+    // ToDo: Make this work again (broken since change from callback to coroutine)
+#if 0
+    if constexpr (std::same_as<std::decay_t<decltype(*resp)>, malloy::http::response<boost::beast::http::string_body>>)
+        std::cout << *resp << std::endl;
+    else
+        std::cout << "Downloaded webpage to: " << download_path << std::endl;
+#endif
 }
+
+int
+main()
+{
+    boost::asio::io_context ioc;
+
+    boost::asio::co_spawn(
+        ioc,
+        example(),
+        boost::asio::use_future
+    );
+
+    ioc.run();
+}
+
