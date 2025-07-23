@@ -1,6 +1,7 @@
 #pragma once
 
 #include "connection.hpp"
+#include "../../core/awaitable.hpp"
 #include "../../core/tcp/stream.hpp"
 
 namespace malloy::client::http
@@ -33,7 +34,7 @@ namespace malloy::client::http
         }
 
         // Called by base class
-        boost::asio::awaitable<void>
+        awaitable<void>
         hook_connected()
         {
             co_return;
