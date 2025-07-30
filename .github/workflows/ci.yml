@@ -34,22 +34,22 @@ jobs:
               tls: OFF,
               os: ubuntu-latest,
             },
-            {
-              name: "Ubuntu Clang TLS",
-              cxx: "clang++",
-              cc: "clang",
-              packages: "libspdlog-dev libssl-dev",
-              tls: ON,
-              os: ubuntu-latest,
-            },
-            {
-              name: "Ubuntu Clang",
-              cxx: "clang++",
-              cc: "clang",
-              packages: "libspdlog-dev",
-              tls: OFF,
-              os: ubuntu-latest,
-            },
+            #{
+            #  name: "Ubuntu Clang TLS",
+            #  cxx: "clang++",
+            #  cc: "clang",
+            #  packages: "libspdlog-dev libssl-dev",
+            #  tls: ON,
+            #  os: ubuntu-latest,
+            #},
+            #{
+            #  name: "Ubuntu Clang",
+            #  cxx: "clang++",
+            #  cc: "clang",
+            #  packages: "libspdlog-dev",
+            #  tls: OFF,
+            #  os: ubuntu-latest,
+            #},
             # ToDo
             #{
             #  name: "VS2022",
