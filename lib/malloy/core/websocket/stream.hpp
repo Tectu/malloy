@@ -21,18 +21,21 @@ namespace malloy::websocket
 
     namespace detail
     {
+        using plain_stream = boost::beast::websocket::stream<malloy::tcp::stream<>>;
 
 #if MALLOY_FEATURE_TLS
 		using tls_stream = boost::beast::websocket::stream<
 			boost::beast::ssl_stream<malloy::tcp::stream<>>
 		>;
 #endif
+
 		using websocket_t = std::variant<
 #if MALLOY_FEATURE_TLS
 			tls_stream,
 #endif
-			boost::beast::websocket::stream<malloy::tcp::stream<>>
+			plain_stream
 		>;
+
         template<typename T>
         concept rw_completion_token = boost::asio::completion_token_for<T, void(malloy::error_code, std::size_t)>;
 	}
@@ -273,6 +276,7 @@ namespace malloy::websocket
          *
          * @return Whether the stream is open.
          */
+        [[nodiscard]]
         bool
         is_open() const
         {
@@ -288,7 +292,8 @@ namespace malloy::websocket
          * @brief Whether the underlying stream is TLS or not 
          * @note Always false if MALLOY_FEATURE_TLS == 0
          */
-		constexpr
+        [[nodiscard]]
+        constexpr
         bool
         is_tls() const
 		{
