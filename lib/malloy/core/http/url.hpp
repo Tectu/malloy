@@ -75,7 +75,7 @@ namespace malloy::http
     template<typename Body>
     [[nodiscard]]
     std::optional<request<Body>>
-    build_request(const method method_, const std::string_view& url)
+    build_request(const method method_, const std::string_view url)
     {
         // Parse URL
         auto parsed_url = boost::urls::parse_uri(url);
