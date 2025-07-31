@@ -333,13 +333,9 @@ namespace malloy::client
             // Build endpoint
             auto ep = malloy::websocket::build_endpoint(url);
             if (!ep) {
-                // ToDo: Invoke handler and pass ec
-                /*
-                // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
-                malloy::error_code ec;
-                ec.assign(0, boost::beast::generic_category());
-                co_return std::unexpected(ec);
-                */
+                malloy::error_code ec(0, boost::beast::generic_category());
+                std::invoke(std::forward<decltype(handler)>(handler), ec, std::shared_ptr<websocket::connection>{nullptr});
+                return;
             }
 
 #if MALLOY_FEATURE_TLS
