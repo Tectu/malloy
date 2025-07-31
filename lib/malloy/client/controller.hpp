@@ -174,9 +174,6 @@ namespace malloy::client
             const std::string_view url,
             Filter filter = {}
         ){
-            std::promise<malloy::error_code> prom;
-            auto err_channel = prom.get_future();
-
             // Build request
             auto req = malloy::http::build_request<ReqBody>(method_, url);
             if (!req) {
