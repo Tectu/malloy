@@ -257,8 +257,6 @@ namespace malloy::client
             std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
         )
         {
-            check_tls();
-
             // Create connection
             make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
