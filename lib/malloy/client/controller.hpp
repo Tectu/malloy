@@ -388,6 +388,12 @@ namespace malloy::client
         awaitable< http::request_result<Filter> >
         make_http_connection(malloy::http::request<Body> req, Filter filter)
         {
+            // Check TLS context
+            if constexpr (UseTLS) {
+                if (auto ec = tls_context_valid(); !ec)
+                    co_return std::unexpected(ec.error());
+            }
+
             // Set User-Agent header if not already set
             if (!malloy::http::has_field(req, malloy::http::field::user_agent)) {
                 req.set(malloy::http::field::user_agent, m_cfg.user_agent);
@@ -440,7 +446,6 @@ namespace malloy::client
         )
         {
             // Check TLS context
-            // ToDo: Why do we only do this for websocket but not for http?
             if constexpr (UseTLS) {
                 if (auto ec = tls_context_valid(); !ec)
                     return;
