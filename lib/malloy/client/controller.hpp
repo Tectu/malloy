@@ -339,7 +339,7 @@ namespace malloy::client
         }
 
         template<
-            bool isHttps,
+            bool UseTLS,
             malloy::http::concepts::body Body,
             typename Filter
         >
@@ -352,7 +352,7 @@ namespace malloy::client
             }
 
 #if MALLOY_FEATURE_TLS
-            if constexpr (isHttps) {
+            if constexpr (UseTLS) {
                 // Create connection
                 auto conn = std::make_shared<http::connection_tls<Body, Filter>>(
                     m_cfg.logger->clone(m_cfg.logger->name() + " | HTTPS connection"),
@@ -388,7 +388,7 @@ namespace malloy::client
             std::unreachable();
         }
 
-        template<bool isSecure>
+        template<bool UseTLS>
         void
         make_ws_connection(
             const std::string& host,
@@ -408,7 +408,7 @@ namespace malloy::client
                     else {
                         auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
-                            if constexpr (isSecure) {
+                            if constexpr (UseTLS) {
                                 return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream<>>{
                                     malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
                             }
