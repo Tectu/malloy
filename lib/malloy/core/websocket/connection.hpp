@@ -101,6 +101,7 @@ namespace malloy::websocket
          * @param ws Stream to use. May be unopened/connected but in that case
          * `connect` must be called before this connection can be used
          */
+        [[nodiscard]]
         static
         std::shared_ptr<connection>
         make(const std::shared_ptr<spdlog::logger> logger, stream&& ws, const std::string& agent_string)
