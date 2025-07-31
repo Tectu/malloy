@@ -179,7 +179,6 @@ namespace malloy::client
             auto req = malloy::http::build_request<ReqBody>(method_, url);
             if (!req) {
                 // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
-
                 malloy::error_code ec;
                 ec.assign(0, boost::beast::generic_category());
                 co_return std::unexpected(ec);
