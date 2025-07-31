@@ -133,33 +133,33 @@ namespace malloy::websocket
         {
             m_logger->trace("connect()");
 
+            // ToDo: Return ec instead of throwing
             if (m_state != state::inactive)
                 throw std::logic_error{"connect() called on already active websocket connection"};
 
             // Set the timeout for the operation
-            m_ws.get_lowest_layer([&, me = this->shared_from_this(), this, done = std::forward<Callback>(done), resource](auto& sock) mutable {
-                sock.expires_after(std::chrono::seconds(30));
+            m_ws.get_lowest_layer([](auto& stream) { stream.expires_after(std::chrono::seconds(30)); });
 
-                // Make the connection on the IP address we get from a lookup
-                sock.async_connect(
-                    target,
-                    [this, me, target, done = std::forward<Callback>(done), resource](auto ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) mutable {
-                        if (ec) {
-                            done(ec);
-                        }
-                        else {
-                            me->on_connect(
-                                ec,
-                                ep,
-                                resource,
-                                [this, done = std::forward<Callback>(done)](auto ec) mutable {
-                                    go_active();
-                                    std::invoke(std::forward<decltype(done)>(done), ec);
-                                }
-                            );
-                        }
-                    });
-            });
+            // Connect
+            m_ws.async_connect(
+                target,
+                [this, me = this->shared_from_this(), done = std::forward<Callback>(done), resource](auto ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) mutable {
+                    if (ec) {
+                        done(ec);
+                    }
+                    else {
+                        me->on_connect(
+                            ec,
+                            ep,
+                            resource,
+                            [this, done = std::forward<Callback>(done)](auto ec) mutable {
+                                go_active();
+                                std::invoke(std::forward<decltype(done)>(done), ec);
+                            }
+                        );
+                    }
+                }
+            );
         }
 
         /**

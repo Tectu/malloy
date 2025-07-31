@@ -5,6 +5,7 @@
 
 #include <boost/beast/core.hpp>
 #include <boost/asio/connect.hpp>
+#include <boost/asio/ip/basic_resolver_results.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/websocket/error.hpp>
@@ -44,7 +45,7 @@ namespace malloy::websocket
 	* @class stream
 	* @brief Websocket stream. May use TLS
     * @details Provides an interface for different types of websocket streams,
-    * allowing TLS and non-TLS streams to be used transparently. 
+    * allowing TLS and non-TLS streams to be used transparently.
     * @note Not all of the interface has explicit documentation. You can assume
     * that anything without documentation simply calls the function of the same
     * name on the underlying stream
@@ -88,6 +89,19 @@ namespace malloy::websocket
         {
         }
 #endif
+
+        // ToDo: Concept
+        template<typename Callback>
+        auto
+        async_connect(const boost::asio::ip::tcp::resolver::results_type& target, Callback&& done)
+        {
+            return std::visit(
+                [&target, done = std::forward<Callback>(done)](auto& stream) mutable {
+                    return boost::beast::get_lowest_layer(stream).async_connect(target, std::forward<Callback>(done));
+                },
+                m_underlying_conn
+            );
+        }
 
 		template<concepts::const_buffer_sequence Buff, detail::rw_completion_token Callback>
 		auto
