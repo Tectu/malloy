@@ -178,12 +178,9 @@ namespace malloy::client
         ){
             // Build request
             auto req = malloy::http::build_request<ReqBody>(method_, url);
-            if (!req) {
+            if (!req)
                 // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
-                malloy::error_code ec;
-                ec.assign(0, boost::beast::generic_category());
-                co_return std::unexpected(ec);
-            }
+                co_return std::unexpected(malloy::error_code(1, boost::beast::generic_category()));
 
             // Make request
 #if MALLOY_FEATURE_TLS
@@ -371,7 +368,7 @@ namespace malloy::client
         {
             if (!m_tls_ctx)
                 // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
-                return std::unexpected(malloy::error_code(0, boost::beast::generic_category()));
+                return std::unexpected(malloy::error_code(1, boost::beast::generic_category()));
 
             return { };
         }
