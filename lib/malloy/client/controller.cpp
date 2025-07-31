@@ -26,24 +26,28 @@ controller::controller(config cfg) :
         return true;
     }
 
-    void
+    std::expected<void, std::string>
     controller::add_ca_file(const std::filesystem::path& file)
     {
         if (!std::filesystem::exists(file))
-            throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
+            return std::unexpected(fmt::format("add_tls_keychain passed '{}', which does not exist", file.string()));
 
         if (!tls_context_valid())
-            throw std::logic_error("TLS context not initialized");  // ToDo: Return error code instead
+            return std::unexpected("TLS context not initialized");
 
         m_tls_ctx->load_verify_file(file.string());
+
+        return { };
     }
 
-    void
+    std::expected<void, std::string>
     controller::add_ca(const std::string& contents)
     {
         if (!tls_context_valid())
-            throw std::logic_error("TLS context not initialized");  // ToDo: Return error-code instead
+            return std::unexpected("TLS context not initialized");
 
         m_tls_ctx->add_certificate_authority(malloy::buffer(contents));
+
+        return { };
     }
 #endif // MALLOY_FEATURE_TLS

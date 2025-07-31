@@ -263,9 +263,11 @@ namespace malloy::client
          * @warning tls_init() MUST be called before this.
          * @param file The path to the certificate to be added to the keychain
          *
+         * @return void or error message
+         *
          * @sa add_ca()
          */
-        void
+        std::expected<void, std::string>
         add_ca_file(const std::filesystem::path& file);
 
         /**
@@ -273,9 +275,11 @@ namespace malloy::client
          * @warning tls_init() MUST be called before this.
          * @param contents The certificate to be added to the keychain
          *
+         * @return void or error message
+         *
          * @sa add_ca_file()
          */
-        void
+        std::expected<void, std::string>
         add_ca(const std::string& contents);
 #endif
 
