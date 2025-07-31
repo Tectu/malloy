@@ -34,15 +34,5 @@ example()
         std::cout << *resp << std::endl;
 }
 
-int main()
-{
-    boost::asio::io_context ioc;
-
-    boost::asio::co_spawn(
-        ioc,
-        example(),
-        boost::asio::use_future
-    );
-
-    ioc.run();
-}
+// Include main() which will invoke the example() coroutine
+#include "../client_example_main.hpp"
