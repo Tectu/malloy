@@ -32,14 +32,18 @@ controller::controller(config cfg) :
         if (!std::filesystem::exists(file))
             throw std::invalid_argument{fmt::format("add_tls_keychain passed '{}', which does not exist", file.string())};
 
-        check_tls();
+        if (!tls_context_valid())
+            throw std::logic_error("TLS context not initialized");  // ToDo: Return error code instead
+
         m_tls_ctx->load_verify_file(file.string());
     }
 
     void
     controller::add_ca(const std::string& contents)
     {
-        check_tls();
+        if (!tls_context_valid())
+            throw std::logic_error("TLS context not initialized");  // ToDo: Return error-code instead
+
         m_tls_ctx->add_certificate_authority(malloy::buffer(contents));
     }
 #endif // MALLOY_FEATURE_TLS

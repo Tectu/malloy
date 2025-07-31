@@ -24,6 +24,7 @@
 #include <boost/asio/use_future.hpp>
 #include <spdlog/logger.h>
 
+#include <expected>
 #include <filesystem>
 
 namespace boost::asio::ssl
@@ -365,14 +366,18 @@ namespace malloy::client
 
         /**
          * Checks whether the TLS context was initialized.
-         * @note This will throw if the TLS context was not initialized.
+         *
+         * @return void or error code
          */
-        void
-        check_tls() const
+        [[nodiscard]]
+        std::expected<void, malloy::error_code>
+        tls_context_valid() const
         {
-            // Check whether TLS context was initialized
             if (!m_tls_ctx)
-                throw std::logic_error("TLS context not initialized.");
+                // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
+                return std::unexpected(malloy::error_code(0, boost::beast::generic_category()));
+
+            return { };
         }
 
         template<
@@ -435,11 +440,11 @@ namespace malloy::client
         )
         {
             // Check TLS context
-            // ToDo: Do we really need this?
-            // ToDo: This throws if it fails - maybe we should return an error instead?
             // ToDo: Why do we only do this for websocket but not for http?
-            if constexpr (UseTLS)
-                check_tls();
+            if constexpr (UseTLS) {
+                if (auto ec = tls_context_valid(); !ec)
+                    return;
+            }
 
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(*m_ioc));
