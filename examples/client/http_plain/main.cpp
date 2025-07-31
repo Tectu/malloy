@@ -4,7 +4,6 @@
 
 #include <iostream>
 
-#include <boost/asio/error.hpp>
 malloy::awaitable<void>
 example()
 {
