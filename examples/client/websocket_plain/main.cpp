@@ -20,9 +20,7 @@ int main()
 
     // Connect to the /echo endpoint of the websocket example server
     c.ws_connect(
-        "127.0.0.1",
-        8080,
-        "/echo",
+        "ws://127.0.0.1:8080/echo",
         [](malloy::error_code ec, auto conn) {
             // Was the connection attempt successful?
             if (ec) {

@@ -26,10 +26,8 @@ int main()
     [[maybe_unused]] auto session = start(c);
 
     // Connect to the /echo endpoint of the websocket example server
-    c.wss_connect(
-        "127.0.0.1",
-        8080,
-        "/echo",
+    c.ws_connect(
+        "wss://127.0.0.1:8080/echo",
         [](malloy::error_code ec, auto conn) {
             // Was the connection attempt successful?
             if (ec) {

@@ -8,5 +8,6 @@ target_sources(
                 connection.hpp
                 stream.hpp
                 types.hpp
+                url.hpp
                 websocket.hpp
 )

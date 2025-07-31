@@ -13,6 +13,7 @@
 #include "../core/http/url.hpp"
 #include "../core/http/utils.hpp"
 #include "../core/tcp/stream.hpp"
+#include "../core/websocket/url.hpp"
 #if MALLOY_FEATURE_TLS
     #include "http/connection_tls.hpp"
 
@@ -312,6 +313,47 @@ namespace malloy::client
             make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
         }
 
+        /**
+         * Create a websocket connection.
+         *
+         * @detail This will either issue a plain (unencrypted) or TLS request based on the scheme in the URL (ws:// vs. wss://).
+         *
+         * @param url The URL.
+         * @param handler Callback invoked when the connection is established
+         * (successfully or otherwise). Must satisfy `f(e, c)`, where:
+         * - `f` is the callback
+         * - `e` is `malloy::error_code`
+         * - `c` is `std::shared_ptr<websocket::connection>`
+         *
+         * @warning If the error code passed to `handler` is truthy (an error) the
+         * connection will be `nullptr`
+         */
+        void
+        ws_connect(
+            const std::string_view url,
+            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
+        )
+        {
+            // Build endpoint
+            auto ep = malloy::websocket::build_endpoint(url);
+            if (!ep) {
+                // ToDo: Invoke handler and pass ec
+                /*
+                // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
+                malloy::error_code ec;
+                ec.assign(0, boost::beast::generic_category());
+                co_return std::unexpected(ec);
+                */
+            }
+
+#if MALLOY_FEATURE_TLS
+            if (ep->use_tls)
+                make_ws_connection<true>(ep->host, ep->port, ep->target, std::forward<decltype(handler)>(handler));
+            else
+#endif
+                make_ws_connection<false>(ep->host, ep->port, ep->target, std::forward<decltype(handler)>(handler));
+        }
+
     private:
         std::shared_ptr<boost::asio::ssl::context> m_tls_ctx{nullptr};
         std::unique_ptr<boost::asio::io_context> m_ioc_sm{std::make_unique<boost::asio::io_context>()};
@@ -397,6 +439,13 @@ namespace malloy::client
             std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
         )
         {
+            // Check TLS context
+            // ToDo: Do we really need this?
+            // ToDo: This throws if it fails - maybe we should return an error instead?
+            // ToDo: Why do we only do this for websocket but not for http?
+            if constexpr (UseTLS)
+                check_tls();
+
             // Create connection
             auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(*m_ioc));
             resolver->async_resolve(
