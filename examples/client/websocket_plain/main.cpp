@@ -20,7 +20,8 @@ example()
     [[maybe_unused]] auto session = start(c);
 
     // Connect to the /echo endpoint of the websocket example server
-    auto ec1 = co_await c.ws_connect(
+    {
+        auto ec1 = co_await c.ws_connect(
         "ws://127.0.0.1:8080/echo",
         [](malloy::error_code ec, auto conn) {
             // Was the connection attempt successful?
@@ -41,10 +42,12 @@ example()
                     std::cout << msg << '\n';
                 });
             });
-    });
+        });
+    }
 
     // Connect to the /timer endpoint of the websocket example server
-    auto ec2 = co_await c.ws_connect(
+    {
+        auto ec2 = co_await c.ws_connect(
         "ws://127.0.0.1:8080/timer",
         [](malloy::error_code ec, auto conn) {
             // Was the connection attempt successful?
@@ -66,8 +69,8 @@ example()
                     std::cout << msg << std::endl;
                 });
             });
-        }
-    );
+        });
+    }
 
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(15s);
