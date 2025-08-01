@@ -245,23 +245,6 @@ namespace malloy::client
         }
 
         /**
-         * @brief Same as ws_connect() but uses TLS
-         * @warning tls_init MUST be called before this
-         *
-         * @sa ws_connect()
-         */
-        void
-        wss_connect(
-            const std::string& host,
-            std::uint16_t port,
-            const std::string& resource,
-            std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
-        )
-        {
-            make_ws_connection<true>(host, port, resource, std::forward<decltype(handler)>(handler));
-        }
-
-        /**
          * @brief Load a certificate authority for use with TLS validation
          * @warning tls_init() MUST be called before this.
          * @param file The path to the certificate to be added to the keychain
@@ -318,15 +301,11 @@ namespace malloy::client
          *
          * @detail This will either issue a plain (unencrypted) or TLS request based on the scheme in the URL (ws:// vs. wss://).
          *
-         * @param url The URL.
-         * @param handler Callback invoked when the connection is established
-         * (successfully or otherwise). Must satisfy `f(e, c)`, where:
-         * - `f` is the callback
-         * - `e` is `malloy::error_code`
-         * - `c` is `std::shared_ptr<websocket::connection>`
+         * @detail If the return value does not hold an error, the connection pointer is guaranteed to be non-null.
          *
-         * @warning If the error code passed to `handler` is truthy (an error) the
-         * connection will be `nullptr`
+         * @param url The URL.
+         *
+         * @return Connection or error code
          */
         awaitable< std::expected<std::shared_ptr<websocket::connection>, error_code> >
         ws_connect(const std::string_view url)
@@ -433,6 +412,12 @@ namespace malloy::client
             std::unreachable();
         }
 
+        /**
+         *
+         * @detail If the return value does not hold an error, the connection pointer is guaranteed to be non-null.
+         *
+         * @return Connection or error code.
+         */
         template<bool UseTLS>
         awaitable< std::expected<std::shared_ptr<websocket::connection>, error_code> >
         make_ws_connection(
