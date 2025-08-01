@@ -41,9 +41,6 @@ namespace malloy::websocket
 #endif
 			plain_stream
 		>;
-
-        template<typename T>
-        concept rw_completion_token = boost::asio::completion_token_for<T, void(malloy::error_code, std::size_t)>;
 	}
 
 	/**
@@ -335,20 +332,19 @@ namespace malloy::websocket
         async_handshake_tls(const boost::asio::ssl::stream_base::handshake_type type)
         {
             // ToDo: return ec instead of throwing
+            // ToDo: Is this actually necessary given that we have a visitor checking for the tls stream type?
 			if (!is_tls())
                 throw std::logic_error{"async_handshake_tls called on non-tls stream"};
 
-            // ToDo
-            /*
-            return std::visit(
-                [type](auto& s) mutable {
+            co_return co_await std::visit(
+                [type](auto& s) mutable -> awaitable<error_code> {
                     if constexpr (std::same_as<std::decay_t<decltype(s)>, detail::tls_stream>)
-                        return s.next_layer().async_handshake(type, boost::asio::use_awaitable);
+                        co_await s.next_layer().async_handshake(type, boost::asio::use_awaitable);
+
+                    co_return error_code{ };      // ToDo: Return actual error code from async_handshake()?
                 },
                 m_underlying_conn
             );
-            */
-            co_return error_code{ };
         }
 		#endif
 

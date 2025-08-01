@@ -31,6 +31,7 @@ example()
     {
         // Make connection
         auto conn_exp = co_await c.ws_connect("ws://127.0.0.1:8080/echo");
+        //auto conn_exp = co_await c.ws_connect("wss://echo.websocket.org/");
         if (!conn_exp) {
             spdlog::error("could not make websocket connection: {}", conn_exp.error().message());
             co_return;

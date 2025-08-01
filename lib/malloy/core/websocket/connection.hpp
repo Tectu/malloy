@@ -152,6 +152,7 @@ namespace malloy::websocket
             // Setup connection
             setup_connection();
 
+            // Perform TLS handshake (if necessary)
 #if MALLOY_FEATURE_TLS
             if (m_ws.is_tls()) {
                 // ToDo: Check returned ec
@@ -163,6 +164,9 @@ namespace malloy::websocket
             // ToDo: async_handshake() should return error code
             m_state = state::handshaking;
             co_await m_ws.async_handshake(std::move(host), std::move(resource));
+
+            // We're good to go
+            go_active();
 
             co_return error_code{ };
         }
