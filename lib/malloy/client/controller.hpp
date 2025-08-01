@@ -464,17 +464,26 @@ namespace malloy::client
                 co_return ec1;
 
             // Create connection
-            auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
+            auto conn = websocket::connection::make(
+                m_cfg.logger->clone("connection"),
+                [this]() -> malloy::websocket::stream {
 #if MALLOY_FEATURE_TLS
-                if constexpr (UseTLS) {
-                    return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream<>>{
-                        malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}
-                    };
-                }
-                else
+                    if constexpr (UseTLS) {
+                        return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream<>>{
+                            malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}
+                        };
+                    }
+                    else
 #endif
-                    return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
-            }(), m_cfg.user_agent);
+                    {
+                        return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
+                    }
+                }(),
+                m_cfg.user_agent
+            );
+            if (!conn)
+                // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
+                co_return error_code(1, boost::beast::generic_category());
 
             // Connect
             auto ec2 = co_await conn->connect(dns_results, std::move(resource));
