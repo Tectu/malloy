@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "../awaitable.hpp"
 #include "../error.hpp"
 #include "../type_traits.hpp"
 #include "../utils.hpp"
@@ -123,12 +124,9 @@ namespace malloy::websocket
          * @note Only available if isClient == true
          * @param target The list of resolved endpoints to connect to
          * @param resource A suburl to make the connection on (e.g. `/api/websocket`)
-         * @param done Callback invoked on accepting the handshake or an error
-         * occurring
          */
-        template<concepts::accept_handler Callback>
-        void
-        connect(const boost::asio::ip::tcp::resolver::results_type& target, const std::string& resource, Callback&& done)
+        awaitable<error_code>
+        connect(const boost::asio::ip::tcp::resolver::results_type& target, std::string resource)
             requires(isClient)
         {
             m_logger->trace("connect()");
@@ -140,26 +138,33 @@ namespace malloy::websocket
             // Set the timeout for the operation
             m_ws.get_lowest_layer([](auto& stream) { stream.expires_after(std::chrono::seconds(30)); });
 
-            // Connect
-            m_ws.async_connect(
-                target,
-                [this, me = this->shared_from_this(), done = std::forward<Callback>(done), resource](auto ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) mutable {
-                    if (ec) {
-                        done(ec);
-                    }
-                    else {
-                        me->on_connect(
-                            ec,
-                            ep,
-                            resource,
-                            [this, done = std::forward<Callback>(done)](auto ec) mutable {
-                                go_active();
-                                std::invoke(std::forward<decltype(done)>(done), ec);
-                            }
-                        );
-                    }
-                }
-            );
+            // Make the connection on the IP address we get from a lookup
+            auto ep = co_await m_ws.async_connect(target);
+
+            // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout system.
+            m_ws.get_lowest_layer([](auto& s) { s.expires_never(); });
+
+            // Update the m_host string. This will provide the value of the
+            // Host HTTP header during the WebSocket handshake.
+            // See https://tools.ietf.org/html/rfc7230#section-5.4
+            std::string host = fmt::format("{}:{}", ep.address().to_string(), ep.port());
+
+            // Setup connection
+            setup_connection();
+
+#if MALLOY_FEATURE_TLS
+            if (m_ws.is_tls()) {
+                // ToDo: Check returned ec
+                co_await m_ws.async_handshake_tls(boost::asio::ssl::stream_base::handshake_type::client);
+            }
+#endif
+
+            // Perform the websocket handshake
+            // ToDo: async_handshake() should return error code
+            m_state = state::handshaking;
+            co_await m_ws.async_handshake(std::move(host), std::move(resource));
+
+            co_return error_code{ };
         }
 
         /**
@@ -397,66 +402,6 @@ namespace malloy::websocket
 
                 on_done();
             });
-        }
-
-        void
-        on_connect(
-            boost::beast::error_code ec,
-            boost::asio::ip::tcp::resolver::results_type::endpoint_type ep,
-            const std::string& resource,
-            concepts::accept_handler auto&& on_handshake)
-        {
-            m_logger->trace("on_connect()");
-
-            if (ec) {
-                m_logger->error("on_connect(): {}", ec.message());
-                return;
-            }
-
-            m_ws.get_lowest_layer([](auto& s) { s.expires_never(); }); // websocket has its own timeout system that conflicts
-
-            // Update the m_host string. This will provide the value of the
-            // Host HTTP header during the WebSocket handshake.
-            // See https://tools.ietf.org/html/rfc7230#section-5.4
-            const std::string host = fmt::format("{}:{}", ep.address().to_string(), ep.port());
-
-#if MALLOY_FEATURE_TLS
-            if constexpr (isClient) {
-                if (m_ws.is_tls()) {
-                    // TODO: Should this be a separate method?
-                    m_ws.async_handshake_tls(
-                        boost::asio::ssl::stream_base::handshake_type::client,
-                        [on_handshake = std::forward<decltype(on_handshake)>(on_handshake), resource, host, me = this->shared_from_this()](auto ec) mutable
-                        {
-                            if (ec)
-                                on_handshake(ec);
-
-                            me->on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
-                        }
-                    );
-                    return;
-                }
-            }
-#endif
-            on_ready_for_handshake(host, resource, std::forward<decltype(on_handshake)>(on_handshake));
-        }
-
-        void
-        on_ready_for_handshake(const std::string& host, const std::string& resource, concepts::accept_handler auto&& on_handshake)
-        {
-            m_logger->trace("on_ready_for_handshake()");
-
-            // Turn off the timeout on the tcp_stream, because
-            // the websocket stream has its own timeout system.
-            m_ws.get_lowest_layer([](auto& s) { s.expires_never(); });
-            setup_connection();
-
-            // Perform the websocket handshake
-            m_ws.async_handshake(
-                host,
-                resource,
-                std::forward<decltype(on_handshake)>(on_handshake)
-            );
         }
 
         void

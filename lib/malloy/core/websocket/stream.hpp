@@ -1,10 +1,12 @@
 #pragma once
 
+#include "../awaitable.hpp"
 #include "../tcp/stream.hpp"
 #include "../type_traits.hpp"
 
 #include <boost/beast/core.hpp>
 #include <boost/asio/connect.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/ip/basic_resolver_results.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/websocket/stream.hpp>
@@ -90,14 +92,13 @@ namespace malloy::websocket
         }
 #endif
 
-        // ToDo: Concept
-        template<typename Callback>
-        auto
-        async_connect(const boost::asio::ip::tcp::resolver::results_type& target, Callback&& done)
+        // ToDo: also return ec
+        awaitable<boost::asio::ip::tcp::resolver::results_type::endpoint_type>
+        async_connect(const boost::asio::ip::tcp::resolver::results_type& target)
         {
             return std::visit(
-                [&target, done = std::forward<Callback>(done)](auto& stream) mutable {
-                    return boost::beast::get_lowest_layer(stream).async_connect(target, std::forward<Callback>(done));
+                [&target](auto& stream) mutable {
+                    return boost::beast::get_lowest_layer(stream).async_connect(target, boost::asio::use_awaitable);
                 },
                 m_underlying_conn
             );
@@ -198,13 +199,13 @@ namespace malloy::websocket
             );
 		}
 
-		template<boost::asio::completion_token_for<void(malloy::error_code)> Callback>
-		auto
-        async_handshake(std::string host, std::string target, Callback&& done)
+        // ToDo: This should return error_code
+		awaitable<void>
+        async_handshake(std::string host, std::string target)
 		{
 			return std::visit(
-                [host = std::move(host), target = std::move(target), done = std::forward<Callback>(done)](auto& s) mutable {
-				    return s.async_handshake(host, target, std::forward<Callback>(done));
+                [host = std::move(host), target = std::move(target)](auto& s) mutable {
+				    return s.async_handshake(host, target, boost::asio::use_awaitable);
 			    },
                 m_underlying_conn
             );
@@ -319,20 +320,24 @@ namespace malloy::websocket
 		}
 
 #if MALLOY_FEATURE_TLS
-		template<concepts::accept_handler Callback>
-        void
-        async_handshake_tls(boost::asio::ssl::stream_base::handshake_type type, Callback&& done)
+        awaitable<error_code>
+        async_handshake_tls(const boost::asio::ssl::stream_base::handshake_type type)
         {
+            // ToDo: return ec instead of throwing
 			if (!is_tls())
                 throw std::logic_error{"async_handshake_tls called on non-tls stream"};
 
-            std::visit(
-                [done = std::forward<Callback>(done), type](auto& s) mutable {
+            // ToDo
+            /*
+            return std::visit(
+                [type](auto& s) mutable {
                     if constexpr (std::same_as<std::decay_t<decltype(s)>, detail::tls_stream>)
-                        s.next_layer().async_handshake(type, std::forward<Callback>(done));
+                        return s.next_layer().async_handshake(type, boost::asio::use_awaitable);
                 },
                 m_underlying_conn
             );
+            */
+            co_return error_code{ };
         }
 		#endif
 

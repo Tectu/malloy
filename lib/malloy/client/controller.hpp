@@ -24,6 +24,7 @@
 #include <boost/asio/use_future.hpp>
 #include <spdlog/logger.h>
 
+#include <coroutine>
 #include <expected>
 #include <filesystem>
 
@@ -188,7 +189,9 @@ namespace malloy::client
                 co_return co_await make_http_connection<true>(std::move(*req), std::move(filter));
             else
 #endif
+            {
                 co_return co_await make_http_connection<false>(std::move(*req), std::move(filter));
+            }
 
             // We should never end up here
             std::unreachable();
@@ -299,15 +302,15 @@ namespace malloy::client
          *
          * @sa wss_connect()
          */
-        void
+        awaitable<error_code>
         ws_connect(
-            const std::string& host,
+            std::string host,
             std::uint16_t port,
-            const std::string& resource,
+            std::string resource,
             std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
         )
         {
-            make_ws_connection<false>(host, port, resource, std::forward<decltype(handler)>(handler));
+            return make_ws_connection<false>(std::move(host), port, std::move(resource), std::forward<decltype(handler)>(handler));
         }
 
         /**
@@ -325,7 +328,7 @@ namespace malloy::client
          * @warning If the error code passed to `handler` is truthy (an error) the
          * connection will be `nullptr`
          */
-        void
+        awaitable<error_code>
         ws_connect(
             const std::string_view url,
             std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
@@ -333,18 +336,18 @@ namespace malloy::client
         {
             // Build endpoint
             auto ep = malloy::websocket::build_endpoint(url);
-            if (!ep) {
-                malloy::error_code ec(0, boost::beast::generic_category());
-                std::invoke(std::forward<decltype(handler)>(handler), ec, std::shared_ptr<websocket::connection>{nullptr});
-                return;
-            }
+            if (!ep)
+                // ToDo: Here, we'd want to assign a proper error code indicating the actual failure.
+                co_return error_code(1, boost::beast::generic_category());
 
 #if MALLOY_FEATURE_TLS
             if (ep->use_tls)
-                make_ws_connection<true>(ep->host, ep->port, ep->target, std::forward<decltype(handler)>(handler));
+                co_return co_await make_ws_connection<true>(ep->host, ep->port, ep->target, std::forward<decltype(handler)>(handler));
             else
 #endif
-                make_ws_connection<false>(ep->host, ep->port, ep->target, std::forward<decltype(handler)>(handler));
+            {
+                co_return co_await make_ws_connection<false>(ep->host, ep->port, ep->target, std::forward<decltype(handler)>(handler));
+            }
         }
 
     private:
@@ -433,50 +436,54 @@ namespace malloy::client
             std::unreachable();
         }
 
+        // Todo: Should this return awaitable<expected<conn, error_code>> instead?
         template<bool UseTLS>
-        void
+        awaitable<error_code>
         make_ws_connection(
-            const std::string& host,
+            std::string host,
             std::uint16_t port,
-            const std::string& resource,
+            std::string resource,
             std::invocable<malloy::error_code, std::shared_ptr<websocket::connection>> auto&& handler
         )
         {
             // Check TLS context
             if constexpr (UseTLS) {
                 if (auto ec = tls_context_valid(); !ec)
-                    return;
+                    co_return ec.error();
             }
 
-            // Create connection
-            auto resolver = std::make_shared<boost::asio::ip::tcp::resolver>(boost::asio::make_strand(*m_ioc));
-            resolver->async_resolve(
+            // Look up the domain name
+            auto executor = co_await boost::asio::this_coro::executor;
+            auto resolver = boost::asio::ip::tcp::resolver{ executor };
+            const auto [ec1, dns_results] = co_await resolver.async_resolve(
                 host,
                 std::to_string(port),
-                [this, resolver, done = std::forward<decltype(handler)>(handler), resource](auto ec, auto results) mutable {
-                    if (ec)
-                        std::invoke(std::forward<decltype(done)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
-                    else {
-                        auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
-#if MALLOY_FEATURE_TLS
-                            if constexpr (UseTLS) {
-                                return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream<>>{
-                                    malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}};
-                            }
-                            else
-#endif
-                                return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
-                        }(), m_cfg.user_agent);
-
-                        conn->connect(results, resource, [conn, done = std::forward<decltype(done)>(done)](auto ec) mutable {
-                            if (ec)
-                                std::invoke(std::forward<decltype(handler)>(done), ec, std::shared_ptr<websocket::connection>{nullptr});
-                            else
-                                std::invoke(std::forward<decltype(handler)>(done), ec, conn);
-                        });
-                    }
-                }
+                boost::asio::as_tuple(boost::asio::use_awaitable)
             );
+            if (ec1)
+                co_return ec1;
+
+            // Create connection
+            auto conn = websocket::connection::make(m_cfg.logger->clone("connection"), [this]() -> malloy::websocket::stream {
+#if MALLOY_FEATURE_TLS
+                if constexpr (UseTLS) {
+                    return malloy::websocket::stream{boost::beast::ssl_stream<malloy::tcp::stream<>>{
+                        malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}, *m_tls_ctx}
+                    };
+                }
+                else
+#endif
+                    return malloy::websocket::stream{malloy::tcp::stream<>{boost::asio::make_strand(*m_ioc)}};
+            }(), m_cfg.user_agent);
+
+            // Connect
+            auto ec2 = co_await conn->connect(dns_results, std::move(resource));
+            if (ec2)
+                std::invoke(std::forward<decltype(handler)>(handler), ec2, std::shared_ptr<websocket::connection>{nullptr});
+            else
+                std::invoke(std::forward<decltype(handler)>(handler), ec2, conn);
+
+            co_return ec2;
         }
     };
 

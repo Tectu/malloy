@@ -5,7 +5,8 @@
 
 #include <iostream>
 
-int main()
+malloy::awaitable<void>
+example()
 {
     // Create the controller config
     malloy::client::controller::config cfg;
@@ -19,7 +20,7 @@ int main()
     [[maybe_unused]] auto session = start(c);
 
     // Connect to the /echo endpoint of the websocket example server
-    c.ws_connect(
+    auto ec1 = co_await c.ws_connect(
         "ws://127.0.0.1:8080/echo",
         [](malloy::error_code ec, auto conn) {
             // Was the connection attempt successful?
@@ -43,10 +44,8 @@ int main()
     });
 
     // Connect to the /timer endpoint of the websocket example server
-    c.ws_connect(
-        "127.0.0.1",
-        8080,
-        "/timer",
+    auto ec2 = co_await c.ws_connect(
+        "ws://127.0.0.1:8080/timer",
         [](malloy::error_code ec, auto conn) {
             // Was the connection attempt successful?
             if (ec) {
@@ -75,5 +74,8 @@ int main()
 
     // Session will stop the client controller when it goes out of scope
 
-    return EXIT_SUCCESS;
+    co_return;
 }
+
+// Include main() which will invoke the example() coroutine
+#include "../client_example_main.hpp"
