@@ -5,6 +5,7 @@
 #include "../type_traits.hpp"
 
 #include <boost/beast/core.hpp>
+#include <boost/asio/as_tuple.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/ip/basic_resolver_results.hpp>
@@ -17,6 +18,8 @@
 	#include <boost/asio/ssl/stream.hpp>
 #endif
 
+#include <coroutine>
+#include <expected>
 #include <variant>
 
 namespace malloy::websocket
@@ -104,21 +107,25 @@ namespace malloy::websocket
             );
         }
 
-		template<concepts::const_buffer_sequence Buff, detail::rw_completion_token Callback>
-		auto
-        async_write(const Buff& buffers, Callback&& done)
+		template<concepts::const_buffer_sequence Buff>
+		awaitable< std::expected<std::size_t, error_code> >
+        async_write(const Buff& buffers)
 		{
-			return std::visit(
-                [&buffers, done = std::forward<Callback>(done)](auto& stream) mutable {
-                    return stream.async_write(buffers, std::forward<Callback>(done));
+			co_return co_await std::visit(
+                [&buffers](auto& stream) mutable -> awaitable< std::expected<std::size_t, error_code> > {
+                    auto [ec, bytes_written] = co_await stream.async_write(buffers, boost::asio::as_tuple(boost::asio::use_awaitable));
+                    if (ec)
+                        co_return std::unexpected(ec);
+
+                    co_return bytes_written;
                 },
                 m_underlying_conn
             );
 		}
 
 		template<concepts::const_buffer_sequence Buff>
-		auto
-        write(const Buff& buffers) -> std::size_t
+		std::size_t
+        write(const Buff& buffers)
 		{
 			return std::visit(
                 [&buffers](auto& stream) mutable {
@@ -128,21 +135,25 @@ namespace malloy::websocket
             );
 		}
 
-		template<concepts::dynamic_buffer Buff, detail::rw_completion_token Callback>
-		auto
-        async_read(Buff& buff, Callback&& done)
+		template<concepts::dynamic_buffer Buff>
+        awaitable< std::expected<std::size_t, error_code> >
+        async_read(Buff& buff)
 		{
-			return std::visit(
-                [&buff, done = std::forward<Callback>(done)](auto& s) mutable {
-                    return s.async_read(buff, std::forward<Callback>(done));
+			co_return co_await std::visit(
+                [&buff](auto& s) mutable -> awaitable< std::expected<std::size_t, error_code> > {
+                    auto [ec, bytes_read] = co_await s.async_read(buff, boost::asio::as_tuple(boost::asio::use_awaitable));
+                    if (ec)
+                        co_return std::unexpected(ec);
+
+                    co_return bytes_read;
                 },
                 m_underlying_conn
             );
 		}
 
 		template<concepts::dynamic_buffer Buff>
-		auto
-        read(Buff& buff, boost::beast::error_code& ec) -> std::size_t
+		std::size_t
+        read(Buff& buff, boost::beast::error_code& ec)
 		{
 			return std::visit(
                 [&buff, &ec](auto& s) mutable {

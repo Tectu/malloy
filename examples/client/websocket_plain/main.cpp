@@ -3,7 +3,7 @@
 
 #include <malloy/client/controller.hpp>
 
-#include <iostream>
+#include <print>
 
 malloy::awaitable<void>
 example()
@@ -21,55 +21,56 @@ example()
 
     // Connect to the /echo endpoint of the websocket example server
     {
-        auto ec1 = co_await c.ws_connect(
-        "ws://127.0.0.1:8080/echo",
-        [](malloy::error_code ec, auto conn) {
-            // Was the connection attempt successful?
-            if (ec) {
-                std::cerr << "could not connect: " << ec.message() << '\n';
-                return;
-            }
+        // Make connection
+        auto conn_exp = co_await c.ws_connect("ws://127.0.0.1:8080/echo");
+        if (!conn_exp) {
+            spdlog::error("could not make websocket connection: {}", conn_exp.error().message());
+            co_return;
+        }
+        auto conn = std::move(conn_exp.value());
 
-            conn->send(malloy::buffer("Hello from Malloy!"), [conn](auto ec, auto) {
-                // Was the sending attempt successful?
-                if (ec) {
-                    std::cerr << "could not send message to server: " << ec.message() << "\n";
-                    return;
-                }
+        // Send message
+        const auto bytes_written = co_await conn->send("Hello from Malloy!");
+        if (!bytes_written)
+            spdlog::error("could not to send data to websocket server: {}", bytes_written.error().message());
 
-                // Read
-                malloy::examples::ws::oneshot_read(conn, [](malloy::error_code ec, std::string msg) {
-                    std::cout << msg << '\n';
-                });
-            });
-        });
+        // Read message (read echo)
+        const auto read = co_await conn->read();
+        if (!read)
+            spdlog::error("could not read data from websocket: {}", read.error().message());
+
+        // Print
+        std::println("{}", malloy::buffers_to_string(malloy::buffer(read->cdata(), read->size())));
     }
 
     // Connect to the /timer endpoint of the websocket example server
     {
-        auto ec2 = co_await c.ws_connect(
-        "ws://127.0.0.1:8080/timer",
-        [](malloy::error_code ec, auto conn) {
-            // Was the connection attempt successful?
-            if (ec) {
-                std::cerr << "could not connect: " << ec.message() << '\n';
-                return;
-            }
+        // Make connection
+        auto conn_exp = co_await c.ws_connect("ws://127.0.0.1:8080/timer");
+        if (!conn_exp) {
+            spdlog::error("could not make websocket connection: {}", conn_exp.error().message());
+            co_return;
+        }
+        auto conn = std::move(conn_exp.value());
 
-            // Send something to the server
-            conn->send(malloy::buffer("Whoop Whoop"), [conn](auto ec, auto) {
-                // Was the sending attempt successful?
-                if (ec) {
-                    std::cerr << "could not send message to server: " << ec.message() << "\n";
-                    return;
-                }
+        // Send something to the server
+        co_await conn->send("");
 
-                // Read
-                malloy::examples::ws::oneshot_read(conn, [](malloy::error_code ec, std::string msg) {
-                    std::cout << msg << std::endl;
-                });
-            });
-        });
+        // Read until the connection was closed (by the server)
+        while (true) {
+            const auto read = co_await conn->read();
+            if (!read) {
+                const auto ec = read.error();
+                if (ec == malloy::websocket::error::closed)
+                    spdlog::info("server closed connection");
+                else
+                    spdlog::error("could not read data from websocket: {}", ec.message());
+
+                break;
+            } else
+                // Print
+                std::println("{}", malloy::buffers_to_string(malloy::buffer(read->cdata(), read->size())));
+        }
     }
 
     using namespace std::chrono_literals;

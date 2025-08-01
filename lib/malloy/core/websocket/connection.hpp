@@ -269,17 +269,16 @@ namespace malloy::websocket
          * alive until `done` is called
          *
          * @param buff Buffer to put the message into. Must satisfy dynamic_buffer @ref general_concepts
-         * @param done Callback invoked on the message being read
-         * (successfully or otherwise). Must satisfy async_read_handler @ref
-         * general_concepts. Will NOT be invoked on the websocket being closed
-         * before the message could be fully or partially read
          *
+         * @return Number of bytes transferred or error code
          */
-        void
-        read(concepts::dynamic_buffer auto& buff, concepts::async_read_handler auto&& done)
+        awaitable< std::expected<std::size_t, error_code> >
+        read(concepts::dynamic_buffer auto& buff)
         {
             m_logger->trace("read()");
 
+// ToDo: Prior to coroutines we had this action queue thingy. Is that still needed? I do think so.
+#if 0
             m_read_queue.push(
                 [
                     this,
@@ -296,24 +295,39 @@ namespace malloy::websocket
                     });
                }
            );
+#else
+            return m_ws.async_read(buff);
+#endif
+        }
+
+        // ToDo: Add template parameter for buffer type
+        awaitable< std::expected<boost::beast::flat_buffer, error_code> >
+        read()
+        {
+            boost::beast::flat_buffer buffer;
+
+            auto bytes_transferred = co_await read(buffer);
+            if (!bytes_transferred)
+                co_return std::unexpected(bytes_transferred.error());
+
+            co_return buffer;   // ToDo: Should we move this?
         }
 
         /**
          * @brief Send the contents of a buffer to the client.
-         * @warning The caller is responsible for keeping the memory of `payload`
-         * alive until `done` is invoked
+         * @warning The caller is responsible for keeping the memory of `payload` alive.
          *
-         * @param payload The payload to send. Must satisfy const_buffer_sequence
-         *  @ref general_concepts
-         * @param done Callback invoked after the message is written (successfully
-         * or otherwise). Must satisfy async_read_handler @ref general_concepts
+         * @param payload The payload to send. Must satisfy const_buffer_sequence @ref general_concepts
+         *
+         * @return Number of bytes written or error code
          */
-        template<concepts::async_read_handler Callback>
-        void
-        send(const concepts::const_buffer_sequence auto& payload, Callback&& done)
+        awaitable< std::expected<std::size_t, error_code> >
+        send(const concepts::const_buffer_sequence auto& payload)
         {
             m_logger->trace("send(). payload size: {}", payload.size());
 
+            // ToDo: Prior to coroutines we had this action queue thingy. Is that still needed? I do think so.
+#if 0
             m_write_queue.push([buff = payload, done = std::forward<Callback>(done), this, me = this->shared_from_this()](const auto& on_done) mutable {
                 m_ws.async_write(buff, [this, me, on_done, done = std::forward<decltype(done)>(done)](auto ec, auto size) mutable {
                     on_write(ec, size);
@@ -321,6 +335,17 @@ namespace malloy::websocket
                     on_done();
                 });
             });
+#else
+            return m_ws.async_write(payload);
+#endif
+        }
+
+        awaitable< std::expected<std::size_t, error_code> >
+        send(std::string payload)
+        {
+            auto buffer = malloy::buffer(payload);
+
+            co_return co_await send(buffer);
         }
 
     private:
@@ -376,10 +401,10 @@ namespace malloy::websocket
             );
 
             // Set agent string/field
-            const auto agent_field = isClient ? malloy::http::field::user_agent : malloy::http::field::server;
             m_ws.set_option(
                 boost::beast::websocket::stream_base::decorator(
-                    [this, agent_field](boost::beast::websocket::request_type& req) {
+                    [this](boost::beast::websocket::request_type& req) {
+                        const auto agent_field = isClient ? malloy::http::field::user_agent : malloy::http::field::server;
                         req.set(agent_field, m_agent_string);
                     }
                 )
