@@ -16,6 +16,14 @@ example()
     // Create the controller
     malloy::client::controller c{cfg};
 
+#if MALLOY_FEATURE_TLS
+    // Initialize TLS context
+    if (!c.init_tls()) {
+        spdlog::error("initializing TLS context failed.");
+        co_return;
+    }
+#endif
+
     // Start
     [[maybe_unused]] auto session = start(c);
 

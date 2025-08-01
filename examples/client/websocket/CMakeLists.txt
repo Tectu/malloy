@@ -1,5 +1,5 @@
 # Set a target name
-set(TARGET malloy-example-client-websocket-secure)
+set(TARGET malloy-example-client-websocket)
 
 # Create the executable
 add_executable(${TARGET})
