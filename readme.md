@@ -144,12 +144,13 @@ int main()
 
 HTTP client:
 ```cpp
-int main()
+malloy::awaitable<void>
+example()
 {
     // Create the controller config
     malloy::client::controller::config cfg;
-    cfg.num_threads = 1;
     cfg.logger      = create_example_logger();
+    cfg.num_threads = 1;
 
     // Create the controller
     malloy::client::controller c{cfg};
@@ -158,19 +159,11 @@ int main()
     [[maybe_unused]] auto session = start(c);
 
     // Make request
-    auto stop_token = c.http_request(
-        malloy::http::method::get,
-        "http://www.google.com",
-        [](auto&& resp) mutable {
-            std::cout << resp << std::endl;
-    });
-    const auto ec = stop_token.get();
-    if (ec) {
-        spdlog::error("error: {}", ec.message());
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+    auto resp = co_await c.http_request("http://www.google.com");
+    if (!resp)
+        spdlog::error("error: {}", resp.error().message());
+    else
+        std::cout << *resp << std::endl;
 }
 ```
 
