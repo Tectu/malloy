@@ -30,13 +30,15 @@ namespace malloy::server
         write_func writer;
 
         [[nodiscard]]
-        bool matches(const req_header_t& head) const override
+        bool
+        matches(const req_header_t& head) const override
         {
             return malloy::http::resource_string(head).starts_with(resource_base);
         }
 
         [[nodiscard]]
-        handle_retr handle(const req_t& req, const http::connection_t& conn) const override
+        handle_retr
+        handle(const req_t& req, const http::connection_t& conn) const override
         {
             std::visit([this, conn](auto& gen) {
                 gen->template body<boost::beast::http::string_body>([this, conn](auto&& req) {

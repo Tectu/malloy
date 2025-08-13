@@ -51,7 +51,8 @@ namespace malloy::server
          */
         [[nodiscard]]
         virtual
-        bool matches(const req_header_t& req) const
+        bool
+        matches(const req_header_t& req) const
         {
             return method == req.method();
         }
@@ -64,7 +65,8 @@ namespace malloy::server
          */
         [[nodiscard]]
         virtual
-        handle_retr handle(const req_t& req, const http::connection_t& conn) const = 0;
+        handle_retr
+        handle(const req_t& req, const http::connection_t& conn) const = 0;
     };
 
 }

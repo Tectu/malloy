@@ -16,13 +16,15 @@ namespace malloy::server
 
 
         [[nodiscard]]
-        bool matches(const req_header_t& head) const override
+        bool
+        matches(const req_header_t& head) const override
         {
             return malloy::http::resource_string(head) == resource_old;
         }
 
         [[nodiscard]]
-        handle_retr handle(const req_t&, const http::connection_t&) const override
+        handle_retr
+        handle(const req_t&, const http::connection_t&) const override
         {
             return malloy::http::generator::redirect(status, resource_new);
         }
