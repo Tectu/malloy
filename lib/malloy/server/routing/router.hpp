@@ -239,7 +239,7 @@ namespace malloy::server
         /**
          * Move constructor.
          */
-        router(router&& other) noexcept = default;
+        router(router&& other) noexcept = delete;
 
         /**
          * Destructor.
@@ -262,7 +262,7 @@ namespace malloy::server
          * @return A reference to the assignee.
          */
         router&
-        operator=(router&& rhs) noexcept = default;
+        operator=(router&& rhs) noexcept = delete;
 
         /**
          * Set the logger to use.
@@ -281,12 +281,6 @@ namespace malloy::server
          */
         bool
         add_subrouter(std::string resource, std::unique_ptr<router> sub_router);
-
-        /**
-         * @copydoc add_subrouter
-         */
-        bool
-        add_subrouter(std::string resource, router&& sub_router);
 
         /**
          * Add an HTTP regex endpoint.

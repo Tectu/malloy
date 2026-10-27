@@ -92,12 +92,6 @@ router::add_subrouter(std::string resource, std::unique_ptr<router> sub_router)
     return true;
 }
 
-bool
-router::add_subrouter(std::string resource, router&& sub)
-{
-    return add_subrouter(std::move(resource), std::make_unique<router>(std::move(sub)));
-}
-
 void
 router::set_server_string(std::string_view str)
 {
