@@ -4,6 +4,7 @@
 #include <boost/beast/core/bind_handler.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
 
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 
@@ -139,10 +140,16 @@ namespace malloy
     void
     url_decode(std::string& str)
     {
+        const auto is_hex = [](const char c) {
+            return std::isxdigit(static_cast<unsigned char>(c)) != 0;
+        };
+
         size_t w = 0;
         for (size_t r = 0 ; r < str.size() ; ++r) {
             uint8_t v = str[r];
-            if (str[r] == '%') {
+
+            // Only decode complete & valid sequences. Malformed ones (eg. a trailing "%") are kept as-is.
+            if (str[r] == '%' && r + 2 < str.size() && is_hex(str[r+1]) && is_hex(str[r+2])) {
                 v = hex2dec(str[++r]) << 4;
                 v |= hex2dec(str[++r]);
             }

@@ -96,5 +96,19 @@ TEST_SUITE("components - utils - core")
         {
             test("some%25thi%3Eng%20here%3f", "some%thi>ng here?");
         }
+
+        SUBCASE("incomplete sequence")
+        {
+            test("%", "%");
+            test("foo%", "foo%");
+            test("foo%2", "foo%2");
+            test("%2%41", "%2A");
+        }
+
+        SUBCASE("invalid sequence")
+        {
+            test("foo%zz", "foo%zz");
+            test("%4g%41", "%4gA");
+        }
     }
 }
