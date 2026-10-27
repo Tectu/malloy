@@ -67,7 +67,9 @@ generator::file(const std::filesystem::path& storage_base_path, std::string_view
             rel_path = rel_path.substr(1);
     }
 
-    const std::filesystem::path& path = storage_base_path / rel_path;
+    // Only append the relative portion as appending an absolute path (eg. "//etc/passwd" or "C:/foo")
+    // would replace the storage base path entirely.
+    const std::filesystem::path& path = storage_base_path / std::filesystem::path{ rel_path }.relative_path();
 
     // Check whether this is a valid file path
     if (!std::filesystem::is_regular_file(path))
